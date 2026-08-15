@@ -1,4 +1,4 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: CORE (owner: architect â€” do not restructure) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: CORE (owner: architect — do not restructure) ══════════════════════
 window.__errors = [];
 const __err = (m) => { window.__errors.push(String(m)); document.title = 'ERROR'; };
 window.onerror = (m, s, l) => __err(m + ' @' + (s||'').split('/').pop() + ':' + l);
@@ -16,18 +16,518 @@ const SHOT = P.get('shot');                       // deterministic screenshot pr
 // long before SHOT_PRESETS exists, so the binding lives in this one small table. `&map=`
 // still wins, so any preset can be shot on any map.
 const SHOT_MAPS = { overview2: 2, battle2: 2, overview3: 3, battle3: 3, _snow: 2, _ash: 3 };
+
+// ══ i18n — the string layer (SPEC4 §B) ═══════════════════════════════════════════════════
+// EVERY player-facing sentence in the game is a KEY, and the two dictionaries below are the
+// only places English or French is written. `L(key, ...args)` resolves it; `{0}`/`{1}` are
+// the slots. A missing French key falls back to English rather than printing a key, so a
+// half-translated build degrades instead of breaking.
+//
+// The language is resolved ONCE, here, at module scope — render-side, before a single sim
+// tick, never from a wall clock and never out of rng(). Precedence: `&lang=` (the harness
+// pins EN, so a critic frame never shifts under a translator), then the saved choice, then
+// navigator.language. The settings toggle writes the choice and reloads, which is exactly
+// the idiom the quality toggle already uses; nothing re-renders mid-run.
+const LANG_KEY = 'bannerfall.lang';
+const LANG = (() => {
+  const q = (P.get('lang') || '').toLowerCase();
+  if (q === 'fr' || q === 'en') return q;                // an explicit request always wins
+  if (SHOT) return 'en';                                 // battery default: English
+  try { const s = localStorage.getItem(LANG_KEY); if (s === 'fr' || s === 'en') return s; } catch (e) { /* private mode */ }
+  return /^fr/i.test(navigator.language || '') ? 'fr' : 'en';
+})();
+// French register: medieval, terse, properly accented. "l'ost" (the feudal levy) carries
+// MUSTER everywhere — it is one syllable where "rassemblement" is four, and it is the word
+// a captain of this period would actually have used.
+const STR = {
+en: {
+  // ── title / campaign chrome ──────────────────────────────────────────────────────
+  'tag': 'Hold the vale · Break the horde',
+  'play': 'Play',
+  'foot': '{0} roads &nbsp;·&nbsp; {1} fortifications &nbsp;·&nbsp; ',
+  'seed': 'War Seed {0}',
+  'seed.roll': 'Roll',
+  'seed.rollT': 'Roll a new war seed — new elite swaps, new omen draws',
+  'maps.kick': 'The campaign',
+  'maps.title': 'CHOOSE YOUR ROAD',
+  'maps.back': '← Back',
+  'maps.waves': '{0} waves',
+  'maps.chained': 'Chained until {0} is held.',
+  'maps.first': 'the first road',
+  'maps.chain': 'Chained',
+  'maps.replay': 'Replay',
+  'maps.cont': 'Continue',
+  'maps.cardT': '{0} · {1} waves · best {2}/3 stars',
+  'maps.lockT': '{0} — locked until {1} is held',
+  // ── HUD ──────────────────────────────────────────────────────────────────────────
+  'hud.gold': 'Gold', 'hud.vale': 'Vale', 'hud.wave': 'Wave', 'hud.muster': 'Muster',
+  'hud.speed': 'Speed', 'hud.pause': 'Pause (Space)', 'hud.resume': 'Resume (Space)',
+  'hud.settings': 'Settings',
+  'hud.waveT': '{0} · {1} waves',
+  'mus.fullT': 'The muster is full — no more standards may take the field. ',
+  'mus.capT': 'The muster is at its limit.',
+  'mus.raiseT': 'Raise the muster for {0} gold.',
+  // ── settings ─────────────────────────────────────────────────────────────────────
+  'set.title': 'Settings',
+  'set.sound': 'Sound', 'snd.on': 'On', 'snd.off': 'Off',
+  'set.qual': 'Quality', 'qual.low': 'Low', 'qual.high': 'High', 'qual.ultra': 'Ultra',
+  'set.auto': 'Auto-call', 'val.on': 'On', 'val.off': 'Off',
+  'set.autoT': 'Call each wave three seconds after the last one breaks — the skipped seconds are still paid in gold',
+  'set.lang': 'Language',
+  'set.reset': 'Restart Campaign',
+  // ── wave call / hint rail ────────────────────────────────────────────────────────
+  'call.start': '⚔ Start Wave',
+  'call.wave': '⚔ Call Wave {0}',
+  'hint.build': 'Build', 'hint.place': 'Place', 'hint.keep': 'Keep', 'hint.cancel': 'Cancel',
+  'hint.orders': 'Orders', 'hint.omen': 'Omen',
+  'key.click': 'Click', 'key.shift': 'Shift', 'key.esc': 'Esc',
+  'place.raise': 'Raise', 'place.cancel': 'Cancel',
+  // ── wave copy ────────────────────────────────────────────────────────────────────
+  'wave.n': 'Wave {0}',
+  'wave.held': 'Wave {0} Held',
+  'wave.quiet': 'The road falls quiet',
+  'wave.sub': '{0} · {1} on the road',
+  'wave.breach': 'The Gate Is Breached',
+  'wave.hold': 'Hold the vale',
+  'wave.in': '{0} incoming',
+  'wave.horde': 'The horde',
+  'wave.musterIn': 'Muster in {0}',
+  'wave.strong': '{0} strong on the road',
+  'wave.foe': 'This foe',
+  'pip.res': '{0} resists {1}',
+  'pip.weak': '{0} is weak to {1}',
+  // ── war omens ────────────────────────────────────────────────────────────────────
+  'om.head': 'War Omens',
+  'om.clock': 'Muster in',
+  'om.clockT': 'Time left to choose',
+  'om.subTake': 'Wave {0} · take one before the muster ends',
+  'om.subTaken': 'Wave {0} · omen taken',
+  'om.taken': 'Taken',
+  'om.key': 'key {0}',
+  'om.label': 'Omen',
+  'om.chal': 'Challenge', 'om.boon': 'Boon',
+  'om.now': 'gold now', 'om.coin': 'coin',
+  'om.line.taken': 'Omen taken',
+  'om.line.three': 'Three omens on the table · <b>choose one</b>',
+  'om.line.from': 'War omens from wave <b>{0}</b>',
+  'om.line.at': 'Wave {0} · <b>omens at the muster</b>',
+  'omen.march.name': 'Forced March',
+  'omen.march.desc': 'The horde comes on at a run — +25% speed.',
+  'omen.ironskin.name': 'Iron Skins',
+  'omen.ironskin.desc': 'Boiled hide and plate — +40% hit points.',
+  'omen.ward.name': 'Elemental Ward',
+  'omen.ward.desc': 'Warded against whichever school has spilt the most blood this campaign.',
+  'omen.ward.descX': 'Warded against your {0} towers.',
+  'omen.night.name': 'Night Raid',
+  'omen.night.desc': 'They come out of the dark almost twice as thick.',
+  'omen.sappers.name': 'Sappers',
+  'omen.sappers.desc': 'Nothing slows them and they smother burning ground.',
+  'omen.shafts.name': 'Sharpened Shafts',
+  'omen.shafts.desc': 'Arrows and bolts bite 30% deeper this wave.',
+  'omen.front.name': 'Storm Front',
+  'omen.front.desc': 'Lightning leaps two foes further.',
+  'omen.chest.name': 'War Chest',
+  'omen.chest.desc': 'The treasury opens — 60 gold, now.',
+  'omen.wind.name': 'Second Wind',
+  'omen.wind.desc': 'Fallen knights return twice as fast.',
+  'omen.thin.name': 'Thin Ranks',
+  'omen.thin.desc': 'A fifth fewer foes — and a quarter less coin.',
+  // ── schools ──────────────────────────────────────────────────────────────────────
+  'sch.pierce': 'Pierce', 'sch.crush': 'Crush', 'sch.fire': 'Fire', 'sch.storm': 'Storm',
+  'sch.support': 'Support',
+  'sch.pierce.t': 'Pierce — shields and plate turn it aside',
+  'sch.crush.t': 'Crush — goes through a shield wall, poor against plate',
+  'sch.fire.t': 'Fire — cooks armour, smothered by the fireproof',
+  'sch.storm.t': 'Storm — leaps a crowd, grounded by the earthed',
+  'sch.support.t': 'Support — strengthens your own line',
+  // ── build bar ────────────────────────────────────────────────────────────────────
+  'bm.build': 'Build',
+  'bm.muster': 'Raise the Muster',
+  'bm.cancel': 'Cancel',
+  'bm.limit': 'Limit',
+  'bm.capT': 'The muster is at its limit — 14 standards is all the vale can field',
+  'bm.raiseT': 'Raise the Muster — one more tower may take the field ({0} gold)',
+  'bm.reachT': 'Reach at tier 1',
+  'tw.archer': 'Archer', 'tw.ballista': 'Ballista', 'tw.catapult': 'Catapult',
+  'tw.barracks': 'Barracks', 'tw.storm': 'Storm', 'tw.pyre': 'Pyre', 'tw.banner': 'Warbanner',
+  'tw.banner.s': 'Banner',
+  'th.archer': 'Quick volleys · cheap to raise',
+  'th.ballista': 'Heavy bolt, punches through two',
+  'th.catapult': 'Lobbed splash · blind up close',
+  'th.barracks': 'Three knights hold the road',
+  'th.storm': 'Arc leaps between four foes',
+  'th.pyre': 'Sets the ground itself alight',
+  'th.banner': 'Quickens every tower in its aura',
+  // ── road traps (SPEC4 §D) — same tw./th. prefixes as any other buildable ─────────
+  'tw.caltrops': 'Caltrops', 'tw.tar': 'Tar Pit', 'tw.keg': 'Powder Keg',
+  'tw.caltrops.s': 'Caltrops', 'tw.tar.s': 'Tar', 'tw.keg.s': 'Keg',
+  'th.caltrops': 'Strewn iron — slows and bleeds',
+  'th.tar': 'Clinging pitch — takes fire and doubles it',
+  'th.keg': 'Bursts under the first foe to touch it',
+  'bm.traps': 'Road Traps',
+  'bm.trapsT': 'Traps are laid ON the road · {0} of {1} armed',
+  'st.slow': 'Slow', 'st.dur': 'Lasts', 'st.blast': 'Blast', 'st.once': 'One use',
+  'cp.offroad': 'A trap must lie on the road',
+  'cp.tfull': 'Four traps are already armed',
+  'cp.trap': 'Too close to another trap',
+  'pl.lay': ' · click to lay',
+  // ── powers (SPEC4 §C) ────────────────────────────────────────────────────────────
+  'pw.rally': 'Rally of the Vale', 'pw.smite': 'Fire of Heaven',
+  'ph.rally': 'Three militia hold that ground for 12s',
+  'ph.smite': 'A pillar of holy fire — 90 damage, then burning ground',
+  'pw.ready': 'Ready',
+  'pw.btnT': '{0} ({1}) — {2}',
+  'pw.cdT': '{0} ({1}) — mustering, {2}s',
+  'pw.cast': ' · click to call it down',
+  'cp.cd': 'Not yet mustered',
+  'hint.powers': 'Powers', 'hint.traps': 'Traps',
+  // ── garrison sheet ───────────────────────────────────────────────────────────────
+  'tm.garrison': 'Garrison', 'tm.veteran': 'Veteran',
+  'tm.tier': 'Tier {0}', 'tm.max': 'Max',
+  'tm.up': '▲ Upgrade', 'tm.built': 'Fully Built',
+  'tm.sell': 'Dismantle', 'tm.confirm': 'Confirm?',
+  'tm.tgtT': 'Cycle this tower’s standing order (T)',
+  'mode.first': 'First', 'mode.strong': 'Strong', 'mode.close': 'Close',
+  'st.guards': 'Guards', 'st.hp': 'HP', 'st.rng': 'Rng', 'st.rate': 'Rate', 'st.aura': 'Aura',
+  'st.heals': 'Heals', 'st.yes': 'yes', 'st.no': 'no', 'st.burn': 'Burn', 'st.area': 'Area',
+  'st.dmg': 'Dmg', 'st.dps': 'DPS', 'st.ghp': 'Guard HP', 'st.gdps': 'Guard DPS',
+  'st.rally': 'Rally', 'st.stacks': 'Stacks', 'st.fires': 'Fires',
+  // ── placement writ ───────────────────────────────────────────────────────────────
+  'pl.reach': 'reach', 'pl.aura': 'aura',
+  'pl.click': ' · click to raise',
+  'pl.mfullSub': '{0} of {1} standards already in the field · ',
+  'pl.noMore': 'no more may be raised',
+  'pl.raiseFor': 'raise the muster for <i>{0}</i> gold, or dismantle one',
+  'cp.mfull': 'The muster is full',
+  'cp.off': 'Off the map',
+  'cp.beyond': 'Beyond the vale',
+  'cp.steep': 'Ground too steep',
+  'cp.road': 'Too close to the road',
+  'cp.gate': 'Under the foe’s gate',
+  'cp.keep': 'Inside the keep grounds',
+  'cp.tower': 'Too close to a tower',
+  'cp.occupied': 'Ground is occupied',
+  'tut.title': 'Raising a tower',
+  'tut.body': 'Set it on open ground clear of the road — the <b>ring</b> is how far it will reach. ',
+  'tut.touch': 'Drag to aim, then tap <b>✓</b>.',
+  'tut.mouse': 'Click to raise it · <b>Shift</b> keeps the hammer in hand · <b>Esc</b> puts it down.',
+  // ── victory / defeat ─────────────────────────────────────────────────────────────
+  'end.win': 'VICTORY', 'end.fallen': 'THE VALE HAS FALLEN', 'end.lost': 'THE ROAD IS LOST',
+  'end.holds': '{0} holds', 'end.fall': 'The banners fall on {0}',
+  'end.clean': 'Not a banner lost', 'end.never': 'The line never broke',
+  'end.costly': 'A costly hold', 'end.thread': 'Held by a thread',
+  'end.newbest': ' · new best', 'end.best': ' · best {0}/3',
+  'end.next': '{0} awaits', 'end.road': 'Choose Your Road', 'end.again': 'Try Again',
+  'end.replay': 'Play Again',
+  'md.held': 'Held', 'md.garrison': 'Garrison Kept', 'md.flawless': 'Flawless',
+  'es.slain': 'Foes slain', 'es.breach': 'Breached the gate', 'es.waves': 'Waves held',
+  'es.left': 'Garrison left', 'es.ratio': 'Kill ratio',
+  // ── endless & daily (SPEC4 §E) ───────────────────────────────────────────────────
+  'end.hold': 'Hold the line',
+  'end.holdT': 'The horde does not stop. Fight on, wave after wave, until the vale falls.',
+  'end.endless': 'THE LINE BROKE',
+  'end.endSub': 'The vale held {0} waves past the end',
+  'es.endless': 'Endless waves', 'es.daily': 'Daily War',
+  'maps.endless': 'Endless: W{0}',
+  'wave.endless': 'no horn, no herald',
+  // The dispatch title is nowrap-with-ellipsis at 322px, so an endless title has the same
+  // budget every campaign title has: ~16 characters. These are terse on purpose.
+  'ew.1': 'Endless road',
+  'ew.2': 'No horn sounds',
+  'ew.3': 'Another tide',
+  'ew.mini': 'Something heavy',
+  'ew.echo': 'The dead return',
+  'daily.title': 'Daily War',
+  'daily.sub': '{0} · seed {1}',
+  'daily.T': 'One road, one seed — everyone plays the same hand today.',
+  'daily.best': 'best · wave {0}',
+  'daily.held': 'held · {0} stars',
+  'daily.new': 'not yet fought',
+  // ── maps ─────────────────────────────────────────────────────────────────────────
+  'map.1.name': 'The Vale',
+  'map.1.blurb': 'A green valley road. Hold it and the realm holds.',
+  'map.1.finale': 'THE WARLORD',
+  'map.2.name': 'Frostfell Pass',
+  'map.2.blurb': 'Two gates feed one frozen road. Cover the fork or lose half the wave.',
+  'map.2.finale': 'THE FROST MATRIARCH',
+  'map.3.name': 'Ember Wastes',
+  'map.3.blurb': 'The road forks. Half the horde takes the canyon — cover both or be flanked.',
+  'map.3.finale': 'THE EMBER TWINS',
+  // ── the roster ───────────────────────────────────────────────────────────────────
+  'e.grunt': 'Levy', 'e.runner': 'Skirmishers', 'e.brute': 'Brutes', 'e.boss': 'The Warlord',
+  'e.shield': 'The Shieldwall', 'e.hound': 'War Hounds', 'e.marauder': 'Marauders',
+  'e.ogre': 'The Ogre', 'e.matriarch': 'The Frost Matriarch', 'e.emberlord': 'The Ember Lord',
+  'e.cinderqueen': 'The Cinder Queen', 'e.ironclad': 'The Ironclads', 'e.ashwraith': 'Ash Wraiths',
+  'e.frostrevenant': 'Frost Revenants', 'e.warshaman': 'War Shamans', 'e.ram': 'The Siege Ram',
+  // ── wave titles, per map (flattened to w.<map>.<index> below) ────────────────────
+  _w: {
+    1: ['Red Rabble', 'The Levy Swells', 'Skirmishers', 'Two Columns',
+        'Brutes at the Van', 'Running Tide', 'Drums and Bone Charms', 'The Ironclad Wall',
+        'Ram at the Gate', 'The Warlord'],
+    2: ['First Snowfall', 'Two Gates Open', 'The Pack', 'Wall of Pavises', 'The Dead Walk',
+        'Chanting in the Drifts', 'Timber and Iron', 'Bruteshield', 'The Ironclad Column',
+        'Something Huge', 'The Long Howl', 'The Frost Matriarch'],
+    3: ['Ash on the Wind', 'The Cinder Levy', 'Raiders', 'Running the Wastes', 'Skirmish Line',
+        'Wraiths off the Ash', 'Fork in the Road', 'The Ironclad Line', 'Twin Giants', 'The Ram Rolls',
+        'Everything at Once', 'The Ogre March', 'The Great Burning', 'The Ember Twins'],
+  },
+},
+fr: {
+  'tag': 'Tenez le val. Brisez la horde.',
+  'play': 'Jouer',
+  'foot': '{0} routes &nbsp;·&nbsp; {1} ouvrages &nbsp;·&nbsp; ',
+  'seed': 'Sceau de guerre {0}',
+  'seed.roll': 'Tirer',
+  'seed.rollT': 'Tirer un nouveau sceau — autres élites, autres présages',
+  'maps.kick': 'La campagne',
+  'maps.title': 'CHOISISSEZ VOTRE ROUTE',
+  'maps.back': '← Retour',
+  'maps.waves': '{0} vagues',
+  // Phrased as an imperative rather than "tant que X n’est pas tenu": map names carry their
+  // own gender ("La Passe", "Le Val"), and no single participle agrees with all of them.
+  'maps.chained': 'Enchaînée — prenez d’abord {0}.',
+  'maps.first': 'la première route',
+  'maps.chain': 'Enchaînée',
+  'maps.replay': 'Rejouer',
+  'maps.cont': 'Continuer',
+  'maps.cardT': '{0} · {1} vagues · record {2}/3 étoiles',
+  'maps.lockT': '{0} — enchaînée ; prenez d’abord {1}',
+  'hud.gold': 'Or', 'hud.vale': 'Val', 'hud.wave': 'Vague', 'hud.muster': 'Ost',
+  'hud.speed': 'Allure', 'hud.pause': 'Pause (Espace)', 'hud.resume': 'Reprendre (Espace)',
+  'hud.settings': 'Réglages',
+  'hud.waveT': '{0} · {1} vagues',
+  'mus.fullT': 'L’ost est au complet — plus une bannière ne peut prendre le champ. ',
+  'mus.capT': 'L’ost est à sa limite.',
+  'mus.raiseT': 'Lever l’ost pour {0} d’or.',
+  'set.title': 'Réglages',
+  'set.sound': 'Son', 'snd.on': 'Actif', 'snd.off': 'Muet',
+  'set.qual': 'Détail', 'qual.low': 'Bas', 'qual.high': 'Haut', 'qual.ultra': 'Ultra',
+  'set.auto': 'Appel auto', 'val.on': 'Oui', 'val.off': 'Non',
+  'set.autoT': 'Appeler chaque vague trois secondes après la précédente — les secondes sautées sont payées en or',
+  'set.lang': 'Langue',
+  'set.reset': 'Tout recommencer',
+  'call.start': '⚔ Lancer la vague',
+  'call.wave': '⚔ Appel de l’ost {0}',
+  'hint.build': 'Bâtir', 'hint.place': 'Poser', 'hint.keep': 'Garder', 'hint.cancel': 'Annuler',
+  'hint.orders': 'Ordres', 'hint.omen': 'Présage',
+  'key.click': 'Clic', 'key.shift': 'Maj', 'key.esc': 'Échap',
+  'place.raise': 'Élever', 'place.cancel': 'Annuler',
+  'wave.n': 'Vague {0}',
+  'wave.held': 'Vague {0} tenue',
+  'wave.quiet': 'La route se tait',
+  'wave.sub': '{0} · {1} sur la route',
+  'wave.breach': 'La porte est enfoncée',
+  'wave.hold': 'Tenez le val',
+  // "en vue" over "en marche": the dispatch title is nowrap-with-ellipsis at 322px, and the
+  // longest French head has to clear it the way the English one does.
+  'wave.in': '{0} en vue',
+  'wave.horde': 'La horde',
+  'wave.musterIn': 'Ost dans {0}',
+  'wave.strong': '{0} sur la route',
+  'wave.foe': 'Cet ennemi',
+  'pip.res': '{0} résiste : {1}',
+  'pip.weak': '{0} craint : {1}',
+  'om.head': 'Présages de guerre',
+  'om.clock': 'Ost dans',
+  'om.clockT': 'Temps pour choisir',
+  'om.subTake': 'Vague {0} · prenez-en un avant l’appel',
+  'om.subTaken': 'Vague {0} · présage pris',
+  'om.taken': 'Pris',
+  'om.key': 'touche {0}',
+  'om.label': 'Présage',
+  'om.chal': 'Épreuve', 'om.boon': 'Faveur',
+  'om.now': 'or aussitôt', 'om.coin': 'or',
+  'om.line.taken': 'Présage pris',
+  'om.line.three': 'Trois présages sur la table · <b>choisissez</b>',
+  'om.line.from': 'Présages dès la vague <b>{0}</b>',
+  'om.line.at': 'Vague {0} · <b>présages à l’appel</b>',
+  'omen.march.name': 'Marche forcée',
+  'omen.march.desc': 'La horde vient au pas de course — +25% d’allure.',
+  'omen.ironskin.name': 'Peaux de fer',
+  'omen.ironskin.desc': 'Cuir bouilli et plates — +40% de vie.',
+  'omen.ward.name': 'Garde d’élément',
+  'omen.ward.desc': 'Gardée contre l’école qui a versé le plus de sang.',
+  'omen.ward.descX': 'Gardée contre vos tours {0}.',
+  'omen.night.name': 'Raid de nuit',
+  'omen.night.desc': 'Ils sortent du noir presque deux fois plus drus.',
+  'omen.sappers.name': 'Sapeurs',
+  'omen.sappers.desc': 'Rien ne les ralentit ; ils étouffent les braises.',
+  'omen.shafts.name': 'Fûts affûtés',
+  'omen.shafts.desc': 'Flèches et carreaux mordent 30% plus creux.',
+  'omen.front.name': 'Front d’orage',
+  'omen.front.desc': 'La foudre bondit sur deux ennemis de plus.',
+  'omen.chest.name': 'Coffre de guerre',
+  'omen.chest.desc': 'Le trésor s’ouvre — 60 d’or, aussitôt.',
+  'omen.wind.name': 'Second souffle',
+  'omen.wind.desc': 'Les chevaliers tombés reviennent deux fois plus vite.',
+  'omen.thin.name': 'Rangs clairs',
+  'omen.thin.desc': 'Un cinquième d’ennemis en moins — un quart d’or en moins.',
+  'sch.pierce': 'Perce', 'sch.crush': 'Choc', 'sch.fire': 'Feu', 'sch.storm': 'Foudre',
+  'sch.support': 'Soutien',
+  'sch.pierce.t': 'Perce — écus et plates la détournent',
+  'sch.crush.t': 'Choc — passe le mur d’écus, faible contre la plate',
+  'sch.fire.t': 'Feu — cuit l’armure, étouffé par l’ignifuge',
+  'sch.storm.t': 'Foudre — bondit dans la foule, perdue sur qui est mis à la terre',
+  'sch.support.t': 'Soutien — renforce votre propre ligne',
+  'bm.build': 'Bâtir',
+  'bm.muster': 'Lever l’ost',
+  'bm.cancel': 'Annuler',
+  'bm.limit': 'Limite',
+  'bm.capT': 'L’ost est à sa limite — 14 bannières, pas une de plus',
+  'bm.raiseT': 'Lever l’ost — une tour de plus au champ ({0} d’or)',
+  'bm.reachT': 'Portée au rang 1',
+  'tw.archer': 'Archers', 'tw.ballista': 'Baliste', 'tw.catapult': 'Trébuchet',
+  'tw.barracks': 'Caserne', 'tw.storm': 'Foudre', 'tw.pyre': 'Bûcher', 'tw.banner': 'Bannière',
+  'tw.banner.s': 'Bannière',
+  'th.archer': 'Volées rapides · peu coûteux',
+  'th.ballista': 'Carreau lourd, en perce deux',
+  'th.catapult': 'Tir courbe · aveugle de près',
+  'th.barracks': 'Trois chevaliers tiennent la route',
+  'th.storm': 'L’arc bondit sur quatre ennemis',
+  'th.pyre': 'Embrase le sol lui-même',
+  'th.banner': 'Hâte chaque tour de son aura',
+  // Pièges de route (SPEC4 §D). « Chausse-trapes » est le mot d’époque pour les caltrops ;
+  // les deux cartes courtes sont recoupées pour la largeur du téléphone.
+  'tw.caltrops': 'Chausse-trapes', 'tw.tar': 'Fosse de poix', 'tw.keg': 'Baril de poudre',
+  'tw.caltrops.s': 'Chausses', 'tw.tar.s': 'Poix', 'tw.keg.s': 'Baril',
+  'th.caltrops': 'Fer semé — ralentit et saigne',
+  'th.tar': 'Poix collante — prend feu et le double',
+  'th.keg': 'Éclate sous le premier qui le touche',
+  'bm.traps': 'Pièges de route',
+  'bm.trapsT': 'Un piège se pose SUR la route · {0} sur {1} armés',
+  'st.slow': 'Ralenti', 'st.dur': 'Durée', 'st.blast': 'Souffle', 'st.once': 'Un seul usage',
+  'cp.offroad': 'Un piège se pose sur la route',
+  'cp.tfull': 'Quatre pièges sont déjà armés',
+  'cp.trap': 'Trop près d’un autre piège',
+  'pl.lay': ' · clic pour poser',
+  // Pouvoirs (SPEC4 §C). « Le ban » est la convocation féodale : un mot, la bonne époque.
+  'pw.rally': 'Le ban du val', 'pw.smite': 'Feu du ciel',
+  'ph.rally': 'Trois miliciens tiennent ce sol 12 s',
+  'ph.smite': 'Colonne de feu sacré — 90 dégâts, puis sol en flammes',
+  'pw.ready': 'Prêt',
+  'pw.btnT': '{0} ({1}) — {2}',
+  'pw.cdT': '{0} ({1}) — en rassemblement, {2} s',
+  'pw.cast': ' · clic pour l’appeler',
+  'cp.cd': 'Pas encore rassemblé',
+  'hint.powers': 'Pouvoirs', 'hint.traps': 'Pièges',
+  'tm.garrison': 'Garnison', 'tm.veteran': 'Vétéran',
+  'tm.tier': 'Rang {0}', 'tm.max': 'Max',
+  'tm.up': '▲ Élever', 'tm.built': 'Achevée',
+  'tm.sell': 'Raser', 'tm.confirm': 'Sûr ?',
+  'tm.tgtT': 'Changer l’ordre permanent de cette tour (T)',
+  'mode.first': 'Tête', 'mode.strong': 'Fort', 'mode.close': 'Près',
+  'st.guards': 'Gardes', 'st.hp': 'PV', 'st.rng': 'Port', 'st.rate': 'Cad', 'st.aura': 'Aura',
+  'st.heals': 'Soins', 'st.yes': 'oui', 'st.no': 'non', 'st.burn': 'Braise', 'st.area': 'Aire',
+  'st.dmg': 'Dég', 'st.dps': 'DPS', 'st.ghp': 'PV garde', 'st.gdps': 'DPS garde',
+  'st.rally': 'Ralli', 'st.stacks': 'Cumul', 'st.fires': 'Feux',
+  'pl.reach': 'portée', 'pl.aura': 'aura',
+  'pl.click': ' · cliquez pour élever',
+  'pl.mfullSub': '{0} bannières sur {1} déjà au champ · ',
+  'pl.noMore': 'aucune de plus',
+  'pl.raiseFor': 'levez l’ost pour <i>{0}</i> d’or, ou rasez-en une',
+  'cp.mfull': 'L’ost est au complet',
+  'cp.off': 'Hors carte',
+  'cp.beyond': 'Hors du val',
+  'cp.steep': 'Terrain trop raide',
+  'cp.road': 'Trop près de la route',
+  'cp.gate': 'Sous la porte ennemie',
+  'cp.keep': 'Dans la cour du donjon',
+  'cp.tower': 'Trop près d’une tour',
+  'cp.occupied': 'Terrain occupé',
+  'tut.title': 'Élever une tour',
+  'tut.body': 'Posez-la en terrain libre, à l’écart de la route — l’<b>anneau</b> dit sa portée. ',
+  'tut.touch': 'Glissez pour viser, puis touchez <b>✓</b>.',
+  'tut.mouse': 'Cliquez pour l’élever · <b>Maj</b> garde le marteau en main · <b>Échap</b> le repose.',
+  'end.win': 'VICTOIRE', 'end.fallen': 'LE VAL EST TOMBÉ', 'end.lost': 'LA ROUTE EST PERDUE',
+  'end.holds': '{0} tient', 'end.fall': 'Les bannières tombent sur {0}',
+  'end.clean': 'Pas une bannière perdue', 'end.never': 'La ligne n’a pas cédé',
+  'end.costly': 'Tenue chèrement', 'end.thread': 'Tenue d’un fil',
+  'end.newbest': ' · record', 'end.best': ' · record {0}/3',
+  'end.next': 'Vers {0}', 'end.road': 'Choisir la route', 'end.again': 'Réessayer',
+  'end.replay': 'Rejouer',
+  'md.held': 'Tenu', 'md.garrison': 'Garnison sauve', 'md.flawless': 'Sans faute',
+  'es.slain': 'Ennemis tués', 'es.breach': 'Porte franchie', 'es.waves': 'Vagues tenues',
+  'es.left': 'Garnison restante', 'es.ratio': 'Ratio de tués',
+  // SPEC4 §E. "Sans fin" (endless) is held SHORT on purpose — it shares the map-card foot
+  // line with the wave count and the star row at 390px.
+  'end.hold': 'Tenir la ligne',
+  'end.holdT': 'La horde ne s’arrête pas. Combattez, vague après vague, jusqu’à la chute du val.',
+  'end.endless': 'LA LIGNE A CÉDÉ',
+  'end.endSub': 'Le val a tenu {0} vagues au-delà de la fin',
+  'es.endless': 'Vagues sans fin', 'es.daily': 'Guerre du jour',
+  'maps.endless': 'Sans fin : V{0}',
+  'wave.endless': 'ni cor ni héraut',
+  'ew.1': 'Route sans fin',
+  'ew.2': 'Nul cor ne sonne',
+  'ew.3': 'Encore une marée',
+  'ew.mini': 'Une masse lourde',
+  'ew.echo': 'Le mort revient',
+  'daily.title': 'Guerre du jour',
+  'daily.sub': '{0} · sceau {1}',
+  'daily.T': 'Une route, un sceau — tous jouent la même main aujourd’hui.',
+  'daily.best': 'record · vague {0}',
+  'daily.held': 'tenue · {0} étoiles',
+  'daily.new': 'pas encore livrée',
+  'map.1.name': 'Le Val',
+  'map.1.blurb': 'Une route de val vert. Tenez-la et le royaume tient.',
+  'map.1.finale': 'LE SEIGNEUR DE GUERRE',
+  // Map names are held SHORTER than their English originals on purpose: on the 390px
+  // chooser the card title shares its top line with the CONTINUER ribbon, so a name that
+  // wraps collides with it. "Col" is the exact French word for a mountain pass, and the
+  // ash desert takes the same "cendre" vocabulary its roster already speaks.
+  'map.2.name': 'Le Col Gelé',
+  'map.2.blurb': 'Deux portes, une route gelée. Couvrez la fourche ou perdez la moitié.',
+  'map.2.finale': 'LA MATRIARCHE DE GIVRE',
+  'map.3.name': 'Les Cendres',
+  'map.3.blurb': 'La route se fend. Moitié par le canyon — couvrez les deux ou soyez pris de flanc.',
+  'map.3.finale': 'LES JUMEAUX DE BRAISE',
+  'e.grunt': 'La levée', 'e.runner': 'Tirailleurs', 'e.brute': 'Brutes',
+  'e.boss': 'Le Seigneur de guerre', 'e.shield': 'Le mur d’écus', 'e.hound': 'Chiens de guerre',
+  'e.marauder': 'Maraudeurs', 'e.ogre': 'L’ogre', 'e.matriarch': 'La Matriarche de givre',
+  'e.emberlord': 'Le Seigneur de braise', 'e.cinderqueen': 'La Reine de cendre',
+  'e.ironclad': 'Les bardés', 'e.ashwraith': 'Spectres de cendre',
+  'e.frostrevenant': 'Revenants de givre', 'e.warshaman': 'Chamans de guerre',
+  'e.ram': 'Le bélier',
+  _w: {
+    1: ['Racaille rouge', 'La levée grossit', 'Tirailleurs', 'Deux colonnes',
+        'Brutes en tête', 'Marée courante', 'Tambours et osselets', 'Le mur bardé',
+        'Le bélier à la porte', 'Le Seigneur de guerre'],
+    2: ['Première neige', 'Deux portes ouvertes', 'La meute', 'Mur de pavois', 'Les morts marchent',
+        'Chants dans les congères', 'Bois et fer', 'Brutes et écus', 'La colonne bardée',
+        'Quelque chose d’énorme', 'Le long hurlement', 'La Matriarche de givre'],
+    3: ['Cendre au vent', 'La levée de cendre', 'Pillards', 'Course des landes', 'Ligne d’escarmouche',
+        'Spectres de la cendre', 'La route se fend', 'La ligne bardée', 'Géants jumeaux', 'Le bélier roule',
+        'Tout à la fois', 'La marche des ogres', 'Le grand brasier', 'Les Jumeaux de braise'],
+  },
+},
+};
+// Wave titles are authored as arrays (a campaign reads as a list, not as 36 loose keys) and
+// flattened into the same flat keyspace as everything else, so per-key English fallback
+// covers a map whose French list is short rather than printing `undefined` mid-campaign.
+for (const d of [STR.en, STR.fr]) {
+  for (const m in d._w) d._w[m].forEach((t, i) => { d['w.' + m + '.' + i] = t; });
+  delete d._w;
+}
+const L = (k, ...a) => {
+  let s = STR[LANG][k];
+  if (s === undefined) s = STR.en[k];
+  if (s === undefined) return k;                         // never print blank: a key is a bug report
+  return a.length ? s.replace(/\{(\d)\}/g, (m, i) => (a[i] === undefined ? m : a[i])) : s;
+};
+document.documentElement.lang = LANG;
+document.documentElement.dataset.lang = LANG;            // CSS hangs the few ::after strings off this
 // WORLD seed. The diorama's prop scatter (`_ws` in WORLD, `_as` in PATH) runs off this and
-// nothing else, so the Vale is the same Vale on every run â€” which is what makes a map a
+// nothing else, so the Vale is the same Vale on every run — which is what makes a map a
 // place rather than a shuffle. It is a CONSTANT on purpose: it used to read `&seed=`, so a
-// seeded run moved every tree and rock as well as the threat mix, and the Â§G anti-staleness
+// seeded run moved every tree and rock as well as the threat mix, and the §G anti-staleness
 // sweep could have "passed" purely because the scenery had been reshuffled under it.
 const SEED = 1337;
 const TPS = 30, TICK = 1 / TPS;                   // fixed simulation rate
 let _s = SEED >>> 0;
 const rng = () => { _s |= 0; _s = _s + 0x6D2B79F5 | 0; let t = Math.imul(_s ^ _s >>> 15, 1 | _s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-// â”€â”€ RUN SEED (SPEC3 Â§E) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── RUN SEED (SPEC3 §E) ───────────────────────────────────────────────────────
 // Determinism now means "deterministic GIVEN (map, seed)". Entropy is captured EXACTLY
-// once, here, at module scope â€” render-side, before any sim tick, never from Math.random
+// once, here, at module scope — render-side, before any sim tick, never from Math.random
 // or Date.now. `&seed=` names THE RUN and every shot preset pins it, so the harness and the
 // balance matrix stay bit-identical; a real play session draws a fresh four-digit war seed.
 // It then SEEDS THE SIM (`_s`), which is why a new run rolls a different column jitter.
@@ -37,47 +537,72 @@ const runSeed = P.has('seed') ? (parseInt(P.get('seed')) >>> 0)
 _s = runSeed >>> 0;
 // Run-level draws (elite swap slots, omen offers) must NOT consume the sim stream: they
 // happen at wave boundaries, and pulling from rng() there would shift every lane jitter
-// downstream of a choice the player made. Hash of (runSeed, salt, index) instead â€” same
+// downstream of a choice the player made. Hash of (runSeed, salt, index) instead — same
 // seed, same campaign, whatever the sim did in between.
 const srng = (salt, i) => {
   let t = (runSeed ^ Math.imul(salt | 0, 0x9E3779B1) ^ Math.imul(i | 0, 0x85EBCA6B)) >>> 0;
   t = Math.imul(t ^ t >>> 15, 0x2C1B3C6D); t = Math.imul(t ^ t >>> 12, 0x297A2D39);
   return ((t ^ t >>> 15) >>> 0) / 4294967296;
 };
+// ── DAILY WAR (SPEC4 §E) ──────────────────────────────────────────────────────
+// The calendar is read EXACTLY ONCE, here, at module scope — render-side, before a single
+// sim tick, exactly like runSeed above. Nothing downstream of this line may ever touch a
+// wall clock: a sim that asks what day it is stops being replayable. Everything the daily
+// needs (its stamp, its road, its seed) is derived from this one string.
+//   `&today=YYYYMMDD` overrides it (that is how the chip is art-directed and how a future
+//   date can be tested); the harness PINS it, so the chooser frame is byte-identical on
+//   any machine on any day.
+const TODAY = (() => {
+  const q = (P.get('today') || '').replace(/\D/g, '');
+  if (q.length === 8) return q;
+  if (SHOT) return '20260101';
+  const d = new Date();
+  return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+})();
+// Weekday from the captured stamp — UTC arithmetic over a fixed string is a pure function,
+// not a clock read. The rotation is FIXED (not drawn): everyone playing on a Tuesday walks
+// the same road, which is the whole point of a daily.
+const DAILY_DOW = new Date(Date.UTC(+TODAY.slice(0, 4), +TODAY.slice(4, 6) - 1, +TODAY.slice(6, 8))).getUTCDay();
+const DAILY_ROT = [1, 2, 3, 1, 2, 3, 2];           // Sun..Sat — three roads over seven days
+const DAILY_MAP = DAILY_ROT[DAILY_DOW] || 1;
+const DAILY_SEED = (+TODAY) >>> 0;                 // the date IS the war seed
+// The date key of the run IN PROGRESS ('' = not a daily). Written by the chip's deep link.
+const DAILY = ((P.get('daily') || '').replace(/\D/g, '') || '');
 const isTouch = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) < 900;
 const tier = P.get('tier') || (SHOT ? 'ultra' : (isTouch ? 'mobile' : 'high'));
-const Q = { // quality knobs â€” sections read these. HOOK: builders may add knobs.
+const Q = { // quality knobs — sections read these. HOOK: builders may add knobs.
   mobile: { px: 1.5, shadow: 1024, bloom: false, segs: 96,  density: 0.55 },
   high:   { px: 2,   shadow: 2048, bloom: true,  segs: 160, density: 1 },
   ultra:  { px: 2,   shadow: 4096, bloom: true,  segs: 224, density: 1 },
 }[tier];
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
-const G = { THREE, rng, srng, runSeed, tier, Q, TPS, TICK };       // shared namespace between sections
-// â”€â”€ MAPS: the campaign is data-driven (SPEC2 Â§E). Map 1 is the shipped Vale. This table
+const G = { THREE, rng, srng, runSeed, tier, Q, TPS, TICK, L, LANG, LANG_KEY,
+  TODAY, DAILY, DAILY_MAP, DAILY_SEED };   // shared namespace between sections
+// ── MAPS: the campaign is data-driven (SPEC2 §E). Map 1 is the shipped Vale. This table
 // carries everything a map is EXCEPT its wave list, which SECTION: SIM owns and attaches
 // (`MAP.waves`); SECTION: PATH builds the road spline from `wps`. `&map=` selects.
-// ROUTES (SPEC2 Â§E): a map is a LIST of road splines, not one. Route 0 always runs from a
+// ROUTES (SPEC2 §E): a map is a LIST of road splines, not one. Route 0 always runs from a
 // spawn gate to the keep. Any further route is a tributary or a branch, described by where
 // it leaves and where it lands:
-//   from: {route, tag}  â€” this route is entered FROM that route (tag = enemy.branch value
+//   from: {route, tag}  — this route is entered FROM that route (tag = enemy.branch value
 //                          that takes it; absent `from` = the route owns a spawn gate)
-//   to:   route         â€” where this route hands its walkers back (absent = the keep)
+//   to:   route         — where this route hands its walkers back (absent = the keep)
 // PATH turns those into per-route arc-length tables plus a handoff list; SIM's movement
 // pass consumes them (enemy.pathId). The junction distances are FOUND from the geometry
 // (nearest point on the target spline), so a waypoint tweak never desyncs the handoff.
 const MAPS = [
-  { id: 1, name: 'The Vale', blurb: 'A green valley road. Hold it and the realm holds.',
-    interwave: 12, hpRamp: 0.14, palette: null, waves: null, finale: 'THE WARLORD',
+  { id: 1, name: L('map.1.name'), blurb: L('map.1.blurb'),
+    interwave: 12, hpRamp: 0.14, palette: null, waves: null, finale: L('map.1.finale'),
     houses: [[-72, 31, 0.55], [-60, 27, 2.35], [-80, 40, -0.35], [-64, 42, 1.15]],
     wps: [[86, -56], [50, -40], [28, -14], [42, 10], [18, 32], [-14, 34], [-38, 18], [-54, -6], [-72, 4], [-92, 18]] },
-  // â”€â”€ 2. FROSTFELL PASS â€” two gates, one road â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 2. FROSTFELL PASS — two gates, one road ──────────────────────────────────
   // Both spawn splines run west and CONVERGE (they arrive on nearly the same bearing), so
   // the junction reads as a fork in a mountain road rather than a head-on collision. The
   // wedge of high ground between the two approaches is the map's whole tactical idea: one
   // tower line there covers both gates, anywhere else covers half a wave.
-  { id: 2, name: 'Frostfell Pass', blurb: 'Two gates feed one frozen road. Cover the fork or lose half the wave.',
-    interwave: 13, hpRamp: 0.13, waves: null, finale: 'THE FROST MATRIARCH',
+  { id: 2, name: L('map.2.name'), blurb: L('map.2.blurb'),
+    interwave: 13, hpRamp: 0.13, waves: null, finale: L('map.2.finale'),
     houses: [[-70, -24, 0.5], [-58, -20, 2.3], [-78, -32, -0.3], [-62, -38, 1.1]],
     routes: [
       { wps: [[94, -42], [70, -38], [54, -46], [40, -36], [30, -20], [22, -8], [16, -2],
@@ -85,7 +610,7 @@ const MAPS = [
       { to: 0, wps: [[88, 44], [70, 40], [56, 32], [44, 24], [34, 12], [26, 4], [16, -2]] },
     ],
     palette: {
-      // snow throws an enormous amount of light back up â€” this map keeps a fat ambient
+      // snow throws an enormous amount of light back up — this map keeps a fat ambient
       sun: 0xffe6c4, sunI: 5.15, hemiSky: 0x9ec0ee, hemiGnd: 0x9aa6b2, hemiI: 0.70,
       fill: 0x9fc0e8, fillI: 0.50, haze: 0xcfd9e2, bg: 0xdce7f2, envI: 0.52,
       hazeV: [0.420, 0.470, 0.545],
@@ -112,16 +637,16 @@ const MAPS = [
       pinD: [0.0140, 0.0240, 0.0220], pinL: [0.0780, 0.1220, 0.1140],
       weather: { col: [1.85, 1.98, 2.20], fall: 3.1, dx: -1.9, dz: 0.8, size: 1.55, alpha: 1.15, floor: 0.58 },
     } },
-  // â”€â”€ 3. EMBER WASTES â€” the fork in the road â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 3. EMBER WASTES — the fork in the road ───────────────────────────────────
   // One gate, but the road splits: half the wave takes the canyon (short, arrives early,
   // arrives ALONE) and half walks the long northern loop. A build that only covers one
   // arm gets flanked by its own timing.
-  { id: 3, name: 'Ember Wastes', blurb: 'The road forks. Half the horde takes the canyon â€” cover both or be flanked.',
-    interwave: 13, hpRamp: 0.11, waves: null, finale: 'THE EMBER TWINS',
+  { id: 3, name: L('map.3.name'), blurb: L('map.3.blurb'),
+    interwave: 13, hpRamp: 0.11, waves: null, finale: L('map.3.finale'),
     houses: [[-70, -16, 0.4], [-58, -13, 2.2], [-79, -23, -0.4], [-63, -28, 1.2]],
     routes: [
       // The two arms run PARALLEL rather than enclosing a fat lens: the strip between them
-      // narrows to about 15u at two waists (xâ‰ˆ-26 and xâ‰ˆ16) where a long-range tower
+      // narrows to about 15u at two waists (x≈-26 and x≈16) where a long-range tower
       // covers both roads at once, and swells to 35u in the middle where nothing does.
       // Choosing which waist to fortify is the map.
       { wps: [[96, -40], [78, -26], [62, -40], [48, -28], [36, -40], [24, -34],
@@ -132,8 +657,8 @@ const MAPS = [
     ],
     palette: {
       // Ember's problem was never saturation, it was that ground, haze, sky and the red
-      // army all sat inside one 20Â°-wide hue wedge. The ash sky is now cool grey-violet
-      // (a burnt sky IS cool â€” the warmth is in the ground), the hemisphere bounce is
+      // army all sat inside one 20°-wide hue wedge. The ash sky is now cool grey-violet
+      // (a burnt sky IS cool — the warmth is in the ground), the hemisphere bounce is
       // violet-slate so shadowed sand gives a cool anchor, and the road bed drops well
       // below the flats in value. The tabard red then has somewhere to sit.
       // Ember is the one map that must NOT run a thin ambient: with a saturated orange key
@@ -150,7 +675,7 @@ const MAPS = [
       gDark: [0.0105, 0.0092, 0.0125], gMid: [0.0250, 0.0225, 0.0270], gLit: [0.0530, 0.0490, 0.0555],
       dry0: [0.0300, 0.0255, 0.0235], dry1: [0.0880, 0.0740, 0.0620], bare: [0.0520, 0.0410, 0.0330],
       dirt0: [0.0480, 0.0395, 0.0355], dirt1: [0.1000, 0.0840, 0.0740],
-      // Rock is authored COOL on this map so it reads grey-violet under the orange key â€”
+      // Rock is authored COOL on this map so it reads grey-violet under the orange key —
       // warm rock on warm sand was the single biggest contributor to the monochrome read.
       rockA: [0.0230, 0.0245, 0.0290], rockB: [0.1120, 0.1130, 0.1330],
       rockWarm: [1.06, 1.00, 0.92], rockCool: [0.80, 0.88, 1.14],
@@ -173,16 +698,16 @@ const MAPS = [
 ];
 const MAP = MAPS[clamp((parseInt(P.get('map') || '') || SHOT_MAPS[SHOT] || 1) - 1, 0, MAPS.length - 1)];
 G.MAPS = MAPS; G.MAP = MAP;
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: CORE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: CORE ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: WORLD (owner: WORLD builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: WORLD (owner: WORLD builder) ══════════════════════
 // Sculpted diorama: heightfield meadow + carved road bed + granite cliff ring, splat-blended
 // in a patched MeshStandardMaterial (fully lit & shadow-receiving). The heightfield has to
 // carve the road spline and flatten build pads, so the heavy construction lives in
 // World.build(), which SECTION: PATH invokes once the road spline exists.
 // Public: G.scene, G.sun, G.groundY(x,z), G.groundNormal(x,z,out), G.roadSD(x,z), G.World.
 const scene = new THREE.Scene();
-// â”€â”€ PALETTE (SPEC2 Â§E) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PALETTE (SPEC2 §E) ───────────────────────────────────────────────────────
 // Every colour decision in this section reads from WPAL. WPAL_BASE holds the exact values
 // the Vale shipped with, so map 1 renders byte-for-byte what it always did; a map's
 // `palette` object in CORE's MAPS table overrides only what it wants to change.
@@ -228,27 +753,27 @@ G.scene = scene;
 
 const WT = { value: 0 };                            // shared render-only time uniform
 const sstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
-// Dedicated deterministic stream for world scatter â€” keeps G.rng()'s sim stream untouched
+// Dedicated deterministic stream for world scatter — keeps G.rng()'s sim stream untouched
 // regardless of quality tier / prop counts.
 let _ws = (SEED * 2654435761 + 0x51ed270b) >>> 0;
 const wrng = () => { _ws |= 0; _ws = _ws + 0x6D2B79F5 | 0; let t = Math.imul(_ws ^ _ws >>> 15, 1 | _ws); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const wr = (a, b) => a + (b - a) * wrng();
 
-// â”€â”€ lighting: warm sun raking from screen-left, cool sky fill, faked bounce â”€â”€
-// Golden hour, not midday. Elevation 44Â° (SPEC Â§3 asks ~48Â°): long enough that shadows
+// ── lighting: warm sun raking from screen-left, cool sky fill, faked bounce ──
+// Golden hour, not midday. Elevation 44° (SPEC §3 asks ~48°): long enough that shadows
 // rake ACROSS the road instead of pooling under everything, short enough that a single
 // roadside oak stand cannot throw a 30u slab of shade over the whole hero read. The cliff ring does
 // then throw a long shadow, which is why the rim's own contribution is kept out of the
 // shadow frustum's far plane rather than by raising the sun back up.
 const SUN_EL = 44 * Math.PI / 180, SUN_R = 132;
 const sun = new THREE.DirectionalLight(WPAL.sun, WPAL.sunI);
-// Azimuth from the lower-left of the game camera (SPEC Â§3). Swinging it further round to
+// Azimuth from the lower-left of the game camera (SPEC §3). Swinging it further round to
 // -x does make shadows rake more laterally, but it also lights the meadow flat-on and the
-// terrain loses all its modelling â€” this bearing keeps the raking.
+// terrain loses all its modelling — this bearing keeps the raking.
 sun.position.set(-Math.cos(SUN_EL) * SUN_R * 0.857, Math.sin(SUN_EL) * SUN_R, Math.cos(SUN_EL) * SUN_R * 0.514);
 sun.castShadow = true;
 sun.shadow.mapSize.set(Q.shadow, Q.shadow);
-// Tight to the PLAYABLE box, not the whole diorama + cliff ring: the old Â±118/Â±108
+// Tight to the PLAYABLE box, not the whole diorama + cliff ring: the old ±118/±108
 // frustum spread the map over 2.3x the area, which is why every shadow was a smear and
 // the watchtower's leg lattice was unreadable in its own shadow.
 sun.shadow.camera.left = -84; sun.shadow.camera.right = 84;
@@ -263,7 +788,7 @@ scene.add(sun, sun.target, hemi, fill);
 G.sun = sun;
 const SUNDIR = sun.position.clone().normalize();
 
-// â”€â”€ procedural gradient sky dome (also feeds the IBL environment) â”€â”€
+// ── procedural gradient sky dome (also feeds the IBL environment) ──
 const NOISE_GLSL = `
 float h21(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123); }
 float vn2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
@@ -276,7 +801,7 @@ const skyMat = new THREE.ShaderMaterial({
   uniforms: { uSun: { value: SUNDIR } },
   vertexShader: 'varying vec3 vD;\nvoid main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   // NOTE: three's fragment prefix already defines the tonemapping + colorspace helpers for
-  // ShaderMaterial â€” re-including their *_pars chunks redefines the functions (link error).
+  // ShaderMaterial — re-including their *_pars chunks redefines the functions (link error).
   fragmentShader: '#include <common>\nvarying vec3 vD;\nuniform vec3 uSun;\n' + NOISE_GLSL + `
 void main(){
   vec3 d = normalize(vD); float y = d.y;
@@ -310,7 +835,7 @@ const skyDome = new THREE.Mesh(new THREE.SphereGeometry(420, 40, 22), skyMat);
 skyDome.frustumCulled = false; skyDome.renderOrder = -10; skyDome.name = 'SKY';
 scene.add(skyDome);
 
-// â•â• geometry helpers (no external BufferGeometryUtils â€” keeps CORE imports untouched) â•â•
+// ══ geometry helpers (no external BufferGeometryUtils — keeps CORE imports untouched) ══
 function idxd(g) {
   if (!g.index) { const n = g.attributes.position.count, a = new Uint32Array(n); for (let i = 0; i < n; i++) a[i] = i; g.setIndex(new THREE.BufferAttribute(a, 1)); }
   return g;
@@ -325,7 +850,7 @@ function paint(g, fn) { // bake per-vertex colour (fake AO / mottling / strata)
   g.setAttribute('color', new THREE.Float32BufferAttribute(out, 3));
   return g;
 }
-// parts: [{ g, m?, w?, leaf? }] â€” w(x,y,z) bakes a per-vertex "wave weight" in the part's
+// parts: [{ g, m?, w?, leaf? }] — w(x,y,z) bakes a per-vertex "wave weight" in the part's
 // local space; `leaf` marks the part as foliage and bakes its self-shadowing term.
 // uvScale (units per texture tile) replaces per-face UVs with a box projection so a masonry /
 // plank texture keeps the same texel density across every merged piece.
@@ -373,7 +898,7 @@ function mergeParts(parts, uvScale) {
 }
 // Weld a non-indexed geometry (IcosahedronGeometry & friends are unindexed, and
 // computeVertexNormals on those can only ever produce FLAT facets). Welding first is what
-// lets a displaced lobe carry smooth normals â€” the whole difference between a painterly
+// lets a displaced lobe carry smooth normals — the whole difference between a painterly
 // leaf mass and a chrome-flat geodesic ball.
 function weldG(g) {
   const P = g.attributes.position, n = P.count, map = new Map(), idx = new Uint32Array(n), keep = [];
@@ -411,7 +936,7 @@ const trs = (x, y, z, ry = 0, sx = 1, sy = sx, sz = sx, rx = 0, rz = 0) =>
   new THREE.Matrix4().compose(_P3.set(x, y, z), _Q4.setFromEuler(_E.set(rx, ry, rz)), _S3.set(sx, sy, sz));
 const boxG = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 
-// â”€â”€ value noise for the heightfield (hash-based: independent of any rng stream) â”€â”€
+// ── value noise for the heightfield (hash-based: independent of any rng stream) ──
 function h2i(x, y) {
   let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -424,7 +949,7 @@ function vnz(x, y) {
 }
 function fbmz(x, y, oct) { let s = 0, a = 0.5, n = 0, f = 1; for (let i = 0; i < oct; i++) { s += a * vnz(x * f, y * f); n += a; a *= 0.5; f *= 2.03; } return s / n; }
 
-// â”€â”€ diorama footprint: rounded-rect (superellipse) cliff ring â”€â”€
+// ── diorama footprint: rounded-rect (superellipse) cliff ring ──
 const FW = 268, FD = 196;               // terrain plane extents
 const CA = 103, CB = 75;                // playfield radii
 function ringU(x, z) {
@@ -453,7 +978,7 @@ function rimProfile(x, z) {              // per-azimuth cliff start / crest heig
            top: (16 + n1 * 17 + n2 * 10 + n3 * 7) * (1 - 0.44 * opn), open: opn };
 }
 function meadowH(x, z) {                 // gentle valley floor + foothills, no road, no cliff
-  // enough relief that the low sun actually SHAPES the meadow â€” a near-flat plane reads
+  // enough relief that the low sun actually SHAPES the meadow — a near-flat plane reads
   // as a billiard table no matter how good the splat material is
   let h = 4.4 * (fbmz(x * 0.0128 + 7.3, z * 0.0128 - 3.1, 3) - 0.5) * 2;
   h += 1.85 * (fbmz(x * 0.047 + 31.7, z * 0.047 - 11.3, 3) - 0.5) * 2;
@@ -475,7 +1000,7 @@ function cliffH(x, z, notch) {
   h += rise * brk * (fbmz(x * 0.44 + 5.1, z * 0.44 + 2.3, 2) - 0.5) * 4.2;      // ~2.3u breakage
   h += sstep(pr.start - 0.125, pr.start + 0.015, u) * 6.0 * brk;           // talus shoulder
   const d0 = pr.start + 0.078;
-  // the map edge drops away into shadow â€” except inside the road notch, where the corridor
+  // the map edge drops away into shadow — except inside the road notch, where the corridor
   // carries on through the gorge behind each gate (otherwise the gates sit on a void).
   h -= sstep(d0, d0 + 0.055, u) * (pr.top + 70) * (1 - 0.97 * notch);
   return h;
@@ -485,7 +1010,7 @@ function cliffH(x, z, notch) {
 // never culled, so the gates always have ground under them.
 const cullFar = (x, z, sd) => Math.abs(sd) > 15 && ringU(x, z) > rimProfile(x, z).start + 0.33;
 
-// â•â• heightfield grids (fixed resolution â†’ groundY is tier-independent = sim-safe) â•â•
+// ══ heightfield grids (fixed resolution → groundY is tier-independent = sim-safe) ══
 const GX = 225, GZ = 165, GSx = FW / (GX - 1), GSz = FD / (GZ - 1);
 let HG = null, SDG = null, TDG = null, AOG = null;
 function bi(grid, x, z) {
@@ -507,10 +1032,10 @@ const World = { group: new THREE.Group(), pads: [], props: [] };
 G.World = World;
 scene.add(World.group);
 
-// â”€â”€ prop contact AO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── prop contact AO ───────────────────────────────────────────────────────────
 // Every scattered prop stamps a radial darkening into one R8 field covering the whole
 // diorama; the terrain shader multiplies it into albedo. Without this a rock is a sticker
-// on the grass â€” the eye reads "no contact shadow" as "not touching". Cheap (1 texture,
+// on the grass — the eye reads "no contact shadow" as "not touching". Cheap (1 texture,
 // 1 lookup) and it buys more grounding than anything else in the section.
 const PAO_N = 1024;
 const paoData = new Uint8Array(PAO_N * PAO_N);
@@ -534,7 +1059,7 @@ G.stampAO = function (x, z, r, k) {
   paoTex.needsUpdate = true;
 };
 
-// â”€â”€ canvas texture helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── canvas texture helpers ──────────────────────────────────────────────────────
 function cnv(s) { const c = document.createElement('canvas'); c.width = c.height = s; return [c, c.getContext('2d')]; }
 function tex(c, rep) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
@@ -672,7 +1197,7 @@ function flameTex() {
   return tex(c);
 }
 
-// â”€â”€ triplanar granite for crag / boulder instances â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── triplanar granite for crag / boulder instances ────────────────────────────
 // (declared here, compiled in World.build once WPAL + NOISE_GLSL exist)
 function graniteMat(o) {
   const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.88, metalness: 0 }, o));
@@ -720,7 +1245,7 @@ function graniteMat(o) {
   };
   return m;
 }
-// â”€â”€ material factory: vertex-coloured, sway-capable prop material â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── material factory: vertex-coloured, sway-capable prop material ──────────────
 function propMat(o) {
   const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.88, metalness: 0 }, o));
   return m;
@@ -771,7 +1296,7 @@ function swayMat(o, amp, freq, key, leaf) {
         vec3 _V = normalize(vWPf - cameraPosition);
         vec3 _alb = diffuseColor.rgb;
         // Backlit translucency: the read that says "leaves" instead of "painted plastic".
-        // Gated on the leaf facing AWAY from the sun â€” without that gate a camera aimed
+        // Gated on the leaf facing AWAY from the sun — without that gate a camera aimed
         // down-sun lights every canopy in frame uniformly and the whole wood washes out.
         gl_FragColor.rgb += ${lin3(WPAL.sun, 1)} * _alb * pow(max(0.0, dot(-uSunDir, _V)), 3.0)
                           * smoothstep(0.15, -0.55, dot(_N, uSunDir)) * 1.35;
@@ -785,7 +1310,7 @@ function swayMat(o, amp, freq, key, leaf) {
   return m;
 }
 
-// â•â• rock / crag geometry â•â•
+// ══ rock / crag geometry ══
 function rockGeo(detail, seed, ang) {
   const g = new THREE.IcosahedronGeometry(1, detail);
   const P = g.attributes.position;
@@ -802,7 +1327,7 @@ function rockGeo(detail, seed, ang) {
   }
   g.computeVertexNormals();
   // A boulder and the cliff it sits on must be the SAME rock. Both now read from the map
-  // palette's rockA/rockB with the same strata banding and the same moss colour â€” a
+  // palette's rockA/rockB with the same strata banding and the same moss colour — a
   // beige untextured facet next to a stratified brown heightfield reads as two materials
   // that cannot coexist in one world.
   const RA = WPAL.rockA, RB = WPAL.rockB, MO = WPAL.moss;
@@ -838,7 +1363,7 @@ function cragGeo(sides, tiers, seed) {
   const put = (k, x, y, z, up, crev, hgt) => {
     pos[k * 3] = x; pos[k * 3 + 1] = y; pos[k * 3 + 2] = z;
     // Bake the read: sunlit caps, mid vertical faces, dark crevices and base.
-    // NOTE: this is an ALBEDO, not a rendered value â€” 0.13 base already renders near
+    // NOTE: this is an ALBEDO, not a rendered value — 0.13 base already renders near
     // white under the 4.9-intensity sun. Anything higher blows out to sugar cubes.
     const v = (0.54 + 0.56 * Math.pow(hgt, 0.70)) * (up ? 1.18 : 0.86) * (1 - 0.24 * crev)
             * (0.70 + 0.62 * fbmz(x * 5.1 + seed, z * 5.1 + y * 4.2, 2));
@@ -870,7 +1395,7 @@ function cragGeo(sides, tiers, seed) {
   gi.setIndex(idx);
   // FLAT facets, not smooth: averaged normals turn an irregular prism into a rounded
   // box. Expanding to non-indexed and re-deriving normals gives crisp rock planes, and
-  // lets each facet carry its own tint â€” the classic faceted-granite read.
+  // lets each facet carry its own tint — the classic faceted-granite read.
   const g = gi.toNonIndexed();
   gi.dispose();
   g.computeVertexNormals();
@@ -885,10 +1410,10 @@ function cragGeo(sides, tiers, seed) {
   return g;
 }
 
-// â•â• tree species â•â•
+// ══ tree species ══
 // One canopy LOBE: a welded icosahedron displaced in and out along its own normals (a
 // per-vertex hash plus a smooth lump term) and then re-smoothed. Several of these
-// overlapping ARE the canopy. A single hull â€” however finely subdivided â€” can only ever
+// overlapping ARE the canopy. A single hull — however finely subdivided — can only ever
 // present a convex silhouette, which is the flat-shaded-geodesic-ball read.
 function lobeG(r, sq, seed) {
   const g = weldG(new THREE.IcosahedronGeometry(r, 1));
@@ -907,7 +1432,7 @@ function lobeG(r, sq, seed) {
   g.computeVertexNormals();
   return g;
 }
-// A conifer whorl. NOT a ConeGeometry: every ring's radius wobbles Â±15%, the skirt sags
+// A conifer whorl. NOT a ConeGeometry: every ring's radius wobbles ±15%, the skirt sags
 // unevenly between the boughs and the tip is offset, so a stack of these stops reading as
 // hard concentric rings on a party hat.
 function coneRingG(r, h, seed) {
@@ -937,7 +1462,7 @@ function coneRingG(r, h, seed) {
   return g;
 }
 // Canopy albedo: three green values plus dark speckle (leaf gaps) and pale sun flecks,
-// sampled triplanar-on-Y from world XZ at ~1.5 u/tile. Deliberately NOT an sRGB texture â€”
+// sampled triplanar-on-Y from world XZ at ~1.5 u/tile. Deliberately NOT an sRGB texture —
 // the shader uses it as a ~1.0 modulation so each map's palette keeps doing the colour work.
 function canopyTex() {
   const S = 256, [c, g] = cnv(S);
@@ -984,7 +1509,7 @@ function paintBark(g, h) {
 }
 // Flat-facet a mesh and give every triangle its own tint. Smooth-shaded noise spheres
 // read as rubber balloons; faceted leaf masses with per-plane dapple read as painterly
-// canopy â€” the single biggest quality lever on the foliage.
+// canopy — the single biggest quality lever on the foliage.
 function facet(g, seed, amt) {
   // POLISH: several callers hand this an already-expanded geometry, and three.js logs a
   // console warning for a redundant toNonIndexed(). Work in place in that case.
@@ -1064,8 +1589,8 @@ function bushG(seed) {
   }
   return baseBleed(mergeParts(parts), 0.18, 0.42);
 }
-// â•â• built structures â•â•
-// â”€â”€ vertex-colour helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ══ built structures ══
+// ── vertex-colour helpers ─────────────────────────────────────────────────────
 // paintTex() bakes a ~1.0 MULTIPLIER (for meshes that carry a canvas texture);
 // paintFlat() bakes an ABSOLUTE linear colour (for untextured pieces).
 function paintTex(g, tint, jitter, aoK) {
@@ -1131,7 +1656,7 @@ function houseParts(w, d, h, seed) {
   return P;
 }
 
-// â•â• terrain splat material (patched MeshStandardMaterial â€” keeps lights + shadows) â•â•
+// ══ terrain splat material (patched MeshStandardMaterial — keeps lights + shadows) ══
 // Snow lies where the ground is level and unwalked: it drifts by the same noise the grass
 // splat uses (so the patches follow the terrain's own shapes), thins on slopes, and is
 // scraped off the road by traffic. Empty string on maps whose palette has snow: 0, which
@@ -1145,11 +1670,11 @@ const SNOW_GLSL = WPAL.snow > 0 ? `
       vec3 sc = ${v3s(WPAL.snowC)} * mix(1.0, 0.93 + 0.14*nG, dDet) * mix(1.0, 0.955 + 0.09*nX, dDet);
       alb = mix(alb, sc, clamp(snw, 0.0, 1.0));
       // crust glitter: a few grains catch the low sun, which is what stops flat snow
-      // reading as grey paper at overview zoom (near field only â€” at distance it aliases)
+      // reading as grey paper at overview zoom (near field only — at distance it aliases)
       alb += vec3(0.048,0.052,0.060)*smoothstep(0.88,0.995, nG)*snw*dDet;
     }
 ` : '';
-// â”€â”€ EMBER lava (SPEC3 palette `lava`) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── EMBER lava (SPEC3 palette `lava`) ────────────────────────────────────────
 // Wide glowing bedrock fissures, not 2px ember dots. A ridged fbm gives ~2u cracks with
 // a charred lip; they are the ONLY thing on the ash map allowed above 70% luminance, so
 // the eye has somewhere to go and the ground can stay dark enough to read the horde.
@@ -1182,12 +1707,12 @@ const TERRAIN_ALBEDO = `
     // with distance, so the diorama flattens.
     dDet = 1.0 - 0.62*smoothstep(80.0, 220.0, distance(cameraPosition, vWP));
 
-    // rock by slope, PLUS by altitude â€” the escarpment crest is a rounded (low-slope)
+    // rock by slope, PLUS by altitude — the escarpment crest is a rounded (low-slope)
     // surface, and leaving it grassy makes 50u granite cliffs read as green hills.
     float alt = smoothstep(13.0, 27.0, vWP.y) * (0.72 + 0.42*nM);
     tRock = max(smoothstep(0.26,0.50, slope + (nM-0.5)*0.26), clamp(alt,0.0,1.0));
 
-    // â”€â”€ meadow: saturated valley greens, luminance driven by the 3u clump layer â”€â”€
+    // ── meadow: saturated valley greens, luminance driven by the 3u clump layer ──
     vec3 gDark = ` + v3s(WPAL.gDark) + `;
     vec3 gMid  = ` + v3s(WPAL.gMid) + `;
     vec3 gLit  = ` + v3s(WPAL.gLit) + `;
@@ -1199,8 +1724,8 @@ const TERRAIN_ALBEDO = `
     grass.r += 0.024*smoothstep(0.50,0.96,gk);            // sun-bleached tips warm up
     grass.b += 0.015*smoothstep(0.45,0.05,gk);            // deep grass goes cool
 
-    // â”€â”€ dry / grazed patches (the reference meadow is never one flat green) â”€â”€
-    // Driven by a ~33u fBm (nB) so the patches arrive at MEADOW scale â€” big enough to
+    // ── dry / grazed patches (the reference meadow is never one flat green) ──
+    // Driven by a ~33u fBm (nB) so the patches arrive at MEADOW scale — big enough to
     // read as pasture, not as the 3u speckle the old mask produced. ~28% coverage.
     // The dry lerp rides an INDEPENDENT ~80u mask plus altitude, so ridges and shoulders
     // go dry while hollows hold their green. The old mask was multiplied by the 3.5u
@@ -1217,7 +1742,7 @@ const TERRAIN_ALBEDO = `
     // no tonal SHAPES, which is what makes it read as wallpaper at overview zoom.
     soil *= 0.84 + 0.32*fbm2(wxz*0.0135 + 207.0);
 
-    // â”€â”€ worn dirt road: dark packed centre, cut ruts, earth verge â”€â”€
+    // ── worn dirt road: dark packed centre, cut ruts, earth verge ──
     // d = lateral distance normalised by the half width, so the centre/rut/verge bands
     // stay put wherever the spline wanders.
     float lat = abs(vRD.y);
@@ -1232,7 +1757,7 @@ const TERRAIN_ALBEDO = `
     dirt *= 0.88 + 0.26*vn2(vec2(vRD.y*6.4, 3.7));      // longitudinal wheel-wear streaks
     dirt *= 0.94 + 0.12*nS;
     dirt += vec3(0.028,0.025,0.020)*smoothstep(0.82,0.98, vn2(wxz*2.4))*dDet;  // pebbles
-    // dither the road/grass boundary with BOTH a fine and a macro octave â€” a single soft
+    // dither the road/grass boundary with BOTH a fine and a macro octave — a single soft
     // ramp gives an airbrushed stripe, which is exactly what the road used to read as
     tRoad = smoothstep(0.10,0.74, clamp(vRD.x*1.36 - 0.14
               + (fbm2(wxz*0.62+9.0)-0.5)*0.78 + (fbm2(wxz*0.11+77.0)-0.5)*0.46, 0.0, 1.0));
@@ -1240,7 +1765,7 @@ const TERRAIN_ALBEDO = `
     soil = mix(soil, mix(soil*0.82, dry*1.00, 0.60), smoothstep(0.02,0.66,vRD.x));
     vec3 alb = mix(soil, dirt, tRoad);
 
-    // â”€â”€ layered granite, TRIPLANAR (an xz-only projection smears on vertical cliff faces) â”€â”€
+    // ── layered granite, TRIPLANAR (an xz-only projection smears on vertical cliff faces) ──
     if (tRock > 0.004) {
       vec3 aw = abs(vWN); aw = pow(aw, vec3(3.5)); aw /= (aw.x + aw.y + aw.z + 1e-4);
       vec2 pA = vWP.zy, pB = vWP.xz, pC = vWP.xy;
@@ -1280,12 +1805,12 @@ const TERRAIN_ALBEDO = `
     alb = mix(alb, mix(` + v3s(WPAL.scree) + `, alb, 0.50), smoothstep(0.16,0.34,slope)*(1.0-tRock)*0.60);
 ` + SNOW_GLSL + LAVA_GLSL + `
     alb *= mix(1.0, 0.94 + 0.12*nX, dDet);
-    // baked contact AO from every scattered prop â€” this is what puts them IN the ground
+    // baked contact AO from every scattered prop — this is what puts them IN the ground
     {
       float pao = texture2D(uPAO, (vWP.xz + vec2(${(FW / 2).toFixed(1)}, ${(FD / 2).toFixed(1)})) / vec2(${FW.toFixed(1)}, ${FD.toFixed(1)})).r;
       alb *= 1.0 - 0.55*clamp(pao, 0.0, 1.0);
     }
-    // the map edge falls away into shadow â€” keyed well below the valley floor so the
+    // the map edge falls away into shadow — keyed well below the valley floor so the
     // meadow's own hollows (which dip to about -5) never darken.
     alb *= 1.0 - 0.94*smoothstep(-15.0,-44.0,vWP.y);
     diffuseColor.rgb *= alb * (0.48 + 0.52*vAOf);
@@ -1323,7 +1848,7 @@ terrainMat.onBeforeCompile = (sh) => {
       }`);
 };
 
-// â•â• sky-derived IBL (plain equirect canvas â€” the renderer PMREMs it internally) â•â•
+// ══ sky-derived IBL (plain equirect canvas — the renderer PMREMs it internally) ══
 {
   const W = 256, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
@@ -1353,9 +1878,9 @@ terrainMat.onBeforeCompile = (sh) => {
   scene.background = bt;
 }
 
-// â•â• the world beyond the diorama â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ the world beyond the diorama ══════════════════════════════════════════════
 // The playfield sits on a plateau high above a hazy lowland. Everything here is
-// unlit, unfogged, self-hazed vertex colour on MeshBasicMaterial â€” 3 draw calls that
+// unlit, unfogged, self-hazed vertex colour on MeshBasicMaterial — 3 draw calls that
 // buy the whole aerial-perspective read and stop the map looking like a floating slab.
 // (Scene fog is deliberately off on these: baking the haze by hand gives exact control
 // over how each distance band separates.)
@@ -1364,7 +1889,7 @@ const HAZE = WPAL.hazeV;
 const farMat = () => new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
 const hz = (out, base, k) => { for (let i = 0; i < 3; i++) out[i] = lerp(base[i], HAZE[i], k); };
 const _c3 = [0, 0, 0];
-{ // â”€â”€ lowland floor: a wide annulus of hazed fields/woods far below the plateau â”€â”€
+{ // ── lowland floor: a wide annulus of hazed fields/woods far below the plateau ──
   const NR = 14, NA = 132, RAD = [88, 106, 126, 150, 176, 206, 240, 278, 320, 368, 424, 490, 560, 660];
   const pos = new Float32Array(NR * NA * 3), col = new Float32Array(NR * NA * 3);
   const idx = new Uint32Array((NR - 1) * NA * 6);
@@ -1393,7 +1918,7 @@ const _c3 = [0, 0, 0];
   const m = new THREE.Mesh(g, farMat()); m.frustumCulled = false; m.name = 'LOWLAND';
   m.renderOrder = -8; scene.add(m);
 }
-// â”€â”€ distant ridge bands rising out of the lowland â”€â”€
+// ── distant ridge bands rising out of the lowland ──
 function ridgeBand(rad, N, yMin, yMax, seed, rock, haze) {
   const pos = new Float32Array(N * 6), col = new Float32Array(N * 6), idx = new Uint32Array(N * 6);
   for (let i = 0; i < N; i++) {
@@ -1433,11 +1958,11 @@ scene.add(
   ridgeBand(322, 120, -110, -54, 8.7, WPAL.ridge[1], 0.54),
   ridgeBand(410, 96, -116, -46, 5.3, WPAL.ridge[2], 0.72));
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• World.build() â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════ World.build() ══════════════════════════════
 const ROAD_HALF = 2.55;
 const HOUSE_SITES = MAP.houses;
 World.build = function () {
-  // â”€â”€ 1. extended road centrelines, ALL routes (road continues out through each gate) â”€â”€
+  // ── 1. extended road centrelines, ALL routes (road continues out through each gate) ──
   // XP is every route's polyline laid end to end; XS records each route's span so tangents
   // and the road-bed height profile are never smoothed ACROSS a junction. A map with one
   // route produces exactly the array the Vale always built.
@@ -1461,7 +1986,7 @@ World.build = function () {
     let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1;
     XT.push([dx / l, dz / l]);
   }
-  // â”€â”€ 2. signed lateral distance + along-parameter fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 2. signed lateral distance + along-parameter fields ──────────────────────
   SDG = new Float32Array(GX * GZ); TDG = new Float32Array(GX * GZ);
   const RMG = new Float32Array(GX * GZ), BMG = new Float32Array(GX * GZ);
   const nearest = (x, z) => {
@@ -1483,7 +2008,7 @@ World.build = function () {
     BMG[k] = sstep(hw + 2.7, hw - 0.5, dist);          // height-carving mask
     RMG[k] = sstep(hw + 3.5, hw - 0.7, dist);          // albedo paint mask
   }
-  // â”€â”€ 3. base heights, then a smoothed road-bed profile, then flattened pads â”€â”€
+  // ── 3. base heights, then a smoothed road-bed profile, then flattened pads ──
   const notchAt = (dist) => sstep(19.0, 7.0, dist);   // gorge wide enough to see the gates in
   const baseH = (x, z) => {
     const i = nearest(x, z), c = XP[i];
@@ -1509,7 +2034,7 @@ World.build = function () {
     }
   }
   // flat pads: house sites + gate aprons. (Free placement replaced the fixed build plots,
-  // so the meadow is NOT pre-flattened for towers any more â€” G.canPlace() gates slope and
+  // so the meadow is NOT pre-flattened for towers any more — G.canPlace() gates slope and
   // placeTower() sinks a tower to its footprint's lowest sample instead.)
   World.pads = [];
   for (const [hx, hz] of HOUSE_SITES) World.pads.push([hx, hz, 4.6, 3.0]);
@@ -1534,7 +2059,7 @@ World.build = function () {
       if (m > 0.001) HG[k] = lerp(HG[k], py, m);
     }
   }
-  // â”€â”€ 4. vertex AO from the heightfield (grounding for cliffs, road cuts, pads) â”€â”€
+  // ── 4. vertex AO from the heightfield (grounding for cliffs, road cuts, pads) ──
   AOG = new Float32Array(GX * GZ);
   const RADS = [1.7, 4.0, 9.0, 19.0], DIRS = 10;
   for (let iz = 0; iz < GZ; iz++) for (let ix = 0; ix < GX; ix++) {
@@ -1548,7 +2073,7 @@ World.build = function () {
     }
     AOG[k] = clamp(1 - occ / DIRS * 1.05, 0.28, 1);
   }
-  // â”€â”€ 5. terrain mesh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 5. terrain mesh ─────────────────────────────────────────────────────────
   {
     const MX = Q.segs + 1, MZ = Math.round(Q.segs * FD / FW) + 1, NV = MX * MZ;
     const pos = new Float32Array(NV * 3), rd = new Float32Array(NV * 2), ao = new Float32Array(NV);
@@ -1577,9 +2102,9 @@ World.build = function () {
     terrain.name = 'GROUND'; terrain.receiveShadow = true; terrain.castShadow = true;
     World.group.add(terrain); World.terrain = terrain;
   }
-  // â”€â”€ 5b. diorama plinth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 5b. diorama plinth ──────────────────────────────────────────────────────
   // Without this the heightfield simply STOPS just past the rim and the frame edges
-  // show bare sky â€” the map reads as a floating island. This is a sheer stratified
+  // show bare sky — the map reads as a floating island. This is a sheer stratified
   // wall hung off the crest that plunges out of frame, so every sightline that leaves
   // the playfield lands on rock falling into shadow. Baked shading (MeshBasicMaterial
   // + scene fog) = 1 draw call, no shadow-map cost.
@@ -1592,7 +2117,7 @@ World.build = function () {
       const a = i / N * Math.PI * 2;
       const pr = rimProfile(...seP(a, 1));
       const p = seP(a, pr.start + 0.070), x = p[0], z = p[1];
-      // hang the wall off the LOCAL CREST, not the sample point â€” otherwise grazing
+      // hang the wall off the LOCAL CREST, not the sample point — otherwise grazing
       // sightlines skim over the top of the wall and hit bare sky beyond.
       let top = -1e9, lo = 1e9, sd = 1e9;
       for (let s = 0; s <= 5; s++) {
@@ -1600,7 +2125,7 @@ World.build = function () {
         top = Math.max(top, hq); lo = Math.min(lo, hq); sd = Math.min(sd, Math.abs(bi(SDG, q[0], q[1])));
       }
       // Inside the gate corridors the road continues out through the gorge, so the wall
-      // has to be BURIED there â€” otherwise it stands up as a black bar across the road.
+      // has to be BURIED there — otherwise it stands up as a black bar across the road.
       top = sd < 17 ? lo - 9 : top + 0.6;
       const sunF = clamp(-0.86 * Math.cos(a) - 0.51 * Math.sin(a), 0, 1);  // faces the sun?
       for (let r = 0; r < NR; r++) {
@@ -1626,12 +2151,12 @@ World.build = function () {
     pm.frustumCulled = false; pm.name = 'PLINTH';
     World.group.add(pm);
   }
-  // â”€â”€ 6. scatter helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 6. scatter helpers ──────────────────────────────────────────────────────
   const blockers = [];   // [x,z,r] keep-out zones (houses, gates)
   for (const [hx, hz] of HOUSE_SITES) blockers.push([hx, hz, 6.2]);
   for (const sg of World.spawnG) blockers.push([sg.x, sg.z, 26]);
   blockers.push([World.gateOut.x, World.gateOut.z, 24]);
-  // WORLD â†’ SIM contract (SPEC2 Â§A): every big prop registers a footprint circle here as
+  // WORLD → SIM contract (SPEC2 §A): every big prop registers a footprint circle here as
   // it is scattered, so G.canPlace() can reject a tower that would grow out of a tree or
   // through a farmhouse wall. Gates are covered by the path-endpoint keep-outs instead.
   // Maps 2-3 must populate this the same way.
@@ -1670,10 +2195,10 @@ World.build = function () {
                slate: shingleTex('#22262c', 'rgba(108,118,132,L)'),
                shake: shingleTex('#2b1f14', 'rgba(126,92,58,L)') };
   const texMat = (map, o) => new THREE.MeshStandardMaterial(Object.assign({ map, vertexColors: true, roughness: 0.9, metalness: 0 }, o));
-  // foliage varies in luminance AND hue (yellow-green â†” blue-green) so a wood never reads flat
+  // foliage varies in luminance AND hue (yellow-green ↔ blue-green) so a wood never reads flat
   const varyF = () => { const l = wr(0.52, 1.08), y = wr(-0.15, 0.15); return [l * (1 + y * 1.6), l, l * (1 - y * 1.0)]; };
 
-  // â”€â”€ 7. cliff crags + boulders (silhouette variation on the rim) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 7. cliff crags + boulders (silhouette variation on the rim) ─────────────
   // Three registers so the rim reads as an escarpment rather than a boulder field:
   // (a) dense blocks fracturing the crest skyline, (b) big buttress slabs for scale,
   // (c) outcrops threaded down the face. Talus + field boulders stay rounded.
@@ -1735,7 +2260,7 @@ World.build = function () {
   iMesh(baseBleed(cragGeo(11, 5, 31.7), 0.42, 0.48), rockMat, cragL[2], false, 'CRAGS_C');
   iMesh(baseBleed(rockGeo(1, 11.3, false), 0.46, 0.50), rockMat, bldL, true, 'ROCKS');
 
-  // â”€â”€ 8. trees + bushes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 8. trees + bushes ───────────────────────────────────────────────────────
   const oakL = [], ashL = [], pineL = [], bushL = [];
   // FOCAL HIERARCHY: the centre of the plateau is where the road-to-keep read has to live,
   // and a wood parked on top of it owns the frame instead. Clusters that land inside the
@@ -1796,7 +2321,7 @@ World.build = function () {
   iMesh(treePine(8.1), foliMat, pineL, true, 'TREE_PINE');
   iMesh(bushG(2.9), foliMat, bushL, true, 'BUSHES');
 
-  // â”€â”€ 9. grass tufts (ground clutter â€” reads at gameplay + closeup zoom) â”€â”€â”€â”€â”€â”€
+  // ── 9. grass tufts (ground clutter — reads at gameplay + closeup zoom) ──────
   {
     // A rosette of cards tipped outward: seen from the game's high camera each tuft
     // presents leaf AREA instead of the edge-on "asterisk" a vertical cross gives.
@@ -1833,7 +2358,7 @@ World.build = function () {
     };
     for (let p = 0; p < PATCHES; p++) {
       const a = wr(0, 6.283), u = wr(0.05, 1.02), c0 = seP(a, u);
-      // Tuft tints used to run up to 1.4x â€” at overview zoom that read as yellow confetti
+      // Tuft tints used to run up to 1.4x — at overview zoom that read as yellow confetti
       // sprinkled over the meadow rather than as ground cover. Kept close to the terrain's
       // own value so the clutter adds texture, not noise.
       const dryish = wrng() < 0.13, dark = !dryish && wrng() < 0.40;
@@ -1862,12 +2387,12 @@ World.build = function () {
     iMesh(tuftG, tuftM, list, false, 'TUFTS');
   }
 
-  // â”€â”€ 10. fences along road stretches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 10. fences along road stretches ─────────────────────────────────────────
   {
     const parts = [], T = 0.215;
     // Posts run 0.9u deeper than they show. A fence spans 3.1u but is anchored to the
     // ground height at its CENTRE, and 0.17u of burial is less than the drop a gentle roll
-    // puts under the downhill post â€” buried timber merges into the same instance, so the
+    // puts under the downhill post — buried timber merges into the same instance, so the
     // insurance is free. (Same reasoning as SECTION: TOWERS' SINK.)
     for (const px of [-1.55, 1.55]) parts.push({ g: paintWood(boxG(T, 2.52, T)), m: trs(px, 0.25, 0) });
     for (const py of [0.60, 1.10]) parts.push({ g: paintWood(boxG(3.25, 0.19, 0.15)), m: trs(0, py, 0, 0, 1, 1, 1, 0, wr(-0.03, 0.03)) });
@@ -1887,7 +2412,7 @@ World.build = function () {
     iMesh(fenceG, texMat(TX.wood, { roughness: 0.75 }), list, true, 'FENCES');
   }
 
-  // â”€â”€ 11. village near the keep gate â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 11. village near the keep gate ──────────────────────────────────────────
   {
     const buckets = { plaster: [], timber: [], roof: [] };
     let hi = 0;
@@ -1906,7 +2431,7 @@ World.build = function () {
     add(buckets.roof, texMat(TX.shake, { roughness: 0.68 }), 1.5, 'HOUSE_ROOF');
   }
 
-  // â”€â”€ 12. gates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 12. gates ───────────────────────────────────────────────────────────────
   const torchParts = (px, py, pz) => [
     { g: paintWood(boxG(0.24, 3.0, 0.24)), m: trs(px, py + 1.5, pz, wr(-0.05, 0.05)) },
     { g: paintWood(new THREE.CylinderGeometry(0.42, 0.26, 0.55, 8, 1, true), 0.34), m: trs(px, py + 3.1, pz) },
@@ -1926,7 +2451,7 @@ World.build = function () {
     };
     const m = new THREE.Mesh(mergeParts(bp), bmat); m.castShadow = false; return m;
   };
-  { // â”€â”€ player keep gate: crenellated stone barbican, blue banners, timber hoarding â”€â”€
+  { // ── player keep gate: crenellated stone barbican, blue banners, timber hoarding ──
     const G0 = World.gateOut, ang = Math.atan2(G0.rx, G0.rz), gy = bi(HG, G0.x, G0.z);
     const stone = [], timber = [], slate = [];
     for (const s of [-1, 1]) {                        // flanking drum towers
@@ -1972,7 +2497,7 @@ World.build = function () {
       bannerTex('#2e5fa3', '#16305c', '#e8b64c', '\u2726'), 2.1));
     World.group.add(gGrp);
   }
-  for (const G1 of World.spawnG) { // â”€â”€ enemy spawn gate(s): dark crag arch, iron spikes, blood banners â”€â”€
+  for (const G1 of World.spawnG) { // ── enemy spawn gate(s): dark crag arch, iron spikes, blood banners ──
     const ang = Math.atan2(G1.rx, G1.rz), gy = bi(HG, G1.x, G1.z);
     const dark = [], iron = [];
     // A leaning crag arch: stacked angular masses climbing each jamb and corbelling in
@@ -2008,7 +2533,7 @@ World.build = function () {
       bannerTex('#8e2018', '#3d0d09', '#c8b48a', '\u2620'), 2.4));
     World.group.add(gGrp);
   }
-  // â”€â”€ 13. torch flames + gate glow (torch local coords mirror Â§12) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 13. torch flames + gate glow (torch local coords mirror §12) ────────────
   {
     const faceY = Math.atan2(0.42, 0.9);
     const parts = [];
@@ -2043,14 +2568,14 @@ World.build = function () {
 scene.onBeforeRender = () => {
   WT.value = SHOT ? (G.vt ? G.vt() : 0) : performance.now() * 0.001;
 };
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: WORLD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: WORLD ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: PATH (owner: WORLD builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: PATH (owner: WORLD builder) ══════════════════════
 // Road spline + arc-length tables. The control points come from the ACTIVE map (CORE's
 // MAPS table), so a new map is a data entry, not a code change. The PT table is
 // load-bearing for SIM (enemy travel) and for G.canPlace()'s gate keep-outs.
 const PATH_N = 512;
-// One arc-length table per ROUTE. Route 0 is always spawnâ†’keep; `PT` stays bound to it so
+// One arc-length table per ROUTE. Route 0 is always spawn→keep; `PT` stays bound to it so
 // every line of code written before maps 2-3 existed keeps meaning exactly what it meant.
 const ROUTE_DEF = MAP.routes || [{ wps: MAP.wps }];
 function buildPT(wps) {
@@ -2114,7 +2639,7 @@ G.pathPos = (d, out, lane = 0, pid = 0) => { // d in world units along route `pi
   return out;
 };
 G.pathTan = (d, pid = 0) => { const T = PTS[pid] || PT; return T.tan[clamp(Math.round(clamp(d / T.len, 0, 1) * PATH_N), 0, PATH_N)]; };
-// Nearest point across ALL routes â€” a barracks on the Frostfell wedge must rally onto the
+// Nearest point across ALL routes — a barracks on the Frostfell wedge must rally onto the
 // arm of the fork it actually stands beside, not onto route 0 by definition.
 const _np3 = new THREE.Vector3();
 G.nearestPath = (x, z) => {
@@ -2133,27 +2658,27 @@ G.nearestPath = (x, z) => {
 const ROAD_W = 4.6;                                 // nominal road width (the visual road is
 G.roadW = ROAD_W;                                   // painted + carved by the terrain shader)
 
-// The heightfield carves this spline, so the world is built here â€” once the spline
+// The heightfield carves this spline, so the world is built here — once the spline
 // exists everything downstream can rely on a real G.groundY(). (The fixed build plots
-// and their dashed markers are GONE: SPEC2 Â§A replaced them with free placement, and
+// and their dashed markers are GONE: SPEC2 §A replaced them with free placement, and
 // G.canPlace() in SECTION: SIM is now the single authority on where a tower may stand.)
 World.build();
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: PATH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: PATH ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: ARMIES (owner: ARMIES builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: ARMIES (owner: ARMIES builder) ══════════════════════
 // Procedural low-poly soldiers. One merged geometry per faction-archetype, one
-// InstancedMesh each (SPEC2 Â§D: 8 red archetypes + knights + 1 health-bar system = 10
+// InstancedMesh each (SPEC2 §D: 8 red archetypes + knights + 1 health-bar system = 10
 // scene draw calls at most, and a mesh whose count is 0 is skipped entirely by three, so
 // a map that never fields ogres never pays for them). Gait / fight / death animation is
 // GPU vertex skinning: per-vertex bone id + pivot attributes, per-instance
-// (phase, gait rate, mode, death). Modes: 0 march Â· 1 fight Â· 2 guard Â· 3 bow draw Â·
-// 4 four-legged gallop Â· 5 ogre stomp (one-shot, re-phased by the CPU each frame).
+// (phase, gait rate, mode, death). Modes: 0 march · 1 fight · 2 guard · 3 bow draw ·
+// 4 four-legged gallop · 5 ogre stomp (one-shot, re-phased by the CPU each frame).
 // Contract: Armies.syncVisuals(vt) reads G.enemies/G.knights every frame. Sim fields
 // are owned by SIM; this section never writes them (only render-only `_`-prefixed cache).
 const KNIGHT_CAP = 64;
-// SPEC2 Â§D roster of 8. One InstancedMesh per archetype; a mesh whose count is 0 costs
+// SPEC2 §D roster of 8. One InstancedMesh per archetype; a mesh whose count is 0 costs
 // no draw call, so the four new types only bill the frames they actually appear in.
-// SPEC3 Â§B raises the roster to 13. A mesh whose count is 0 is skipped entirely by three,
+// SPEC3 §B raises the roster to 13. A mesh whose count is 0 is skipped entirely by three,
 // so the five newcomers cost nothing on the waves that never field them, and the caps are
 // sized to the biggest group any wave table (or elite swap) can actually spawn.
 const ACAP = { grunt: 560, runner: 380, brute: 140, boss: 8,
@@ -2161,16 +2686,16 @@ const ACAP = { grunt: 560, runner: 380, brute: 140, boss: 8,
                ironclad: 48, ashwraith: 260, frostrevenant: 140, warshaman: 64, ram: 8 };
 let ENEMY_CAP = 0; for (const k in ACAP) ENEMY_CAP += ACAP[k];
 const BAR_CAP = 640;
-// â”€â”€ FORMATION LATTICE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── FORMATION LATTICE ─────────────────────────────────────────────────────────
 // The horde used to draw its lateral offset from `(rng()+rng()-1)*2.35`, a triangular
-// distribution whose mass sits inside Â±1.4u. On a road nearly 8u across that is a 2-3
-// abreast queue hugging the centre line, with road surface visible between every rank â€”
+// distribution whose mass sits inside ±1.4u. On a road nearly 8u across that is a 2-3
+// abreast queue hugging the centre line, with road surface visible between every rank —
 // a trickle, not the reference's crimson river. A deterministic six-file lattice spanning
 // ~0.85 of the road puts the same head count shoulder to shoulder bank to bank, and the
 // file ORDER zig-zags so consecutive spawns never march a visible diagonal stripe.
 // SIM's spawnEnemy() is the only caller; it still burns exactly two rng() draws, so the
-// sim stream â€” and every balance number tuned against it â€” is bit-identical.
-// The outer files sit at Â±2.30, INSIDE the Â±2.35 the old jitter already reached, so no
+// sim stream — and every balance number tuned against it — is bit-identical.
+// The outer files sit at ±2.30, INSIDE the ±2.35 the old jitter already reached, so no
 // unit is ever further off the centre line (and therefore further from a tower) than the
 // balance pass measured. All that changes is that the road is filled evenly instead of
 // piling two thirds of the column into the middle 1.4u.
@@ -2183,9 +2708,9 @@ G.subT = 0;                                  // sub-tick fraction, plumbed from 
 const _m4 = new THREE.Matrix4(), _v3 = new THREE.Vector3(), _q = new THREE.Quaternion(), _sc = new THREE.Vector3();
 const AM = {};                               // archetype key -> instanced record
 let barMesh = null, barArr = null, KITM = null;   // KITM: boss-variant attachment meshes
-const WARD_CAP = 300;                        // SPEC3 Â§D ground rings under a warded wave
+const WARD_CAP = 300;                        // SPEC3 §D ground rings under a warded wave
 let wardRing = null;
-const SHAD_CAP = 700;                        // ARMIES-FIX2 Â§1 contact-shadow decals
+const SHAD_CAP = 700;                        // ARMIES-FIX2 §1 contact-shadow decals
 let shadDecal = null, SHAD_AZ = 0, SHAD_LEN = 1;
 const AT_U = { value: 0 };                   // shared animation clock (sim-time based)
 {
@@ -2195,17 +2720,17 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   const arng = () => { _as |= 0; _as = _as + 0x6D2B79F5 | 0; let t = Math.imul(_as ^ _as >>> 15, 1 | _as); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const ar = (a, b) => a + (b - a) * arng();
 
-  // â”€â”€ 1. texture atlas: 4x5 tiles. albedo + a linear map with G=roughness, B=metalness â”€â”€
-  // SPEC3 Â§B: a seventh tile row carries the newcomers' materials (rimed plate, grave
+  // ── 1. texture atlas: 4x5 tiles. albedo + a linear map with G=roughness, B=metalness ──
+  // SPEC3 §B: a seventh tile row carries the newcomers' materials (rimed plate, grave
   // shroud, banked embers, shaman wool). Every UV is computed from AW/AH, so widening the
-  // sheet re-maps the existing tiles identically â€” no unit changes appearance.
+  // sheet re-maps the existing tiles identically — no unit changes appearance.
   const AGX = 4, AGY = 7, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
   const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
   const [acv, ag] = mkc(AW, AH), [mcv, mg] = mkc(AW, AH), [ecv, eg] = mkc(AW, AH);
   const T = { MAIL: 0, STEEL: 1, RED: 2, BLUE: 3, LEATH: 4, FACE: 5, SHR: 6, SHB: 7, WOOD: 8, BLADE: 9,
               BANN: 10, SKIN: 11, FUR: 12, GOLD: 13, SHBK: 14, IRON: 15, EYES: 16, PLUME: 17, CRIM: 18, BONE: 19,
-              HAIR: 20, DIRT: 21, PAV: 22, HIDE: 23,     // 22/23: SPEC2 Â§D pavise face + ogre hide
-              FROST: 24, SHROUD: 25, EMBER: 26, ROBE: 27 };   // SPEC3 Â§B newcomers
+              HAIR: 20, DIRT: 21, PAV: 22, HIDE: 23,     // 22/23: SPEC2 §D pavise face + ogre hide
+              FROST: 24, SHROUD: 25, EMBER: 26, ROBE: 27 };   // SPEC3 §B newcomers
   eg.fillStyle = '#000'; eg.fillRect(0, 0, AW, AH);
   const tOX = t => (t % AGX) * S, tOY = t => ((t / AGX) | 0) * S;
   const tile = (t, rough, metal, fn) => {
@@ -2261,16 +2786,16 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     g.fillStyle = vg; g.fillRect(0, 0, S, S);
   });
   // The horde's value mass lives in these two tiles. RED is the spec's #a42a22 exactly and
-  // CRIM its #7e1e18 shade â€” the old pair sat a stop darker and, once steel highlights and
+  // CRIM its #7e1e18 shade — the old pair sat a stop darker and, once steel highlights and
   // sun were added on top, the column squinted down to pink-grey gravel instead of crimson.
   clothTile(T.RED, '#a42a22', '#5d130e', '#d6583f', 0.88);
-  // ARMIES-FIX2 Â§2. The spec's #2e5fa3 exactly, with the shade pushed down and the highlight
+  // ARMIES-FIX2 §2. The spec's #2e5fa3 exactly, with the shade pushed down and the highlight
   // pushed toward true blue: at the old pair the knights sampled pale steel-blue and lost to
   // the red mass at every zoom, which is half of why the reference's red-vs-blue clash never
   // happened on screen.
   clothTile(T.BLUE, '#2e5fa3', '#0f2a5c', '#5b9ae8', 0.86);
   clothTile(T.CRIM, '#7e1e18', '#3a0a07', '#ab4030', 0.90);
-  // ARMIES-FIX2 Â§2. This tile is the hose â€” the soldiers' legs â€” and under a 5.7-intensity
+  // ARMIES-FIX2 §2. This tile is the hose — the soldiers' legs — and under a 5.7-intensity
   // golden key it was tone-mapping out to ~#af9773: the BRIGHTEST value on the whole model,
   // brighter than the crimson torso it hangs under, so every figure read as two pale sticks
   // with a red box on top and the mass never fused into one red river. Dark leather greaves
@@ -2361,8 +2886,8 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     for (let i = 0; i < 70; i++) { g.strokeStyle = rgba(arng() < 0.5 ? 255 : 58, arng() < 0.5 ? 255 : 68, arng() < 0.5 ? 255 : 80, ar(0.05, 0.13)); g.lineWidth = ar(0.7, 1.8) * u; const y = arng() * S; g.beginPath(); g.moveTo(arng() * S * 0.4, y); g.lineTo(S * 0.5 + arng() * S * 0.5, y + ar(-4, 4) * u); g.stroke(); }
   });
   // FACTION SEPARATION: iron is the RED army's metal. At 0.90 metalness it mirrored the
-  // sky IBL and every kettle helm and brow plate came out #2e5fa3 â€” the blue army's own
-  // colour â€” so red and blue units stopped being separable at gameplay zoom. Rough, warm
+  // sky IBL and every kettle helm and brow plate came out #2e5fa3 — the blue army's own
+  // colour — so red and blue units stopped being separable at gameplay zoom. Rough, warm
   // and only half metallic, it now reads as forged iron under a warm sun instead.
   tile(T.IRON, 0.62, 0.46, g => {
     g.fillStyle = '#3d3730'; g.fillRect(0, 0, S, S);
@@ -2419,7 +2944,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     for (let i = -1; i <= 1; i++) { g.lineWidth = (13 - Math.abs(i) * 3) * u; g.beginPath(); g.moveTo(S * (0.32 + i * 0.16), S * 0.22); g.quadraticCurveTo(S * (0.54 + i * 0.16), S * 0.52, S * (0.40 + i * 0.16), S * 0.80); g.stroke(); }
     shade(g, 'rgba(255,236,210,.14)', 'rgba(0,0,0,.36)');
   });
-  { // round red shield face â€” the single largest facet a grunt turns to the camera, so it
+  { // round red shield face — the single largest facet a grunt turns to the camera, so it
     // carries #a42a22 edge to edge with the #7e1e18 shade on the underside. The rim was a
     // 13px band of cold steel and the boss a mirror cone: together they out-valued the
     // paint and the whole column sampled steel-dominant from the overview camera.
@@ -2475,7 +3000,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     g.lineWidth = 2.4 * u; g.strokeStyle = 'rgba(226,236,246,.42)'; g.stroke();
   });
 
-  // â”€â”€ SPEC2 Â§D tiles â”€â”€
+  // ── SPEC2 §D tiles ──
   tile(T.PAV, 0.68, 0.10, g => {                       // pavise face: banded planks + boss
     g.fillStyle = '#a42a22'; g.fillRect(0, 0, S, S);
     { const ug = g.createLinearGradient(0, S * 0.40, 0, S);
@@ -2488,7 +3013,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       g.fillStyle = 'rgba(255,214,186,.07)'; g.fillRect(x + 2.6 * u, 0, 1.8 * u, S);
     }
     blot(g, 54, '#3a0906', '#c05a42', 0.06, 0.16, 6, 30);
-    for (const yy of [S * 0.14, S * 0.84]) {           // iron bands, riveted â€” warm, not steel
+    for (const yy of [S * 0.14, S * 0.84]) {           // iron bands, riveted — warm, not steel
       g.fillStyle = '#42392f'; g.fillRect(0, yy, S, S * 0.070);
       g.fillStyle = 'rgba(240,224,196,.24)'; g.fillRect(0, yy, S, 2.4 * u);
       g.fillStyle = 'rgba(0,0,0,.44)'; g.fillRect(0, yy + S * 0.070 - 2.4 * u, S, 2.4 * u);
@@ -2518,11 +3043,11 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     }
     shade(g, 'rgba(228,240,206,.13)', 'rgba(0,0,0,.36)');
   });
-  // â•â• SPEC3 Â§B materials â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // FROST: rimed plate. Cold and pale â€” the ONE place the red army is allowed a cool
+  // ══ SPEC3 §B materials ═══════════════════════════════════════════════════════
+  // FROST: rimed plate. Cold and pale — the ONE place the red army is allowed a cool
   // value, because the frost revenant is a dead thing wearing armour the snow has eaten.
-  // ARMIES-FIX2 Â§4: the old ramp was a NEUTRAL grey-blue, and under a 5.7-intensity warm key
-  // it tone-mapped straight back to "pale steel soldier" â€” the revenant shipped with no
+  // ARMIES-FIX2 §4: the old ramp was a NEUTRAL grey-blue, and under a 5.7-intensity warm key
+  // it tone-mapped straight back to "pale steel soldier" — the revenant shipped with no
   // frost cue at all. Saturated toward the spec's #9fd8ff rim so the cold survives the sun.
   tile(T.FROST, 0.44, 0.52, g => {
     const gr = g.createLinearGradient(0, 0, 0, S);
@@ -2537,7 +3062,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(226,242,252,.30)'; g.fillRect(0, S * (0.06 + i * 0.16), S, 2.6 * u); }
     shade(g, 'rgba(238,250,255,.20)', 'rgba(6,14,24,.40)');
   });
-  // SHROUD: grave linen, rotted through. Nearly value-less on purpose â€” the wraith is a
+  // SHROUD: grave linen, rotted through. Nearly value-less on purpose — the wraith is a
   // hole in the road with two coals in it, and any texture louder than this fills it in.
   tile(T.SHROUD, 0.95, 0.0, g => {
     g.fillStyle = '#2a2930'; g.fillRect(0, 0, S, S);
@@ -2585,7 +3110,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     }
     eg.restore();
   }
-  // ROBE: the war shaman's boiled wool â€” ochre and bone, no metal anywhere, so the healer
+  // ROBE: the war shaman's boiled wool — ochre and bone, no metal anywhere, so the healer
   // never gets mistaken for a line trooper at the range you have to pick him out at.
   clothTile(T.ROBE, '#6b5a2e', '#33290f', '#a89152', 0.93);
 
@@ -2593,7 +3118,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   const mrmap = new THREE.CanvasTexture(mcv); mrmap.colorSpace = THREE.NoColorSpace; mrmap.anisotropy = 4;
   const emmap = new THREE.CanvasTexture(ecv); emmap.colorSpace = THREE.SRGBColorSpace;
 
-  // â”€â”€ 2. geometry helpers (every part carries atlas UVs + bone id + pivots) â”€â”€
+  // ── 2. geometry helpers (every part carries atlas UVs + bone id + pivots) ──
   const SEG = tier === 'mobile' ? 6 : 9;               // radial segments for rods / domes
   const DSEG = tier === 'mobile' ? 10 : 16;            // shield disc segments
   const uvAll = (g, t) => {                            // map a geometry's 0..1 UVs into a tile
@@ -2625,7 +3150,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return [new THREE.Matrix4().compose(_va.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2),
       new THREE.Quaternion().setFromUnitVectors(_vu, _vb), _sc.set(1, 1, 1)), L];
   };
-  // plate: extrude a 2D polygon (CCW, fan-safe) â€” blades, banners, capes, shields
+  // plate: extrude a 2D polygon (CCW, fan-safe) — blades, banners, capes, shields
   const plateGeo = (pts, th, tF, tB, tS) => {
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (const p of pts) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
@@ -2658,7 +3183,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   };
   const polyC = (r, n, sq) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * TAU; p.push([Math.cos(a) * r, Math.sin(a) * r * (sq || 1)]); } return p; };
 
-  // â”€â”€ 3. merge: bakes bone id, pivot, parent pivot, cloth weight and vertex AO â”€â”€
+  // ── 3. merge: bakes bone id, pivot, parent pivot, cloth weight and vertex AO ──
   function mergeA(parts, H) {
     let vc = 0, ic = 0;
     for (const p of parts) { idxd(p.g); if (!p.g.attributes.normal) p.g.computeVertexNormals(); vc += p.g.attributes.position.count; ic += p.g.index.count; }
@@ -2708,7 +3233,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return out;
   }
 
-  // â”€â”€ 4. archetype construction â”€â”€
+  // ── 4. archetype construction ──
   // Heroic proportions: ~6.5 heads. Bones: 0 root, 1/2 thigh L/R, 3/4 shin L/R,
   // 5 shield arm, 6 weapon arm, 7 head, 8 cloth (tabard / cape / banner).
   function buildSoldier(C) {
@@ -2737,7 +3262,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     const yNck = K(1.425) - drop - hsk, yChn = K(1.45) - drop - hsk, yCrn = K(1.71) - drop - hsk;
     const hipX = K(0.105) * B, shX = K(0.238) * B * (C.shF || 1);
 
-    // â”€â”€ legs â”€â”€
+    // ── legs ──
     for (const s of [-1, 1]) {
       const bT = s < 0 ? 1 : 2, bS = s < 0 ? 3 : 4;
       const hipP = [s * hipX, yHip, 0], kneP = [s * hipX * 0.96, yKne, 0];
@@ -2748,7 +3273,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       limb([s * hipX * 0.96, yKne + K(0.01), 0], [s * hipX * 0.94, yAnk - K(0.055), 0], K(0.152) * B, K(0.118) * B, [C.shin], bS, kneP, hipP, 0.90);
       A(uvAll(new THREE.CylinderGeometry(K(0.098) * B, K(0.112) * B, K(0.070), (C.seg || SEG)), C.knee ? (C.kneeT || T.IRON) : T.LEATH),
         trs(s * hipX * 0.94, yAnk + K(0.012), K(0.006)), bS, kneP, hipP, null, 0.86);
-      // knee: a cop plate over the joint, not a bare ball â€” the leg reads as two articulated
+      // knee: a cop plate over the joint, not a bare ball — the leg reads as two articulated
       // segments instead of one tapered cylinder once there is a hard edge at the pivot
       if (C.knee) {
         A(uvAll(new THREE.SphereGeometry(K(0.084) * B, 7, 5), C.kneeT || T.IRON), trs(s * hipX * 0.96, yKne, K(0.028), 0, 1, 0.86, 1), bS, kneP, hipP, null, 1.06);
@@ -2756,7 +3281,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       }
       A(boxA(K(0.170) * B, K(0.128), K(0.29), [T.LEATH]), trs(s * hipX * 0.94, K(0.052), K(0.048)), bS, kneP, hipP, null, 0.80);
       A(boxA(K(0.176) * B, K(0.055), K(0.10), [T.IRON]), trs(s * hipX * 0.94, K(0.020), K(0.185)), bS, kneP, hipP, null, 0.88);
-      // ARMIES-FIX2 Â§3. A leg made of dark hose under a dark skirt is a HOLE at 3.6x: the
+      // ARMIES-FIX2 §3. A leg made of dark hose under a dark skirt is a HOLE at 3.6x: the
       // champion read as a torso floating over a pair of boots with nothing between them.
       // A cuisse on the thigh and a greave on the shin, both a stop brighter than the hose,
       // bridge hip to boot so the leg silhouette is continuous at any zoom.
@@ -2768,14 +3293,14 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
           trs(s * hipX * 0.95, (yKne + yAnk) / 2 + K(0.01), K(0.022)), bS, kneP, hipP, null, 1.26);
       }
     }
-    // â”€â”€ pelvis / skirt / torso / belt â”€â”€
+    // ── pelvis / skirt / torso / belt ──
     A(tbox(K(0.36) * B, K(0.18), K(0.27) * W, [C.mail], 1.0, 0.94), trs(0, yHip + K(0.05), 0), 0, null, null, null, 0.95);
     if (C.skirt >= 0) A(uvAll(new THREE.CylinderGeometry(K(0.215) * B, K(0.285) * B, K(0.26), C.seg || SEG, 1, false), C.skirt), trs(0, yHip - K(0.03), 0), 0, null, null, null, 0.92);
     A(tbox(K(0.415) * B, yCst - yWst, K(0.265) * W, [C.mail], 0.92, 1.06), trs(0, (yCst + yWst) / 2, 0), 0, null, null, null, 1.0);
     A(boxA(K(0.44) * B, K(0.080), K(0.30) * W, [T.LEATH]), trs(0, yWst + K(0.012), 0), 0, null, null, null, 0.92);
     A(boxA(K(0.090), K(0.078), K(0.035), [T.GOLD]), trs(0, yWst + K(0.012), K(0.156) * W), 0, null, null, null, 1.1);
     if (C.chest >= 0) A(tbox(K(0.30) * B, K(0.22), K(0.05), [T.IRON, T.IRON, T.IRON, T.IRON, C.chest, T.IRON]), trs(0, yCst - K(0.13), K(0.140) * W), 0, null, null, null, 1.04);
-    // â”€â”€ surcoat / tabard (cloth bone: hem flutters) â”€â”€
+    // ── surcoat / tabard (cloth bone: hem flutters) ──
     if (C.tabard >= 0) {
       const tw = K(0.365) * B * (C.tabW === undefined ? 1 : C.tabW), ty0 = yHip - K(0.24), ty1 = yCst + K(0.005);
       for (const s of [1, -1]) {
@@ -2785,13 +3310,13 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(boxA(tw * 1.03, K(0.030), K(0.032), [T.GOLD]), trs(0, ty0 + K(0.015), s * (K(0.136) * W + K(0.014))), 8, null, null, () => 1, 1.1);
       }
     }
-    // â”€â”€ shoulders â”€â”€
+    // ── shoulders ──
     for (const s of [-1, 1])
       A(tbox(K(0.145) * B, K(0.120), K(0.245) * W, [C.pauld], 1.0, 0.66), trs(s * (shX + K(0.012)), ySh + K(0.012), 0, 0, 1, 1, 1, 0, -s * 0.24), 0, null, null, null, 1.06);
-    // ARMIES-FIX2 Â§3. One flat-topped box per shoulder reads as a crate, which is exactly
+    // ARMIES-FIX2 §3. One flat-topped box per shoulder reads as a crate, which is exactly
     // what the critic called the champion's pauldrons. `spauld` bolts a real harness on
     // top: a domed cap that catches the key, two stepped lames falling over the upper arm,
-    // and a bevelled rim between them â€” the same beaten-plate language as the knight kit.
+    // and a bevelled rim between them — the same beaten-plate language as the knight kit.
     if (C.spauld) for (const s of [-1, 1]) {
       const PT = C.spauldT || T.IRON, px0 = s * (shX + K(0.020));
       A(uvAll(new THREE.SphereGeometry(K(0.098) * B, (C.seg || SEG) + 1, 5, 0, TAU, 0, 1.32), PT),
@@ -2803,15 +3328,15 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
           trs(px0 + s * K(0.014) * (i + 1), ySh - K(0.052) - i * K(0.060), -K(0.004), 0, 1, 1, 1, 0, -s * 0.34),
           0, null, null, null, 1.12 - i * 0.07);
     }
-    // â”€â”€ arms: 5 = shield side (-x), 6 = weapon side (+x) â”€â”€
+    // ── arms: 5 = shield side (-x), 6 = weapon side (+x) ──
     const shL = [-shX, ySh, 0], shR = [shX, ySh, 0];
     const elbL = [-shX - K(0.02), ySh - K(0.255), K(0.015)], elbR = [shX + K(0.02), ySh - K(0.26), K(0.02)];
     const hndL = C.handL || [-shX - K(0.090), ySh - K(0.30), K(0.215)];
     const hndR = C.handR || [shX + K(0.03), ySh - K(0.325), K(0.215)];
     const aT = C.armTint === undefined ? 1 : C.armTint;
     // A bare cube at the wrist reads as "no hand" the moment the camera gets close, and the
-    // sword grip terminated in one. A five-part mitten â€” cuff, tapered palm, knuckle mass,
-    // thumb â€” costs 3 boxes and closes the single worst closeup tell in the whole rig.
+    // sword grip terminated in one. A five-part mitten — cuff, tapered palm, knuckle mass,
+    // thumb — costs 3 boxes and closes the single worst closeup tell in the whole rig.
     const mitt = (h, s, bone, piv, tint) => {
       A(tbox(K(0.104) * B, K(0.070), K(0.120), [C.hand], 1.0, 0.90), trs(h[0], h[1] + K(0.032), h[2] - K(0.004)), bone, piv, null, null, tint * 1.02);
       A(tbox(K(0.094) * B, K(0.108), K(0.118), [C.hand], 1.0, 0.80), trs(h[0], h[1] - K(0.024), h[2] + K(0.010)), bone, piv, null, null, tint);
@@ -2827,7 +3352,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     mitt(hndR, 1, 6, shR, 0.92 * aT);
     if (C.bracer) for (const [h, bo, pv] of [[hndL, 5, shL], [hndR, 6, shR]])
       A(uvAll(new THREE.CylinderGeometry(K(0.072), K(0.078), K(0.12), 7), T.IRON), trs(h[0], h[1] + K(0.09), h[2] - K(0.035), 0, 1, 1, 1, -1.1), bo, pv, null, null, 1.04);
-    // â”€â”€ neck + head â”€â”€
+    // ── neck + head ──
     const SKN = C.skin === undefined ? T.SKIN : C.skin, HRT = C.hair === undefined ? T.HAIR : C.hair;
     const HS = C.headS || 1;                             // brutish skulls read wider, not taller
     if (!C.headDrop) A(uvAll(new THREE.CylinderGeometry(K(0.072) * B, K(0.086) * B, K(0.075), 7), SKN), trs(0, yNck, 0), 7, [0, yNck - K(0.02), 0], null, null, 0.80);
@@ -2839,7 +3364,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     const hp = [0, yNck - K(0.02), 0];
     // The helmet bowl must swallow the skull down to the brow (sphere cap swept past the
     // equator) or the head reads as a pale block at every zoom level.
-    // â”€â”€ helmets â”€â”€
+    // ── helmets ──
     const dome = (r, sy, t, yy, tint) => A(uvAll(new THREE.SphereGeometry(r, C.seg || SEG, 6, 0, TAU, 0, 1.88), t), trs(0, yy, 0, 0, 1, sy, 1), 7, hp, null, null, tint);
     // Aventail: a mail curtain from the helm rim over the neck and cheeks, open at the face.
     // Without it the exposed skin below the bowl reads as a pale block at every zoom.
@@ -2848,7 +3373,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     // helm ridge: a low crest front-to-back so the bowl is not a perfect polished sphere
     const ridge = (r, yy, t) => A(boxA(K(0.036), K(0.048), r * 1.96, [t]), trs(0, yy, 0), 7, hp, null, null, 1.14);
     if (C.helm === 'nasal') {
-      // helmT/helmTint: the dome used to be polished T.STEEL at tint 1.12 â€” one bright
+      // helmT/helmTint: the dome used to be polished T.STEEL at tint 1.12 — one bright
       // specular cap per unit, 160 of them, and the horde sampled steel-dominant from the
       // overview camera. Warm iron at unity carries the same silhouette at a quarter of the
       // luminance, and a red crest + red cheek scales put the paint back on the head.
@@ -2895,7 +3420,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       }
       for (let i = 0; i < 5; i++) A(boxA(K(0.030), K(0.085), K(0.030), [T.GOLD]), trs((i - 2) * K(0.062), yCrn - K(0.075), K(0.130) - Math.abs(i - 2) * K(0.022)), 7, hp, null, null, 1.16);
     } else if (C.helm === 'kettle') {
-      // SHIELDBEARER (SPEC2 Â§D). The brim is the whole silhouette read: a broad iron war
+      // SHIELDBEARER (SPEC2 §D). The brim is the whole silhouette read: a broad iron war
       // hat over a mail curtain says "heavy infantry" at 12 px, which is the point of a
       // unit whose job is to be recognised and shot at with something other than arrows.
       dome(K(0.152), 0.84, T.IRON, yCrn - K(0.050), 1.08);
@@ -2905,7 +3430,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(uvAll(new THREE.CylinderGeometry(K(0.240), K(0.248), K(0.048), (C.seg || SEG) + 2), T.IRON), trs(0, yCrn - K(0.062), 0), 7, hp, null, null, 0.90);
       A(uvAll(new THREE.SphereGeometry(K(0.034), 6, 4), T.IRON), trs(0, yCrn + K(0.042), 0), 7, hp, null, null, 1.16);
     } else if (C.helm === 'hood') {
-      // MARAUDER: a deep hood with a flopped peak â€” no metal anywhere on the head, so the
+      // MARAUDER: a deep hood with a flopped peak — no metal anywhere on the head, so the
       // skirmisher never gets confused with the mailed line troops behind him.
       dome(K(0.154), 1.02, T.DIRT, yCrn - K(0.078), 1.02);
       aventail(K(0.160), K(0.228), yCrn - K(0.140), K(0.300), T.DIRT);
@@ -2915,13 +3440,13 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(uvAll(new THREE.CylinderGeometry(K(0.235) * B, K(0.335) * B, K(0.30), (C.seg || SEG) + 3, 1, true), T.DIRT),
         trs(0, ySh - K(0.09), -K(0.01)), 0, null, null, null, 0.86);     // shoulder mantle
     } else if (C.helm === 'tusk') {
-      // OGRE. The old head was a featureless sage sphere under a full-width flat iron disc â€”
+      // OGRE. The old head was a featureless sage sphere under a full-width flat iron disc —
       // at gameplay size that is a lamp, and at mobile size an olive blob. Three changes fix
       // the silhouette: (1) the flat brim is GONE, replaced by an asymmetric bolted brow
       // that hugs the skull and never breaks its outline sideways; (2) the tusks are more
       // than a third of the skull's width and their tips push OUTSIDE it, so the head has
       // two hard spikes in profile at any zoom; (3) a heavy jaw and browridge give the
-      // sphere an actual face. The dome is WIDER than the head box on purpose â€” it swallows
+      // sphere an actual face. The dome is WIDER than the head box on purpose — it swallows
       // it, so every feature has to be pushed past its front surface (z ~ 0.26K) or it
       // renders inside the skull and the ogre comes out faceless.
       const SW = K(0.180) * HS;                       // skull half-width (0.27K at HS 1.5)
@@ -2936,13 +3461,13 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       for (let i = 0; i < 4; i++)                     // rivets along the plate
         A(uvAll(new THREE.SphereGeometry(K(0.026), 5, 4), T.IRON),
           trs(-K(0.170) + i * K(0.080), yCrn - K(0.016) - i * K(0.010), K(0.208)), 7, hp, null, null, 1.22);
-      // heavy underslung jaw â€” mass below the eyes is what stops a sphere reading as a bulb
+      // heavy underslung jaw — mass below the eyes is what stops a sphere reading as a bulb
       A(tbox(K(0.330), K(0.135), K(0.150), [SKN], 1.0, 0.84), trs(0, yChn + K(0.036), K(0.185)), 7, hp, null, null, 0.84);
       A(boxA(K(0.250), K(0.036), K(0.040), [T.BONE]), trs(0, yChn + K(0.104), K(0.245)), 7, hp, null, null, 0.60);  // lower teeth
       for (const s of [-1, 1]) {
         A(boxA(K(0.100), K(0.052), K(0.060), [SKN]), trs(s * K(0.098), yCrn - K(0.116), K(0.212)), 7, hp, null, null, 0.24);  // sunken eye
         A(uvAll(new THREE.SphereGeometry(K(0.024), 5, 4), T.EYES), trs(s * K(0.098), yCrn - K(0.116), K(0.226)), 7, hp, null, null, 1.0);
-        // TUSKS: 0.19K root to 0.40K tip in x â€” the tip clears the 0.27K skull edge, so the
+        // TUSKS: 0.19K root to 0.40K tip in x — the tip clears the 0.27K skull edge, so the
         // silhouette grows two spikes. Forward-leaning as they rise; up-and-back would read
         // as horns, and a horned ogre is just the brute again.
         const [m, L] = spanM([s * K(0.185), yChn - K(0.020), K(0.150)], [s * K(0.400), yChn + K(0.360), K(0.230)]);
@@ -2950,7 +3475,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(uvAll(new THREE.SphereGeometry(K(0.086), 6, 5), SKN), trs(s * K(0.176), yChn + K(0.006), K(0.156), 0, 1, 0.72, 1), 7, hp, null, null, 0.80);
       }
     } else if (C.helm === 'great') {
-      // IRONCLAD (SPEC3 Â§B). A flat-topped great helm: the only head in the roster with a
+      // IRONCLAD (SPEC3 §B). A flat-topped great helm: the only head in the roster with a
       // straight horizontal crown line, which is what tells a plate slab apart from the
       // shieldbearer's domed war hat at 12 px. No skin shows anywhere.
       const HR = K(0.196) * HS;
@@ -2989,7 +3514,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(plateGeo([[-K(0.108), K(0.150)], [K(0.108), K(0.150)], [K(0.120), -K(0.055)],
                   [0, -K(0.185)], [-K(0.120), -K(0.055)]], K(0.028), T.BONE, T.BONE, T.BONE),
         trs(0, yCrn - K(0.196), K(0.112)), 7, hp, null, null, 1.18);                // bone face mask
-      // ARMIES-FIX2 Â§4. The antlers are GONE. Two big cream cones on a dome is the same
+      // ARMIES-FIX2 §4. The antlers are GONE. Two big cream cones on a dome is the same
       // silhouette the ironclad's shoulder spikes were making, and two of five newcomers
       // sharing a read is worse than one of them losing a feature. The shaman's read is now
       // the thing nothing else on the road has: a HUNCHED, hooded, shoulderless robe cone
@@ -3004,7 +3529,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       for (const s of [-1, 1])
         A(boxA(K(0.044), K(0.030), K(0.026), [T.SHROUD]), trs(s * K(0.052), yCrn - K(0.166), K(0.130)), 7, hp, null, null, 0.16);
     }
-    // â”€â”€ shields (bone 5) â”€â”€
+    // ── shields (bone 5) ──
     if (C.shield === 'round' || C.shield === 'buckler') {
       const r = C.shield === 'round' ? K(0.360) : K(0.200);
       const cen = [hndL[0] - K(0.075), hndL[1] + K(0.085), hndL[2] + K(0.040)];
@@ -3020,13 +3545,13 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       const cen = [hndL[0] - K(0.075), hndL[1] + K(0.105), hndL[2] + K(0.040)];
       A(plateGeo(pts, K(0.054), T.SHB, T.SHBK, T.STEEL), trs(cen[0], cen[1], cen[2], -0.56, 1, 1, 1, 0.11, 0.05), 5, shL, null, null, 1.0);
     } else if (C.shield === 'tower') {
-      // PAVISE (SPEC2 Â§D). Two thirds of the man's height and carried square to the road:
+      // PAVISE (SPEC2 §D). Two thirds of the man's height and carried square to the road:
       // the silhouette IS the unit. Its top edge stops at the nose so the kettle brim
-      // still breaks the outline â€” a featureless slab reads as scenery, not a soldier.
-      // shieldS widens the pavise for the ironclad (SPEC3 Â§B), whose whole read is a
+      // still breaks the outline — a featureless slab reads as scenery, not a soldier.
+      // shieldS widens the pavise for the ironclad (SPEC3 §B), whose whole read is a
       // WALL: at 1.32 the plate is broader than his own shoulders and reaches his visor.
       const SS = C.shieldS || 1, hw = K(0.300) * SS, hh = K(0.540) * SS;   // knee to mouth: a real pavise
-      // ARMIES-FIX2 Â§4: the ironclad's board is a straight RECTANGLE, corner to corner. The
+      // ARMIES-FIX2 §4: the ironclad's board is a straight RECTANGLE, corner to corner. The
       // tapered top was the one soft edge on a unit whose whole identity is "a wall walked
       // onto the road", and it is what let him blur into the shieldbearer at gameplay zoom.
       const pts = C.pavRect
@@ -3034,12 +3559,12 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         : [[-hw, -hh], [hw, -hh], [hw, hh * 0.72], [hw * 0.62, hh], [-hw * 0.62, hh], [-hw, hh * 0.72]];
       const cen = [hndL[0] + K(0.240), yHip + K(0.080), hndL[2] + K(0.115)];
       // shieldT: the ironclad's wall is bare bolted IRON, not the shieldbearer's painted
-      // pavise â€” two units carrying the same red board would be one unit at gameplay zoom.
+      // pavise — two units carrying the same red board would be one unit at gameplay zoom.
       A(plateGeo(pts, K(0.072), C.shieldT || T.PAV, T.SHBK, T.IRON), trs(cen[0], cen[1], cen[2], -0.11, 1, 1, 1, 0.06, 0.02), 5, shL, null, null, 1.0);
       A(uvAll(new THREE.CylinderGeometry(K(0.030), K(0.030), K(0.34) * SS, 6), T.WOOD),      // rear brace
         trs(cen[0], cen[1] - K(0.14), cen[2] - K(0.075), -0.11, 1, 1, 1, 0.06, 0.02), 5, shL, null, null, 0.82);
     }
-    // â”€â”€ weapons (bone 6) â”€â”€
+    // ── weapons (bone 6) ──
     // bladeTint darkens polished steel on the RED army's weapons. A forest of 160 spear
     // heads at tint 1.12 was the single brightest thing on the road and it out-valued every
     // tabard under it; at 0.82 the points still glint but the crimson carries the frame.
@@ -3059,8 +3584,8 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         trs(pt(K(1.44))[0], pt(K(1.44))[1], pt(K(1.44))[2] + K(0.02), 0.35), 6, shR, null, null, 1.06);
     } else if (C.weapon === 'sword' || C.weapon === 'gsword') {
       const big = C.weapon === 'gsword';
-      // ARMIES-FIX2 Â§3. The greatsword stood bolt upright out of the fist and the blade
-      // then ran straight through the pauldron and out of the top of the head â€” an
+      // ARMIES-FIX2 §3. The greatsword stood bolt upright out of the fist and the blade
+      // then ran straight through the pauldron and out of the top of the head — an
       // assembly error at any zoom the champion is the focal figure at. Shouldering it
       // OUTWARD (rz leans the blade away from the body, rx rakes it back over the
       // shoulder) keeps the same heroic line and clears the skull entirely. Every part of
@@ -3115,7 +3640,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(uvAll(new THREE.CylinderGeometry(K(0.040), K(0.040), K(0.07), 7), T.IRON), spanM(pt(-K(0.46)), pt(-K(0.40)))[0], 6, shR, null, null, 1.02);
     } else if (C.weapon === 'club') {
       // OGRE. Was a smooth tapered trunk whose seven "studs" were spheres of r 0.042 sunk
-      // inside a head of r 0.126 â€” they never broke the outline, so the whole weapon read as
+      // inside a head of r 0.126 — they never broke the outline, so the whole weapon read as
       // a tan pill. Now: a hard taper (0.052 grip -> 0.190 head), a stepped iron collar that
       // cuts a notch into the silhouette, and eight IRON SPIKES whose bases sit on the head
       // surface and whose tips stand a third of a head-radius proud of it.
@@ -3132,8 +3657,8 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         spanM(pt(K(0.62)), pt(K(0.70)))[0], 6, shR, null, null, 1.10);
       A(uvAll(new THREE.SphereGeometry(K(0.210), 7, 5), T.WOOD), spanM(pt(K(1.22)), pt(K(1.32)))[0], 6, shR, null, null, 1.02);
       for (let i = 0; i < 8; i++) {
-        // bases sunk just under the head surface, tips at 0.36K â€” nearly TWICE the head
-        // radius â€” so every spike breaks the outline. The old studs were spheres buried
+        // bases sunk just under the head surface, tips at 0.36K — nearly TWICE the head
+        // radius — so every spike breaks the outline. The old studs were spheres buried
         // inside the wood, which is exactly why the club read as a smooth tan pill.
         const a = i / 8 * TAU + 0.4, tt = K(0.82) + (i % 4) * K(0.125);
         const c0 = pt(tt), nx = ux[0] * Math.cos(a) + vx[0] * Math.sin(a),
@@ -3144,7 +3669,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       }
       A(uvAll(new THREE.CylinderGeometry(K(0.062), K(0.062), K(0.14), 7), T.LEATH), spanM(pt(-K(0.32)), pt(-K(0.18)))[0], 6, shR, null, null, 0.92);
     } else if (C.weapon === 'bow') {
-      // MARAUDER (SPEC2 Â§D). The bow lives in the SHIELD hand (bone 5) and carries its own
+      // MARAUDER (SPEC2 §D). The bow lives in the SHIELD hand (bone 5) and carries its own
       // string and nocked arrow: this rig has no way to stretch a string between two bones,
       // so the whole assembly is baked at half draw and the draw arm swings back to meet
       // the nock in shoot mode. At gameplay zoom the cheat is invisible.
@@ -3163,7 +3688,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(uvAll(new THREE.ConeGeometry(K(0.026), L, 5), T.BLADE), m, 5, shL, null, null, 1.16); }
       A(boxA(K(0.012), K(0.088), K(0.115), [T.PLUME]), trs(nock[0], nock[1], nock[2] + K(0.075)), 5, shL, null, null, 1.14);
     } else if (C.weapon === 'totem') {
-      // WAR SHAMAN (SPEC3 Â§B). A totem staff taller than the man carrying it, topped with a
+      // WAR SHAMAN (SPEC3 §B). A totem staff taller than the man carrying it, topped with a
       // horned skull and a caged ember: the roster's only VERTICAL line that ends in a
       // glowing point, so "kill that one first" is legible before you read the health bar.
       const grip = [hndR[0] + K(0.03), hndR[1], hndR[2] + K(0.04)];
@@ -3196,15 +3721,15 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(boxA(K(0.026), K(0.100), K(0.020), [T.BONE]), trs(c2[0] + K(0.062), c2[1] - K(0.070), c2[2], 0, 1, 1, 1, 0, 0.30 + i * 0.12), 6, shR, null, null, 1.14);
       }
     }
-    // â”€â”€ cape / back banner â”€â”€
+    // ── cape / back banner ──
     if (C.cape) {
       const cw = K(0.215) * B, c0 = ySh + K(0.03), c1 = yKne - K(0.04), ch = c0 - c1, cT = C.capeT === undefined ? T.CRIM : C.capeT;
       A(plateGeo([[-cw, 0], [cw, 0], [cw * 1.28, -ch * 0.50], [cw * 1.02, -ch], [-cw * 1.02, -ch], [-cw * 1.28, -ch * 0.50]], K(0.022), cT, cT),
         trs(0, c0, -K(0.165) * W, 0, 1, 1, 1, 0.13), 8, null, null, (x, y) => clamp((c0 - y) / ch, 0, 1), 0.82);
     }
-    // SPEC3 Â§B: ice grown THROUGH the armour â€” shards off both pauldrons and a crust down
+    // SPEC3 §B: ice grown THROUGH the armour — shards off both pauldrons and a crust down
     // the spine. Without them a pale knight is just a knight in the wrong palette.
-    // ARMIES-FIX2 Â§4: the shards were 0.46K stubs hugging the pauldron â€” invisible past
+    // ARMIES-FIX2 §4: the shards were 0.46K stubs hugging the pauldron — invisible past
     // 4x. Grown to nearly a head's height and pushed OUTSIDE the shoulder line so the
     // revenant's outline has four hard ice spurs on it, plus a bright crown of rime at
     // each shard root. That plus the resaturated T.FROST is the frost cue.
@@ -3225,7 +3750,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(uvAll(new THREE.ConeGeometry(K(0.052), K(0.30), 5), T.FROST),  // reaches the ground
           trs(s * hipX * 1.05, yKne - K(0.14), -K(0.09), 0, 1, 1, 1, 0.5, -s * 0.4), 0, null, null, null, 1.36);
     }
-    // Glowing hands (SPEC3 Â§B war shaman): the heal is invisible at range unless the caster
+    // Glowing hands (SPEC3 §B war shaman): the heal is invisible at range unless the caster
     // is lit. Two ember cores riding the wrists put the light ON the unit, not on the effect.
     if (C.glow) for (const [h, bo, pv] of [[hndL, 5, shL], [hndR, 6, shR]])
       A(uvAll(new THREE.SphereGeometry(K(0.086) * B, 7, 5), T.EMBER), trs(h[0], h[1] - K(0.030), h[2] + K(0.030)), bo, pv, null, null, 1.35);
@@ -3250,7 +3775,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(uvAll(new THREE.SphereGeometry(K(0.185) * B, 9, 5), T.FUR), trs(0, ySh - K(0.055), -K(0.050), 0, 1.55, 0.40, 0.86), 0, null, null, null, 1.0);
       for (const s of [-1, 1]) A(uvAll(new THREE.SphereGeometry(K(0.105) * B, 7, 5), T.FUR), trs(s * (shX + K(0.02)), ySh + K(0.030), -K(0.01), 0, 1, 0.80, 1), 0, null, null, null, 1.06);
     }
-    if (C.plates) {                                          // SPEC2 Â§D: iron bolted over hide
+    if (C.plates) {                                          // SPEC2 §D: iron bolted over hide
       A(tbox(K(0.52) * B, K(0.34), K(0.11), [T.IRON], 1.0, 0.84), trs(0, yCst - K(0.17), K(0.146) * W, 0, 1, 1, 1, -0.10), 0, null, null, null, 1.06);
       A(boxA(K(0.46) * B, K(0.080), K(0.095), [T.IRON]), trs(0, yWst + K(0.10), K(0.150) * W), 0, null, null, null, 1.12);
       A(boxA(K(0.095), K(0.095), K(0.052), [T.GOLD]), trs(0, yCst - K(0.17), K(0.205) * W), 0, null, null, null, 1.14);
@@ -3259,9 +3784,9 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
           trs(s * (shX + K(0.020)), ySh + K(0.010), 0, 0, 1, 0.62, 1), 0, null, null, null, 1.10);
         // two long shoulder spikes per side: at overview zoom these are the only thing
         // stopping a heavy-shouldered mini-boss from reading as a rectangle.
-        // ARMIES-FIX2 Â§4: `noSpikes` drops them for the ironclad, whose two pale spikes over
-        // a domed helm were reading as the war shaman's antlers. His read is the WALL â€” the
-        // full-height pavise plus the flat crown of the great helm â€” not a pair of horns.
+        // ARMIES-FIX2 §4: `noSpikes` drops them for the ironclad, whose two pale spikes over
+        // a domed helm were reading as the war shaman's antlers. His read is the WALL — the
+        // full-height pavise plus the flat crown of the great helm — not a pair of horns.
         if (C.noSpikes) continue;
         for (const [ox, oy, oz, r] of [[0.10, 0.42, -0.06, 0.062], [0.26, 0.30, 0.02, 0.048]]) {
           const [m, L] = spanM([s * (shX + K(0.070)), ySh + K(0.060), 0], [s * (shX + K(0.070 + ox * 1.5)), ySh + K(oy), K(oz)]);
@@ -3282,7 +3807,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return { geo: mergeA(p, C.h), h: C.h };
   }
 
-  // â”€â”€ HOUND (SPEC2 Â§D) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── HOUND (SPEC2 §D) ────────────────────────────────────────────────────────
   // A quadruped on the SAME skinning rig, which is the only reason it costs nothing
   // extra: bones 1/2 carry the FRONT legs and 3/4 the BACK legs with aPiv2 === aPiv, so
   // the shader's two-joint knee chain collapses to a single hip rotation and the gallop
@@ -3298,7 +3823,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     const ell = (r, sx, sy, sz, x, y, z, t, bone, piv, tint) =>
       A(uvAll(new THREE.SphereGeometry(r, SG + 1, 6), t), trs(x, y, z, 0, sx, sy, sz), bone, piv, piv, null, tint);
     const HD = [0, K(0.83), K(0.50)];                    // skull pivot (base of the neck)
-    // body: two ellipsoids (deep chest, tucked loin) â€” a box reads as a crate on legs
+    // body: two ellipsoids (deep chest, tucked loin) — a box reads as a crate on legs
     ell(K(0.200), 1.00, 0.96, 1.52, 0, K(0.640), K(0.190), C.coat, 0, null, 1.0);
     ell(K(0.182), 1.00, 1.00, 1.26, 0, K(0.640), -K(0.250), C.coat, 0, null, 0.96);
     A(boxA(K(0.300), K(0.130), K(0.560), [C.coat, C.coat, C.coat, C.belly, C.coat, C.coat]),
@@ -3325,7 +3850,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       const [m2, L2] = spanM([s * K(0.040), K(0.812), K(0.836)], [s * K(0.046), K(0.856), K(0.876)]);
       A(uvAll(new THREE.ConeGeometry(K(0.014), L2, 4), T.BONE), m2, 7, HD, null, null, 1.24);  // fangs
     }
-    // tail (bone 8 â€” the cloth channel gives it a live sway for free)
+    // tail (bone 8 — the cloth channel gives it a live sway for free)
     rod([0, K(0.700), -K(0.470)], [0, K(0.905), -K(0.790)], K(0.042), K(0.020), C.coat, 8, null, null, 0.94);
     p[p.length - 1].w = (x, y, z) => clamp((-z / k - 0.47) / 0.32, 0, 1);
     // four legs. Fronts are straight posts, hinds carry the hock zigzag that says "runs".
@@ -3342,10 +3867,10 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return { geo: mergeA(p, C.h), h: C.h };
   }
 
-  // â”€â”€ ASH WRAITH (SPEC3 Â§B) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── ASH WRAITH (SPEC3 §B) ───────────────────────────────────────────────────
   // The one thing on the road with NO LEGS. Everything below the ribs is a shroud that
   // stops a foot short of the grass, and every rag on it rides bone 8 (the cloth channel),
-  // so it drifts instead of marching â€” a hovering hole with two coals in the hood, which
+  // so it drifts instead of marching — a hovering hole with two coals in the hood, which
   // is the only silhouette a player can pick out of a running column at a glance.
   function buildWraith(C) {
     const p = [];
@@ -3370,7 +3895,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       trs(0, ySh + K(0.06), -K(0.02), 0, 1.10, 1, 0.94), 0, null, null, null, 0.62);
     A(uvAll(new THREE.CylinderGeometry(K(0.375), K(0.360), K(0.055), SG + 4, 1, true), T.SHROUD),
       trs(0, ySh + K(0.20), -K(0.02), 0, 1.10, 1, 0.94), 0, null, null, null, 0.46);
-    // ARMIES-FIX2 Â§4. One unbroken taper from hood to hem is a traffic cone â€” that is
+    // ARMIES-FIX2 §4. One unbroken taper from hood to hem is a traffic cone — that is
     // literally what the critic saw. THREE stepped skirts, each flaring wider than the one
     // above it and each with its own ragged lower edge, cut the cone into layered robes:
     // the wraith now has three hard horizontal breaks in its outline, which is what says
@@ -3410,10 +3935,10 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(uvAll(new THREE.SphereGeometry(K(0.026), 6, 4), T.EMBER),                    // the spill of
         trs(s * K(0.070), yCrn - K(0.340), K(0.140)), 7, hp, null, null, 1.55);      // light down the cheek
     }
-    // skeletal arms â€” bare bone against the shroud, and the only hard edges on the model
-    // ARMIES-FIX2 Â§4: the arms were tucked inside the shroud's own width and read as
+    // skeletal arms — bare bone against the shroud, and the only hard edges on the model
+    // ARMIES-FIX2 §4: the arms were tucked inside the shroud's own width and read as
     // "no arms". Swung OUT past the silhouette and lengthened so two long pale limbs
-    // trail off the body â€” the second thing (after the layered skirts) that tells the
+    // trail off the body — the second thing (after the layered skirts) that tells the
     // player this is a creature and not scenery.
     const shX = K(0.190), shL = [-shX, ySh - K(0.10), 0], shR = [shX, ySh - K(0.10), 0];
     for (const [s, bo, pv] of [[-1, 5, shL], [1, 6, shR]]) {
@@ -3430,7 +3955,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(plateGeo([[-K(0.086), 0], [K(0.086), 0], [K(0.044), -K(0.52)], [-K(0.062), -K(0.42)]], K(0.012), T.SHROUD, T.SHROUD),
         trs(s * (shX + K(0.15)), ySh - K(0.24), -K(0.03), s * 0.5), 8, null, null, () => 1.3, 0.72);
     }
-    // two long tatters streaming off the shoulders â€” the wraith's motion tell at range
+    // two long tatters streaming off the shoulders — the wraith's motion tell at range
     for (const s of [-1, 1])
       A(plateGeo([[-K(0.120), 0], [K(0.120), 0], [K(0.070), -K(0.72)], [-K(0.090), -K(0.60)]], K(0.014), T.SHROUD, T.SHROUD),
         trs(s * K(0.150), ySh + K(0.06), -K(0.240), s * 0.30, 1, 1, 1, 0.16), 8, null, null,
@@ -3439,17 +3964,17 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return { geo: mergeA(p, C.h), h: C.h };
   }
 
-  // â”€â”€ SIEGE RAM (SPEC3 Â§B) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── SIEGE RAM (SPEC3 §B) ────────────────────────────────────────────────────
   // Not a man at all: a timber cradle on four wheels with an iron-headed log slung under a
   // hide roof, pushed by four hunched crew. The log rides bone 6 (the weapon arm), so it
   // swings in its ropes as the machine rolls; the wheels ride bones 1/2, whose hip rotation
-  // is a rotation about X â€” exactly a wheel's axle â€” so they turn instead of sliding.
+  // is a rotation about X — exactly a wheel's axle — so they turn instead of sliding.
   function buildRam(C) {
     const p = [];
     const A = (g, m, bone, piv, piv2, w, tint) => { p.push({ g, m: m || null, bone: bone || 0, piv: piv || [0, 0, 0], piv2: piv2 || null, w: w || null, tint }); };
     // The local unit here is the RIDGE height, not the model height: everything below is
     // authored against a roof at 1.62, so k maps that onto C.h. The first cut divided by
-    // 2.60 and produced a machine shorter than the marauder walking beside it â€” a 1400-hit-
+    // 2.60 and produced a machine shorter than the marauder walking beside it — a 1400-hit-
     // point siege engine has to out-mass everything on the road except a boss.
     const k = C.h / 1.72, K = v => v * k, SG = C.seg || SEG;
     const rod = (a, b, r1, r2, t, bone, piv, tint) => {
@@ -3459,15 +3984,15 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     const HW = K(0.62), yBed = K(0.62), yTop = K(1.62);     // half-width, deck height, roof
     const CY = 0.84;                                        // crew are men, not giants: their
     // own heights are authored in the same local unit and then pulled back to human scale
-    // â”€â”€ chassis: two long sills, four cross members, a deck â”€â”€
+    // ── chassis: two long sills, four cross members, a deck ──
     for (const s of [-1, 1]) {
       A(boxA(K(0.13), K(0.16), K(2.30), [T.WOOD]), trs(s * HW, yBed, 0), 0, null, null, null, 1.0);
       A(boxA(K(0.10), K(0.07), K(2.34), [T.IRON]), trs(s * HW, yBed + K(0.10), 0), 0, null, null, null, 0.92);
     }
     for (let i = -2; i <= 2; i++)
       A(boxA(HW * 2.1, K(0.10), K(0.14), [T.WOOD]), trs(0, yBed + K(0.02), i * K(0.54)), 0, null, null, null, 0.90);
-    // â”€â”€ four wheels, all on bone 1 with their own axle pivots. Bone 1's animation is a
-    // rotation about X â€” which for a cart pointing down +z IS the axle â€” so the wheels turn
+    // ── four wheels, all on bone 1 with their own axle pivots. Bone 1's animation is a
+    // rotation about X — which for a cart pointing down +z IS the axle — so the wheels turn
     // with the gait instead of skidding, and sharing one bone keeps all four in phase.
     for (const s of [-1, 1]) for (const zf of [1, -1]) {
       const wr = K(0.56), ax = [s * (HW + K(0.12)), wr, zf * K(0.86)];
@@ -3483,7 +4008,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(uvAll(new THREE.CylinderGeometry(K(0.075), K(0.075), K(0.30), 6), T.IRON),   // axle stub
         trs(s * (HW + K(0.02)), wr, zf * K(0.86), 0, 1, 1, 1, 0, Math.PI / 2), 0, null, null, null, 0.96);
     }
-    // â”€â”€ A-frame uprights + ridge beam + hide roof â”€â”€
+    // ── A-frame uprights + ridge beam + hide roof ──
     for (const zf of [1, -1]) for (const s of [-1, 1])
       rod([s * HW, yBed + K(0.06), zf * K(0.80)], [s * K(0.16), yTop, zf * K(0.66)], K(0.11), K(0.09), T.WOOD, 0, null, 1.0);
     A(boxA(K(0.15), K(0.15), K(2.10), [T.WOOD]), trs(0, yTop, 0), 0, null, null, null, 1.06);
@@ -3494,14 +4019,14 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     }
     for (let i = -3; i <= 3; i++)                            // purlins under the hide
       A(boxA(K(1.34), K(0.05), K(0.07), [T.WOOD]), trs(0, yTop - K(0.34), i * K(0.30)), 0, null, null, null, 0.82);
-    // â”€â”€ the ram itself: bone 6, so it swings fore-and-aft in its ropes â”€â”€
+    // ── the ram itself: bone 6, so it swings fore-and-aft in its ropes ──
     const rp = [0, yTop - K(0.10), 0];
     rod([0, yBed + K(0.50), -K(1.04)], [0, yBed + K(0.50), K(1.56)], K(0.25), K(0.23), T.WOOD, 6, rp, 1.04);
     for (const zz of [-0.72, 0.00, 0.76])                    // iron bands along the log
       A(uvAll(new THREE.CylinderGeometry(K(0.265), K(0.265), K(0.15), SG + 2), T.IRON),
         trs(0, yBed + K(0.50), K(zz), 0, 1, 1, 1, Math.PI / 2), 6, rp, null, null, 1.02);
     { // the head: a bound iron ram's skull with two horns, standing well proud of the
-      // frame â€” the business end has to break the machine's outline or the whole thing
+      // frame — the business end has to break the machine's outline or the whole thing
       // reads as a covered cart rather than as the reason the gate is about to fall.
       A(uvAll(new THREE.CylinderGeometry(K(0.34), K(0.27), K(0.50), SG + 3), T.IRON),
         trs(0, yBed + K(0.50), K(1.76), 0, 1, 1, 1, Math.PI / 2), 6, rp, null, null, 1.10);
@@ -3514,14 +4039,14 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     }
     for (const zz of [-0.60, 0.70]) for (const s of [-1, 1])   // suspension ropes
       rod([s * K(0.10), yTop - K(0.10), K(zz)], [s * K(0.05), yBed + K(0.74), K(zz)], K(0.026), K(0.026), T.LEATH, 6, rp, 0.86);
-    // â”€â”€ crew: four hunched pushers on the flanks. Deliberately crude â€” they are scale
+    // ── crew: four hunched pushers on the flanks. Deliberately crude — they are scale
     // reference and motion, and any real detail on them steals read from the machine.
     for (const s of [-1, 1]) for (const zf of [0, 1]) {
       const cx = s * (HW + K(0.34)), cz = -K(0.72) - zf * K(0.62);
       A(tbox(K(0.30), K(0.62) * CY, K(0.23), [T.CRIM], 1.0, 0.86), trs(cx, K(0.94) * CY, cz, 0, 1, 1, 1, 0.34), 0, null, null, null, 0.94);
       A(uvAll(new THREE.SphereGeometry(K(0.14), 7, 5), T.IRON), trs(cx, K(1.30) * CY, cz + K(0.09)), 0, null, null, null, 1.02);
       A(boxA(K(0.26), K(0.26), K(0.09), [T.FACE]), trs(cx, K(1.26) * CY, cz + K(0.18)), 0, null, null, null, 0.92);
-      // legs ride bones 1/2 and arms 5/6 â€” the same channels the wheels and the log use, so
+      // legs ride bones 1/2 and arms 5/6 — the same channels the wheels and the log use, so
       // the crew walks and heaves without the rig growing a single new bone
       for (const [ls, bo] of [[-1, 1], [1, 2]]) {
         const hip = [cx + ls * K(0.10), K(0.66) * CY, cz];
@@ -3530,7 +4055,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       const sho = [cx, K(1.14) * CY, cz + K(0.05)];
       rod(sho, [cx - s * K(0.24), K(1.02) * CY, cz + K(0.52)], K(0.064), K(0.052), T.MAIL, zf ? 5 : 6, sho, 0.90);
     }
-    // â”€â”€ a horde standard lashed to the rear post (cloth channel: it waves) â”€â”€
+    // ── a horde standard lashed to the rear post (cloth channel: it waves) ──
     rod([0, yTop - K(0.04), -K(1.02)], [-K(0.10), yTop + K(0.98), -K(1.18)], K(0.045), K(0.036), T.WOOD, 0, null, 1.0);
     { const bw = K(0.34), bh = K(0.80), bty = yTop + K(0.88);
       A(plateGeo([[-bw, 0], [bw, 0], [bw, -bh * 0.84], [0, -bh], [-bw, -bh * 0.84]], K(0.018), T.BANN, T.BANN),
@@ -3539,7 +4064,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return { geo: mergeA(p, C.h), h: C.h };
   }
 
-  // â”€â”€ 5. GPU skinning: gait / fight lunge / death fall+sink+dither-dissolve â”€â”€
+  // ── 5. GPU skinning: gait / fight lunge / death fall+sink+dither-dissolve ──
   // aAnim (per instance) = (gait phase, cycle rate, mode 0=march 1=fight 2=guard, death 0..1 / -1 alive)
   const ANIM_HEAD = `
 uniform float uT; uniform float uHip;
@@ -3557,8 +4082,8 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   float wk = step(aMd, 0.5);
   float fg = step(0.5, aMd)*step(aMd, 1.5);
   float idl = step(1.5, aMd)*step(aMd, 2.5);
-  // SPEC2 Â§D modes. 3 = marauder braced and drawing; 4 = hound four-beat gallop (bones
-  // 1/2 front, 3/4 back â€” see buildHound); 5 = ogre stomp, a one-shot the CPU re-phases
+  // SPEC2 §D modes. 3 = marauder braced and drawing; 4 = hound four-beat gallop (bones
+  // 1/2 front, 3/4 back — see buildHound); 5 = ogre stomp, a one-shot the CPU re-phases
   // so aT starts at 0 on the frame the stomp lands.
   float sht = step(2.5, aMd)*step(aMd, 3.5);
   float qd  = step(3.5, aMd)*step(aMd, 4.5);
@@ -3627,10 +4152,10 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     if (vFade < dth + 0.02) discard;
   }
 `;
-  // â”€â”€ SPEC3 Â§D ELEMENTAL WARD SHELL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── SPEC3 §D ELEMENTAL WARD SHELL ────────────────────────────────────────────
   // The omen that turns a whole wave against the player's best school shipped with NO
   // on-unit visual at all: a warded grunt was pixel-identical to an ordinary grunt, so the
-  // only way to learn a combat state was to read a text card â€” a UI crutch standing in for
+  // only way to learn a combat state was to read a text card — a UI crutch standing in for
   // an art read. The shell is a FRESNEL RIM baked into the unit's own fragment shader
   // rather than a second instanced draw of the mesh: same silhouette-hugging result, zero
   // extra draw calls, and a phone rendering three hundred bodies pays one pow() for it.
@@ -3655,7 +4180,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
         .replace('#include <begin_vertex>', 'vec3 transformed = aP;');
       let fs = sh.fragmentShader.replace('void main() {', 'void main() {\n' + DITHER);
       if (ward) {
-        // three renamed this chunk (output_fragment â†’ opaque_fragment); resolve rather
+        // three renamed this chunk (output_fragment → opaque_fragment); resolve rather
         // than assume, because a silently failed replace means an invisible mechanic.
         const tag = fs.indexOf('#include <opaque_fragment>') >= 0
           ? '#include <opaque_fragment>' : '#include <output_fragment>';
@@ -3667,12 +4192,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     return mat;
   };
 
-  // â”€â”€ 5b. BOSS VARIANT KITS (SPEC2 Â§E) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // A map finale used to be the base boss with a colour multiply and a scale â€” three
+  // ── 5b. BOSS VARIANT KITS (SPEC2 §E) ─────────────────────────────────────────
+  // A map finale used to be the base boss with a colour multiply and a scale — three
   // climaxes, one silhouette, and one of them (cinderqueen at mscale 0.88) SMALLER than the
   // boss it recoloured. Each variant now owns a swappable attachment set built in the
   // boss's own local space and rendered as one extra InstancedMesh that shares his instance
-  // matrix, colour and animation attributes. Three draw calls, not three rigs â€” and a mesh
+  // matrix, colour and animation attributes. Three draw calls, not three rigs — and a mesh
   // whose count is 0 never draws, so the Vale pays nothing for the other maps' finales.
   const KITS = {};
   function buildKit(kind) {
@@ -3718,7 +4243,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
         A(boxA(K(0.40) * B, K(0.075), K(0.032), [T.LEATH]), trs(0, yCst - K(0.30), -K(0.20) * W, 0, 1, 1, 1, 0, 0.42), 0, null, null, 0.90); }
     } else if (kind === 'cinderqueen') {
       // CINDERQUEEN: a cracked mantle of spikes off the shoulder line and twin blades crossed
-      // at her back â€” the widest and spikiest of the three reads at the greatest distance.
+      // at her back — the widest and spikiest of the three reads at the greatest distance.
       for (let i = 0; i < 7; i++) {
         const f = (i / 6 - 0.5) * 2, x = f * (shX + K(0.20)), h2 = K(0.78) - Math.abs(f) * K(0.30);
         rod([x, ySh + K(0.02), -K(0.12) * W], [x * 1.24, ySh + h2, -K(0.42) * W], K(0.060), K(0.012), T.IRON, 0, null, 1.14);
@@ -3736,7 +4261,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     return mergeA(p, C.h);
   }
 
-  // â”€â”€ 6. archetype table + instanced meshes â”€â”€
+  // ── 6. archetype table + instanced meshes ──
   const CFG = {
     // FACTION LAW: red-army units carry NO T.STEEL and NO T.BLUE anywhere. Their metal is
     // T.IRON (warm, half-metallic) and their value mass is T.RED/#a42a22 tabard + skirt +
@@ -3754,7 +4279,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               pauld: T.FUR, skirt: T.CRIM, tabard: -1, chest: T.CRIM, face: T.FACE, helm: 'horned',
               shield: 'none', weapon: 'axe2h', knee: true, gait: 0.98, jit: 0.07, aim: 1.55, pelt: true,
               bracer: true, armTint: 0.80, bladeTint: 0.88 },
-    // THE WARLORD. Was blue pauldrons over a gold cuirass â€” the enemy general dressed in the
+    // THE WARLORD. Was blue pauldrons over a gold cuirass — the enemy general dressed in the
     // player's own heraldry. Crimson over dark iron now, and gold survives only as crown
     // band, belt buckle, tabard hem and pommel (well under 8% of his surface).
     boss:   { h: 3.90, bulk: 1.58, hose: T.IRON, shin: T.IRON, mail: T.IRON, arm: T.IRON, hand: T.IRON,
@@ -3762,12 +4287,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               shield: 'none', weapon: 'gsword', knee: true, kneeT: T.IRON, gait: 0.62, jit: 0.03, aim: 2.60,
               bladeTint: 0.92, banner: true, cape: true, seg: 10, tabW: 0.94,
               greave: true, greaveT: T.IRON, spauld: true, spauldT: T.IRON },
-    // ARMIES-FIX2 Â§2: the tabard is widened (0.96 -> 1.22 of the torso) and a blue breast
+    // ARMIES-FIX2 §2: the tabard is widened (0.96 -> 1.22 of the torso) and a blue breast
     // plate added, so a knight carries a blue MASS rather than a blue ribbon over steel.
     knight: { h: 1.88, bulk: 1.06, hose: T.MAIL, shin: T.MAIL, mail: T.MAIL, arm: T.MAIL, hand: T.STEEL,
               pauld: T.STEEL, skirt: T.BLUE, tabard: T.BLUE, tabW: 1.22, chest: T.BLUE, face: T.FACE, helm: 'plume',
               shield: 'kite', weapon: 'sword', knee: true, kneeT: T.STEEL, gait: 1.66, jit: 0.06, aim: 1.00, bar: 0.96 },
-    // â•â• SPEC2 Â§D: four more silhouettes, same rig, +4 draw calls â•â•
+    // ══ SPEC2 §D: four more silhouettes, same rig, +4 draw calls ══
     // Every one of them has to be told apart from a grunt at overview zoom, so each owns
     // one loud shape: a wall (pavise), a low four-legged blur (hound), a hood and a bow
     // (marauder) and sheer mass with tusks (ogre).
@@ -3792,7 +4317,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // shoulders ~1.9x the hip line and the skull sunk into the chest: mass with no
               // neck is the whole difference between a mini-boss and a big man in a hood.
               shF: 1.22, headDrop: 0.13 },
-    // â•â• SPEC3 Â§B: five more silhouettes, +5 draw calls â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══ SPEC3 §B: five more silhouettes, +5 draw calls ══════════════════════════
     // Each one exists to be recognised INSTANTLY and answered with a different school, so
     // each owns exactly one loud shape the rest of the roster does not have: a flat-topped
     // great helm behind a wall (ironclad), a legless drifting shroud (ashwraith), antlers
@@ -3831,7 +4356,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     const anim = new Float32Array(cap * 4);
     for (let i = 0; i < cap; i++) anim[i * 4 + 3] = -1;
     geo.setAttribute('aAnim', new THREE.InstancedBufferAttribute(anim, 4));
-    const ward = new Float32Array(cap * 4);          // (r,g,b,strength) â€” see WARD_FS
+    const ward = new Float32Array(cap * 4);          // (r,g,b,strength) — see WARD_FS
     const wardA = new THREE.InstancedBufferAttribute(ward, 4);
     wardA.setUsage(THREE.DynamicDrawUsage);
     geo.setAttribute('aWard', wardA);
@@ -3843,7 +4368,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
       emissiveIntensity: EMIT[key] || 0,
     }), C.h * 0.50 * (C.legF || 1), 'sold_' + key, true);
     const mesh = new THREE.InstancedMesh(geo, mat, cap);
-    // ARMIES-FIX2 Â§1. castShadow was already on and the units DO write into the map (verified
+    // ARMIES-FIX2 §1. castShadow was already on and the units DO write into the map (verified
     // by reading the depth texels back), but a 1.8u body over a 168u shadow frustum is ~40
     // texels of silhouette filtered by a 3x3 PCF kernel: what lands on the road is a pale
     // smear, not a shadow, and the horde read as stickers on the grass. Two changes:
@@ -3856,7 +4381,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     const dep = patchAnim(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), C.h * 0.50 * (C.legF || 1), 'solddep_' + key);
     mesh.customDepthMaterial = dep;
     scene.add(mesh);
-    // `hv` is the VISUAL height when the skeleton is not 6.5 heads (see legF) â€” the health
+    // `hv` is the VISUAL height when the skeleton is not 6.5 heads (see legF) — the health
     // bar rides on it, so an ogre's bar sits on its skull instead of a metre above it.
     AM[key] = { mesh, anim, cap, n: 0, h: C.hv || C.h, gait: C.gait, jit: C.jit, key,
                 bar: C.bar || 0.92, quad: !!C.quad, ward, wardA };
@@ -3890,7 +4415,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     Armies.KITS = KITM = KITS;
   }
 
-  // â”€â”€ 7. health bars: one instanced billboard quad system, drawn only when damaged â”€â”€
+  // ── 7. health bars: one instanced billboard quad system, drawn only when damaged ──
   {
     const bg = new THREE.PlaneGeometry(1, 1);
     const bar = new Float32Array(BAR_CAP * 2);
@@ -3937,10 +4462,10 @@ void main(){
     Armies.barMesh = barMesh;
   }
 
-  // â”€â”€ 7b. ward ground rings (SPEC3 Â§D) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 7b. ward ground rings (SPEC3 §D) ────────────────────────────────────────
   // The Fresnel shell above is the CLOSE read; this is the read that survives overview
   // pitch, where a rim light two pixels wide has nothing to sit on. One thin analytic ring
-  // laid flat under every warded body â€” one draw call, and on a wave that carries no omen
+  // laid flat under every warded body — one draw call, and on a wave that carries no omen
   // its count is 0, so an unwarded campaign pays nothing for it.
   {
     const rg = new THREE.PlaneGeometry(1, 1);
@@ -3971,15 +4496,15 @@ void main(){
     Armies.wardRing = wardRing;
   }
 
-  // â”€â”€ 7c. CONTACT SHADOWS (ARMIES-FIX2 Â§1) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── 7c. CONTACT SHADOWS (ARMIES-FIX2 §1) ────────────────────────────────────
   // The shadow map does render the horde, but a soldier is ~40 texels of a 168-unit
   // frustum and three-tap PCF filters that down to a grey haze the eye never reads as
   // contact. A tower's shadow is crisp because a tower is twenty times the footprint.
   // So the units get an explicit ground decal instead: one quad per body, laid flat,
   // ROTATED to the sun's ground bearing and stretched to the real shadow length
   // (height / tan(elevation)), with a soft radial core under the boots. It is one draw
-  // call for the whole army, it is resolution-independent, and â€” the part that matters
-  // for the horde read â€” a hundred of these overlapping on the road IS the crimson
+  // call for the whole army, it is resolution-independent, and — the part that matters
+  // for the horde read — a hundred of these overlapping on the road IS the crimson
   // river's footprint: the tan between the ranks stops being empty ground.
   {
     const SP = G.sun.position;
@@ -4018,20 +4543,20 @@ void main(){
   }
 }
 
-// â”€â”€ 8. per-frame sync: sub-tick position lerp + per-unit gait jitter â”€â”€
+// ── 8. per-frame sync: sub-tick position lerp + per-unit gait jitter ──
 const H1 = n => { let h = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
 const DEATH_DUR = 1.45;
 const _acol = new THREE.Color();
-// HOOK: VFX builder (SPEC3 Â§D). Elemental Ward turns a whole wave against the school the
+// HOOK: VFX builder (SPEC3 §D). Elemental Ward turns a whole wave against the school the
 // player has leaned on hardest, and a mechanic that only exists in a HUD banner is a
 // mechanic the player forgets the moment the horde walks on. So the wave WEARS it: the
 // per-instance tint is dragged toward the warded school's colour on a slow pulse, phase-
 // offset per unit so a column shimmers rather than strobing in lockstep. Costs one branch
-// and one lerp per unit â€” no quads, no second draw call, nothing in the alpha bucket, which
+// and one lerp per unit — no quads, no second draw call, nothing in the alpha bucket, which
 // is the only version of this that a phone rendering three hundred bodies can afford.
 // Storm reads VIOLET here and in VFX.hit, so it never collides with pierce's steel.
-// VFX-FIX2: the tint lerp alone was invisible â€” a warded grunt and an ordinary grunt were
-// the same pixels â€” so the tint is now only the QUIET half of the read. The loud half is
+// VFX-FIX2: the tint lerp alone was invisible — a warded grunt and an ordinary grunt were
+// the same pixels — so the tint is now only the QUIET half of the read. The loud half is
 // the Fresnel shell (WARD_FS) and the ground ring, both driven from WARDS below, which is
 // the school's SHELL colour: pierce steel-blue, fire orange, crush bone, storm cyan.
 const WARDC = { pierce: [0.74, 0.88, 1.10], crush: [1.06, 0.88, 0.54],
@@ -4041,14 +4566,14 @@ const WARDS = { pierce: [0.50, 0.70, 0.91], crush: [0.80, 0.69, 0.54],
 const _YAX = new THREE.Vector3(0, 1, 0);
 const _v3s = new THREE.Vector3();
 let _lastTick = -1, _wardWas = false;
-// â”€â”€ ARMIES-FIX2 Â§2: RENDER-ONLY FILE SPREAD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ARMIES-FIX2 §2: RENDER-ONLY FILE SPREAD ──────────────────────────────────
 // The sim draws `lane` from a triangular distribution (see spawnEnemy): two thirds of the
 // column lands inside the middle 1.4u of a road 4.6u across, which is why 100 alive still
 // reads as a one-to-two-wide conga line instead of the reference's crimson flood. The
-// DISTRIBUTION is load-bearing sim â€” r7 reverted a lattice that changed it because it
-// flipped BALANCE.md's map-3 anchors â€” so this does not touch `e.lane` at all. It reshapes
+// DISTRIBUTION is load-bearing sim — r7 reverted a lattice that changed it because it
+// flipped BALANCE.md's map-3 anchors — so this does not touch `e.lane` at all. It reshapes
 // the lane the RENDERER draws with: monotone, sign-preserving, fixed end points, and
-// clamped to Â±0.55u of displacement (a quarter of a body width, well inside the silhouette,
+// clamped to ±0.55u of displacement (a quarter of a body width, well inside the silhouette,
 // so hit sparks and melee pairings still land on the body). Deterministic in the unit id,
 // no rng, and it collapses to zero the moment a unit is engaged so scrums stay tight.
 const LANE_MAX = 2.35;
@@ -4066,7 +4591,7 @@ Armies.syncVisuals = (vtNow) => {
   for (const key in AM) AM[key].n = 0;
   for (const key in KITM) KITM[key].n = 0;
   let bn = 0, nw = 0, sn = 0, wardC = null;
-  // ARMIES-FIX2 Â§1/Â§2. One flat quad per body, rotated onto the sun's ground bearing and
+  // ARMIES-FIX2 §1/§2. One flat quad per body, rotated onto the sun's ground bearing and
   // scaled to the true shadow length. `fade` carries the death dissolve so a falling body
   // does not leave its shadow standing on the road.
   const pushShadow = (x, y, z, h, w, fade) => {
@@ -4087,7 +4612,7 @@ Armies.syncVisuals = (vtNow) => {
     if (!e.alive && e.deathT < 0) continue;
     const dd = e.alive ? -1 : (at - e.deathT) / DEATH_DUR;
     if (dd > 1.02) continue;
-    // `art` lets a map finale borrow another archetype's mesh (SPEC2 Â§E boss variants)
+    // `art` lets a map finale borrow another archetype's mesh (SPEC2 §E boss variants)
     const A = AM[e.def.art || e.type];
     if (!A || A.n >= A.cap) continue;
     if (e._cd === undefined) { e._cd = e._pd = e.d; e._pid = e.pathId; }
@@ -4123,7 +4648,7 @@ Armies.syncVisuals = (vtNow) => {
     if (tnt) _acol.setRGB(l * (1 + wv) * tnt[0], l * tnt[1], l * (1 - wv * 1.5) * tnt[2]);
     else _acol.setRGB(l * (1 + wv), l, l * (1 - wv * 1.5));
     const WS = e.ward && WARDS[e.ward];
-    if (e.ward) {                                  // SPEC3 Â§D â€” the warded wave shimmers
+    if (e.ward) {                                  // SPEC3 §D — the warded wave shimmers
       const W = WARDC[e.ward];
       if (W) {
         const k = 0.11 + 0.15 * (0.5 + 0.5 * Math.sin(at * 2.3 + h2 * 6.2831853));
@@ -4153,7 +4678,7 @@ Armies.syncVisuals = (vtNow) => {
     an[o + 1] = rate;
     an[o + 2] = mode; an[o + 3] = dd;
     A.n++;
-    // SPEC2 Â§E: a finale variant bolts its own silhouette kit onto the shared boss body â€”
+    // SPEC2 §E: a finale variant bolts its own silhouette kit onto the shared boss body —
     // identical matrix, colour and animation row, so it is one extra draw call rather than
     // one extra rig, and it costs nothing on a map that never fields that boss.
     const KT = e.def.art_kit && KITM[e.def.art_kit];
@@ -4165,7 +4690,7 @@ Armies.syncVisuals = (vtNow) => {
       KT.n++;
     }
     // Bars are a DAMAGE read-out for the rank and file, but a mini-boss's bar is a threat
-    // read-out: `elite` (SPEC3 Â§B â€” ogre, ironclad, ram) keeps it up from the moment the
+    // read-out: `elite` (SPEC3 §B — ogre, ironclad, ram) keeps it up from the moment the
     // thing walks on, so the player can see what he is about to have to kill.
     if (e.alive && (e.hp < e.maxhp || e.def.elite))
       pushBar(_v3.x, _v3.y + A.h * s + 0.34, _v3.z, A.bar * s, e.hp / e.maxhp, 0);
@@ -4186,7 +4711,7 @@ Armies.syncVisuals = (vtNow) => {
     _q.setFromAxisAngle(_YAX, kn.face);
     _m4.compose(_v3.set(x, G.groundY(x, z), z), _q, _sc.setScalar(s));
     KA.mesh.setMatrixAt(KA.n, _m4);
-    // ARMIES-FIX2 Â§2: six knights buried in a hundred-body red mass were 2-3 pale pixels.
+    // ARMIES-FIX2 §2: six knights buried in a hundred-body red mass were 2-3 pale pixels.
     // The per-instance tint now pushes them COOL as well as bright, so the defenders read
     // blue against the crimson instead of reading as steel-coloured enemies.
     const l = 0.98 + h2 * 0.14;
@@ -4212,7 +4737,7 @@ Armies.syncVisuals = (vtNow) => {
   barMesh.geometry.attributes.aBar.needsUpdate = true;
   shadDecal.count = sn;
   shadDecal.instanceMatrix.needsUpdate = true;
-  // SPEC3 Â§D: the ward buffers only move on frames a ward is (or has just stopped being)
+  // SPEC3 §D: the ward buffers only move on frames a ward is (or has just stopped being)
   // on the road, so an unwarded campaign never uploads them at all.
   if (nw > 0 || _wardWas) {
     for (const key in AM) if (AM[key].wardA) AM[key].wardA.needsUpdate = true;
@@ -4222,31 +4747,31 @@ Armies.syncVisuals = (vtNow) => {
   }
   _wardWas = nw > 0;
 };
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: ARMIES â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: ARMIES ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: TOWERS (owner: TOWERS builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: TOWERS (owner: TOWERS builder) ══════════════════════
 // Four hand-authored procedural fortifications, each with three visible upgrade stages
 // and a mechanism that actually tracks and shoots at the sim's targets.
 //
-// PERF CONTRACT â€” every tower is exactly FOUR merged meshes (one per material bucket).
+// PERF CONTRACT — every tower is exactly FOUR merged meshes (one per material bucket).
 // Moving parts are NOT separate objects: they are rigged in the vertex shader off baked
 // per-vertex pivot/weight attributes driven by six per-tower uniforms, so a fully
 // animated ballista still costs 4 draw calls. Projectiles are 3 pooled InstancedMeshes.
 // Selection UX adds 2 meshes that only draw while something is selected, and every
 // brazier/torch flame in the game shares 1 additive InstancedMesh.
 //
-// RIG CHANNELS (per-vertex weight Ã— per-tower uniform driver):
-//   aRig.x Ã— uPitch  rotate about local X at aPiv   (elevation, catapult arm, bow draw)
-//   aRig.y Ã— uSlide  translate along local Z        (bolt carriage, nocked arrow)
-//   aRig.z Ã— uYaw    rotate about local Y at uYawP  (turret / archer torso; radians)
-//   aRig.w Ã— uAux    rotate about local Y at aPiv   (ballista arms, training dummy)
-//   aLoad  Ã— uLoad   scale about aPv2               (ammunition appear/disappear)
-// ELEMENT (SPEC3 Â§A) replaces SPEC2's dmgType: every damaging tower belongs to exactly one
-// school â€” pierce Â· crush Â· fire Â· storm â€” and every foe carries a resist vector against
+// RIG CHANNELS (per-vertex weight × per-tower uniform driver):
+//   aRig.x × uPitch  rotate about local X at aPiv   (elevation, catapult arm, bow draw)
+//   aRig.y × uSlide  translate along local Z        (bolt carriage, nocked arrow)
+//   aRig.z × uYaw    rotate about local Y at uYawP  (turret / archer torso; radians)
+//   aRig.w × uAux    rotate about local Y at aPiv   (ballista arms, training dummy)
+//   aLoad  × uLoad   scale about aPv2               (ammunition appear/disappear)
+// ELEMENT (SPEC3 §A) replaces SPEC2's dmgType: every damaging tower belongs to exactly one
+// school — pierce · crush · fire · storm — and every foe carries a resist vector against
 // those four. There is no "ignores armour" branch any more: a school is strong against
 // some silhouettes and inefficient against others, which is the whole diversification
-// pressure. The barracks does no tower damage of its own â€” its knights swing CRUSH.
-// `mode` (SPEC3 Â§F) is the tower's DEFAULT targeting doctrine; the player cycles it per
+// pressure. The barracks does no tower damage of its own — its knights swing CRUSH.
+// `mode` (SPEC3 §F) is the tower's DEFAULT targeting doctrine; the player cycles it per
 // tower (First / Strong / Close) and the choice rides on the tower, not on the type.
 const TOWER_DEFS = {
   // Balance pass r2: archer one-shots early grunts (16 vs 12hp*hpMul through W4) so single-
@@ -4256,31 +4781,31 @@ const TOWER_DEFS = {
   ballista: { name: 'Ballista', cost: 85,  range: 14, cd: 2.3,  dmg: 38,  color: 0x777f88, pierce: 4, element: 'pierce', mode: 'strong' },
   catapult: { name: 'Catapult', cost: 110, range: 12, cd: 3.4,  dmg: 26,  color: 0x5f5648, splash: 4.5, minRange: 4.5, element: 'crush', mode: 'first' },
   barracks: { name: 'Barracks', cost: 70,  range: 8,  cd: 0,    dmg: 0,   color: 0x3a5fa0, knights: 3, element: 'crush' },
-  // r9: user playtest â€” storm+banner carried a zero-loss campaign. Crowd dps âˆ’31%, and the
+  // r9: user playtest — storm+banner carried a zero-loss campaign. Crowd dps −31%, and the
   // tank spine (brute/ogre/bosses) now grounds out chains so storm stays the swarm answer,
   // not the everything answer.
   storm:    { name: 'Storm',    cost: 100, range: 11, cd: 1.75, dmg: 23,  color: 0x6f86b6, element: 'storm', mode: 'strong', chain: 3, hop: 6.5, fall: 0.40 },
   pyre:     { name: 'Pyre',     cost: 95,  range: 8,  cd: 2.8,  dmg: 0,   color: 0x6a4a34, element: 'fire', mode: 'close',
               patch: { dps: 14, dur: 4, rad: 3, max: 2 } },
   banner:   { name: 'Warbanner', cost: 80, range: 9,  cd: 0,    dmg: 0,   color: 0x2e5fa3, element: 'support',
-              aura: [0.10, 0.16, 0.22] }, // r9: rate aura compounds hardest on high-per-shot AoE â€” trimmed
+              aura: [0.10, 0.16, 0.22] }, // r9: rate aura compounds hardest on high-per-shot AoE — trimmed
 };
-// A tower "fights" if it damages by itself â€” the banner never does, so the sim's firing
+// A tower "fights" if it damages by itself — the banner never does, so the sim's firing
 // loop and the aim solver both ask this instead of testing `dmg` alone.
 const fights = (def) => !!(def.dmg || def.patch);
 G.TOWER_DEFS = TOWER_DEFS;
-// onFire / fireEvents / projRender are the VFX builder's attachment points (see Â§hooks).
+// onFire / fireEvents / projRender are the VFX builder's attachment points (see §hooks).
 const Towers = { onFire: null, fireEvents: [], projRender: [] };
 G.Towers = Towers;
 
-// â”€â”€ deterministic local jitter stream (never touches the sim rng or world scatter) â”€â”€
+// ── deterministic local jitter stream (never touches the sim rng or world scatter) ──
 let _tsd = 0;
 const tsd = (s) => { _tsd = (Math.imul(s | 0, 2654435761) ^ 0x9e3779b9) >>> 0; };
 const trng = () => { _tsd |= 0; _tsd = _tsd + 0x6D2B79F5 | 0; let t = Math.imul(_tsd ^ _tsd >>> 15, 1 | _tsd); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const tr = (a, b) => a + (b - a) * trng();
 
-// â”€â”€ absolute linear albedos for the untextured "trim" bucket. The sun is 4.9 intensity
-// with 0.68 environment on top, so these are DELIBERATELY dark â€” 0.20 already renders
+// ── absolute linear albedos for the untextured "trim" bucket. The sun is 4.9 intensity
+// with 0.68 environment on top, so these are DELIBERATELY dark — 0.20 already renders
 // as bright gold and 0.30 blows out. [metalness, roughness] pairs alongside.
 const IRON = [0.050, 0.053, 0.061], DIRON = [0.026, 0.027, 0.031], STEEL = [0.103, 0.110, 0.122],
       GOLD = [0.200, 0.142, 0.040], ROPE = [0.086, 0.070, 0.044], LEATH = [0.058, 0.039, 0.025],
@@ -4290,14 +4815,14 @@ const IRON = [0.050, 0.053, 0.061], DIRON = [0.026, 0.027, 0.031], STEEL = [0.10
 const M_IRON = [0.72, 0.42], M_STEEL = [0.86, 0.27], M_GOLD = [0.93, 0.25],
       M_DULL = [0, 0.90], M_ROCK = [0, 0.95], M_CLOTH = [0, 0.86], M_SKIN = [0, 0.70];
 // INTEGRATE: a tower stands at G.padY, which is the LOWEST ground within the 1.9u
-// foundation footprint â€” so anything the model puts FURTHER out (palisade stakes at 3.8u,
+// foundation footprint — so anything the model puts FURTHER out (palisade stakes at 3.8u,
 // tent pegs, guy pegs) sits on a plane the terrain has already fallen away from, and on a
 // slope it hangs in the air. canPlace admits ground down to ny 0.93 (~21.6 deg), so 3.8u
 // out can be 1.5u below the pad. Every such prop is driven SINK deeper with its top left
 // where it was: buried timber costs nothing (same merged draw call) and cannot float.
 const SINK = 1.5;
 
-// â”€â”€ shared textures (created once; the wrng stream is already past World.build) â”€â”€
+// ── shared textures (created once; the wrng stream is already past World.build) ──
 function tentTex() {                                   // weathered striped campaign canvas
   const S = 256, [c, g] = cnv(S);
   g.fillStyle = '#cabe9f'; g.fillRect(0, 0, S, S);
@@ -4316,7 +4841,7 @@ function tentTex() {                                   // weathered striped camp
   return tex(c, 1);
 }
 // One heraldry atlas serves every cloth on every tower: quadrants are
-// [0,.5,.5,1] tall banner Â· [.5,.5,1,1] streamer pennant Â· [0,0,.5,.5] square standard Â·
+// [0,.5,.5,1] tall banner · [.5,.5,1,1] streamer pennant · [0,0,.5,.5] square standard ·
 // [.5,0,1,.5] plain field (shields, tent flaps).
 const HR_TALL = [0, 0.5, 0.5, 1], HR_PEN = [0.5, 0.5, 1, 1], HR_SQ = [0, 0, 0.5, 0.5], HR_PLAIN = [0.5, 0, 1, 0.5];
 function heraldTex() {
@@ -4340,14 +4865,14 @@ function heraldTex() {
     g.closePath(); g.fill();
     g.strokeStyle = DG; g.lineWidth = 3; g.stroke();
   };
-  // A Â· tall hanging banner (top-left)
+  // A · tall hanging banner (top-left)
   field(0, 0, H, H, 6);
   g.fillStyle = GD; g.fillRect(0, 0, H, 14); g.fillStyle = DG; g.fillRect(0, 14, H, 5);
   g.fillStyle = GD; g.fillRect(0, 0, 9, H); g.fillRect(H - 9, 0, 9, H);
   star(H / 2, H * 0.40, 46);
   g.fillStyle = GD; g.fillRect(0, H - 26, H, 8);       // fringe rail
   for (let i = 0; i < 12; i++) { g.fillStyle = i & 1 ? GD : DG; g.beginPath(); g.moveTo(i * H / 12, H - 18); g.lineTo((i + 1) * H / 12, H - 18); g.lineTo(i * H / 12 + H / 24, H - 2); g.closePath(); g.fill(); }
-  // B Â· long streamer pennant (top-right) â€” u runs along the length, v across the height
+  // B · long streamer pennant (top-right) — u runs along the length, v across the height
   field(H, 0, H, H, 3);
   g.fillStyle = GD; g.fillRect(H, 0, H, 16); g.fillRect(H, H - 16, H, 16);
   g.fillStyle = DG; g.fillRect(H, 16, H, 5); g.fillRect(H, H - 21, H, 5);
@@ -4356,19 +4881,19 @@ function heraldTex() {
     const x0 = H + 18 + i * 46;
     g.beginPath(); g.moveTo(x0, 34); g.lineTo(x0 + 20, H / 2); g.lineTo(x0, H - 34); g.lineTo(x0 + 9, H - 34); g.lineTo(x0 + 29, H / 2); g.lineTo(x0 + 9, 34); g.closePath(); g.fill();
   }
-  // C Â· square standard (bottom-left)
+  // C · square standard (bottom-left)
   field(0, H, H, H, 5);
   g.strokeStyle = GD; g.lineWidth = 16; g.strokeRect(8, H + 8, H - 16, H - 16);
   g.strokeStyle = DG; g.lineWidth = 4; g.strokeRect(17, H + 17, H - 34, H - 34);
   star(H / 2, H + H / 2, 66);
-  // D Â· plain field (bottom-right)
+  // D · plain field (bottom-right)
   field(H, H, H, H, 4);
   const t = tex(c); t.anisotropy = 8; return t;
 }
 const TXT = { wood: woodTex(), stone: stoneTex(), slate: shingleTex('#22262c', 'rgba(108,118,132,L)'),
               tent: tentTex(), herald: heraldTex() };
 
-// â•â• vertex-shader rig â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ vertex-shader rig ══════════════════════════════════════════════════════════
 const RIG_DECL = `
 attribute vec3 aPiv; attribute vec3 aPv2; attribute vec4 aRig; attribute float aLoad;
 attribute vec2 aMR; attribute float aWv;
@@ -4427,9 +4952,9 @@ function rigDepth(U) {
   return d;
 }
 
-// â•â• geometry assembly â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ geometry assembly ══════════════════════════════════════════════════════════
 const _sa = new THREE.Vector3(), _sb = new THREE.Vector3(), _sd = new THREE.Vector3(), _sup = new THREE.Vector3(0, 1, 0);
-// maps a unit-height box onto the segment aâ†’b (so timber can be aimed, not hand-rotated)
+// maps a unit-height box onto the segment a→b (so timber can be aimed, not hand-rotated)
 function span(a, b) {
   _sa.fromArray(a); _sb.fromArray(b); _sd.subVectors(_sb, _sa);
   const len = _sd.length() || 1e-5; _sd.divideScalar(len);
@@ -4477,7 +5002,7 @@ function tMerge(parts, uvDef) {
       }
       const mot = 1 - jit * 0.5 + jit * vnz(v.x * 3.3 + v.z * 1.8, v.y * 2.6);
       const dn = (1 - aoK) + aoK * clamp(v.y * 0.26 + 0.56, 0, 1);
-      // a source colour attribute (from paint()/facet()) is a MODULATION, not discarded â€”
+      // a source colour attribute (from paint()/facet()) is a MODULATION, not discarded —
       // that is what lets faceted procedural rock keep its per-triangle granite tint
       const sr = CA ? CA.getX(i) : 1, sg = CA ? CA.getY(i) : 1, sb = CA ? CA.getZ(i) : 1;
       col[k3] = R * sr * mot * dn; col[k3 + 1] = Gc * sg * mot * dn; col[k3 + 2] = Bc * sb * mot * dn;
@@ -4515,7 +5040,7 @@ function ctx() {
   const beam = (k, w, d, a, b, o) => { const [m] = span(a, b); return add(k, B(w, 1, d), m, o); };
   return { bk, add, beam };
 }
-// â•â• shared sub-assemblies â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ shared sub-assemblies ══════════════════════════════════════════════════════
 // a hanging cloth: plane subdivided so the sway shader can ripple it, aW rising with
 // distance from the fixing so the fixed edge stays put
 function clothGeo(w, h, sx, sy) { const g = new THREE.PlaneGeometry(w, h, sx, sy); g.translate(0, -h / 2, 0); return g; }
@@ -4541,7 +5066,7 @@ function footing(add, cx, cz, r, n, sc) {
       { tint: [ROCK[0] * 0.82, ROCK[1] * 0.90, ROCK[2] * 0.74], jit: 0.40, ao: 0.50, mr: M_ROCK });
   }
 }
-// iron strap + rivets round a post â€” the detail that stops timber reading as toy blocks
+// iron strap + rivets round a post — the detail that stops timber reading as toy blocks
 function strap(add, y, hw, th, gild) {
   for (const s of [-1, 1]) {
     add('t', B(hw * 2 + th, 0.10, th), trs(0, y, s * hw), { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON, jit: 0.14 });
@@ -4573,7 +5098,7 @@ function figCrew(add, ox, oy, oz, ry, pose) {
   }
 }
 
-// â•â• 1 Â· ARCHER WATCHTOWER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 1 · ARCHER WATCHTOWER ══════════════════════════════════════════════════════
 // Raking timber frame on dry-stone footings, jettied fighting deck, hipped shingle
 // roof, blue streamer pennant, and a live archer who tracks, draws and looses.
 function figArcher(add, ox, oy, oz, pose) {
@@ -4739,7 +5264,7 @@ function bArcher(L) {
     add('b', clothGeo(0.62, 0.72, 1, 1), trs(dh * 0.42, H + 0.30 + pH, dh + 0.09), { pl: 1, rect: HR_PLAIN, mr: M_CLOTH, ao: 0.1 });
     add('t', CY(0.09, 0.09, 0.05, 8), trs(dh * 0.42, H + 0.30 + pH - 0.36, dh + 0.13), { tint: gild ? GOLD : STEEL, mr: gild ? M_GOLD : M_STEEL });
   }
-  // crew â€” the shooter stands at the front sill so his torso, bow and helm clear the
+  // crew — the shooter stands at the front sill so his torso, bow and helm clear the
   // parapet at the gameplay camera angle. He yaws about his OWN feet, not the deck centre.
   const shZ = dh - 0.62;
   figArcher(add, 0, H + 0.24, shZ, 0);
@@ -4747,7 +5272,7 @@ function bArcher(L) {
   if (L >= 3) figArcher(add, dh - 0.58, H + 0.24, -dh + 0.70, 2);
   return { bk, yawP: [0, H + 0.24, shZ], muz: [0.55, H + 1.45] };
 }
-// â•â• 2 Â· BALLISTA â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 2 · BALLISTA ═══════════════════════════════════════════════════════════════
 // Coursed-masonry pedestal, iron-and-ash armature that yaws + elevates onto its target,
 // and a windlass re-cock between shots. Long blue banner on a mast, as per the reference.
 function bBallista(L) {
@@ -4756,7 +5281,7 @@ function bBallista(L) {
   const H = [1.62, 2.02, 2.42][L - 1];                 // pedestal height
   const gild = L >= 3;
   const so = { uv: 2.4, tint: [0.66, 0.62, 0.52], jit: 0.34, ao: 0.40 };
-  // pedestal: battered drum, string course, moulded cornice, entry steps. Kept NARROW â€”
+  // pedestal: battered drum, string course, moulded cornice, entry steps. Kept NARROW —
   // an over-wide drum swallows the machine and the whole thing reads as a stone tub.
   add('s', CY(1.26, 1.52, H * 0.66, 8), trs(0, H * 0.33, 0), so);
   add('s', CY(1.36, 1.30, 0.20, 8), trs(0, H * 0.66 + 0.10, 0), { uv: 2.4, tint: 0.76, jit: 0.28, ao: 0.30 });
@@ -4773,7 +5298,7 @@ function bBallista(L) {
   add('w', CY(0.78, 0.86, 0.15, 12), trs(0, H + 0.12, 0), { uv: 1.2, tint: 1.06, rig: YW });
   add('w', B(1.24, 0.20, 1.80), trs(0, H + 0.22, -0.05), { uv: 1.1, tint: 1.14, rig: YW });
   for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; add('t', B(0.12, 0.12, 0.12), trs(Math.cos(a) * 1.06, H + 0.02, Math.sin(a) * 1.06), { tint: IRON, mr: M_IRON }); }
-  // â”€â”€ the pitching cradle. Geometry is authored level; uPitch is the elevation in radians.
+  // ── the pitching cradle. Geometry is authored level; uPitch is the elevation in radians.
   // It sits a clear 0.9u above the cornice so the machine, not the plinth, is the read.
   const cy = H + 1.00, piv = [0, cy, -0.30];
   const PC = { rig: [1, 0, 1, 0], piv };               // pitch + yaw
@@ -4788,7 +5313,7 @@ function bBallista(L) {
     add('t', CY(0.16, 0.16, 0.12, 9), trs(s * 0.33, cy, -0.30, 0, 1, 1, 1, 0, 1.5708), { tint: IRON, mr: M_IRON, rig: YW });
     beam('w', 0.13, 0.13, [s * 0.46, cy - 1.05, -0.30], [s * 0.86, cy - 1.14, 0.55], { uv: 0.9, tint: 0.8, rig: YW });
   }
-  // elevating strut at the breech (timber, not polished steel â€” a metalness-0.7 rod up
+  // elevating strut at the breech (timber, not polished steel — a metalness-0.7 rod up
   // here catches the sky and reads as a white stick from the gameplay camera)
   for (const s of [-1, 1]) beam('w', 0.12, 0.12, [s * 0.30, cy - 0.10, -0.95], [s * 0.42, H + 0.30, -0.30], { uv: 0.9, tint: 0.84, rig: YW });
   // field frame at the muzzle: two posts, transoms, vertical torsion bundles
@@ -4801,7 +5326,7 @@ function bBallista(L) {
   }
   add('w', B(1.86 * S, 0.26, 0.28 * S), trs(0, fy0 + 0.03, fz), Object.assign({ uv: 1.0, tint: 0.94 }, PC));
   add('w', B(1.86 * S, 0.24, 0.28 * S), trs(0, fy0 + fh - 0.05, fz), Object.assign({ uv: 1.0, tint: 0.94 }, PC));
-  // throwing arms: sweep OUTWARD (mostly Â±x) about the vertical torsion springs so the
+  // throwing arms: sweep OUTWARD (mostly ±x) about the vertical torsion springs so the
   // silhouette from a top-down camera is unmistakably a ballista
   const armY = fy0 + fh * 0.55, aL = 1.55 * S;
   for (const s of [-1, 1]) {
@@ -4840,7 +5365,7 @@ function bBallista(L) {
   // crew
   figCrew(add, 0.55, 0, -1.95, -0.25, 0);
   if (L >= 2) figCrew(add, -1.62, 0, 0.15, 1.45, 1);
-  // banner mast â€” the long blue banner from the reference frame
+  // banner mast — the long blue banner from the reference frame
   const mh = [4.6, 5.5, 6.4][L - 1], mx = 1.82;
   add('w', CY(0.115, 0.095, mh, 7), trs(mx, mh / 2, -1.55), { uv: 1.0, tint: 0.9 });
   add('t', new THREE.SphereGeometry(gild ? 0.20 : 0.14, 9, 7), trs(mx, mh + 0.14, -1.55), { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON, jit: 0.1 });
@@ -4856,7 +5381,7 @@ function bBallista(L) {
   return { bk, yawP, muz: [2.2 * S, H + 1.5] };
 }
 
-// â•â• 3 Â· CATAPULT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 3 · CATAPULT ═══════════════════════════════════════════════════════════════
 // Timber onager on a stone platform. The arm is authored at the RELEASED pose, so
 // uPitch = 0 is "just thrown" and uPitch = 1 is "cocked", which lets the throw play
 // straight off the sim's fire event.
@@ -4893,7 +5418,7 @@ function bCatapult(L) {
   add('t', CY(0.40 * S, 0.40 * S, 1.55 * S, 12), trs(0, axY, axZ, 0, 1, 1, 1, 0, 1.5708), { tint: ROPE, mr: M_DULL, jit: 0.34, rig: YW });
   for (const s of [-1, 1]) { add('w', B(0.26 * S, 1.0 * S, 0.62 * S), trs(s * 0.90 * S, axY - 0.06, axZ), { uv: 1.0, tint: 0.9, rig: YW });
     add('t', CY(0.20, 0.20, 0.16, 9), trs(s * 0.78 * S, axY, axZ, 0, 1, 1, 1, 0, 1.5708), { tint: IRON, mr: M_IRON, rig: YW }); }
-  // throwing arm (released pose) + sling pouch with a whip lead of 1.45Ã— the arm
+  // throwing arm (released pose) + sling pouch with a whip lead of 1.45× the arm
   const ARM = -1.42, tip = [0, axY + 3.05 * S, axZ + 1.15 * S];
   const AR = { rig: [ARM, 0, 1, 0], piv };
   const [am] = span([0, axY - 0.16, axZ - 0.06], tip);
@@ -4939,7 +5464,7 @@ function bCatapult(L) {
   for (const s of [-1, 1]) add('t', B(0.90, 0.07, 0.07), trs(2.25, 0.31 + s * 0.20, 1.25), { tint: IRON, mr: M_IRON });
   return { bk, yawP, muz: [0.9, py + 2.4 * S] };
 }
-// â•â• 4 Â· BARRACKS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 4 · BARRACKS ═══════════════════════════════════════════════════════════════
 // Palisaded campaign camp: ridge tents, a lit brazier, a battered training dummy,
 // weapon rack and the company standard. Opens toward the road.
 function bBarracks(L) {
@@ -4947,7 +5472,7 @@ function bBarracks(L) {
   tsd(4409 + L * 97);
   const L1 = L - 1, gild = L >= 3;
   const R = [3.30, 3.55, 3.80][L1], PH = [1.30, 1.58, 1.86][L1];   // palisade radius / height
-  // â”€â”€ palisade: pointed stakes on an arc, open toward +z (the road side)
+  // ── palisade: pointed stakes on an arc, open toward +z (the road side)
   const a0 = 1.12, a1 = 6.283 - 1.12, n = Math.round((a1 - a0) / 0.21);
   for (let i = 0; i <= n; i++) {
     const a = a0 + (i / n) * (a1 - a0), h = PH * tr(0.90, 1.06);
@@ -4973,7 +5498,7 @@ function bBarracks(L) {
     const a = s < 0 ? a1 : a0;
     beam('w', 0.15, 0.15, [Math.cos(a) * R, PH + 0.30, Math.sin(a) * R], [Math.cos(a) * (R + 0.85), -SINK, Math.sin(a) * (R + 0.85)], { uv: 0.9, tint: 0.88 });
   }
-  // â”€â”€ ridge tents
+  // ── ridge tents
   const tent = (tx, tz, ry, w, len, hgt, cmd) => {
     const sl = Math.hypot(w / 2, hgt);
     const M0 = trs(tx, 0, tz, ry);
@@ -5006,13 +5531,13 @@ function bBarracks(L) {
   tent(-2.00, -1.05, 0.72, 1.90, 2.25, 1.22, false);
   if (L >= 2) tent(-2.35, 1.35, 1.52, 1.58, 1.85, 1.02, false);
   tent(1.62, -1.72, -0.46, 1.78, 2.10, 1.14, L >= 3);
-  // â”€â”€ brazier: iron tripod, bowl of coals (the flame quad lives in the shared glow mesh)
+  // ── brazier: iron tripod, bowl of coals (the flame quad lives in the shared glow mesh)
   const bx = 1.72, bz = 1.42;
   for (let i = 0; i < 3; i++) { const a = i * 2.094 + 0.4; const [m] = span([bx + Math.cos(a) * 0.44, 0, bz + Math.sin(a) * 0.44], [bx, 0.78, bz]); add('t', B(0.075, 1, 0.075), m, { tint: DIRON, mr: M_IRON }); }
   add('t', CY(0.46, 0.30, 0.34, 10), trs(bx, 0.92, bz), { tint: DIRON, mr: M_IRON, jit: 0.2, ao: 0.3 });
   add('t', CY(0.40, 0.40, 0.10, 10), trs(bx, 1.06, bz), { tint: EMBER, mr: [0, 0.85], jit: 0.34, ao: 0 });
   for (let i = 0; i < 5; i++) { const a = tr(0, 6.283), rr = tr(0, 0.30); add('t', B(tr(0.08, 0.16), tr(0.06, 0.12), tr(0.08, 0.16)), trs(bx + Math.cos(a) * rr, 1.13, bz + Math.sin(a) * rr, tr(0, 6.28)), { tint: i & 1 ? EMBER : SOOT, jit: 0.3, ao: 0 }); }
-  // â”€â”€ training dummy (rocks under blows via the aux channel)
+  // ── training dummy (rocks under blows via the aux channel)
   const dx = -1.10, dz = 2.05, dp = [dx, 0, dz];
   const DR = { rig: [0, 0, 0, 0.20], piv: dp };
   add('w', CY(0.135, 0.155, 1.70, 7), trs(dx, 0.85, dz), Object.assign({ uv: 0.9, tint: 0.94 }, DR));
@@ -5023,7 +5548,7 @@ function bBarracks(L) {
   add('t', CY(0.28, 0.28, 0.04, 10), trs(dx, 1.52, dz), Object.assign({ tint: STEEL, mr: M_STEEL }, DR));
   add('b', clothGeo(0.52, 0.60, 1, 1), trs(dx, 1.42, dz + 0.20), Object.assign({ pl: 1, rect: HR_PLAIN, mr: M_CLOTH, ao: 0.14 }, DR));
   for (let i = 0; i < 4; i++) add('t', B(0.022, 0.18, 0.022), trs(dx + tr(-0.22, 0.22), 1.20 + tr(-0.2, 0.2), dz + 0.26, 0, 1, 1, 1, tr(-0.3, 0.3)), Object.assign({ tint: CREAM, jit: 0.1 }, DR)); // spent arrows
-  // â”€â”€ weapon rack, shields, barrels
+  // ── weapon rack, shields, barrels
   for (const s of [-1, 1]) add('w', B(0.11, 1.10, 0.11), trs(-2.30 + s * 0.55, 0.55, 2.00), { uv: 0.8, tint: 0.92 });
   add('w', B(1.30, 0.11, 0.13), trs(-2.30, 1.02, 2.00), { uv: 0.8, tint: 0.9 });
   for (let i = 0; i < 5; i++) { const ox = -2.85 + i * 0.28;
@@ -5037,7 +5562,7 @@ function bBarracks(L) {
     add('w', CY(br, br * 0.88, br * 1.75, 9), trs(bx2, br * 0.87, bz2), { uv: 0.9, tint: 0.9 });
     for (const yy of [0.30, 0.72]) add('t', CY(br * 1.03, br * 1.03, 0.055, 9), trs(bx2, br * 1.75 * yy, bz2), { tint: IRON, mr: M_IRON });
   }
-  // â”€â”€ company standard
+  // ── company standard
   const mh = [3.6, 4.3, 5.0][L1], sx = 2.15, sz = -0.05;
   add('w', CY(0.115, 0.095, mh, 7), trs(sx, mh / 2, sz), { uv: 1.0, tint: 0.92 });
   add('t', CN(gild ? 0.17 : 0.12, gild ? 0.46 : 0.32, 6), trs(sx, mh + 0.20, sz), { tint: gild ? GOLD : STEEL, mr: gild ? M_GOLD : M_STEEL });
@@ -5049,12 +5574,12 @@ function bBarracks(L) {
   return { bk, yawP: [0, 0, 0], muz: [0, 1.5], fire: [[bx, 1.28, bz, 1.0]] };
 }
 
-// â•â• 5 Â· STORM SPIRE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 5 · STORM SPIRE ════════════════════════════════════════════════════════════
 // Dry-stone battered spire, iron-hooped, with a corbelled crown carrying a great
 // focusing crystal caged in wrought iron. The cage traverses onto the target (uYaw), a
 // copper armillary turns about the shaft (uAux) and the shards swell as the charge
 // builds (uLoad). The lightning leaves the crystal, so that is the muzzle height.
-// INTEGRATE: the crystal was authored at [0.62,1.35,2.20] â€” an albedo an order of magnitude
+// INTEGRATE: the crystal was authored at [0.62,1.35,2.20] — an albedo an order of magnitude
 // past the blow-out point for this sun (see the IRON block: 0.30 already clips), so every
 // facet saturated and the crown read as a white blob rather than a stone. Pulled into the
 // same league as the other trim albedos but hard-biased to ice: the shell now shows its
@@ -5078,7 +5603,7 @@ function bStorm(L) {
   const H = [4.3, 5.3, 6.3][L1];                       // crown platform height
   const so = { uv: 2.4, tint: [0.62, 0.60, 0.58], jit: 0.36, ao: 0.44 };
   footing(add, 0, 0, 1.96, 12, 0.64);
-  // â”€â”€ battered octagonal drum: plinth, string course, upper stage, corbelled cornice
+  // ── battered octagonal drum: plinth, string course, upper stage, corbelled cornice
   add('s', CY(1.14, 1.52, H * 0.58, 8), trs(0, H * 0.29, 0), so);
   add('s', CY(1.24, 1.18, 0.20, 8), trs(0, H * 0.58 + 0.10, 0), { uv: 2.4, tint: 0.78, jit: 0.28, ao: 0.30 });
   add('s', CY(0.95, 1.12, H * 0.42 - 0.32, 8), trs(0, H * 0.79 - 0.06, 0), so);
@@ -5090,7 +5615,7 @@ function bStorm(L) {
   add('s', CY(0.44, 0.44, 0.22, 9, 0), trs(0, 1.05, 1.30, 0, 1, 1, 1, 1.5708), { uv: 1.6, tint: 0.6, ao: 0.5 });
   add('s', B(0.30, 0.26, 0.24), trs(0, 1.32, 1.34), { uv: 1.4, tint: 0.92 });
   // rune slits: narrow openings cut through the upper stage. The glow line is deliberately
-  // set INSIDE a dark recess â€” a bright bar sitting proud of the masonry catches the sun
+  // set INSIDE a dark recess — a bright bar sitting proud of the masonry catches the sun
   // and reads as a white stick glued to the wall, not as light coming out of a window.
   for (let i = 0; i < 4; i++) {
     const a = i * 1.5708 + 0.7854, rr2 = 1.06;
@@ -5105,7 +5630,7 @@ function bStorm(L) {
       { uv: 2.2, tint: 0.72, jit: 0.34, ao: 0.44 });
     add('t', B(0.26, 0.09, 0.26), trs(Math.cos(a) * 1.30, H * 0.56, Math.sin(a) * 1.30), { tint: IRON, mr: M_IRON });
   }
-  // â”€â”€ crown: parapet ring of small merlons, plus the yawing iron cage
+  // ── crown: parapet ring of small merlons, plus the yawing iron cage
   const yawP = [0, H, 0], YW = [0, 0, 1, 0];
   add('s', CY(1.16, 1.16, 0.16, 8), trs(0, H + 0.08, 0), { uv: 2.0, tint: 0.88, jit: 0.24, ao: 0.20 });
   for (let i = 0; i < 8; i++) {
@@ -5115,7 +5640,7 @@ function bStorm(L) {
   const cy = H + 2.15;                                 // crystal centre
   const NA = L >= 2 ? 6 : 4;
   // The cage is a CRADLE, not a lantern: the arms stop at the crystal's equator so the
-  // crystal itself is the highest, brightest thing on the model. Iron even at max tier â€”
+  // crystal itself is the highest, brightest thing on the model. Iron even at max tier —
   // gilding the arms turned the crown into a gold cage with a white speck in it.
   for (let i = 0; i < NA; i++) {
     const a = i / NA * 6.283 + 0.5;
@@ -5130,7 +5655,7 @@ function bStorm(L) {
   const cpv = [0, cy, 0];
   shard(add, 0, cy, 0, [0.66, 0.80, 0.96][L1], 1.70, 3, { rig: YW, load: 1, pv2: cpv });
   shard(add, 0, cy + 0.04, 0, [0.38, 0.46, 0.56][L1], 1.95, 11, { rig: YW, load: 1, pv2: cpv, tint: [ARC[0] * 1.6, ARC[1] * 1.5, ARC[2] * 1.4], mr: [0, 0.05] });
-  // â”€â”€ copper armillary + orbiting shards (uAux spins the whole ring)
+  // ── copper armillary + orbiting shards (uAux spins the whole ring)
   const ringY = H + 1.30, AX = [0, 0, 0, 1], apv = [0, ringY, 0];
   add('t', new THREE.TorusGeometry(1.02, 0.042, 5, 22), trs(0, ringY, 0, 0, 1, 1, 1, 1.5708),
     { tint: CU, mr: [0.82, 0.38], rig: AX, piv: apv, jit: 0.16 });
@@ -5142,7 +5667,7 @@ function bStorm(L) {
     shard(add, Math.cos(a) * rr2, yy, Math.sin(a) * rr2, 0.15 + (i % 3) * 0.03, 1.9, 20 + i,
       { rig: AX, piv: apv, load: 1, pv2: [Math.cos(a) * rr2, yy, Math.sin(a) * rr2] });
   }
-  // â”€â”€ heraldry: a standard hung FLAT against the back of the crown, facing out, so it
+  // ── heraldry: a standard hung FLAT against the back of the crown, facing out, so it
   // reads as a banner from the game camera instead of edge-on beside the cage
   const bw = [1.05, 1.20, 1.34][L1], bh = [2.40, 2.90, 3.35][L1], yardZ = -1.30;
   add('t', B(bw + 0.22, 0.07, 0.07), trs(0, H + 0.46, yardZ), { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON, rig: YW });
@@ -5156,7 +5681,7 @@ function bStorm(L) {
     add('b', g, trs(s * 1.02, H + 1.22, 0.16, s > 0 ? 1.05 : 4.15),
       { pl: 1, rect: HR_PEN, wv: (x) => clamp(x / 1.05, 0, 1) * 0.95, mr: M_CLOTH, ao: 0 });
   }
-  // â”€â”€ ground furniture: a scholar's lectern and a rack of spare shards
+  // ── ground furniture: a scholar's lectern and a rack of spare shards
   add('w', B(0.62, 0.10, 0.44), trs(-1.90, 0.96, 0.72, 0.4, 1, 1, 1, -0.38), { uv: 0.7, tint: 0.9 });
   for (const s of [-1, 1]) beam('w', 0.09, 0.09, [-1.90 + s * 0.22, 0.02, 0.72 + s * 0.10], [-1.90 + s * 0.05, 0.94, 0.72], { uv: 0.6, tint: 0.86 });
   add('w', B(0.70, 0.36, 0.52), trs(1.92, 0.20, -0.86, -0.3), { uv: 0.8, tint: 0.84 });
@@ -5166,7 +5691,7 @@ function bStorm(L) {
   return { bk, yawP, muz: [0, cy + 0.05] };
 }
 
-// â•â• 6 Â· PYRE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 6 · PYRE ═══════════════════════════════════════════════════════════════════
 // A soot-blackened stone drum carrying a great iron brazier on a tripod, with a
 // traversing timber davit that lobs sealed clay fire-pots over the road. The davit is
 // authored at the RELEASED pose (uPitch 0 = just thrown, 1 = cocked), same contract as
@@ -5184,14 +5709,14 @@ function bPyre(L) {
   const H = [1.95, 2.35, 2.75][L1];                    // stone drum top
   const so = { uv: 2.4, tint: [0.56, 0.52, 0.46], jit: 0.36, ao: 0.44 };
   footing(add, 0, 0, 1.90, 11, 0.62);
-  // â”€â”€ drum: battered courses, soot-stained cornice, entry steps
+  // ── drum: battered courses, soot-stained cornice, entry steps
   add('s', CY(1.30, 1.58, H * 0.70, 9), trs(0, H * 0.35, 0), so);
   add('s', CY(1.42, 1.34, 0.18, 9), trs(0, H * 0.70 + 0.09, 0), { uv: 2.4, tint: 0.70, jit: 0.30, ao: 0.34 });
   add('s', CY(1.22, 1.30, H * 0.30 - 0.27, 9), trs(0, H * 0.85 - 0.04, 0), { uv: 2.4, tint: [0.40, 0.37, 0.34], jit: 0.34, ao: 0.40 });
   add('s', CY(1.50, 1.22, 0.24, 9), trs(0, H - 0.12, 0), { uv: 2.4, tint: 0.64, jit: 0.28, ao: 0.30 });
   for (let i = 0; i < 3; i++) add('s', B(1.40 - i * 0.14, 0.28, 0.62), trs(0, 0.14 + i * 0.23, -1.34 - (2 - i) * 0.38), { uv: 2.0, tint: 0.60, jit: 0.32, ao: 0.46 });
   add('t', CY(1.44, 1.44, 0.09, 18), trs(0, H * 0.70 + 0.09, 0), { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON, jit: 0.12 });
-  // â”€â”€ brazier: heavy iron tripod, riveted bowl, bed of coals. Static â€” only the davit turns.
+  // ── brazier: heavy iron tripod, riveted bowl, bed of coals. Static — only the davit turns.
   const bowlY = H + 1.28;
   for (let i = 0; i < 3; i++) {
     const a = i * 2.094 + 0.5;
@@ -5221,7 +5746,7 @@ function bPyre(L) {
       trs(Math.cos(a) * BR * 0.98, bowlY - 0.02 - k * 0.11, Math.sin(a) * BR * 0.98, 0, 1, 1, 1, k & 1 ? 0 : 1.5708),
       { tint: IRON, mr: M_IRON });
   }
-  // â”€â”€ traversing davit: king post, braces, throwing arm, pot in the sling
+  // ── traversing davit: king post, braces, throwing arm, pot in the sling
   // The king post stands BEHIND the fire and reaches well above the rim, so the arm sweeps
   // over the coals with daylight under it: the pot is dipped through the flame on its way
   // out, and the machine still reads as a machine from the gameplay camera.
@@ -5249,7 +5774,7 @@ function bPyre(L) {
   add('t', CY(0.20, 0.20, 0.52, 10), trs(kx, H + 0.42, kz - 0.62, 0, 1, 1, 1, 0, 1.5708), { tint: IRON, mr: M_IRON, rig: YW });
   add('t', B(0.045, 0.045, 1.9), trs(kx, kt - 0.60, kz - 0.30, 0, 1, 1, 1, -0.55), { tint: ROPE, mr: M_DULL, jit: 0.2, rig: YW });
   for (const s of [-1, 1]) add('t', B(0.06, 0.34, 0.06), trs(kx + s * 0.30, H + 0.58, kz - 0.62), { rig: [-4.2, 0, 1, 0], piv: [kx + s * 0.30, H + 0.42, kz - 0.62], tint: IRON, mr: M_IRON });
-  // â”€â”€ cressets, pot rack, ash and crew
+  // ── cressets, pot rack, ash and crew
   const fire = [[0, bt + 0.14, 0, 1.75 + 0.22 * L1]];
   if (L >= 2) for (const s of [-1, 1]) {
     const cxx = s * 1.62, czz = 1.05;
@@ -5278,10 +5803,10 @@ function bPyre(L) {
   return { bk, yawP, muz: [1.0, kt + 0.55], fire };
 }
 
-// â•â• 7 Â· WARBANNER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ 7 · WARBANNER ══════════════════════════════════════════════════════════════
 // The company's great standard on a stone dais: a tall banded mast, an enormous blue
-// banner on a yard, flanking pennons, a horn-blower and a drummer. It never shoots â€”
-// its aura is read in the SIM's cooldown maths â€” so the whole asset is silhouette,
+// banner on a yard, flanking pennons, a horn-blower and a drummer. It never shoots —
+// its aura is read in the SIM's cooldown maths — so the whole asset is silhouette,
 // cloth and crew, and every stage adds visible ceremony.
 function figHorn(add, ox, oy, oz, ry) {                // crewman with a raised war horn
   figCrew(add, ox, oy, oz, ry, 1);
@@ -5297,14 +5822,14 @@ function bBanner(L) {
   const L1 = L - 1, gild = L >= 3;
   const mh = [5.6, 6.9, 8.2][L1];                      // mast height
   const so = { uv: 2.2, tint: [0.66, 0.63, 0.55], jit: 0.32, ao: 0.40 };
-  // â”€â”€ dais: two dressed courses over a dry-stone ring, worn tread on the road side
+  // ── dais: two dressed courses over a dry-stone ring, worn tread on the road side
   footing(add, 0, 0, 2.05, 12, 0.60);
   add('s', CY(1.74, 1.86, 0.34, 12), trs(0, 0.17, 0), so);
   add('s', CY(1.42, 1.54, 0.30, 12), trs(0, 0.48, 0), { uv: 2.2, tint: 0.80, jit: 0.28, ao: 0.34 });
   add('s', B(1.30, 0.20, 0.52), trs(0, 0.10, 1.86), { uv: 2.0, tint: 0.72, jit: 0.3, ao: 0.4 });
   add('s', B(1.10, 0.20, 0.46), trs(0, 0.40, 1.52), { uv: 2.0, tint: 0.76, jit: 0.3, ao: 0.4 });
   if (L >= 3) add('t', CY(1.46, 1.46, 0.06, 24), trs(0, 0.635, 0), { tint: GOLD, mr: M_GOLD, jit: 0.1 });
-  // â”€â”€ mast: banded timber, iron collar, finial
+  // ── mast: banded timber, iron collar, finial
   add('w', CY(0.155, 0.20, mh, 9), trs(0, 0.62 + mh / 2, 0), { uv: 1.1, tint: 1.0, jit: 0.26 });
   for (let i = 0; i < 4; i++) add('t', CY(0.21 - i * 0.012, 0.21 - i * 0.012, 0.10, 10), trs(0, 0.90 + i * mh * 0.22, 0),
     { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON, jit: 0.12 });
@@ -5314,7 +5839,7 @@ function bBanner(L) {
     const a = i / 5 * 6.283;
     add('t', B(0.05, 0.24, 0.11), trs(Math.cos(a) * 0.16, 0.62 + mh - 0.16, Math.sin(a) * 0.16, -a, 1, 1, 1, -0.5), { tint: GOLD, mr: M_GOLD });
   }
-  // â”€â”€ the great banner: yard arm, rings, and a wide sheet of heraldry with a deep sway
+  // ── the great banner: yard arm, rings, and a wide sheet of heraldry with a deep sway
   const yy0 = 0.62 + mh - 0.34, yl = [1.55, 1.80, 2.05][L1];
   add('t', B(0.075, 0.075, yl), trs(0, yy0, yl * 0.5 - 0.10), { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON });
   add('t', new THREE.SphereGeometry(0.085, 7, 6), trs(0, yy0, yl - 0.10), { tint: gild ? GOLD : IRON, mr: gild ? M_GOLD : M_IRON });
@@ -5323,10 +5848,10 @@ function bBanner(L) {
   const bw = [1.42, 1.66, 1.92][L1], bh = [3.30, 3.90, 4.50][L1];
   add('b', clothGeo(bw, bh, 4, 11), trs(0, yy0 - 0.10, bw * 0.5 - 0.08, 1.5708),
     { pl: 1, rect: HR_TALL, wv: (x, y) => clamp(-y / bh, 0, 1) * 1.05, mr: M_CLOTH, ao: 0 });
-  // â”€â”€ flanking pennon staves, guyed off the dais
+  // ── flanking pennon staves, guyed off the dais
   for (const s of [-1, 1]) {
     const px = s * 1.42, pz = -0.45, ph = [2.6, 3.2, 3.8][L1];
-    // the stave foot has to reach the LOWER dais course (top 0.34) it actually stands on â€”
+    // the stave foot has to reach the LOWER dais course (top 0.34) it actually stands on —
     // at 0.60 it started above that course and hung in the air (visible in _new1)
     add('w', CY(0.075, 0.09, ph + 0.40, 7), trs(px, 0.40 + ph / 2, pz, 0, 1, 1, 1, 0, -s * 0.10), { uv: 0.9, tint: 0.92 });
     add('t', CN(0.09, 0.26, 6), trs(px - s * ph * 0.05, 0.62 + ph + 0.10, pz), { tint: gild ? GOLD : STEEL, mr: gild ? M_GOLD : M_STEEL });
@@ -5344,7 +5869,7 @@ function bBanner(L) {
     add('t', B(0.028, 1, 0.028), gm, { tint: ROPE, mr: M_DULL, jit: 0.2 });
     add('w', B(0.08, 0.26 + SINK, 0.08), trs(Math.cos(a) * 2.55, 0.07 - SINK / 2, Math.sin(a) * 2.55, -a, 1, 1, 1, 0.18), { uv: 0.5, tint: 0.82 });
   }
-  // â”€â”€ crew: the horn-blower on the dais, a drummer, and a shield trophy at max tier
+  // ── crew: the horn-blower on the dais, a drummer, and a shield trophy at max tier
   figHorn(add, -0.72, 0.62, 0.62, -0.55);
   if (L >= 2) {                                        // drummer, with the drum slung
     const DR = { rig: [0, 0, 0, 0.16], piv: [1.05, 0, -0.55] };
@@ -5364,7 +5889,7 @@ function bBanner(L) {
   return { bk, yawP: [0, 0, 0], muz: [0, 2.0] };
 }
 
-// â•â• assembly, caching and per-tower material sets â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ assembly, caching and per-tower material sets ══════════════════════════════
 const BUILDERS = { archer: bArcher, ballista: bBallista, catapult: bCatapult, barracks: bBarracks,
                    storm: bStorm, pyre: bPyre, banner: bBanner };
 const GEO_CACHE = new Map();
@@ -5410,7 +5935,7 @@ Towers.build = (tw) => {
   if (tw.aim === undefined) { tw.aim = 0; tw.pitch = 0.12; }
   return g;
 };
-// â•â• fire event (called from the SIM HOOK) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ fire event (called from the SIM HOOK) ══════════════════════════════════════
 // Deterministic: the muzzle offset comes from the tower level and the yaw straight to
 // the target, never from the render-side smoothed aim.
 // `hasProj` is false for hitscan weapons (the storm's chain lightning): they push nothing
@@ -5443,7 +5968,7 @@ Towers.fire = (tw, tgt, hasProj = true) => {
   if (Towers.onFire) Towers.onFire(tw, tgt, ev);
 };
 
-// â•â• per-frame mechanism drive â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ per-frame mechanism drive ══════════════════════════════════════════════════
 const wrapPi = (a) => { while (a > Math.PI) a -= 6.283185307; while (a < -Math.PI) a += 6.283185307; return a; };
 let _lastAt = 0;
 function syncTowers(at) {
@@ -5452,7 +5977,7 @@ function syncTowers(at) {
     const U = tw._u; if (!U) continue;
     const def = TOWER_DEFS[tw.type];
     U.t.value = at;
-    // â”€â”€ aim: same target rule as SIM (furthest along the road, inside the band) so the
+    // ── aim: same target rule as SIM (furthest along the road, inside the band) so the
     // mechanism is always pointing where the next shot will actually go
     if (fights(def)) {
       const range = def.range * (1 + 0.08 * (tw.level - 1)), rq = range * range, minq = (def.minRange || 0) ** 2;
@@ -5473,7 +5998,7 @@ function syncTowers(at) {
       }
       U.y.value = tw.aim;
     }
-    // â”€â”€ fire cycle: everything derives from time-since-shot, so it is keyed to the
+    // ── fire cycle: everything derives from time-since-shot, so it is keyed to the
     // sim's real shots and stays deterministic in the shot harness
     const p = at - (tw.fireT === undefined ? -99 : tw.fireT);
     const cd = Math.max(0.4, def.cd);
@@ -5502,7 +6027,7 @@ function syncTowers(at) {
   }
 }
 
-// â•â• projectiles: 3 pooled instanced meshes (shafts Â· boulders Â· additive streaks) â•â•
+// ══ projectiles: 3 pooled instanced meshes (shafts · boulders · additive streaks) ══
 // Arcing kinds fly a fixed-time ballistic path the SIM integrates (boulder, fire pot);
 // everything else chases its target id.
 const ARCK = (k) => k === 'boulder' || k === 'pot';
@@ -5611,7 +6136,7 @@ function syncProj(at) {
   if (rockMesh.instanceColor) rockMesh.instanceColor.needsUpdate = true;
 }
 
-// â•â• shared brazier / coal glow â€” one additive instanced mesh for every tower â•â•
+// ══ shared brazier / coal glow — one additive instanced mesh for every tower ══
 let glowMesh = null;
 {
   const g = new THREE.PlaneGeometry(1, 1); g.translate(0, 0.42, 0);
@@ -5639,9 +6164,9 @@ function syncGlow(at) {
   glowMesh.instanceMatrix.needsUpdate = true;
 }
 
-// â•â• storm chain lightning: one dynamic ribbon mesh for every arc in the air â•â•â•â•
+// ══ storm chain lightning: one dynamic ribbon mesh for every arc in the air ════
 // A bolt is a short-lived (60-90 ms) camera-facing ribbon jagged by a hash of its own
-// seed, so the whole chain â€” towerâ†’foeâ†’foeâ†’foe â€” costs ONE draw call and no allocation.
+// seed, so the whole chain — tower→foe→foe→foe — costs ONE draw call and no allocation.
 // SIM pushes arcs through Towers.zap(); nothing here reads rng().
 const BOLT_MAX = 16, BOLT_SEG = 14, BOLT_V = (BOLT_SEG + 1) * 2;
 const BOLTS = [];
@@ -5679,7 +6204,7 @@ function boltTex() {
   boltMesh.frustumCulled = false; boltMesh.renderOrder = 5; boltMesh.name = 'TW_BOLT';
   boltMesh.visible = false; scene.add(boltMesh);
 }
-// SIM contract: one call per HOP, from â†’ to in world space. `seed` varies the jag.
+// SIM contract: one call per HOP, from → to in world space. `seed` varies the jag.
 Towers.zap = (x0, y0, z0, x1, y1, z1, seed) => {
   BOLTS.push({ x0, y0, z0, x1, y1, z1, t: G.vt(), life: 0.062 + 0.028 * ((seed * 7 + 3) % 4) / 3,
     s: (Math.imul(seed + 1, 2654435761) ^ 0x9e3779b9) >>> 0 });
@@ -5727,7 +6252,7 @@ function syncBolts(at) {
   }
 }
 
-// â•â• burning ground + fire-pot flames: one additive instanced quad mesh â•â•â•â•â•â•â•â•â•
+// ══ burning ground + fire-pot flames: one additive instanced quad mesh ═════════
 // SIM owns the patch list (G.patches, deterministic); this only draws it. Up to two
 // pooled point lights sit in the two liveliest fires so the meadow round them warms.
 const FIRE_CAP = 96, PATCH_Q = 10;
@@ -5788,7 +6313,111 @@ function syncFire(at) {
   fireMesh.instanceMatrix.needsUpdate = true;
 }
 
-// â•â• selection + placement UX: range ring, tower highlight, build ghost â•â•â•â•â•â•â•â•â•â•
+// ══ ROAD TRAPS — the props (SPEC4 §D) ═════════════════════════════════════════
+// SIM owns the trap list (G.traps: armed, sprung, lit — deterministic); this draws it.
+// Each trap is ONE merged mesh off the tower kit's own tMerge/rigMat pipeline, so four
+// armed traps cost four draw calls, and every one of them is lit, shadowed and shaded by
+// exactly the same material path as the fortifications standing beside them.
+const TRAP_U = newU();                                 // static: traps drive no rig channel
+const TRAP_GEO = {}, TRAP_MAT = {};
+function trapGeo(k) {
+  const c = ctx(), P = [];
+  const add = (g, m, o) => P.push(Object.assign({ g, m: m || null }, o));
+  tsd(k === 'caltrops' ? 4211 : k === 'tar' ? 9137 : 5507);
+  if (k === 'caltrops') {
+    // a strew of iron, not a neat ring: eleven four-point spikes scattered over the patch,
+    // each tipped up on a different axis so the silhouette bristles from any camera bearing
+    // Sixteen SMALL ones, not eleven big ones, and DARK iron rather than polished steel: at
+    // this sun (4.9 intensity, 0.68 env on top) a metalness-0.86 tetrahedron the size of a
+    // helmet renders as a sheet of white paper lying in the road. The read is a rough,
+    // rust-dark strew with a glint here and there — the glints come from VFX.trapArm.
+    for (let i = 0; i < 16; i++) {
+      const an = trng() * 6.2832, rr = Math.sqrt(trng()) * 2.15, s = 0.085 + trng() * 0.055;
+      const m = new THREE.Matrix4().compose(
+        new THREE.Vector3(Math.cos(an) * rr, s * 1.5, Math.sin(an) * rr),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(trng() * 3, trng() * 6.28, trng() * 3)),
+        new THREE.Vector3(1, 1, 1));
+      add(new THREE.TetrahedronGeometry(s * 2.6, 0), m, { tint: IRON, mr: [0.42, 0.62], ao: 0.14, jit: 0.30 });
+    }
+  } else if (k === 'tar') {
+    // a shallow pool with a raised lip, and three blisters in it. Low roughness is doing the
+    // work here: the whole read of pitch is that it is the one WET thing on a dry road.
+    add(CY(2.30, 2.44, 0.10, 22), new THREE.Matrix4().makeTranslation(0, 0.05, 0),
+      { tint: [0.020, 0.018, 0.017], mr: [0.10, 0.20], ao: 0.06, jit: 0.10 });
+    add(CY(2.44, 2.30, 0.07, 22), new THREE.Matrix4().makeTranslation(0, 0.015, 0),
+      { tint: [0.034, 0.030, 0.027], mr: [0.05, 0.55], ao: 0.30, jit: 0.20 });
+    for (let i = 0; i < 4; i++) {
+      const an = trng() * 6.2832, rr = trng() * 1.5, s = 0.16 + trng() * 0.16;
+      add(new THREE.SphereGeometry(s, 7, 5), new THREE.Matrix4().makeTranslation(Math.cos(an) * rr, 0.07, Math.sin(an) * rr),
+        { tint: [0.026, 0.023, 0.021], mr: [0.10, 0.16], ao: 0.10 });
+    }
+  } else {
+    // a real barrel: staved body, two iron hoops, a stencilled lid and a fuse standing off
+    // the top. Small (0.9u tall) on purpose — it has to sit ON the road without blocking it.
+    add(CY(0.40, 0.46, 0.86, 12), new THREE.Matrix4().makeTranslation(0, 0.45, 0),
+      { tint: WOODC, mr: M_DULL, ao: 0.32, jit: 0.30, uv: 0.5 });
+    for (const y of [0.16, 0.74]) add(CY(0.475, 0.475, 0.09, 12), new THREE.Matrix4().makeTranslation(0, y, 0),
+      { tint: IRON, mr: M_IRON, ao: 0.20 });
+    add(CY(0.41, 0.41, 0.05, 12), new THREE.Matrix4().makeTranslation(0, 0.89, 0),
+      { tint: DIRON, mr: M_IRON, ao: 0.12 });
+    const [fm] = span([0.10, 0.90, 0], [0.30, 1.24, 0.06]);
+    add(CY(0.030, 0.045, 1, 5), fm, { tint: ROPE, mr: M_DULL, ao: 0.10 });
+    add(new THREE.SphereGeometry(0.075, 6, 5), new THREE.Matrix4().makeTranslation(0.30, 1.25, 0.06),
+      { tint: EMBER, mr: M_DULL, ao: 0 });                 // the lit end, the one warm pixel
+  }
+  return tMerge(P, 0.7);
+}
+function trapProto(k) {
+  if (!TRAP_GEO[k]) {
+    TRAP_GEO[k] = trapGeo(k);
+    TRAP_MAT[k] = rigMat(null, TRAP_U, k === 'tar' ? { roughness: 0.30, metalness: 0.05 } : { roughness: 0.82 });
+  }
+  return k;
+}
+// live meshes, keyed by the sim's trap id — a trap that springs is removed from the list
+// and its mesh goes with it, so nothing here can outlive the thing it draws.
+const TRAP_MESH = new Map();
+const _tarLit = new THREE.Color(0.42, 0.13, 0.03);
+function syncTraps(at) {
+  const live = G.traps || [];
+  if (!live.length && !TRAP_MESH.size) return;
+  for (const [id, m] of TRAP_MESH) {
+    if (live.some(t => t.id === id)) continue;
+    scene.remove(m); TRAP_MESH.delete(id);
+  }
+  let anyLit = false;
+  for (const tr of live) {
+    const D = G.TRAP_DEFS[tr.k];
+    let m = TRAP_MESH.get(tr.id);
+    if (!m) {
+      trapProto(tr.k);
+      m = new THREE.Mesh(TRAP_GEO[tr.k], TRAP_MAT[tr.k]);
+      m.castShadow = tr.k !== 'tar'; m.receiveShadow = true;
+      m.name = 'TRAP_' + tr.k;
+      m.rotation.y = roadFacing(tr.x, tr.z);
+      m.position.set(tr.x, G.groundY(tr.x, tr.z) + 0.02, tr.z);
+      scene.add(m); TRAP_MESH.set(tr.id, m);
+    }
+    if (tr.k === 'tar' && tr.lit) anyLit = true;
+    // a sprung patch is BEING WORN AWAY: it sinks and shrinks over its own duration, so the
+    // player can read how much of it is left without a bar over it
+    if (D.kind === 'patch' && tr.sprung >= 0) {
+      const f = clamp((at - tr.sprung) / D.dur, 0, 1);
+      m.scale.set(1, 1 - 0.62 * f, 1);
+      m.position.y = G.groundY(tr.x, tr.z) + 0.02 - 0.04 * f;
+    }
+  }
+  // Lit pitch glows from inside. ONE material serves every tar pool, so this is a single
+  // write off "is any pool alight" rather than a per-mesh emissive — with four traps on the
+  // board at most, the case where one pool burns and another does not is not worth a
+  // cloned material (and cloning a rigMat would fork its program cache key).
+  if (TRAP_MAT.tar) {
+    if (anyLit) TRAP_MAT.tar.emissive.copy(_tarLit).multiplyScalar(0.55 + 0.45 * Math.sin(at * 6.1));
+    else TRAP_MAT.tar.emissive.setRGB(0, 0, 0);
+  }
+}
+
+// ══ selection + placement UX: range ring, tower highlight, build ghost ══════════
 function ringTex() {
   const S = 256, [c, g] = cnv(S);                      // u = angle, v = radius
   g.clearRect(0, 0, S, S);
@@ -5858,7 +6487,7 @@ function footTex() {
 }
 const SEL = { ring: null, mark: null, foot: null, ghost: null, key: '', pkey: '' };
 {
-  const RS = 128, RR = 10;                             // 128 arcs Ã— 10 radial rings
+  const RS = 128, RR = 10;                             // 128 arcs × 10 radial rings
   const pos = new Float32Array((RS + 1) * RR * 3), uv = new Float32Array((RS + 1) * RR * 2);
   const idx = new Uint32Array(RS * (RR - 1) * 6);
   const VR = [0, 0.55, 0.78, 0.885, 0.925, 0.945, 0.958, 0.975, 0.992, 1.0];
@@ -5910,7 +6539,7 @@ function ringShape(cx, cz, rad) {
   }
   SEL.ring.geometry.attributes.position.needsUpdate = true;
 }
-// â”€â”€ build ghosts: one cached translucent copy per tower type. Towers.build() mints its
+// ── build ghosts: one cached translucent copy per tower type. Towers.build() mints its
 // own material set per tower, so overriding transparency here can never leak into a real
 // fortification. Ghosts are static (no uniforms driven), cast no shadow, and only draw
 // while placement mode is live.
@@ -5924,7 +6553,7 @@ function ghostFor(type) {
       c.material.transparent = true; c.material.opacity = 0.84;
       // depthWrite STAYS ON. A translucent object with depth writes off sorts against
       // itself into mush AND loses to the footprint plate (renderOrder 3), which painted
-      // straight over the ghost's base â€” the preview read as an empty disc with a smear
+      // straight over the ghost's base — the preview read as an empty disc with a smear
       // in it. Writing depth keeps the silhouette coherent and lets the plate's fragments
       // fail the depth test where the tower stands on it.
       c.material.depthWrite = true;
@@ -5937,7 +6566,7 @@ function ghostFor(type) {
   return g;
 }
 // Plate/ring wash. The refusal colour is ROSE, not red: the ring blends additively over a
-// green meadow, and additive red there resolves to exactly the brown of the dirt road â€” the
+// green meadow, and additive red there resolves to exactly the brown of the dirt road — the
 // "you cannot build here" ring read as a second road. Magenta has no counterpart in the
 // palette, so it can only be read as UI.
 const C_OK = [0.52, 1.00, 0.58], C_NO = [1.00, 0.26, 0.52];
@@ -5948,30 +6577,64 @@ const C_AURA = [0.26, 0.60, 1.65];
 const T_OK = [0.86, 1.12, 0.94], T_NO = [1.30, 0.44, 0.52];
 // Placement mode read-out (state lives in SIM's G.place): footprint plate + range ring +
 // ghost tower, tinted by validity. The RANGE IS ALWAYS VISIBLE BEFORE GOLD IS SPENT.
+// SPEC4 §C/§D: a trap gets a GHOST like a tower (you are putting an object down and its
+// footprint matters); a power gets none (you are pointing at ground, and a militia ghost
+// would be three men who are not there yet). Both keep the ring and the footprint plate,
+// which is the whole reason they reuse this machinery: green/rose validity, the same pulse,
+// the same writ underneath.
+const TRAP_GHOST = new Map();
+function trapGhostFor(k) {
+  let g = TRAP_GHOST.get(k);
+  if (!g) {
+    trapProto(k);
+    // A PLAIN standard material, not a clone of the rig one: Material.copy() does not carry
+    // an instance onBeforeCompile, so a "clone" would silently ship an unpatched shader.
+    // The ghost needs none of the rig — the geometry's colours are already baked.
+    const m = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true,
+      opacity: 0.80, depthWrite: true, roughness: 0.82, metalness: 0 });
+    g = new THREE.Mesh(TRAP_GEO[k], m);
+    g.renderOrder = 2; g.castShadow = false; g.receiveShadow = false;
+    g.userData._c0 = m.color.clone();
+    g.visible = false; scene.add(g); TRAP_GHOST.set(k, g);
+  }
+  return g;
+}
 function syncPlace(p, at) {
   SEL.mark.visible = false; SEL.key = '';
-  const def = TOWER_DEFS[p.type], rad = def.range;
-  const key = p.type + '|' + p.ok + '|' + p.x.toFixed(2) + '|' + p.z.toFixed(2);
+  const kind = p.kind || 'tower';
+  const rad = kind === 'cast' ? G.POWERS[p.power].rad
+            : kind === 'trap' ? G.TRAP_DEFS[p.trap].rad
+            : TOWER_DEFS[p.type].range;
+  const half = kind === 'tower' ? 2.35 : Math.max(1.7, rad * 0.85);
+  const key = kind + (p.type || p.power || p.trap) + '|' + p.ok + '|' + p.x.toFixed(2) + '|' + p.z.toFixed(2);
   if (key !== SEL.pkey) {
     SEL.pkey = key;
     const c = p.ok ? C_OK : C_NO;
     if (rad > 0) ringShape(p.x, p.z, rad);
-    gridShape(SEL.foot, p.x, p.z, 2.35, 0.12);
+    gridShape(SEL.foot, p.x, p.z, half, 0.12);
     SEL.ring.material.color.setRGB(c[0], c[1], c[2]);
     SEL.foot.material.color.setRGB(c[0], c[1], c[2]);
-    const gh = ghostFor(p.type);
+    const t = p.ok ? T_OK : T_NO;
+    const gh = kind === 'tower' ? ghostFor(p.type) : kind === 'trap' ? trapGhostFor(p.trap) : null;
     if (SEL.ghost && SEL.ghost !== gh) SEL.ghost.visible = false;
     SEL.ghost = gh;
-    gh.position.set(p.x, G.padY(p.x, p.z), p.z);
-    gh.rotation.y = roadFacing(p.x, p.z);
-    // a cool cast on a valid ghost, a rose one on a refused ghost: even with the plate
-    // hidden behind foliage the preview still reads as 'not built yet'
-    const t = p.ok ? T_OK : T_NO;
-    for (const ch of gh.children) {
-      const b = ch.userData._c0;
-      ch.material.color.setRGB(clamp(b.r * t[0], 0, 1), clamp(b.g * t[1], 0, 1), clamp(b.b * t[2], 0, 1));
+    if (gh && kind === 'trap') {
+      gh.position.set(p.x, G.groundY(p.x, p.z) + 0.02, p.z);
+      gh.rotation.y = roadFacing(p.x, p.z);
+      const b = gh.userData._c0;
+      gh.material.color.setRGB(clamp(b.r * t[0], 0, 1), clamp(b.g * t[1], 0, 1), clamp(b.b * t[2], 0, 1));
+      gh.visible = true;
+    } else if (gh) {
+      gh.position.set(p.x, G.padY(p.x, p.z), p.z);
+      gh.rotation.y = roadFacing(p.x, p.z);
+      // a cool cast on a valid ghost, a rose one on a refused ghost: even with the plate
+      // hidden behind foliage the preview still reads as 'not built yet'
+      for (const ch of gh.children) {
+        const b = ch.userData._c0;
+        ch.material.color.setRGB(clamp(b.r * t[0], 0, 1), clamp(b.g * t[1], 0, 1), clamp(b.b * t[2], 0, 1));
+      }
+      gh.visible = true;
     }
-    gh.visible = true;
   }
   const pu = 0.72 + 0.28 * Math.sin(at * 3.4);
   SEL.foot.material.opacity = 0.60 + 0.40 * pu;
@@ -6007,7 +6670,7 @@ function syncSel(at) {
   SEL.ring.material.map.offset.x = at * 0.012;
 }
 
-// â•â• MAIN's per-frame entry point (contract name preserved) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ MAIN's per-frame entry point (contract name preserved) ══════════════════════
 Towers.syncProjectiles = (vtNow) => {
   const at = vtNow + (G.subT || 0) * TICK;
   syncTowers(at);
@@ -6015,20 +6678,21 @@ Towers.syncProjectiles = (vtNow) => {
   syncGlow(at);
   syncBolts(at);
   syncFire(at);
+  syncTraps(at);
   syncSel(at);
 };
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: TOWERS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: TOWERS ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: SIM (owner: architect; TOWERS/ARMIES builders may tune constants) â•â•
+// ══════════════════════ SECTION: SIM (owner: architect; TOWERS/ARMIES builders may tune constants) ══
 // ARMIES pass: unit counts tripled and per-unit HP/bounty/dps scaled down to match, so a
 // wave reads as the reference's dense crimson river on the road instead of a trickle of
 // individuals. Total wave HP only rises ~1.5x, so tower balance is broadly preserved.
-// `resist` (SPEC3 Â§A) replaces SPEC2's flat `armor`: a vector over the four schools
-// (pierce Â· crush Â· fire Â· storm), fraction of that school's damage shrugged off. Negative
-// is VULNERABLE â€” it takes extra. Immunity is capped at 0.85 in dealDamage(), so a resist
+// `resist` (SPEC3 §A) replaces SPEC2's flat `armor`: a vector over the four schools
+// (pierce · crush · fire · storm), fraction of that school's damage shrugged off. Negative
+// is VULNERABLE — it takes extra. Immunity is capped at 0.85 in dealDamage(), so a resist
 // only ever makes a school INEFFICIENT, never useless. Migration: the old armour value is
 // now resist.pierce, and siege's old "half armour" is authored as its own crush profile.
-// SPEC2 Â§D roster of 8. `scale` is ONLY the height projectiles aim at; the model's real
+// SPEC2 §D roster of 8. `scale` is ONLY the height projectiles aim at; the model's real
 // height lives in ARMIES' CFG. `range`/`melee` make a skirmisher (halts and shoots knights,
 // fights badly when caught); `stomp` makes a mini-boss (area blow on a timer while held).
 const ENEMY_DEFS = {
@@ -6037,18 +6701,18 @@ const ENEMY_DEFS = {
   // actually fell them before the gate now that mode:'strong' towers focus them.
   grunt:   { hp: 12,   speed: 2.0,  bounty: 2,   dps: 1.5, leak: 1,  scale: 1,    resist: {} },
   runner:  { hp: 9,    speed: 3.4,  bounty: 2,   dps: 1.2, leak: 1,  scale: 0.82, resist: {} },
-  // the pavise wall is the ANTI-ARROW unit and always was â€” but a shield held against
-  // arrows is a bad answer to a boulder, so crush now goes THROUGH it (SPEC3 Â§A).
+  // the pavise wall is the ANTI-ARROW unit and always was — but a shield held against
+  // arrows is a bad answer to a boulder, so crush now goes THROUGH it (SPEC3 §A).
   shield:  { hp: 55,   speed: 1.7,  bounty: 6,   dps: 4,   leak: 1,  scale: 1.10, resist: { pierce: 0.7, crush: -0.2 } },
   hound:   { hp: 7,    speed: 4.6,  bounty: 1,   dps: 2,   leak: 1,  scale: 0.55, resist: {} },
   marauder:{ hp: 26,   speed: 2.2,  bounty: 4,   dps: 5,   leak: 1,  scale: 0.98, resist: {}, range: 7, melee: 3 },
-  brute:   { hp: 150,  speed: 1.15, bounty: 9,   dps: 5,   leak: 2,  scale: 1.55, resist: { storm: 0.35 } }, // r9: thick hide grounds out chains â€” the tank spine storm can't clean
+  brute:   { hp: 150,  speed: 1.15, bounty: 9,   dps: 5,   leak: 2,  scale: 1.55, resist: { storm: 0.35 } }, // r9: thick hide grounds out chains — the tank spine storm can't clean
   ogre:    { hp: 860,  speed: 0.9,  bounty: 40,  dps: 25,  leak: 3,  scale: 2.0,  elite: true,
              resist: { pierce: 0.25, fire: -0.2, storm: 0.30 },
              stomp: { cd: 5, dmg: 30, rad: 2.5 } },
   // bosses keep their old armour as pierce and gain storm .2, so no single school melts a
-  // finale on its own â€” the answer to a boss is a COMPOSITION.
-  // â•â• SPEC3 Â§B â€” five newcomers. Every one of them is a QUESTION about composition:
+  // finale on its own — the answer to a boss is a COMPOSITION.
+  // ══ SPEC3 §B — five newcomers. Every one of them is a QUESTION about composition:
   // ironclad is a wall crush and fire walk through, ashwraith burns for nothing and must
   // be met with storm or mass pierce, frostrevenant shrugs arrows off, warshaman turns
   // every other unit on the road into a longer fight until he is picked out of it, and the
@@ -6070,12 +6734,12 @@ const ENEMY_DEFS = {
   ram:     { hp: 1400, speed: 0.6,  bounty: 60,  dps: 14,  leak: 6,  scale: 1.60, elite: true,
              unblockable: true, resist: { crush: 0.8, pierce: -0.3, storm: 0.3 } },
   boss:    { hp: 2400, speed: 0.75, bounty: 200, dps: 30,  leak: 20, scale: 2.6,  resist: { pierce: 0.22, storm: 0.3 }, unblockable: true },
-  // â”€â”€ map finales (SPEC2 Â§E): palette + scale swaps of the boss ARCHETYPE. `art` points
+  // ── map finales (SPEC2 §E): palette + scale swaps of the boss ARCHETYPE. `art` points
   // at the mesh they borrow, so a variant costs no extra InstancedMesh and no extra draw
   // call; `tint` multiplies the per-instance colour and `mscale` the model matrix.
   // `art_kit` names a swappable SILHOUETTE ATTACHMENT SET (ARMIES' KIT meshes): crown,
   // banners, brazier, blades. A tint and a scale alone made every map's climax the same
-  // man in the same armour â€” a recolour, not a boss. The kit rides the boss's own instance
+  // man in the same armour — a recolour, not a boss. The kit rides the boss's own instance
   // matrix and animation, so a variant costs one InstancedMesh that only draws on the map
   // that fields it, not a second rig.
   // mscale is a SILHOUETTE number, not a balance one: cinderqueen shipped at 0.88, which
@@ -6095,18 +6759,18 @@ const resistOf = (def, el) => (def.resist ? (def.resist[el] || 0) : 0);
 G.resistOf = resistOf;
 const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
   // r2 reshape: waves 1-4 sized so an HONEST purse (140g start, bounty-funded) can hold
-  // with 2 archers â†’ 4-5 towers; the marketing-frame hordes stay in W5+ where a real
+  // with 2 archers → 4-5 towers; the marketing-frame hordes stay in W5+ where a real
   // defense exists to fight them.
   [['grunt', 30, 0.75, 0]],
   [['grunt', 50, 0.55, 0]],
   [['grunt', 85, 0.40, 0], ['runner', 40, 0.30, 12]],
   [['grunt', 105, 0.32, 0], ['runner', 55, 0.24, 8]],
-  // r4: the Vale's back half now fields the full bestiary â€” shieldbearer walls bleed a
+  // r4: the Vale's back half now fields the full bestiary — shieldbearer walls bleed a
   // pure-physical battery, hounds race slow lines, marauders harry the knights, and two
   // ogres headline wave 9. Without them any phys deathball swept the map untouched.
   [['brute', 8, 1.40, 0], ['grunt', 85, 0.32, 2], ['hound', 14, 0.25, 10]],
   [['runner', 100, 0.18, 0], ['shield', 8, 1.30, 4], ['grunt', 70, 0.30, 8]],
-  // SPEC3 Â§B fixed mini-boss slots. Every one of these is a SWAP-IN, not an addition: the
+  // SPEC3 §B fixed mini-boss slots. Every one of these is a SWAP-IN, not an addition: the
   // head count it costs is taken straight back out of the chaff group beside it, so the
   // Vale's wave sizes stay within a few units of the r6 balance pass. W7 teaches the
   // priority kill (shamans healing the brute line), W8 the ironclad wall, W9 the ram.
@@ -6115,9 +6779,9 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
   [['grunt', 132, 0.21, 0], ['ogre', 3, 4.50, 6], ['ram', 1, 0, 14], ['brute', 16, 0.85, 12], ['runner', 60, 0.20, 16]],
   [['boss', 1, 0, 10], ['grunt', 150, 0.22, 0], ['shield', 20, 0.80, 5], ['brute', 16, 0.85, 3]],
 ] ,
-  // â•â• 2. FROSTFELL PASS â€” 12 waves. The map's own idea is TIMING: two gates means two
+  // ══ 2. FROSTFELL PASS — 12 waves. The map's own idea is TIMING: two gates means two
   // arrival clocks, and a group tagged with a gate index (the 5th field) comes out of that
-  // gate alone. Hound packs and shieldbearer walls are the featured pressure â€” the hounds
+  // gate alone. Hound packs and shieldbearer walls are the featured pressure — the hounds
   // punish a slow single-target line, the pavises punish a purely physical one.
   2: [
     // waves 1-2 come out of the NORTH gate alone: a two-gate map that opens both mouths on
@@ -6128,13 +6792,13 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     [['grunt', 46, 0.55, 0, 0], ['hound', 8, 0.40, 12, 1]],
     [['hound', 20, 0.26, 0, 1], ['grunt', 56, 0.44, 3, 0]],
     [['shield', 8, 1.20, 0, 0], ['grunt', 64, 0.40, 2]],
-    // SPEC3 Â§B: the frost revenants are Frostfell's own dead and walk their home map from
-    // W5 â€” an arrow battery that swept the first four waves meets a wall of pierce .6 here.
+    // SPEC3 §B: the frost revenants are Frostfell's own dead and walk their home map from
+    // W5 — an arrow battery that swept the first four waves meets a wall of pierce .6 here.
     // W6 the shamans, W7 the ram, W9 the ironclad column: two mini-boss species mid-run,
     // every one of them paid for out of the group it marches beside.
     [['runner', 59, 0.25, 0], ['frostrevenant', 5, 2.20, 5], ['hound', 20, 0.22, 12, 1]],
     // NO fixed shaman here. Three chanters behind a fourteen-strong pavise wall put nine
-    // lives on the floor at wave 6 in the bot matrix â€” a healer is a MULTIPLIER, and it
+    // lives on the floor at wave 6 in the bot matrix — a healer is a MULTIPLIER, and it
     // multiplies hardest against exactly the unit Frostfell already leans on. The shaman
     // still reaches this map through the wave-10 swap slot, where the purse can answer him.
     [['shield', 14, 0.95, 0, 0], ['grunt', 70, 0.36, 2], ['marauder', 8, 1.05, 9, 1]],
@@ -6146,18 +6810,18 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     [['matriarch', 1, 0, 13, 0], ['shield', 32, 0.52, 0, 1], ['hound', 54, 0.13, 6, 0],
      ['grunt', 102, 0.25, 2], ['ogre', 2, 4.00, 20, 1]],
   ],
-  // â•â• 3. EMBER WASTES â€” 14 waves. Marauders and ogres are the featured pressure: the
+  // ══ 3. EMBER WASTES — 14 waves. Marauders and ogres are the featured pressure: the
   // skirmishers make a barracks a liability and the ogres make one a corpse, so the wastes
   // are the map that has to be answered with towers over the road. Finale is a double boss.
   3: [
-    // r2: 14 waves is a marathon â€” the front half runs lighter so the purse can build the
+    // r2: 14 waves is a marathon — the front half runs lighter so the purse can build the
     // battery the back half demands; marauders enter at W3 in single digits only.
     [['grunt', 30, 0.75, 0]],
     [['grunt', 52, 0.55, 0]],
     [['marauder', 6, 1.20, 0], ['grunt', 62, 0.44, 3]],
     [['runner', 62, 0.26, 0], ['grunt', 54, 0.40, 5]],
     [['marauder', 14, 0.75, 0], ['shield', 8, 1.30, 7], ['grunt', 64, 0.38, 2]],
-    // SPEC3 Â§B: ash wraiths are the wastes' own â€” a pyre wall, the obvious answer to this
+    // SPEC3 §B: ash wraiths are the wastes' own — a pyre wall, the obvious answer to this
     // map, does almost nothing to them (fire .85), which is the lesson W6 exists to teach.
     // W8 fields the ironclads, W10 the ram. Head counts unchanged to within 3%.
     [['ogre', 2, 4.00, 0], ['grunt', 80, 0.35, 2], ['ashwraith', 12, 0.55, 8], ['runner', 36, 0.24, 11]],
@@ -6168,7 +6832,7 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     [['brute', 15, 0.88, 0], ['shield', 20, 0.76, 5], ['marauder', 18, 0.58, 11], ['grunt', 80, 0.30, 2]],
     [['ogre', 4, 3.20, 0], ['runner', 86, 0.19, 6], ['hound', 46, 0.15, 11], ['grunt', 80, 0.30, 2]],
     [['marauder', 30, 0.48, 0], ['brute', 16, 0.85, 6], ['shield', 23, 0.70, 11], ['grunt', 94, 0.28, 2]],
-    // The twins duel you IN SEQUENCE (10s / 34s): simultaneous arrival made both leak â€”
+    // The twins duel you IN SEQUENCE (10s / 34s): simultaneous arrival made both leak —
     // tough-preferring towers split fire and neither died. Staggered, each is a real duel.
     [['emberlord', 1, 0, 10], ['cinderqueen', 1, 0, 34], ['ogre', 3, 4.20, 4],
      ['marauder', 22, 0.54, 0], ['shield', 16, 0.90, 9], ['grunt', 92, 0.28, 2]],
@@ -6180,18 +6844,125 @@ MAP.waves = MAP.waves || WAVE_TABLES[MAP.id] || WAVE_TABLES[1];
 const WAVES = MAP.waves;
 G.WAVES = WAVES;
 const INTERWAVE = MAP.interwave;
+// ══ ENDLESS (SPEC4 §E) ═══════════════════════════════════════════════
+// Past the finale the campaign stops being a LIST and becomes a GENERATOR. Everything the
+// mode needs already exists: hpRamp is `1 + ramp*(wave-1)` in spawnEnemy, so it keeps
+// climbing linearly the moment the wave counter does, and every downstream reader (the
+// dispatch card, the horn cue, the omen draw) goes through one accessor.
+//
+// FINALE_W is the campaign's last wave, captured before anything can grow past it. It is
+// the ONLY thing that separates "the road is held" from "the road does not end".
+const FINALE_W = WAVES.length;
+G.FINALE_W = FINALE_W;
+// Six templates. Each is a different composition question — a chaff flood, a fast pack, a
+// pavise wall, a tank line, a skirmisher screen, a resist puzzle — so the mix keeps asking
+// for a rounded battery instead of rewarding one answer forever.
+// Sized against the campaign's BACK HALF: the wave after a finale is the hardest thing the
+// player has ever seen plus one, and a generator that opens at wave-6 weight turns the
+// victory into an anticlimax. Every template lands within a few units of the Vale's own
+// W8/W9 head count — the difficulty past that comes from the hp ramp, not from head counts
+// that would eventually walk over the instance budget.
+const ENDLESS_TPL = [
+  [['grunt', 150, 0.22, 0], ['runner', 70, 0.19, 8]],
+  [['runner', 118, 0.17, 0], ['hound', 54, 0.14, 6], ['grunt', 90, 0.26, 3]],
+  [['shield', 26, 0.70, 0], ['grunt', 116, 0.25, 2], ['marauder', 18, 0.62, 9]],
+  [['brute', 20, 0.80, 0], ['grunt', 110, 0.26, 3], ['hound', 34, 0.17, 10], ['shield', 10, 1.10, 14]],
+  [['marauder', 28, 0.48, 0], ['runner', 96, 0.18, 5], ['shield', 16, 0.90, 10], ['grunt', 60, 0.32, 14]],
+  [['ashwraith', 20, 0.50, 0], ['frostrevenant', 10, 1.50, 6], ['grunt', 100, 0.26, 2], ['runner', 40, 0.22, 12]],
+];
+// The mini-boss rota. Every 4th endless wave fields one, in order, so a player can LEARN
+// the cycle (the ram on 4, an ironclad column on 8, the ogres on 12 …) rather than being
+// handed a coin flip. Each entry is a GROUP LIST, because a mini-boss wave that is one
+// unit is a speed bump, not a wave.
+const ENDLESS_MINI = [
+  [['ram', 1, 0, 12], ['ogre', 2, 4.00, 6]],
+  [['ironclad', 5, 2.40, 8]],
+  [['ogre', 4, 3.40, 6]],
+  [['warshaman', 6, 2.40, 9], ['ironclad', 3, 3.00, 4]],
+];
+// Cached per endless index: a wave the player is fighting must not re-generate itself
+// under the dispatch card halfway through, and waveMix() is called every frame.
+const ENDLESS_CACHE = [];
+// The map's own finale boss, read off the last campaign wave — so the echo on every 10th
+// wave is THIS road's climax coming back, not a borrowed one. (Ember fields two; the echo
+// takes the first, because a doubled finale every ten waves is a wall, not an echo.)
+const ECHO_BOSS = (() => {
+  for (const g of WAVES[FINALE_W - 1]) if (g[0] === 'boss' || (ENEMY_DEFS[g[0]] || {}).art === 'boss') return g[0];
+  return 'boss';
+})();
+// Which template wave `e` fields. A FLAT draw was wrong twice over: srng avalanches poorly
+// on small consecutive integers (the first cut dealt the same template to endless waves
+// 2,3,4 AND 5 — measured, not feared), and even a perfect draw hands out back-to-back
+// repeats one wave in six, which reads as the generator having run out of ideas. So the
+// draw picks a STRIDE of 1..len-1 and walks the ring: consecutive waves can never be the
+// same template, and the walk still visits every template. Deterministic given the seed,
+// memoized, and built from srng — never rng(), because a wave-boundary draw pulled out of
+// the sim stream would shift every lane jitter downstream of it (the same rule the elite
+// swaps and the omen offers keep).
+const ENDLESS_PICK = [0];
+function pickTpl(e) {
+  const N = ENDLESS_TPL.length;
+  for (let i = ENDLESS_PICK.length; i <= e; i++)
+    ENDLESS_PICK[i] = (ENDLESS_PICK[i - 1] + 1 + ((srng(0xE4D, i + MAP.id * 211) * (N - 1)) | 0)) % N;
+  return ENDLESS_PICK[e];
+}
+// `n` is the ABSOLUTE wave number; `e` counts from 1 at the first wave past the finale.
+function endlessWave(n) {
+  const e = n - FINALE_W;
+  if (ENDLESS_CACHE[e]) return ENDLESS_CACHE[e];
+  const w = ENDLESS_TPL[pickTpl(e)].map(g => g.slice());
+  if (e % 4 === 0) for (const g of ENDLESS_MINI[(e / 4 - 1) % ENDLESS_MINI.length]) w.push(g.slice());
+  if (e % 10 === 0) w.push([ECHO_BOSS, 1, 0, 14]);
+  return (ENDLESS_CACHE[e] = w);
+}
+// THE one accessor. Everything that used to index WAVES[n-1] goes through here, so the
+// campaign and the generator are indistinguishable to the dispatch card, the horn cue and
+// the spawner. Inside the campaign it is exactly the old array read.
+const waveDefs = (n) => n <= FINALE_W ? WAVES[n - 1] : endlessWave(n);
+G.waveDefs = waveDefs;
+// The endless wave's title, in the same keyspace as every campaign title (SPEC4 §B).
+const endlessTitle = (n) => {
+  const e = n - FINALE_W;
+  return L(e % 10 === 0 ? 'ew.echo' : e % 4 === 0 ? 'ew.mini' : 'ew.' + ((e % 3) + 1));
+};
+G.endlessTitle = endlessTitle;
+// ECONOMY CAP. Bounty tapers 2% per wave past the finale down to a 30% floor, so an
+// endless run cannot compound a purse into an unkillable carpet — the ramp climbs and the
+// income does not. Campaign waves multiply by the literal 1, so the balance matrix reads
+// bit-for-bit what it always read.
+const bountyMul = () => state.wave <= FINALE_W ? 1 : Math.max(0.30, 1 - 0.02 * (state.wave - FINALE_W));
+G.bountyMul = bountyMul;
+// ══ AUTO-CALL (SPEC4 §A) ═════════════════════════════════════════════
+// A player preference, not a rule of the game: it is read from localStorage at boot and is
+// IGNORED under the harness, so every shot preset and every balance run still measures the
+// same INTERWAVE the matrix was tuned against. Bots never set it.
+const AUTO_KEY = 'bannerfall.auto', AUTO_CD = 3;
+let autoCall = false;
+if (!SHOT) try { autoCall = localStorage.getItem(AUTO_KEY) === '1'; } catch (e) { /* private mode */ }
+G.autoCall = () => autoCall;
+G.setAutoCall = (v) => {
+  autoCall = !!v;
+  try { localStorage.setItem(AUTO_KEY, v ? '1' : '0'); } catch (e) { /* private mode */ }
+  // Turning it on mid-countdown takes effect at the NEXT clear, not retroactively: paying
+  // the skip bonus for seconds already spent would be free gold for flicking a switch.
+  return autoCall;
+};
 // lives raised with the horde-scale rebalance: at ~150 units per wave, 20 lives meant a 6%
 // leak rate was an instant loss.
 // selTower indexes G.towersList (-1 = nothing selected). There are no plots to select
 // any more: empty ground is selected by ENTERING PLACEMENT MODE, not by tapping a marker.
-// `muster` (SPEC3 Â§C) is the number of towers the vale can field at once â€” the anti-
+// `muster` (SPEC3 §C) is the number of towers the vale can field at once — the anti-
 // deathball bound. `omen` is the war omen riding the CURRENT wave ('' = none).
+// `endless` (SPEC4 §E) is the one flag that changes what a cleared finale MEANS. It is set
+// by the victory plate's "Hold the line", or pinned at boot by `&endless=1` so the harness
+// and a bot smoke run can measure the generator without playing eleven waves by hand.
 const state = { phase: 'title', gold: 140, lives: 32, wave: 0, tick: 0, speed: 1, paused: false,
-  countdown: 0, kills: 0, selTower: -1, leaked: 0, invested: 0, muster: 6, omen: '' };
+  countdown: 0, kills: 0, selTower: -1, leaked: 0, invested: 0, muster: 6, omen: '',
+  endless: P.has('endless') };
 G.state = state;
-// â•â• MUSTER (SPEC3 Â§C) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ MUSTER (SPEC3 §C) ════════════════════════════════════════════════
 // Six standards to start; each further slot is bought, and the price climbs steeply, so a
-// wide line costs real board presence. Fourteen is the ceiling â€” past that the map is a
+// wide line costs real board presence. Fourteen is the ceiling — past that the map is a
 // carpet again and the comp stops being a choice.
 const MUSTER_COST = [120, 170, 230, 300, 380, 470, 570, 680];
 const musterCost = () => MUSTER_COST[state.muster - 6];   // undefined at the cap
@@ -6206,41 +6977,44 @@ function raiseMuster(free = false) {
 }
 G.raiseMuster = raiseMuster;
 G.enemies = []; G.knights = []; G.towersList = []; G.projectiles = [];
-G.patches = [];                      // burning ground (pyre) â€” sim-owned, TOWERS draws it
+G.patches = [];                      // burning ground (pyre) — sim-owned, TOWERS draws it
 G.obstacles = G.obstacles || [];
 let eid = 0, twid = 0;
 
-// â•â• FREE PLACEMENT (SPEC2 Â§A) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ FREE PLACEMENT (SPEC2 §A) ════════════════════════════════════════
 // G.canPlace(x,z) is the SINGLE authority on whether a tower may stand somewhere: the UI
 // ghost, the keyboard/touch commit path and the bot harness all ask this one function, so
 // what the player sees tinted green is exactly what the sim will accept. Reads only the
-// fixed heightfield + the prop table WORLD registered, never rng() â€” safe to call from a
+// fixed heightfield + the prop table WORLD registered, never rng() — safe to call from a
 // sim tick and from a render frame alike.
 const FOOT_R = 1.9;                  // tower footprint radius (matches the ghost plate)
 const _cn = new THREE.Vector3(), _cp = new THREE.Vector3();
 function canPlace(x, z) {
   // The muster is checked FIRST and without looking at the ground: when the standards are
   // all raised, no site is a good site, and the writ must say why rather than blaming the
-  // slope (SPEC3 Â§C). Sell a tower or pay the herald to widen the line.
-  if (G.towersList.length >= state.muster) return { ok: false, reason: 'The muster is full' };
-  if (!isFinite(x) || !isFinite(z)) return { ok: false, reason: 'Off the map' };
-  if ((x / 86) ** 2 + (z / 58) ** 2 > 1) return { ok: false, reason: 'Beyond the vale' };
+  // slope (SPEC3 §C). Sell a tower or pay the herald to widen the line.
+  // Every refusal is a KEY as well as a sentence (SPEC4 \u00a7B): the writ prints `reason`, but
+  // callers that need to BRANCH on which refusal it was read `why` \u2014 a translated string is
+  // not something to compare against.
+  if (G.towersList.length >= state.muster) return { ok: false, why: 'mfull', reason: L('cp.mfull') };
+  if (!isFinite(x) || !isFinite(z)) return { ok: false, why: 'off', reason: L('cp.off') };
+  if ((x / 86) ** 2 + (z / 58) ** 2 > 1) return { ok: false, why: 'beyond', reason: L('cp.beyond') };
   G.groundNormal(x, z, _cn);
-  if (_cn.y < 0.93) return { ok: false, reason: 'Ground too steep' };
-  if (Math.abs(G.roadSD(x, z)) < 4.2) return { ok: false, reason: 'Too close to the road' };
+  if (_cn.y < 0.93) return { ok: false, why: 'steep', reason: L('cp.steep') };
+  if (Math.abs(G.roadSD(x, z)) < 4.2) return { ok: false, why: 'road', reason: L('cp.road') };
   for (const r of G.spawnRoutes) {
     G.pathPos(0, _cp, 0, r);
-    if (Math.hypot(x - _cp.x, z - _cp.z) < 26) return { ok: false, reason: 'Under the foe\u2019s gate' };
+    if (Math.hypot(x - _cp.x, z - _cp.z) < 26) return { ok: false, why: 'gate', reason: L('cp.gate') };
   }
   G.pathPos(G.pathLen, _cp);
-  if (Math.hypot(x - _cp.x, z - _cp.z) < 24) return { ok: false, reason: 'Inside the keep grounds' };
+  if (Math.hypot(x - _cp.x, z - _cp.z) < 24) return { ok: false, why: 'keep', reason: L('cp.keep') };
   for (const tw of G.towersList)
-    if ((x - tw.x) ** 2 + (z - tw.z) ** 2 < 3.8 * 3.8) return { ok: false, reason: 'Too close to a tower' };
+    if ((x - tw.x) ** 2 + (z - tw.z) ** 2 < 3.8 * 3.8) return { ok: false, why: 'tower', reason: L('cp.tower') };
   for (const o of G.obstacles) {
     const r = o.r + FOOT_R;
-    if ((x - o.x) ** 2 + (z - o.z) ** 2 < r * r) return { ok: false, reason: 'Ground is occupied' };
+    if ((x - o.x) ** 2 + (z - o.z) ** 2 < r * r) return { ok: false, why: 'occupied', reason: L('cp.occupied') };
   }
-  return { ok: true, reason: '' };
+  return { ok: true, why: '', reason: '' };
 }
 G.canPlace = canPlace;
 // Foundation height: the LOWEST ground under the footprint, so a tower on a gentle roll
@@ -6254,26 +7028,56 @@ function padY(x, z) {
   return y;
 }
 G.padY = padY;
-// Placement mode. MAIN drives the cursor â†’ world hit-test; this owns the rules (phase,
+// Placement mode. MAIN drives the cursor → world hit-test; this owns the rules (phase,
 // affordability, validity) and the read-out handoff to UI + TOWERS.
+// SPEC4 §C/§D: placement mode now carries THREE kinds of intent — a tower on open ground,
+// a power called down anywhere, a trap laid on the road — and all three run through this
+// one object, so the ghost, the ring, the writ, the ✓/✗ touch flow and the Esc/right-click
+// cancel are written once. `kind` selects the oracle and the commit; everything downstream
+// (TOWERS' syncPlace, UI.place, MAIN's pointer path) branches on it and on nothing else.
 G.place = null;
-function enterPlace(type) {
+const PK_TOWER = 'tower', PK_CAST = 'cast', PK_TRAP = 'trap';
+function armPlace(kind, key) {
   if (state.phase !== 'prewave' && state.phase !== 'wave') return false;
-  if (!TOWER_DEFS[type]) return false;
-  if (state.gold < TOWER_DEFS[type].cost) { Audio.play('ui'); return false; }
   state.selTower = -1;
   const p = G.place;
-  G.place = { type, x: p ? p.x : 0, z: p ? p.z : 0, ok: false, reason: '' };
+  G.place = { kind, type: kind === PK_TOWER ? key : '', power: kind === PK_CAST ? key : '',
+    trap: kind === PK_TRAP ? key : '', x: p ? p.x : 0, z: p ? p.z : 0, ok: false, why: '', reason: '' };
   setPlaceAt(G.place.x, G.place.z);
   Audio.play('ui'); UI.sync();
   return true;
+}
+function enterPlace(type) {
+  if (!TOWER_DEFS[type]) return false;
+  if (state.gold < TOWER_DEFS[type].cost) { Audio.play('ui'); return false; }
+  return armPlace(PK_TOWER, type);
+}
+// A power is FREE and cooldown-gated, so the arming gate is the cooldown; a trap is bought,
+// so its gate is the purse. Both refuse out loud (the ui tick) rather than silently.
+function enterCast(power) {
+  if (!POWERS[power]) return false;
+  if (powerCD[power] > 0) { Audio.play('ui'); return false; }
+  return armPlace(PK_CAST, power);
+}
+function enterTrap(t) {
+  if (!TRAP_DEFS[t]) return false;
+  if (state.gold < TRAP_DEFS[t].cost) { Audio.play('ui'); return false; }
+  return armPlace(PK_TRAP, t);
+}
+// The one oracle switch. Every caller (UI ghost, commit path, bot harness) asks HERE, so
+// what the player sees tinted green is exactly what the sim will accept — the same contract
+// canPlace() has always carried, widened to the two new kinds.
+function placeOracle(p, x, z) {
+  return p.kind === PK_CAST ? canCast(p.power, x, z)
+       : p.kind === PK_TRAP ? canTrap(p.trap, x, z)
+       : canPlace(x, z);
 }
 function setPlaceAt(x, z) {
   const p = G.place;
   if (!p) return;
   p.x = x; p.z = z;
-  const v = canPlace(x, z);
-  p.ok = v.ok; p.reason = v.reason;
+  const v = placeOracle(p, x, z);
+  p.ok = v.ok; p.why = v.why; p.reason = v.reason;
   UI.place(p);
 }
 function exitPlace() {
@@ -6284,23 +7088,29 @@ function exitPlace() {
 function commitPlace(keep) {
   const p = G.place;
   if (!p) return false;
-  if (!p.ok || !placeTower(p.x, p.z, p.type)) { Audio.play('ui'); return false; }
-  // Shift-place keeps the hammer in hand as long as the purse allows it.
-  if (keep && state.gold >= TOWER_DEFS[p.type].cost) { setPlaceAt(p.x, p.z); return true; }
+  const done = p.ok && (p.kind === PK_CAST ? castPower(p.power, p.x, p.z)
+                      : p.kind === PK_TRAP ? layTrap(p.trap, p.x, p.z)
+                      : placeTower(p.x, p.z, p.type));
+  if (!done) { Audio.play('ui'); return false; }
+  // Shift-place keeps the hammer in hand as long as the purse allows it. A power is
+  // one-per-cooldown, so it always puts itself down.
+  const cost = p.kind === PK_TRAP ? TRAP_DEFS[p.trap].cost : p.kind === PK_TOWER ? TOWER_DEFS[p.type].cost : Infinity;
+  if (keep && state.gold >= cost) { setPlaceAt(p.x, p.z); return true; }
   exitPlace();
   return true;
 }
 G.enterPlace = enterPlace; G.setPlaceAt = setPlaceAt; G.exitPlace = exitPlace; G.commitPlace = commitPlace;
+G.enterCast = enterCast; G.enterTrap = enterTrap;
 
-// â•â• DAMAGE (SPEC3 Â§A) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// EVERY point of damage in the game goes through here â€” arrows, bolts, boulders, splash,
-// burning ground and knights â€” so the element wheel, the omen modifiers and (later) any
+// ══ DAMAGE (SPEC3 §A) ════════════════════════════════════════════════
+// EVERY point of damage in the game goes through here — arrows, bolts, boulders, splash,
+// burning ground and knights — so the element wheel, the omen modifiers and (later) any
 // on-hit effect have exactly one place to live. Returns the damage actually dealt.
-//   resist  0.5 â†’ takes half Â· 0    â†’ takes all Â· âˆ’0.2 â†’ takes 20% EXTRA
+//   resist  0.5 → takes half · 0    → takes all · −0.2 → takes 20% EXTRA
 // Resistance is capped at RES_CAP: nothing in the game is ever immune, only inefficient.
 const RES_CAP = 0.85;
 // Per-school ledger for the whole run. Elemental Ward reads it to pick the school the
-// player has leaned on hardest â€” the diversification forcer only works if it can see the
+// player has leaned on hardest — the diversification forcer only works if it can see the
 // lean, so the count has to be kept everywhere damage lands, not just at towers.
 const dmgBySchool = { pierce: 0, crush: 0, fire: 0, storm: 0 };
 G.dmgBySchool = dmgBySchool;
@@ -6316,11 +7126,11 @@ function dealDamage(e, amount, element) {
   return dmg;
 }
 G.dealDamage = dealDamage;
-// HOOK: VFX/AUDIO builder (SPEC3 Â§A). The one place that DRESSES a landed blow. Kept next
+// HOOK: VFX/AUDIO builder (SPEC3 §A). The one place that DRESSES a landed blow. Kept next
 // to dealDamage() rather than at each call site so the picture and the sound of a school
 // can never drift apart, and so a shrug is defined once: at or above half resistance the
 // hit is a deflection, and the cue that plays is the dull one that says so. Pierce under
-// that bar stays SILENT on purpose â€” an archer wall firing four arrows a second would turn
+// that bar stays SILENT on purpose — an archer wall firing four arrows a second would turn
 // any per-hit cue into a rattle, and the bow report already covers it.
 const HIT_SFX = { crush: 'thud', fire: 'sizzle', storm: 'crack', pierce: '' };
 function hitFX(e, x, y, z, el, size) {
@@ -6331,26 +7141,21 @@ function hitFX(e, x, y, z, el, size) {
   if (cue) Audio.play(cue, x, z, r >= 0.5 ? 0.5 : 0.62);
 }
 
-// â•â• WAR OMENS (SPEC3 Â§D) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// From wave 5 on, every muster offers three omens â€” always at least one challenge and at
-// least one boon â€” and the one the player takes rides the NEXT wave only. A challenge pays
+// ══ WAR OMENS (SPEC3 §D) ═════════════════════════════════════════════
+// From wave 5 on, every muster offers three omens — always at least one challenge and at
+// least one boon — and the one the player takes rides the NEXT wave only. A challenge pays
 // +20% bounty, so the greedy line and the safe line are genuinely different lines.
 // The offer is drawn from the RUN SEED (srng), never from the sim stream: the draw must be
 // the same whether the player called the wave early or let the countdown run out.
 const OMEN_FROM = 5;                                   // first wave that carries an omen
 G.OMEN_FROM = OMEN_FROM;                               // UI reads it for the dispatch's omen line
-const OMENS = {
-  march:    { kind: 'challenge', name: 'Forced March',    desc: 'The horde comes on at a run â€” +25% speed.' },
-  ironskin: { kind: 'challenge', name: 'Iron Skins',      desc: 'Boiled hide and plate â€” +40% hit points.' },
-  ward:     { kind: 'challenge', name: 'Elemental Ward',  desc: 'Warded against whichever school has spilt the most blood this campaign.' },
-  night:    { kind: 'challenge', name: 'Night Raid',      desc: 'They come out of the dark almost twice as thick.' },
-  sappers:  { kind: 'challenge', name: 'Sappers',         desc: 'Nothing slows them and they smother burning ground.' },
-  shafts:   { kind: 'boon',      name: 'Sharpened Shafts',desc: 'Arrows and bolts bite 30% deeper this wave.' },
-  front:    { kind: 'boon',      name: 'Storm Front',     desc: 'Lightning leaps two foes further.' },
-  chest:    { kind: 'boon',      name: 'War Chest',       desc: 'The treasury opens â€” 60 gold, now.' },
-  wind:     { kind: 'boon',      name: 'Second Wind',     desc: 'Fallen knights return twice as fast.' },
-  thin:     { kind: 'boon',      name: 'Thin Ranks',      desc: 'A fifth fewer foes â€” and a quarter less coin.' },
-};
+// Name and blurb come out of the string layer (SPEC4 §B); `kind` is the only field the sim
+// itself reads, so the table stays data even when its copy is in another language.
+const OMENS = {};
+for (const [k, kind] of [['march', 'challenge'], ['ironskin', 'challenge'], ['ward', 'challenge'],
+  ['night', 'challenge'], ['sappers', 'challenge'], ['shafts', 'boon'], ['front', 'boon'],
+  ['chest', 'boon'], ['wind', 'boon'], ['thin', 'boon']])
+  OMENS[k] = { kind, name: L('omen.' + k + '.name'), desc: L('omen.' + k + '.desc') };
 G.OMENS = OMENS;
 // The active bundle. EVERY omen effect is read out of this one object, so "the omen is
 // over" is a single reset rather than five scattered flags.
@@ -6362,7 +7167,7 @@ function resetOmenFx() {
   OMEN_FX.ward = OMEN_FX.chain = OMEN_FX.noSlow = 0; OMEN_FX.wardEl = '';
   for (const k in OMEN_FX.dmg) delete OMEN_FX.dmg[k];
 }
-// The school this run has leaned on hardest â€” what Elemental Ward turns against you.
+// The school this run has leaned on hardest — what Elemental Ward turns against you.
 function topSchool() {
   let best = SCHOOLS[0];
   for (const s of SCHOOLS) if (dmgBySchool[s] > dmgBySchool[best]) best = s;
@@ -6405,14 +7210,14 @@ function policyPick(offer, n) {
   return -1;                                            // leave it to the seeded default
 }
 const Omens = { offer: [], forWave: 0, picked: -1, defIdx: 0, active: '', wardEl: '' };
-// UI contract (SPEC3 Â§D): G.omens.offer is the three keys on the table, pick(i) takes one,
+// UI contract (SPEC3 §D): G.omens.offer is the three keys on the table, pick(i) takes one,
 // active is the omen riding the wave in progress ('' = none). Everything else is private.
 G.omens = Omens;
 function drawOmens(n) {
   // The draw index carries the MAP as well as the wave. Keyed on the wave alone, a pinned
-  // seed dealt all three roads the identical wave-N hand â€” visible in the shipped frames,
-  // where battle2 (W8) and battle3 (W7) both came up Elemental Ward â€” which makes the
-  // campaign feel scripted exactly where Â§D wants it to feel dealt. SWAPS already salts on
+  // seed dealt all three roads the identical wave-N hand — visible in the shipped frames,
+  // where battle2 (W8) and battle3 (W7) both came up Elemental Ward — which makes the
+  // campaign feel scripted exactly where §D wants it to feel dealt. SWAPS already salts on
   // MAP.id; this is the same idiom. Still deterministic given (map, seed).
   const oi = n + MAP.id * 101;
   const keys = Object.keys(OMENS);
@@ -6433,7 +7238,7 @@ Omens.pick = (i) => {
   if (state.phase !== 'prewave' || !Omens.offer.length) return false;
   if (!(i >= 0 && i < Omens.offer.length)) return false;
   Omens.picked = i;
-  // HOOK: AUDIO builder â€” taking an omen is the only decision in the game that is not a
+  // HOOK: AUDIO builder — taking an omen is the only decision in the game that is not a
   // purchase, so it gets its own stinger (page turn + a low choir) rather than the HUD tick.
   // The parchment burn-in is UI-CSS's `omBurn`, which runs off the card being rebuilt.
   Audio.play('omen'); UI.omens(); UI.sync();
@@ -6443,7 +7248,10 @@ Omens.pick = (i) => {
 // (a cleared wave, UI.startGame, or the shot harness staging one directly).
 function omenTick() {
   const n = state.wave + 1;
-  if (n < OMEN_FROM || n > WAVES.length) return;
+  // SPEC4 §E: the omens keep coming past the finale — an endless run without them loses
+  // the one decision that is not a purchase. The draw is srng-keyed on the wave index, so
+  // it extends past WAVES.length for free.
+  if (n < OMEN_FROM || (n > FINALE_W && !state.endless)) return;
   if (Omens.forWave !== n) drawOmens(n);
 }
 // Fired by startWave(): the pick (or the seeded default) becomes the wave's omen.
@@ -6456,15 +7264,15 @@ function commitOmen(n) {
   if (SHOT) console.log('OMENLOG wave=' + n + ' key=' + state.omen + (OMEN_FX.wardEl ? ' ward=' + OMEN_FX.wardEl : ''));
 }
 
-// â•â• ELITE SWAP SLOTS (SPEC3 Â§E) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ ELITE SWAP SLOTS (SPEC3 §E) ══════════════════════════════════════
 // From wave 6 on, two or three groups per campaign are drawn from a swap table instead of
 // being fixed: the same seed always fields the same threats, a new run fields a different
-// mix. Each option is [key, countÃ—, intervalÃ—] â€” a mini-boss replaces a mob of chaff at a
+// mix. Each option is [key, count×, interval×] — a mini-boss replaces a mob of chaff at a
 // fraction of the count and a slower cadence. Option 0 is always the ORIGINAL group, so a
 // run can legitimately come out vanilla.
 // Options naming a species the roster does not carry YET fall back to the original group.
 // ROSTER pass: the count/interval factors were authored blind against SPEC3's hp column.
-// They are now sized against EFFECTIVE hit points â€” raw hp divided through the resist the
+// They are now sized against EFFECTIVE hit points — raw hp divided through the resist the
 // swapped species carries against the school the map's advertised comp actually shoots
 // with. Raw-hp parity is the wrong target and the bot matrix proved it: 18 frost revenants
 // carry the same 3100 hit points as the 11 brutes they replaced, but at pierce .6 against
@@ -6472,7 +7280,7 @@ function commitOmen(n) {
 // 12 to dying on wave 8. A slot is allowed to be a spike, not a different campaign.
 const SWAP_SLOTS = {
   1: [
-    // 16 brutes = 2400 hp. ironclad 5 (pierce .5 Â· storm .85) Â· ram 2 Â· ashwraith 32.
+    // 16 brutes = 2400 hp. ironclad 5 (pierce .5 · storm .85) · ram 2 · ashwraith 32.
     { wave: 7, from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.32, 2.7], ['ram', 0.14, 5.0], ['ashwraith', 2.0, 0.50]] },
     // 60 runners = 540 hp. A mini-swarm of 18 wraiths or 8 revenants is a real spike but
     // not a second wave: at the blind 0.55/0.42 this slot fielded 2000+ hp of elites.
@@ -6487,20 +7295,20 @@ const SWAP_SLOTS = {
     { wave: 8,  from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.28, 3.1], ['frostrevenant', 0.70, 1.4]] },
     // 30 pavises. A healer count is a force multiplier, so it sits far under hp parity.
     { wave: 10, from: 'shield', to: [['shield', 1, 1], ['ironclad', 0.10, 7.0], ['warshaman', 0.22, 3.8]] },
-    // 74 hounds = 518 hp. 10 wraiths = 620 â€” and a wraith pack is as fast as a hound pack.
+    // 74 hounds = 518 hp. 10 wraiths = 620 — and a wraith pack is as fast as a hound pack.
     { wave: 11, from: 'hound',  to: [['hound', 1, 1], ['ashwraith', 0.14, 6.0], ['runner', 0.9, 1.05]] },
   ],
   3: [
     // 22 marauders = 572 hp. ashwraith 11 = 660 (and fire, the wastes' own school, is the
-    // one thing that does not touch them) Â· warshaman 8.
+    // one thing that does not touch them) · warshaman 8.
     { wave: 7,  from: 'marauder', to: [['marauder', 1, 1], ['ashwraith', 0.5, 1.9], ['warshaman', 0.35, 2.7]] },
-    // 15 brutes = 2250 hp. ram 2 Â· ironclad 4.
+    // 15 brutes = 2250 hp. ram 2 · ironclad 4.
     { wave: 11, from: 'brute',    to: [['brute', 1, 1], ['ram', 0.16, 5.0], ['ironclad', 0.27, 3.4]] },
-    // 23 pavises = 1265 hp. ironclad 2 Â· ashwraith 21 = 1260.
+    // 23 pavises = 1265 hp. ironclad 2 · ashwraith 21 = 1260.
     { wave: 13, from: 'shield',   to: [['shield', 1, 1], ['ironclad', 0.11, 6.2], ['ashwraith', 0.9, 0.78]] },
   ],
 };
-// Resolved ONCE per run, off the run seed â€” not per wave, so a slot cannot re-roll itself
+// Resolved ONCE per run, off the run seed — not per wave, so a slot cannot re-roll itself
 // by the player replaying a wave boundary.
 const SWAPS = (SWAP_SLOTS[MAP.id] || []).map((s, i) => {
   const r = srng(0x53 + MAP.id * 17, i);
@@ -6511,9 +7319,9 @@ const SWAPS = (SWAP_SLOTS[MAP.id] || []).map((s, i) => {
 G.SWAPS = SWAPS;
 if (SHOT) for (const s of SWAPS)
   console.log('SWAPLOG wave=' + s.wave + ' ' + s.from + '->' + s.k + ' n=' + s.n);
-// ROSTLOG (SPEC3 Â§B verification): one line per resolved slot with the seed that resolved
+// ROSTLOG (SPEC3 §B verification): one line per resolved slot with the seed that resolved
 // it, plus the roster head count. Two runs at different `&seed=` must print different
-// resolutions â€” that IS the per-run-variance test, and it is machine-readable.
+// resolutions — that IS the per-run-variance test, and it is machine-readable.
 if (SHOT) {
   console.log('ROSTLOG roster=' + Object.keys(ENEMY_DEFS).length + ' map=' + MAP.id + ' seed=' + G.runSeed +
     ' slots=' + SWAPS.length);
@@ -6522,7 +7330,7 @@ if (SHOT) {
       ' n=' + s.n + ' iv=' + s.iv + (s.k === s.from ? ' (vanilla)' : ' (elite)'));
   // the fixed mid-campaign mini-boss slots, so a log diff proves they are still on the road
   const fixed = [];
-  WAVES.forEach((w, i) => { for (const g of w) if ((ENEMY_DEFS[g[0]] || {}).elite && g[0] !== 'ogre') fixed.push('W' + (i + 1) + ':' + g[0] + 'Ã—' + g[1]); });
+  WAVES.forEach((w, i) => { for (const g of w) if ((ENEMY_DEFS[g[0]] || {}).elite && g[0] !== 'ogre') fixed.push('W' + (i + 1) + ':' + g[0] + '×' + g[1]); });
   console.log('ROSTLOG fixed map=' + MAP.id + ' ' + (fixed.join(' ') || 'none'));
 }
 
@@ -6531,16 +7339,16 @@ if (SHOT) {
 // map consumes the rng stream exactly as it did before maps 2-3 existed.
 function spawnEnemy(type, pid) {
   const def = ENEMY_DEFS[type];
-  const hpMul = 1 + (MAP.hpRamp || 0.14) * (state.wave - 1); // r3: per-map ramp â€” long maps scale slower per wave
-  // r7 REGRESSION REVERT â€” spawn placement is SIM, not dressing. ARMIES swapped this for a
+  const hpMul = 1 + (MAP.hpRamp || 0.14) * (state.wave - 1); // r3: per-map ramp — long maps scale slower per wave
+  // r7 REGRESSION REVERT — spawn placement is SIM, not dressing. ARMIES swapped this for a
   // six-file lattice (G.laneOf) + a `d0 = r1 * 0.30` head start. Draw COUNT was preserved, so
   // the rng stream stayed aligned, but the lane DISTRIBUTION did not: the old jitter is
   // triangular (two thirds of the column inside the middle ~1.4u), the lattice is uniform out
-  // to Â±2.30. Same maximum, very different mean distance from the road centre â€” so towers
+  // to ±2.30. Same maximum, very different mean distance from the road centre — so towers
   // sited on the centre line lost DPS uptime on most of the column. That flipped BALANCE.md's
-  // map-3 anchors both ways (magic3 2/32 win â†’ loss, intended3 loss â†’ 13/32 win). Centring d0
+  // map-3 anchors both ways (magic3 2/32 win → loss, intended3 loss → 13/32 win). Centring d0
   // alone did not restore them; the lattice is the load-bearing half. Reverted to the tuned
-  // distribution. ARMIES' mesh/armour/ogre art is untouched â€” only these two lines were sim.
+  // distribution. ARMIES' mesh/armour/ogre art is untouched — only these two lines were sim.
   // G.laneOf stays defined: the _bestiary showcase preset still poses with it.
   const lane = (rng() + rng() - 1) * 2.35;
   const SR = G.spawnRoutes;
@@ -6557,7 +7365,7 @@ function spawnEnemy(type, pid) {
     spdM: OMEN_FX.spd, ward: OMEN_FX.ward ? OMEN_FX.wardEl : '', noSlow: OMEN_FX.noSlow,
     shooting: false, aimX: 0, aimZ: 0, stompT: def.stomp ? 2 : 0, stompFX: -1 });
 }
-// The one place a knight loses hit points â€” melee, marauder arrows and the ogre's stomp
+// The one place a knight loses hit points — melee, marauder arrows and the ogre's stomp
 // all land here, so a knight's death always frees whoever was holding him and always
 // looks the same. Mirrors dealDamage()'s role on the other side of the line.
 function hurtKnight(kn, amount) {
@@ -6580,9 +7388,9 @@ function nearestKnight(x, z, rad) {
   }
   return best;
 }
-// OGRE (SPEC2 Â§D). While it is held in melee it brings a foot down every 5 s: 30 to every
+// OGRE (SPEC2 §D). While it is held in melee it brings a foot down every 5 s: 30 to every
 // knight inside 2.5u, a shake and a ring of dust. That is what makes a barracks a bad
-// answer to one â€” you have to shoot it.
+// answer to one — you have to shoot it.
 function ogreStomp(e) {
   const S = e.def.stomp;
   if (e.stompT > 0) { e.stompT -= TICK; return; }
@@ -6592,18 +7400,18 @@ function ogreStomp(e) {
     if (kn.alive && (kn.x - e.px) ** 2 + (kn.z - e.pz) ** 2 <= rq) hurtKnight(kn, S.dmg);
   const gy = G.groundY(e.px, e.pz);
   VFX.shakeAt(e.px, gy, e.pz, 0.85);
-  VFX.stomp(e.px, gy, e.pz);                            // HOOK: VFX builder â€” dust burst
+  VFX.stomp(e.px, gy, e.pz);                            // HOOK: VFX builder — dust burst
   Audio.play('stomp', e.px, e.pz);
 }
 let spawnQueue = [];
 let _bountyFrac = 0;                                    // sub-gold change from omen bounty multipliers
 function startWave(n) {
   state.wave = n; state.phase = 'wave'; spawnQueue = [];
-  commitOmen(n);                                        // SPEC3 Â§D â€” the omen is locked in here
+  commitOmen(n);                                        // SPEC3 §D — the omen is locked in here
   // 5th field of a wave group = the spawn gate it marches out of (Frostfell). Omitted, the
   // group is split across the map's gates one enemy at a time by spawnEnemy().
-  for (const [type0, count0, interval0, delay, pid] of WAVES[n - 1]) {
-    // SPEC3 Â§E: an elite swap slot re-casts one group of this wave for the whole run.
+  for (const [type0, count0, interval0, delay, pid] of waveDefs(n)) {
+    // SPEC3 §E: an elite swap slot re-casts one group of this wave for the whole run.
     const sw = SWAPS.find(s => s.wave === n && s.from === type0);
     const type = sw ? sw.k : type0;
     const count = Math.max(1, Math.round(count0 * (sw ? sw.n : 1) * OMEN_FX.count));
@@ -6612,16 +7420,18 @@ function startWave(n) {
       spawnQueue.push({ tick: state.tick + Math.round((delay + i * interval) * TPS), type, pid });
   }
   spawnQueue.sort((a, b) => a.tick - b.tick);
-  UI.msg('Wave ' + n + (n === WAVES.length ? ' â€” ' + MAP.finale : '') + ' incoming!');
-  // HOOK: AUDIO builder â€” the horn reads the wave's COMPOSITION, so a pack wave answers
-  // with hounds and a finale answers with the boss's own sting (SPEC2 Â§D/Â§E).
-  Audio.waveCue(WAVES[n - 1]);
+  // SPEC4 §B: SIM signals WHAT happened, UI owns the sentence. Passing an English string to
+  // be regex-matched on the other side made the banner untranslatable by construction.
+  UI.msg({ wave: n, finale: n === FINALE_W, endless: n > FINALE_W });
+  // HOOK: AUDIO builder — the horn reads the wave's COMPOSITION, so a pack wave answers
+  // with hounds and a finale answers with the boss's own sting (SPEC2 §D/§E).
+  Audio.waveCue(waveDefs(n));
   UI.sync();
 }
 G.startWave = startWave;
 
 // Free placement: (x,z) is anywhere G.canPlace() allows. `free` skips the purse AND the
-// validity gate â€” that is the shot harness / preset path only.
+// validity gate — that is the shot harness / preset path only.
 function placeTower(x, z, type, level = 1, free = false) {
   const def = TOWER_DEFS[type];
   if (!free) {
@@ -6630,9 +7440,9 @@ function placeTower(x, z, type, level = 1, free = false) {
   }
   // POLISH/BUGFIX: this used to store `level` here AND then run the upgrade loop below, so
   // placeTower(..., 2) actually produced a LEVEL 3 tower and mis-stated `invested`. Build
-  // at tier 1 and let the loop walk up â€” every preset's level argument now means what it
+  // at tier 1 and let the loop walk up — every preset's level argument now means what it
   // says (the shot tables were re-pointed to the tiers they were really getting).
-  // `mode` (SPEC3 Â§F) starts at the type's doctrine and is then the tower's own property â€”
+  // `mode` (SPEC3 §F) starts at the type's doctrine and is then the tower's own property —
   // cycled per tower, never re-read from the def.
   const tw = { uid: ++twid, type, level: 1, cdT: 0, invested: def.cost, x, z, y: padY(x, z), group: null,
     mode: def.mode || 'first' };
@@ -6642,11 +7452,11 @@ function placeTower(x, z, type, level = 1, free = false) {
   scene.add(tw.group);
   G.towersList.push(tw);
   if (type === 'barracks') spawnKnights(tw);
-  // HOOK: WORLD â€” stamp a contact-AO footprint so the tower sits IN the terrain instead of
+  // HOOK: WORLD — stamp a contact-AO footprint so the tower sits IN the terrain instead of
   // on it (same pass every scattered prop uses).
   if (G.stampAO) G.stampAO(x, z, 2.4, 0.9);
   for (let l = 2; l <= level; l++) upgradeTower(tw, true);
-  // HOOK: AUDIO builder â€” a raised standard gets its own cue (mallets + a horn swell);
+  // HOOK: AUDIO builder — a raised standard gets its own cue (mallets + a horn swell);
   // everything else is timber and stone.
   UI.sync(); Audio.play(def.aura ? 'banner' : 'build', x, z);
   return true;
@@ -6665,7 +7475,7 @@ function upgradeTower(tw, free = false) {
   return true;
 }
 G.upgradeTower = upgradeTower;
-// Selling frees the 3.8u spacing again, so repositioning is a real strategy (SPEC2 Â§A).
+// Selling frees the 3.8u spacing again, so repositioning is a real strategy (SPEC2 §A).
 function sellTower(tw) {
   state.gold += Math.round(tw.invested * 0.7);
   scene.remove(tw.group);
@@ -6675,10 +7485,10 @@ function sellTower(tw) {
   UI.sync(); Audio.play('coin');
 }
 G.sellTower = sellTower;
-// SPEC3 Â§F â€” First â†’ Strong â†’ Close, per tower, hotkey T. Support towers have no target
+// SPEC3 §F — First → Strong → Close, per tower, hotkey T. Support towers have no target
 // to argue about, so they keep no doctrine at all.
 const MODES = ['first', 'strong', 'close'];
-const MODE_NAME = { first: 'First', strong: 'Strong', close: 'Close' };
+const MODE_NAME = { first: L('mode.first'), strong: L('mode.strong'), close: L('mode.close') };
 G.MODES = MODES; G.MODE_NAME = MODE_NAME;
 function cycleMode(tw) {
   if (!tw || !fights(TOWER_DEFS[tw.type])) return null;
@@ -6700,12 +7510,12 @@ function spawnKnights(tw) {
 const vt = () => state.tick * TICK; // sim virtual time (deterministic)
 G.vt = vt;
 
-// â•â• TOWER WEAPONS (SPEC2 Â§C) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ TOWER WEAPONS (SPEC2 §C) ═════════════════════════════════════════
 // Everything a tower does when its cooldown expires lives in fireTower(), so the shot
 // harness can stage a shot mid-frame (`G.fireTower(tw)`) without duplicating the rules.
 const FIRE_SFX = { archer: 'bow', ballista: 'ballista', catapult: 'catapult', storm: 'storm', pyre: 'pyre' };
-// Warbanner aura: NON-STACKING â€” the strongest banner covering a tower wins, so three
-// banners in a heap are worth exactly one (SPEC2 Â§C, anti-deathball).
+// Warbanner aura: NON-STACKING — the strongest banner covering a tower wins, so three
+// banners in a heap are worth exactly one (SPEC2 §C, anti-deathball).
 function auraMul(x, z) {
   let m = 1;
   for (const b of G.towersList) {
@@ -6718,10 +7528,10 @@ function auraMul(x, z) {
 }
 G.auraMul = auraMul;
 // Chain lightning: hops to the nearest un-struck foe within `hop`, losing `fall` of its
-// damage each time. Hitscan â€” the visible arc is a render-side ribbon (Towers.zap).
+// damage each time. Hitscan — the visible arc is a render-side ribbon (Towers.zap).
 const _chain = [];
 function chainLightning(tw, tgt, dmg) {
-  // Storm Front (SPEC3 Â§D) buys the arc two more foes for the wave it rides.
+  // Storm Front (SPEC3 §D) buys the arc two more foes for the wave it rides.
   const def = TOWER_DEFS.storm, hops = def.chain + (tw.level >= 2 ? 1 : 0) + OMEN_FX.chain;
   _chain.length = 0;
   let cur = tgt, d = dmg;
@@ -6734,12 +7544,12 @@ function chainLightning(tw, tgt, dmg) {
       cur.slowT = Math.max(cur.slowT, 0.8);
       cur.slowF = Math.min(cur.slowF, 0.75);
     }
-    // HOOK: VFX/AUDIO builder â€” the strike dressing. One crack per CHAIN (h===0), not per
+    // HOOK: VFX/AUDIO builder — the strike dressing. One crack per CHAIN (h===0), not per
     // hop: four cracks inside 40 ms is a rattle, not lightning (MINGAP would eat them
     // anyway, but saying it here keeps the intent visible).
     VFX.zapHit(cur.px, ey, cur.pz, h, cur);
     if (h === 0) Audio.play('zap', cur.px, cur.pz);
-    // SPEC3 Â§A: an ironclad earths the arc. The strike keeps its crack (the SPIRE fired,
+    // SPEC3 §A: an ironclad earths the arc. The strike keeps its crack (the SPIRE fired,
     // and that is what the player did) but the body answers with the deflection clang.
     if (resistOf(cur.def, 'storm') >= 0.5) Audio.play('shrug', cur.px, cur.pz, 0.5);
     _chain.push(cur);
@@ -6770,11 +7580,11 @@ function addPatch(tw, x, z) {
 function fireTower(tw) {
   const def = TOWER_DEFS[tw.type];
   const range = def.range * (1 + 0.08 * (tw.level - 1)), rq = range * range, minq = (def.minRange || 0) ** 2;
-  // TARGETING DOCTRINE (SPEC3 Â§F), per tower:
-  //   first  â€” furthest along the road (the classic: kill what is closest to the gate)
-  //   strong â€” highest hit points in range, ties to the furthest along. This is what lets
+  // TARGETING DOCTRINE (SPEC3 §F), per tower:
+  //   first  — furthest along the road (the classic: kill what is closest to the gate)
+  //   strong — highest hit points in range, ties to the furthest along. This is what lets
   //            a boss be focused instead of starving behind its own chaff stream.
-  //   close  â€” nearest to the tower, which is what a short-range splash/burn wants.
+  //   close  — nearest to the tower, which is what a short-range splash/burn wants.
   let tgt = null, bestD = -1, bestH = -1, bestQ = Infinity;
   const mode = tw.mode || def.mode || 'first';
   for (const e of G.enemies) {
@@ -6805,17 +7615,277 @@ function fireTower(tw) {
       tid: tgt.id, speed: tw.type === 'archer' ? 42 : 55, dmg, pierce: def.pierce || 0, element: def.element });
   }
   Audio.play(FIRE_SFX[tw.type] || 'bow', tw.x, tw.z);  // AUDIO: x/z pan+attenuate
-  // HOOK: TOWERS builder â€” fire animation trigger here (tw, tgt)
+  // HOOK: TOWERS builder — fire animation trigger here (tw, tgt)
   Towers.fire(tw, tgt, hasProj);
   return true;
 }
 G.fireTower = fireTower;
 
+// ══ POWERS (SPEC4 §C) ════════════════════════════════════════════════
+// Two things the player can DO between placements, both free and both gated by a cooldown
+// counted in TICKS — never in seconds off a wall clock, so a power resolves on exactly the
+// same tick in a headless capture as it does at ×3 speed on a phone.
+//
+// Neither is on any default bot plan (§F): they are player agency, and the balance matrix
+// must keep measuring the campaign a bot can actually reach. `cast:q,x,z` exists for the
+// day someone wants to measure them, and prints a BOTSKIP if the cooldown refuses.
+const POWERS = {
+  // Rally: three militia stand where you point and BLOCK, reusing the knight combat path
+  // wholesale — same claim rule, same melee, same death — so a rallied spearman fights
+  // exactly like a barracks knight and is simply gone in twelve seconds.
+  rally: { key: 'q', cd: 25, rad: 4.0, n: 3, hp: 60, dps: 5, life: 12, gate: 16 },
+  // Fire of Heaven: a telegraph the horde walks into, then the blow. The 1.2s wind-up is
+  // the whole design — it is a prediction, not a delete button.
+  smite: { key: 'w', cd: 45, rad: 4.0, dmg: 90, tele: 1.2, burn: { dur: 2, dps: 18 } },
+};
+G.POWERS = POWERS;
+const PW_KEYS = Object.keys(POWERS);
+G.PW_KEYS = PW_KEYS;
+// Cooldowns in TICKS. `powerReady(k)` is the render-side read-out (0..1) the radial sweep
+// draws from — it reads the sim, it never writes to it.
+const powerCD = { rally: 0, smite: 0 };
+G.powerCD = powerCD;
+G.powerLeft = (k) => powerCD[k] * TICK;                       // seconds remaining, 0 = ready
+G.powerFrac = (k) => 1 - clamp(powerCD[k] / (POWERS[k].cd * TPS), 0, 1);
+// Pending smites: a strike is a scheduled event, not a timer. `at` is an absolute tick.
+G.smites = [];
+// Ground rules for a cast. Deliberately LOOSER than canPlace(): a power is called down on
+// the battlefield, not built on it — the road is a legal target (that is the point of
+// rallying a block), only the foe's own gate mouth is not.
+function canCast(k, x, z) {
+  const P = POWERS[k];
+  if (!P) return { ok: false, why: 'off', reason: L('cp.off') };
+  if (powerCD[k] > 0) return { ok: false, why: 'cd', reason: L('cp.cd') };
+  if (!isFinite(x) || !isFinite(z)) return { ok: false, why: 'off', reason: L('cp.off') };
+  // Inside the vale OR on the road. canPlace's 86×58 ellipse bounds where a tower may STAND
+  // — buildable meadow inside the diorama — but the road itself leaves that ellipse on its
+  // run up to the spawn gate (measured: the Vale's road passes 63.6,−47.3), and a hundred
+  // foes are walking over ground the build bound calls "beyond the vale". A power is called
+  // down on the battlefield, so the battlefield is the bound.
+  if ((x / 86) ** 2 + (z / 58) ** 2 > 1 && Math.abs(G.roadSD(x, z)) >= G.roadW)
+    return { ok: false, why: 'beyond', reason: L('cp.beyond') };
+  // Only the RALLY carries a gate keep-out: three militia parked in the spawn mouth is the
+  // one cheese this system could ship. A smite there is just a smite.
+  if (P.gate) for (const r of G.spawnRoutes) {
+    G.pathPos(0, _cp, 0, r);
+    if (Math.hypot(x - _cp.x, z - _cp.z) < P.gate) return { ok: false, why: 'gate', reason: L('cp.gate') };
+  }
+  // militia have to be able to STAND: a cliff face is not a rally point
+  if (k === 'rally') { G.groundNormal(x, z, _cn); if (_cn.y < 0.86) return { ok: false, why: 'steep', reason: L('cp.steep') }; }
+  return { ok: true, why: '', reason: '' };
+}
+G.canCast = canCast;
+function castPower(k, x, z) {
+  const v = canCast(k, x, z);
+  if (!v.ok) return false;
+  const P = POWERS[k];
+  powerCD[k] = Math.round(P.cd * TPS);
+  if (k === 'rally') rallyMilitia(x, z);
+  else {
+    // The telegraph is drawn NOW and the blow lands 1.2 s of sim time later, so the ring
+    // the player sees and the circle that burns are the same circle.
+    G.smites.push({ x, z, at: state.tick + Math.round(P.tele * TPS) });
+    VFX.telegraph(x, z, P.rad, P.tele);
+    Audio.play('choir', x, z);
+  }
+  UI.sync();
+  return true;
+}
+G.castPower = castPower;
+// Three spearmen on a fixed triangle round the point. NO rng: a player action must not
+// consume the sim stream, or a run with a cast in it stops replaying from its seed.
+function rallyMilitia(x, z) {
+  const P = POWERS.rally, t = vt();
+  for (let i = 0; i < P.n; i++) {
+    const a = i * 2.0943951 + 0.5236, hx = x + Math.cos(a) * 1.25, hz = z + Math.sin(a) * 1.25;
+    G.knights.push({ tower: null, mil: true, expire: t + P.life, alive: true,
+      hp: P.hp, maxhp: P.hp, dps: P.dps, x: hx, z: hz, hx, hz,
+      target: -1, respawn: 0, face: 0, idleT: 0 });
+  }
+  VFX.rally(x, z, P.rad);
+  Audio.play('rally', x, z);
+}
+// Militia are removed from G.knights, and e.blockedBy is an INDEX into that array — so the
+// compaction has to remap every hold in the same pass. Called on the same 90-tick beat that
+// sweeps spent enemies; a run with no militia in it returns before touching anything.
+function reapMilitia() {
+  const K = G.knights;
+  let dead = 0;
+  for (let i = 0; i < K.length; i++) if (K[i].mil && !K[i].alive) dead++;
+  if (!dead) return;
+  const map = new Int32Array(K.length), keep = [];
+  for (let i = 0; i < K.length; i++) {
+    if (K[i].mil && !K[i].alive) { map[i] = -1; continue; }
+    map[i] = keep.length; keep.push(K[i]);
+  }
+  // every removed militiaman freed its hold when it fell, so no live index can map to −1
+  for (const e of G.enemies) if (e.blockedBy >= 0) e.blockedBy = map[e.blockedBy];
+  G.knights = keep;
+}
+function tickPowers() {
+  for (const k of PW_KEYS) if (powerCD[k] > 0) powerCD[k]--;
+  const t = vt();
+  for (let i = G.smites.length - 1; i >= 0; i--) {
+    const s = G.smites[i];
+    if (state.tick < s.at) continue;
+    G.smites.splice(i, 1);
+    const P = POWERS.smite, rq = P.rad * P.rad;
+    let dressed = 0;
+    for (const e of G.enemies) {
+      if (!e.alive) continue;
+      const dd = (e.px - s.x) ** 2 + (e.pz - s.z) ** 2;
+      if (dd > rq) continue;
+      // FIRE, not a fifth school: BANNERFALL has four, and inventing a "magic" column would
+      // mean a resist entry on every foe in the roster. Fire of Heaven burns — which is also
+      // what makes an ash wraith (fire .85) the wrong thing to answer with it.
+      const wasElite = e.def.elite;
+      dealDamage(e, P.dmg, 'fire');
+      if (dressed < 4 && (wasElite || dd < rq * 0.5)) { dressed++; hitFX(e, e.px, 1.3, e.pz, 'fire', 1.0); }
+    }
+    // the burning ground it leaves is an ordinary patch: same list, same damage loop, same
+    // flames TOWERS already draws — and the same thing a tar pit can catch from.
+    G.patches.push({ x: s.x, z: s.z, r: P.rad, dur: P.burn.dur, born: t, owner: 'smite', dps: P.burn.dps });
+    VFX.smite(s.x, s.z, P.rad);
+    VFX.shakeAt(s.x, G.groundY(s.x, s.z), s.z, 0.85);
+    Audio.play('smitehit', s.x, s.z);
+  }
+}
+
+// ══ ROAD TRAPS (SPEC4 §D) ════════════════════════════════════════════
+// The layer free placement can never touch. A tower is refused within 4.2u of the road
+// centre; a trap is refused ANYWHERE ELSE — canPlace() inverted, which is exactly why the
+// two systems never compete for ground. One-shot consumables: four armed at a time, and a
+// sprung trap is gone.
+//   caltrops  8s slow 0.55 + 4 dps pierce · tar  5s slow 0.40, doubles any fire on it
+//   keg       proximity blast, 55 crush over r3.5
+// EVERY point of trap damage goes through dealDamage() like everything else in the game.
+const TRAP_DEFS = {
+  caltrops: { cost: 30, rad: 2.5, dur: 8, slow: 0.55, dps: 4, element: 'pierce', kind: 'patch' },
+  tar:      { cost: 45, rad: 2.5, dur: 5, slow: 0.40, dps: 0, element: 'fire',   kind: 'patch', ignite: 2 },
+  keg:      { cost: 60, rad: 3.5, dmg: 55, element: 'crush', kind: 'blast', trig: 1.7 },
+};
+G.TRAP_DEFS = TRAP_DEFS;
+const TRAPS_K = Object.keys(TRAP_DEFS);
+G.TRAPS_K = TRAPS_K;
+const TRAP_MAX = 4;
+G.TRAP_MAX = TRAP_MAX;
+G.traps = [];
+let trapId = 0;
+// The inverted gate. `|roadSD| < roadW/2` is the whole rule — a trap belongs to the road
+// surface — plus the same gate/keep keep-outs a tower answers to (a trap in the enemy gate
+// mouth is a free kill on every wave) and a spacing rule against other traps so four kegs
+// cannot be stacked into one 220-damage pile.
+function canTrap(k, x, z) {
+  const D = TRAP_DEFS[k];
+  if (!D) return { ok: false, why: 'off', reason: L('cp.off') };
+  if (G.traps.length >= TRAP_MAX) return { ok: false, why: 'tfull', reason: L('cp.tfull') };
+  if (!isFinite(x) || !isFinite(z)) return { ok: false, why: 'off', reason: L('cp.off') };
+  // NO map-ellipse test here, deliberately. canPlace's 86×58 ellipse bounds where a tower
+  // may STAND; "on the road" is a strictly tighter bound than any ellipse, and the road
+  // genuinely leaves that ellipse on its run up to the spawn gate (measured: the Vale's road
+  // passes 63.6,−47.3). Adding one only ever refuses legal road.
+  if (Math.abs(G.roadSD(x, z)) >= G.roadW / 2) return { ok: false, why: 'offroad', reason: L('cp.offroad') };
+  for (const r of G.spawnRoutes) {
+    G.pathPos(0, _cp, 0, r);
+    if (Math.hypot(x - _cp.x, z - _cp.z) < 14) return { ok: false, why: 'gate', reason: L('cp.gate') };
+  }
+  G.pathPos(G.pathLen, _cp);
+  if (Math.hypot(x - _cp.x, z - _cp.z) < 12) return { ok: false, why: 'keep', reason: L('cp.keep') };
+  for (const tr of G.traps)
+    if ((x - tr.x) ** 2 + (z - tr.z) ** 2 < 3.2 * 3.2) return { ok: false, why: 'trap', reason: L('cp.trap') };
+  return { ok: true, why: '', reason: '' };
+}
+G.canTrap = canTrap;
+// `free` is the preset/harness path (no purse, no gate), mirroring placeTower's.
+function layTrap(k, x, z, free = false) {
+  const D = TRAP_DEFS[k];
+  if (!D) return false;
+  if (!free) {
+    if (!canTrap(k, x, z).ok) return false;
+    if (state.gold < D.cost) return false;
+    state.gold -= D.cost; state.invested += D.cost;
+  }
+  G.traps.push({ id: trapId++, k, x, z, r: D.rad, armed: true, born: vt(), sprung: -1, lit: 0 });
+  VFX.trapArm(x, z, k, D.rad);
+  Audio.play('traparm', x, z);
+  UI.sync();
+  return true;
+}
+G.layTrap = layTrap;
+function tickTraps() {
+  const t = vt();
+  for (let i = G.traps.length - 1; i >= 0; i--) {
+    const tr = G.traps[i], D = TRAP_DEFS[tr.k];
+    if (D.kind === 'blast') {
+      // a keg waits, then goes off under whoever touched it
+      const tq = D.trig * D.trig;
+      let hit = null;
+      for (const e of G.enemies) {
+        if (!e.alive) continue;
+        if ((e.px - tr.x) ** 2 + (e.pz - tr.z) ** 2 <= tq) { hit = e; break; }
+      }
+      if (!hit) continue;
+      const rq = D.rad * D.rad;
+      let dressed = 0;
+      for (const e of G.enemies) {
+        if (!e.alive) continue;
+        const dd = (e.px - tr.x) ** 2 + (e.pz - tr.z) ** 2;
+        if (dd > rq) continue;
+        const f = 1 - 0.55 * Math.sqrt(dd) / D.rad;      // full weight at the barrel, half at the rim
+        const wasElite = e.def.elite;
+        dealDamage(e, D.dmg * f, D.element);
+        if (!e.noSlow) { e.slowT = Math.max(e.slowT, 0.5); e.slowF = Math.min(e.slowF, 0.65); }
+        if (dressed < 3 && (wasElite || dd < rq * 0.36)) { dressed++; hitFX(e, e.px, 1.2, e.pz, D.element, 0.9); }
+      }
+      G.traps.splice(i, 1);
+      VFX.kegBlast(tr.x, tr.z, D.rad);
+      VFX.shakeAt(tr.x, G.groundY(tr.x, tr.z), tr.z, 1.05);
+      Audio.play('keg', tr.x, tr.z);
+      continue;
+    }
+    // ── patch traps. They ARM on placement and their clock only starts when something
+    // walks into them, so laying caltrops before the horn is worth doing.
+    const rq = tr.r * tr.r;
+    let touched = false;
+    // Tar takes fire from any burning ground overlapping it and keeps it for the rest of
+    // its life — that is the §D synergy, and it is a state on the TAR, not on the fire, so
+    // the doubling cannot follow a patch that has already burnt out.
+    if (D.ignite && !tr.lit) {
+      for (const pa of G.patches)
+        if ((pa.x - tr.x) ** 2 + (pa.z - tr.z) ** 2 <= (pa.r + tr.r) ** 2) {
+          tr.lit = 1; VFX.tarLit(tr.x, tr.z, tr.r); Audio.play('sizzle', tr.x, tr.z, 0.7);
+          // same idiom as LIVESLOG: the synergy is otherwise invisible to the harness, and
+          // "did the pitch actually catch" is the one thing a §D regression would break.
+          if (SHOT) console.log('TARLIT ' + tr.id + ' at ' + tr.x.toFixed(1) + ',' + tr.z.toFixed(1) + ' from dps ' + pa.dps);
+          break;
+        }
+    }
+    for (const e of G.enemies) {
+      if (!e.alive || e.noSlow) continue;              // sappers walk through a laid trap
+      if ((e.px - tr.x) ** 2 + (e.pz - tr.z) ** 2 > rq) continue;
+      touched = true;
+      if (tr.sprung < 0) continue;                     // sprung on THIS tick: it bites next
+      e.slowT = Math.max(e.slowT, 0.35);
+      e.slowF = Math.min(e.slowF, D.slow);
+      if (D.dps) dealDamage(e, D.dps * TICK, D.element);
+      // lit tar: everything standing in it burns at double the rate of the ground under it
+      if (tr.lit) {
+        let best = 0;
+        for (const pa of G.patches)
+          if ((e.px - pa.x) ** 2 + (e.pz - pa.z) ** 2 <= pa.r * pa.r) best = Math.max(best, pa.dps);
+        if (best > 0) dealDamage(e, best * D.ignite * TICK, 'fire');
+      }
+    }
+    if (touched && tr.sprung < 0) { tr.sprung = t; VFX.trapSpring(tr.x, tr.z, tr.k, tr.r); }
+    if (tr.sprung >= 0 && t - tr.sprung >= D.dur) G.traps.splice(i, 1);
+  }
+}
+
 function tickSim() {
   state.tick++;
   const t = vt();
   if (state.phase === 'prewave') {
-    omenTick();                                         // SPEC3 Â§D â€” three omens on the table
+    omenTick();                                         // SPEC3 §D — three omens on the table
     state.countdown -= TICK;
     if (state.countdown <= 0) startWave(state.wave + 1);
     UI.syncCountdown();
@@ -6834,7 +7904,7 @@ function tickSim() {
       if (e.def.stomp) ogreStomp(e);
     } else {
       e.blockedBy = -1;
-      // MARAUDER (SPEC2 Â§D): a skirmisher that comes within 7u of a free knight stops
+      // MARAUDER (SPEC2 §D): a skirmisher that comes within 7u of a free knight stops
       // where it stands and looses arrows instead of marching on. It never closes, so a
       // barracks alone cannot hold a wave that is carrying them.
       const sk = e.def.range ? nearestKnight(e.px, e.pz, e.def.range) : null;
@@ -6843,11 +7913,11 @@ function tickSim() {
         hurtKnight(sk, e.def.dps * TICK);
         // one arrow per 18 ticks rather than per tick, staggered per unit so a firing line
         // does not strobe. Render-only dressing; the damage above is the real thing.
-        // HOOK: VFX/AUDIO builder â€” the loose. VFX.arrow flies the real line and back-dates
+        // HOOK: VFX/AUDIO builder — the loose. VFX.arrow flies the real line and back-dates
         // its own hit sparks to the moment of arrival.
         if ((state.tick + e.id) % 18 === 0) {
           // both ends are ABSOLUTE world heights (VFX.arrow does no ground lookup of its
-          // own) â€” passing 1.15 raw put the target under the meadow and the streak flew
+          // own) — passing 1.15 raw put the target under the meadow and the streak flew
           // into the hillside
           VFX.arrow(e.px, G.groundY(e.px, e.pz) + 1.35, e.pz, sk.x, G.groundY(sk.x, sk.z) + 1.15, sk.z);
           Audio.play('mbow', e.px, e.pz);
@@ -6856,7 +7926,7 @@ function tickSim() {
         // slowF is the strongest slow currently on this foe (catapult 0.6, storm L3 0.75);
         // it resets when the timer runs out so a stale factor can never outlive its source
         e.d += e.def.speed * (e.spdM || 1) * TICK * (e.slowT > 0 ? e.slowF : 1);
-        // JUNCTIONS (SPEC2 Â§E): crossing a handoff distance moves the walker onto another
+        // JUNCTIONS (SPEC2 §E): crossing a handoff distance moves the walker onto another
         // route and carries the overshoot with it, so no step is ever lost or doubled. A
         // tagged handoff clears the tag, which is what stops the Ember fork re-firing when
         // the canyon drops the walker back onto route 0 downstream of the split.
@@ -6870,7 +7940,7 @@ function tickSim() {
         }
         if (e.pathId === G.endRoute && e.d >= PTS[e.pathId].len - 1.5) {
           e.alive = false; e.deathT = -2; state.lives = Math.max(0, state.lives - e.def.leak); state.leaked++;
-          UI.msg('The gate is breached!'); Audio.play('leak'); UI.sync();
+          UI.msg({ breach: true }); Audio.play('leak'); UI.sync();
           if (state.lives <= 0) return endGame(false);
         }
       }
@@ -6878,10 +7948,10 @@ function tickSim() {
     }
     G.pathPos(e.d, _v3, e.lane, e.pathId); e.px = _v3.x; e.pz = _v3.z;
   }
-  // â”€â”€ WAR SHAMAN (SPEC3 Â§B) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── WAR SHAMAN (SPEC3 §B) ───────────────────────────────────────────────────
   // The only unit in the horde that never attacks the vale: it pours hit points back into
   // everything around it, which is precisely why it has to be picked out and killed first.
-  // Healing is NOT damage â€” it goes through nothing and touches no resist â€” but every point
+  // Healing is NOT damage — it goes through nothing and touches no resist — but every point
   // of harm the shaman itself takes still goes through dealDamage() like anyone else.
   // `pct` of the ALLY's own maximum per second, hard-capped at `cap`: it nurses a levy back
   // to full in three seconds and barely troubles a boss.
@@ -6896,11 +7966,11 @@ function tickSim() {
       e.hp = Math.min(e.maxhp, e.hp + Math.min(e.maxhp * H.pct, H.cap) * TICK);
       lit = true;
     }
-    // HOOK: VFX/AUDIO builder â€” the glow only fires when the chant actually mends someone,
+    // HOOK: VFX/AUDIO builder — the glow only fires when the chant actually mends someone,
     // and is throttled per unit so a shaman line does not carpet the frame in green.
     // `healT` is a RENDER-SIDE read-out (VFX's presence emitter fills the gaps between
     // pulses with chant motes); nothing in the sim ever reads it back, so it cannot move
-    // a tick. Unthrottled on purpose â€” the throttle below is a spawn budget, not a state.
+    // a tick. Unthrottled on purpose — the throttle below is a spawn budget, not a state.
     if (lit) h.healT = vt();
     if (lit && (state.tick + h.id) % 12 === 0) {
       VFX.heal(h.px, G.groundY(h.px, h.pz), h.pz, H.r);
@@ -6910,9 +7980,18 @@ function tickSim() {
   // knights
   for (let ki = 0; ki < G.knights.length; ki++) {
     const kn = G.knights[ki];
+    // SPEC4 §C — rallied militia are knights in every respect except two: they last twelve
+    // seconds, and they never re-form. Their hold is released here exactly as hurtKnight()
+    // releases a dead one, so the compaction in reapMilitia() can never orphan a blockedBy.
+    if (kn.mil && kn.alive && t >= kn.expire) {
+      kn.alive = false;
+      for (const e of G.enemies) if (e.blockedBy === ki) e.blockedBy = -1;
+      VFX.burst(kn.x, 1, kn.z, 0x9fb6e8, 1.1, 0.45);
+    }
     if (!kn.alive) {
+      if (kn.mil) continue;                             // the levy goes home; it does not come back
       kn.respawn -= TICK;
-      // Second Wind (SPEC3 Â§D) halves the walk back from the barracks.
+      // Second Wind (SPEC3 §D) halves the walk back from the barracks.
       if (kn.respawn <= 0) { kn.alive = true; kn.hp = kn.maxhp; kn.x = kn.hx; kn.z = kn.hz; kn.target = -1; }
       continue;
     }
@@ -6932,7 +8011,7 @@ function tickSim() {
       const dx = tgt.px - kn.x, dz = tgt.pz - kn.z, dist = Math.hypot(dx, dz);
       kn.face = Math.atan2(dx, dz);
       if (dist > 1.15) { kn.x += dx / dist * 3.2 * TICK; kn.z += dz / dist * 3.2 * TICK; }
-      else dealDamage(tgt, kn.dps * TICK, 'crush');    // knights swing steel: CRUSH (SPEC3 Â§A)
+      else dealDamage(tgt, kn.dps * TICK, 'crush');    // knights swing steel: CRUSH (SPEC3 §A)
       kn.idleT = 0;
     } else {
       const dx = kn.hx - kn.x, dz = kn.hz - kn.z, dist = Math.hypot(dx, dz);
@@ -6950,18 +8029,22 @@ function tickSim() {
     if (tw.cdT > 0) continue;
     fireTower(tw);
   }
-  // burning ground (SPEC2 Â§C): the pyre's patches live in the SIM, tick in the SIM and
-  // are the only thing that damages from them â€” the flames TOWERS draws are pure render.
+  // burning ground (SPEC2 §C): the pyre's patches live in the SIM, tick in the SIM and
+  // are the only thing that damages from them — the flames TOWERS draws are pure render.
   for (let i = G.patches.length - 1; i >= 0; i--) {
     const pa = G.patches[i];
     if (t - pa.born >= pa.dur) { G.patches.splice(i, 1); continue; }
     const rq = pa.r * pa.r;
     for (const e of G.enemies) {
-      // Sappers (SPEC3 Â§D) smother burning ground as they cross it.
+      // Sappers (SPEC3 §D) smother burning ground as they cross it.
       if (!e.alive || e.noSlow) continue;
       if ((e.px - pa.x) ** 2 + (e.pz - pa.z) ** 2 <= rq) dealDamage(e, pa.dps * TICK, 'fire');
     }
   }
+  // SPEC4 §C/§D — the two player systems tick with everything else, in a fixed place in the
+  // order: powers first (a smite that lands this tick may light a tar pit), then traps.
+  tickPowers();
+  tickTraps();
   // projectiles
   for (let i = G.projectiles.length - 1; i >= 0; i--) {
     const p = G.projectiles[i];
@@ -6982,9 +8065,9 @@ function tickSim() {
         VFX.explosion(p.ex, G.groundY(p.ex, p.ez), p.ez);
         Audio.play('boom', p.ex, p.ez);
         // Stone chips on the BODIES, not just a crater: a boulder landing in a wall of
-        // ironclads (crush âˆ’0.25) is the single clearest picture of the wheel working, and
+        // ironclads (crush −0.25) is the single clearest picture of the wheel working, and
         // one landing on the ram (crush .8) is the clearest picture of it not. Three
-        // victims dressed per blast â€” enough to read, cheap enough to spam.
+        // victims dressed per blast — enough to read, cheap enough to spam.
         let dressed = 0;
         for (const e of G.enemies) {
           if (!e.alive) continue;
@@ -7007,8 +8090,8 @@ function tickSim() {
         G.projectiles.splice(i, 1);
         const tx = tgt.px, tz = tgt.pz;
         dealDamage(tgt, p.dmg, p.element);
-        // HOOK: VFX builder â€” the impact states the SCHOOL and, if the target shrugged it
-        // off, states that too (SPEC3 Â§A). Pierce below the shrug threshold is bit-for-bit
+        // HOOK: VFX builder — the impact states the SCHOOL and, if the target shrugged it
+        // off, states that too (SPEC3 §A). Pierce below the shrug threshold is bit-for-bit
         // the old VFX.burst call, so the archer wall looks exactly as it did.
         hitFX(tgt, tx, 1.4, tz, p.element, 0.7);
         if (p.pierce) { // the bolt punches on through a couple of neighbours
@@ -7024,27 +8107,37 @@ function tickSim() {
   // wave cleared?
   if (state.phase === 'wave' && !spawnQueue.length && !G.enemies.some(e => e.alive)) {
     if (SHOT) console.log('LIVESLOG wave=' + state.wave + ' lives=' + state.lives + ' leaked=' + state.leaked + ' gold=' + state.gold);
-    if (state.wave >= WAVES.length) return endGame(true);
+    // SPEC4 §E: past the finale a cleared wave is a RECORD, not a victory. The run only
+    // ends when the vale does.
+    if (state.wave > FINALE_W) UI.endlessBest(state.wave);
+    else if (state.wave >= FINALE_W && !state.endless) return endGame(true);
     applyOmen(''); Omens.active = '';                   // an omen lasts exactly one wave
-    state.phase = 'prewave'; state.countdown = INTERWAVE;
-    UI.msg('Wave ' + state.wave + ' cleared!'); Audio.play('cleared'); UI.sync();
+    state.phase = 'prewave';
+    // SPEC4 §A — auto-call. A player who has already decided does not want to press the
+    // same button eleven times, but skipping the wait must not skip the WAGE for skipping
+    // it: the early-call bonus for the seconds thrown away is paid exactly as if the button
+    // had been pressed at INTERWAVE, so the toggle changes ergonomics and not economy.
+    // Three seconds is deliberately long enough to still take an omen (or turn auto off).
+    if (autoCall && !SHOT) { state.gold += Math.ceil(INTERWAVE - AUTO_CD); state.countdown = AUTO_CD; }
+    else state.countdown = INTERWAVE;
+    UI.msg({ cleared: state.wave }); Audio.play('cleared'); UI.sync();
   }
-  if (state.tick % 90 === 0) G.enemies = G.enemies.filter(e => e.alive || vt() - e.deathT < 2);
+  if (state.tick % 90 === 0) { G.enemies = G.enemies.filter(e => e.alive || vt() - e.deathT < 2); reapMilitia(); }
 }
 function killEnemy(e) {
   if (!e.alive) return;
   // Bounty rides the omen: a challenge wave pays danger money (+20%), Thin Ranks pays less.
-  // Gold stays an integer, but the FRACTION is banked rather than rounded away â€” +20% of a
+  // Gold stays an integer, but the FRACTION is banked rather than rounded away — +20% of a
   // 2-gold levyman is 0.4 gold, and rounding each kill would have paid the player nothing
   // at all for the whole chaff stream (which is most of a wave's income).
   e.alive = false; e.deathT = vt(); state.kills++;
-  _bountyFrac += e.def.bounty * OMEN_FX.bounty;
+  _bountyFrac += e.def.bounty * OMEN_FX.bounty * bountyMul();
   const paid = Math.floor(_bountyFrac); _bountyFrac -= paid; state.gold += paid;
   if (e.blockedBy >= 0) { const kn = G.knights[e.blockedBy]; if (kn) kn.target = -1; e.blockedBy = -1; }
   for (const kn of G.knights) if (kn.target === e.id) kn.target = -1;
   VFX.burst(e.px, 1, e.pz, 0xc03828, 1.1, 0.4);
   Audio.play('die', e.px, e.pz); UI.sync();
-  // HOOK: VFX builder â€” coin pop / death effect (e)
+  // HOOK: VFX builder — coin pop / death effect (e)
   VFX.death(e);
 }
 function endGame(won) {
@@ -7052,10 +8145,25 @@ function endGame(won) {
   UI.showEnd(won);
   Audio.play(won ? 'victory' : 'defeat');
 }
+// ══ HOLD THE LINE (SPEC4 §E) ═════════════════════════════════════════
+// The victory plate's second call. This is a CONTINUATION, not a restart: the towers stand
+// where they stood, the purse is the purse the campaign left, and the cooldowns, the armed
+// traps and the militia on the road all carry over — because from the vale's side nothing
+// happened except that the horn sounded again. The only things reset are the finale's own
+// omen (an omen lasts exactly one wave, and the finale's never got its clear) and the
+// countdown, which the plate ate.
+G.holdTheLine = () => {
+  if (state.phase !== 'won') return false;
+  state.endless = true;
+  applyOmen(''); Omens.active = ''; Omens.forWave = 0; Omens.offer = []; Omens.picked = -1;
+  state.phase = 'prewave';
+  state.countdown = INTERWAVE;
+  return true;
+};
 G.tickSim = tickSim;
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: SIM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: SIM ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: VFX (owner: VFX builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: VFX (owner: VFX builder) ══════════════════════
 // ONE GPU particle system for the whole game: two InstancedBufferGeometry buckets
 // (alpha-blended + additive) sharing a procedural 4x4 sprite atlas, plus one
 // terrain-conforming decal mesh = 3 draw calls for every effect in BANNERFALL.
@@ -7083,7 +8191,7 @@ const PQ = tier === 'mobile'
   ? { ts: 64,  aCap: 760,  bCap: 520,  mote: [5, 3, 5], mcell: 9, dust: 3, decals: 6,  prime: 52 }
   : { ts: 128, aCap: 2800, bCap: 1900, mote: [8, 4, 8], mcell: 7, dust: 7, decals: 14, prime: 90 };
 
-// â•â• procedural sprite atlas â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ procedural sprite atlas ═══════════════════════════════════════════════════
 // 16 tiles. Alpha carries the silhouette, RGB carries baked internal shadowing so a
 // white puff already has volume before the shader's sun/sky ramp touches it.
 const T_SMOKE = 0, T_WISP = 1, T_DUST = 2, T_SPARK = 3, T_EMBER = 4, T_COIN = 5,
@@ -7182,7 +8290,7 @@ const atlasTex = (() => {
   });
   tile(T_SOFT, (cx, cy, R) => blob(cx, cy, R * 0.99, 0.92, '255,255,255'));
   // VFX-FIX2: at gameplay zoom a coin resolves to ~11 px, and at 11 px the old tile's
-  // 1 px rim and engraved star both vanished â€” what was left was a uniformly filled amber
+  // 1 px rim and engraved star both vanished — what was left was a uniformly filled amber
   // circle that a critic reasonably took for an untextured placeholder ball sitting among
   // the burn FX. The internal contrast is now front-loaded onto the two features that
   // survive a downsample: a heavy dark bevel around the whole edge (so the silhouette is
@@ -7196,7 +8304,7 @@ const atlasTex = (() => {
     x.lineWidth = r * 0.24; x.strokeStyle = 'rgba(58,35,3,.92)'; x.stroke();   // heavy bevel
     x.beginPath(); x.arc(cx, cy, r * 0.60, 0, 7); x.strokeStyle = 'rgba(104,66,10,.85)'; x.lineWidth = r * 0.15; x.stroke();
     x.fillStyle = '#ffeaa8'; x.font = 'bold ' + Math.max(6, r * 1.15).toFixed(0) + 'px Georgia';
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('âœ¦', cx, cy + r * 0.04);
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('✦', cx, cy + r * 0.04);
     x.beginPath(); x.arc(cx, cy, r * 0.86, Math.PI * 1.02, Math.PI * 1.62);    // specular crescent
     x.strokeStyle = 'rgba(255,253,236,.95)'; x.lineWidth = r * 0.20; x.lineCap = 'round'; x.stroke();
     feather(cx, cy, R, 0.86);
@@ -7233,7 +8341,7 @@ const atlasTex = (() => {
   const t = tex(ac); t.anisotropy = 8; return t;
 })();
 
-// â•â• shared uniforms â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ shared uniforms ═══════════════════════════════════════════════════════════
 // Custom haze rather than scene.fog: WORLD's terrain runs fog:false and bakes its own
 // aerial perspective, so particles need a matching curve or the far end of the road
 // reads unnaturally crisp at the 158-unit overview distance.
@@ -7255,7 +8363,7 @@ void main(){
   vec3 R = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
   vec3 U = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
   vec3 wp; float md = iAux.z;
-  // SPEC3 Â§A signature bursts (modes 3/4 = billboard/ground with a screen-space FLOOR).
+  // SPEC3 §A signature bursts (modes 3/4 = billboard/ground with a screen-space FLOOR).
   // A 0.4 s school burst authored in world units is a legible shape at closeup range and
   // three pixels of nothing at the overview pitch the game is actually watched from, so
   // the four schools stopped being distinguishable exactly where distinguishing them
@@ -7273,7 +8381,7 @@ void main(){
     wp = iPos + R*r.x + U*r.y;
     // Gentle top-lit ramp. A full 0..1 sweep put every billboard's lower half at the
     // sky colour, which at this near-top-down camera turned road dust into rows of dark
-    // blobs â€” the quads are seen almost face-on, so the ramp reads as albedo, not light.
+    // blobs — the quads are seen almost face-on, so the ramp reads as albedo, not light.
     vSh = q.y*0.55 + 0.72;
   } else if (m < 1.5) {                            // ground-aligned patch: never clips terrain
     float c = cos(iAux.x), s = sin(iAux.x);
@@ -7308,9 +8416,9 @@ void main(){
   #include <colorspace_fragment>
 }`;
 
-// â•â• ring-buffer particle pools â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// 0 birth Â· 1 life Â· 2..4 p0 Â· 5..7 v0 Â· 8 grav Â· 9 drag Â· 10 s0 Â· 11 s1
-// 12 rot0 Â· 13 rotV Â· 14 tile Â· 15..17 rgb Â· 18 a0 Â· 19 mode Â· 20 fade Â· 21 aspect
+// ══ ring-buffer particle pools ════════════════════════════════════════════════
+// 0 birth · 1 life · 2..4 p0 · 5..7 v0 · 8 grav · 9 drag · 10 s0 · 11 s1
+// 12 rot0 · 13 rotV · 14 tile · 15..17 rgb · 18 a0 · 19 mode · 20 fade · 21 aspect
 const PF = 22;
 function mkBucket(cap, add) {
   const g = new THREE.InstancedBufferGeometry();
@@ -7397,7 +8505,7 @@ function flush(B, n) {
   A.iSize.needsUpdate = true; A.iCol.needsUpdate = true; A.iAux.needsUpdate = true;
 }
 
-// â•â• terrain-conforming decals: scorch craters + expanding ground shockwaves â•â•â•
+// ══ terrain-conforming decals: scorch craters + expanding ground shockwaves ═══
 // One mesh, PQ.decals fixed slots of a 7x7 grid each. A slot's vertices are written
 // once on spawn (conformed to G.groundY) with its birth/duration/type/seed baked per
 // vertex, so per-frame cost is a single uniform write and free slots collapse to
@@ -7466,7 +8574,7 @@ void main(){
     // a splat: a soft-shouldered volume with a bright rim at its true radius. The interior
     // alpha is capped hard (~0.22) so the bodies standing in it keep their own colour, the
     // falloff is a smoothstep from 0.72R out so there is no polygonal cut anywhere, and the
-    // whole thing breathes â€” a static tint on the ground reads as a texture bug, a
+    // whole thing breathes — a static tint on the ground reads as a texture bug, a
     // breathing one reads as a spell. Terrain-conforming (see decal()), so it wraps the
     // road/grass boundary instead of floating a flat quad through it.
     float br  = 1.0 - smoothstep(0.72, 1.00, r);     // no hard edge, ever
@@ -7476,7 +8584,7 @@ void main(){
     a = (br*(0.175 + 0.110*scr) + rim*(0.56 + 0.18*bre)) * bre
       * smoothstep(0.0, 0.14, age) * (1.0 - smoothstep(0.42, 1.0, f));
     // stays a warm CHANT-GREEN at the rim rather than clipping to mint-white: the rim
-    // gain is deliberately under 1.0Ã— total so the hue survives the tone map.
+    // gain is deliberately under 1.0× total so the hue survives the tone map.
     c = vT * (0.66 + 0.34*rim);
   }
   a *= 1.0 - vHz*0.85;
@@ -7511,10 +8619,10 @@ function decal(x, z, rad, type, dur, r, g, b, seed, lead) {
   geo.attributes.aTint.needsUpdate = true;
 }
 
-// â•â• camera shake: impulse + exponential falloff â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ camera shake: impulse + exponential falloff ══════════════════════════════
 // MAIN's updateCamera() treats G.shake as an amplitude and decays it linearly.
 // Turning it into an accessor lets VFX own the envelope (hard attack, exponential
-// tail, secondary wobble, distance attenuation) without editing MAIN â€” MAIN's own
+// tail, secondary wobble, distance attenuation) without editing MAIN — MAIN's own
 // decay write simply loses the comparison in the setter and is absorbed.
 let _shkA = 0, _shkT = -99, _vt = 0;
 const shkEnv = (age) => (age < 0 || age > 1.7) ? 0 : Math.exp(-age * 5.4) * (0.72 + 0.28 * Math.cos(age * 41));
@@ -7529,11 +8637,11 @@ VFX.shakeAt = (x, y, z, power) => {                  // distance-attenuated impu
   if (imp > _shkA * shkEnv(t - _shkT)) { _shkA = imp; _shkT = t; }
 };
 
-// â•â• pooled blast lights â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ pooled blast lights ══════════════════════════════════════════════════════
 // A fireball that lights nothing is a sticker: the soldiers standing two metres off the
 // crater have to catch an orange rim and throw a shadow the other way, or the blast is
 // paint on the ground. Three.js bakes the light COUNT into every shader program, so the
-// pair is built at boot and parked at intensity 0 â€” exactly the trick TOWERS' EMBER_L
+// pair is built at boot and parked at intensity 0 — exactly the trick TOWERS' EMBER_L
 // pair uses for burning ground. A blast claims the least-recently-used slot; the
 // envelope is a closed form of the slot's birth time (rule 1 of this section), so a
 // headless catch-up that fires ten explosions still lights only the one on screen.
@@ -7567,7 +8675,7 @@ function stepBlast(t) {
     l.intensity = 330 * BLD[o + 4] * k * k;
   }
 }
-// â•â• the mending aura's own light â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ the mending aura's own light ══════════════════════════════════════════════
 // The one thing that turns a green circle on the ground into a green circle in the WORLD:
 // the men standing inside it have to catch some of it. Same closed-form envelope trick as
 // the blast pool, one slot (there is never more than a shaman or two chanting at once).
@@ -7594,15 +8702,15 @@ function stepAura(t) {
   }
 }
 
-// â•â• shared wind â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ shared wind ══════════════════════════════════════════════════════════════
 // One place that says which way the air moves, so dust, smoke and (if a later builder
 // wants it) cloth all agree. WORLD's banners and TOWERS' pennants already sway on their
-// own baked vertex-sway shaders and are NOT driven from here â€” they only need this if
+// own baked vertex-sway shaders and are NOT driven from here — they only need this if
 // someone unifies them; the vector matches the direction their sway leans.
 G.wind = { x: -0.72, z: 0.30, s: 1.0 };
 const WX = G.wind.x, WZ = G.wind.z;
 
-// â•â• deterministic emitter stream (independent of G.rng) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ deterministic emitter stream (independent of G.rng) ══════════════════════
 let _es = 1;
 const eseed = (a, b) => { _es = ((Math.imul(a | 0, 2654435761) ^ Math.imul(b | 0, 1013904223) ^ 0x9e3779b9) >>> 0) || 0x1234567; };
 const er = () => { _es ^= _es << 13; _es >>>= 0; _es ^= _es >>> 17; _es ^= _es << 5; _es >>>= 0; return _es / 4294967296; };
@@ -7610,9 +8718,9 @@ const es1 = () => er() * 2 - 1;
 const SMK = () => (er() < 0.5 ? T_SMOKE : T_WISP);
 const _bc = new THREE.Color();
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• EFFECT AUTHORING â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ EFFECT AUTHORING ═════════════════════════════════════
 
-// â”€â”€ generic hit spray. SIM contract: y is relative to the ground. â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── generic hit spray. SIM contract: y is relative to the ground. ─────────────
 // SIM calls this for three different events (arrow/bolt hit, enemy killed, knight
 // killed) and passes no direction, so a projectile hit infers one: the nearest damaging
 // tower is the shooter in every case the sim can produce, and biasing the spark cone
@@ -7673,22 +8781,22 @@ VFX.burst = (x, y, z, color, size, dur) => {
   }
 };
 
-// â”€â”€ element-tinted impact (SPEC3 Â§A) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── element-tinted impact (SPEC3 §A) ─────────────────────────────────────────
 // Every point of damage in BANNERFALL now carries a SCHOOL, and the wheel is the whole v3
 // mechanic: a player who cannot SEE that his arrows are skittering off plate while his
 // catapult caves it in has to read a tooltip to learn what the frame is already trying to
-// tell him. So the hit site is where the school is stated â€”
-//   pierce â€” the pale gold spark it always had. It is the BASELINE the other three are
+// tell him. So the hit site is where the school is stated —
+//   pierce — the pale gold spark it always had. It is the BASELINE the other three are
 //            read against, and it is also the hottest call site in the game (every arrow),
 //            so it delegates straight to VFX.burst: identical frame, identical cost.
-//   crush  â€” stone chips and a low dust ring, NO additive core. Mass, not magic.
-//   fire   â€” an ember burst that lifts, cools and dies.
-//   storm  â€” a violet crack over a hard white core.
+//   crush  — stone chips and a low dust ring, NO additive core. Mass, not magic.
+//   fire   — an ember burst that lifts, cools and dies.
+//   storm  — a violet crack over a hard white core.
 // ...and it is where RESISTANCE is stated too. At res >= SHRUG_AT the hit takes the
 // DEFLECTION path: the core flash is gone entirely and the energy goes sideways or into
-// the ground, so "that did nothing" is a silhouette read one frame after the shot lands â€”
-// which is exactly the teaching moment SPEC3 Â§B's ironclad and ash wraith exist to create.
-// y is RELATIVE to the ground (VFX.burst's convention â€” SIM calls both off the same line);
+// the ground, so "that did nothing" is a silhouette read one frame after the shot lands —
+// which is exactly the teaching moment SPEC3 §B's ironclad and ash wraith exist to create.
+// y is RELATIVE to the ground (VFX.burst's convention — SIM calls both off the same line);
 // `e` is optional and read ONLY for its resist, never mutated.
 const SHRUG_AT = 0.5, RES_CAP_V = 0.85;
 const ESALT = { pierce: 11, crush: 29, fire: 47, storm: 71 };
@@ -7703,7 +8811,7 @@ VFX.hit = (x, y, z, el, size, e) => {
   const gy = G.groundY(x, z), py = gy + y;
   eseed((x * 83 + z * 151) | 0, ((G.vt() * 967) | 0) + (ESALT[el] || 3));
   if (el === 'pierce' && res < SHRUG_AT) {
-    // PIERCE â€” the baseline, and the only school on a hot path (every arrow in the game
+    // PIERCE — the baseline, and the only school on a hot path (every arrow in the game
     // lands here). It keeps the cheap spark spray it always had and gains exactly two
     // quads: a hard three-spoke shard and a thin expanding ring, both on the screen-space
     // floor (modes 3/4) so the school is still nameable at overview pitch. Without those
@@ -7721,7 +8829,7 @@ VFX.hit = (x, y, z, el, size, e) => {
     return;
   }
   if (res >= SHRUG_AT) {
-    // â•â• DEFLECTION â•â• nothing bit. Every variant is DIM, has no white core, and throws
+    // ══ DEFLECTION ══ nothing bit. Every variant is DIM, has no white core, and throws
     // its energy AWAY from the body rather than out of it.
     if (el === 'fire') {                                             // ash wraith: embers deflect
       for (let i = 0; i < 8; i++) {
@@ -7777,14 +8885,14 @@ VFX.hit = (x, y, z, el, size, e) => {
     }
     return;
   }
-  // â•â• SIGNATURE BURSTS (VFX-FIX2) â•â• The four schools were separated by HUE alone at
+  // ══ SIGNATURE BURSTS (VFX-FIX2) ══ The four schools were separated by HUE alone at
   // sub-unit scale, which is no separation at all: at the pitch the game is watched from,
   // a 0.5 u tinted puff is three pixels and the dedicated element frame came back empty.
-  // Each school now owns a SHAPE, runs ~0.4 s, and is authored 2.5â€“3Ã— larger with its
+  // Each school now owns a SHAPE, runs ~0.4 s, and is authored 2.5–3× larger with its
   // headline quads on the screen-space floor (modes 3/4):
-  //   crush â€” grey-brown dust DOME + ground shockwave ring + tumbling debris
-  //   fire  â€” orange FIREBALL + rising ember trails + a scorch mark on the ground
-  //   storm â€” cyan FORKED ARC to the two nearest bodies + a white flash ring
+  //   crush — grey-brown dust DOME + ground shockwave ring + tumbling debris
+  //   fire  — orange FIREBALL + rising ember trails + a scorch mark on the ground
+  //   storm — cyan FORKED ARC to the two nearest bodies + a white flash ring
   if (el === 'crush') {
     eReset();                                                        // the dust DOME
     E.x = x; E.y = py + 0.15 * s; E.z = z; E.tile = T_SMOKE; E.mode = 3;
@@ -7829,7 +8937,7 @@ VFX.hit = (x, y, z, el, size, e) => {
     E.x = x; E.y = py; E.z = z; E.tile = T_FLASH; E.mode = 3;
     E.s0 = 0.9 * s; E.s1 = 2.4 * s; E.r = 3.20; E.g = 1.60; E.b = 0.42;
     E.a = 0.92; E.life = 0.16; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.01; push(BB);
-    // scorch on the ground â€” rationed (the pool is 14 slots and a pyre lands a lot of
+    // scorch on the ground — rationed (the pool is 14 slots and a pyre lands a lot of
     // these; every one of them would evict a catapult crater within the second).
     if (er() < 0.30) decal(x, z, 2.5 * s, 0, 5.0, 0.075, 0.053, 0.038, er(), 0.02);
     for (let i = 0; i < 6; i++) {                                    // rising ember TRAILS
@@ -7867,7 +8975,7 @@ VFX.hit = (x, y, z, el, size, e) => {
     E.x = x; E.y = py; E.z = z; E.tile = T_RING; E.mode = 3;
     E.s0 = 0.6 * s; E.s1 = 4.4 * s; E.r = 0.45; E.g = 2.05; E.b = 2.55;
     E.a = 0.80; E.life = 0.32; E.fade = 2; E.lead = 0.01; push(BB);
-    // FORKED ARC â€” the school's whole identity is that it JUMPS, so the burst reaches for
+    // FORKED ARC — the school's whole identity is that it JUMPS, so the burst reaches for
     // the two nearest bodies instead of spraying isotropically. The scan is bounded by the
     // live roster and only ever runs on a storm hit, which is far from a hot path.
     const EN = G.enemies;
@@ -7912,14 +9020,14 @@ VFX.hit = (x, y, z, el, size, e) => {
   }
 };
 
-// â”€â”€ ogre stomp (SPEC2 Â§D) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ogre stomp (SPEC2 §D) ────────────────────────────────────────────────────
 // HOOK: VFX builder. A ground-hugging dust ring, a shallow dust decal and a handful of
-// clods â€” deliberately EARTH only, no light: the ogre is muscle, not magic, and an
+// clods — deliberately EARTH only, no light: the ogre is muscle, not magic, and an
 // additive flash at his feet would read as a spell. SIM calls this from ogreStomp().
 VFX.stomp = (x, y, z) => {
   eseed((x * 149 + z * 83) | 0, (G.vt() * 811) | 0);
   decal(x, z, 5.6, 1, 0.72, 0.60, 0.52, 0.40, er());               // shockwave in the grass
-  // VFX-2: the dust alone had no ATTACK â€” a ring of puffs simply grew where the foot
+  // VFX-2: the dust alone had no ATTACK — a ring of puffs simply grew where the foot
   // fell. One ground-aligned ring quad snapping outward in a third of a second is what
   // sells the blow; kept dim and warm-grey (NOT additive-bright) so it stays earth.
   eReset();
@@ -7947,29 +9055,29 @@ VFX.stomp = (x, y, z) => {
   }
 };
 
-// â”€â”€ war shaman's chant (SPEC3 Â§B) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// HOOK: ROSTER â†’ VFX. SIM calls this only on the ticks the chant actually MENDS someone,
+// ── war shaman's chant (SPEC3 §B) ────────────────────────────────────────────
+// HOOK: ROSTER → VFX. SIM calls this only on the ticks the chant actually MENDS someone,
 // so the glow is a read-out of a live effect rather than an idle aura. Deliberately COLD
 // green-white and additive: nothing else on the road is that hue, so "there is a healer in
 // that group" is a colour cue you can act on before you have read a single health bar.
-// The ring is ground-aligned at the heal radius â€” it draws the exact area under threat.
+// The ring is ground-aligned at the heal radius — it draws the exact area under threat.
 // VFX/AUDIO-3: retuned from the placeholder. Two changes that matter. (1) GREEN-GOLD, not
 // green-white: at 0.42/1.55/0.86 the aura read as a cold sci-fi shield over a medieval
 // road, and the one hue nothing else in BANNERFALL owns is a warm chant-green that leans
-// gold as it lifts â€” so the motes are born green and DIE gold. (2) The ring is drawn at the
+// gold as it lifts — so the motes are born green and DIE gold. (2) The ring is drawn at the
 // true heal radius and held long enough to overlap the next pulse (SIM chants every 12
 // ticks = 0.4 s, the ring lives 0.66), so while the shaman is mending, the ground under
 // everything he is mending is continuously lit. That circle is the kill order.
 VFX.heal = (x, y, z, rad) => {
   const R = rad || 8;
   eseed((x * 197 + z * 61) | 0, (G.vt() * 653) | 0);
-  // THE RING IS A BOUNDARY, NOT A SHOCKWAVE. It barely moves (r7 â†’ r8.3 over two thirds of
-  // a second) because its job is to say "everything inside this circle is being mended" â€”
+  // THE RING IS A BOUNDARY, NOT A SHOCKWAVE. It barely moves (r7 → r8.3 over two thirds of
+  // a second) because its job is to say "everything inside this circle is being mended" —
   // a ring that races outward like VFX.stomp's reads as a blow landing, which is the exact
   // opposite of what a healer is doing. T_RING's bright band sits at ~0.83 of the quad, so
   // the multipliers are chosen against the TRUE heal radius, not eyeballed.
-  // â”€â”€ the area of effect. VFX-FIX2: a floating 16-unit ground-aligned quad was the wrong
-  // primitive for this and shipped every failure mode of one â€” the flat plane cut a
+  // ── the area of effect. VFX-FIX2: a floating 16-unit ground-aligned quad was the wrong
+  // primitive for this and shipped every failure mode of one — the flat plane cut a
   // straight polygonal edge wherever the terrain climbed through it, the additive quad
   // drew OVER the billboard grass inside its footprint (which turned the tufts solid
   // chroma-green), and the tile's fill gave the whole thing the read of spilled paint.
@@ -8012,17 +9120,17 @@ VFX.heal = (x, y, z, rad) => {
   }
 };
 
-// â”€â”€ chain-lightning strike (SPEC2 Â§C) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── chain-lightning strike (SPEC2 §C) ────────────────────────────────────────
 // One call per HOP, from SIM's chainLightning(), landing where TOWERS' bolt ribbon ends.
 // Three layers: a hard white core so the strike has a point, a cone of cold sparks kicked
 // AWAY from the arc's arrival, and a soft envelope round the body that swells and dies
-// (fade mode 1) â€” that envelope is the "this one is being electrocuted" read at gameplay
+// (fade mode 1) — that envelope is the "this one is being electrocuted" read at gameplay
 // zoom, where a 70 ms ribbon and a spark spray are both too small to parse.
 // TINT GOTCHA: the additive bucket runs uSunC/uSkyC = white, so these numbers are raw
 // radiance. Blue past ~2.6 clips to a violet-white blob under ACES + bloom.
 VFX.zapHit = (x, y, z, hop, e) => {
   const gy = G.groundY(x, z);
-  // SPEC3 Â§A/Â§B: an ironclad is storm .85. Lighting one up like a struck man is a LIE â€”
+  // SPEC3 §A/§B: an ironclad is storm .85. Lighting one up like a struck man is a LIE —
   // the arc reached it and did nothing. VFX.hit's deflection path already draws exactly
   // that (charge running down the plate, spending itself in the earth), so the strike
   // defers to it and skips its own body glow entirely.
@@ -8034,7 +9142,7 @@ VFX.zapHit = (x, y, z, hop, e) => {
   E.rot = er() * 6.28; E.lead = 0.01; push(BB);
   eReset();                                                        // white FLASH RING
   // VFX-FIX2: storm's whole screen-space identity used to be one 0.42 u star and a spray
-  // of hair-thin sparks, which at the pitch the game is watched from is nothing at all â€”
+  // of hair-thin sparks, which at the pitch the game is watched from is nothing at all —
   // the element frame came back with no storm in it. The ring is a BILLOWED burst at the
   // body (not another hoop on the ground; see the note below) and rides the screen-space
   // floor so it survives overview zoom.
@@ -8042,7 +9150,7 @@ VFX.zapHit = (x, y, z, hop, e) => {
   E.r = 0.50; E.g = 2.00; E.b = 2.50; E.a = 0.62; E.life = 0.28; E.fade = 2;
   E.lead = 0.01; push(BB);
   // FORKED, not sprayed. Three branches, each a chain of screen-space streaks with a
-  // jittered kink at every joint â€” a lightning arc has a shape, and eight isotropic
+  // jittered kink at every joint — a lightning arc has a shape, and eight isotropic
   // sparks is the one shape it does not have.
   for (let b = 0; b < 3; b++) {
     const an = er() * 6.2832, dip = -0.25 - er() * 0.75, len = 1.5 + er() * 1.9;
@@ -8082,7 +9190,7 @@ VFX.zapHit = (x, y, z, hop, e) => {
   }
 };
 
-// â”€â”€ marauder arrow (SPEC2 Â§D) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── marauder arrow (SPEC2 §D) ────────────────────────────────────────────────
 // ENEMIES-2 shipped the skirmisher with real ranged damage and NO projectile, so a
 // melting knight had no visible cause. SIM calls this once per loosed arrow (every 18
 // ticks per unit, staggered by id). The streak is a mode-2 screen-space ribbon flying
@@ -8102,7 +9210,7 @@ VFX.arrow = (x0, y0, z0, x1, y1, z1) => {
   E.grav = L * 0.10; E.drag = 0; E.tile = T_SPARK; E.mode = 2;
   // LONG and bright: a marauder often stands only 3 u off the knight it is shooting, and
   // that shot happens INSIDE a scrum of thirty bodies. A short dim streak simply does not
-  // survive the clutter â€” at ~2 u the tracer spans most of the flight and reads.
+  // survive the clutter — at ~2 u the tracer spans most of the flight and reads.
   E.s0 = 0.125; E.s1 = 0.105; E.asp = 15;
   E.r = 2.20; E.g = 1.90; E.b = 1.30; E.a = 1; E.life = T; E.fade = 2; push(BB);
   for (let i = 0; i < 3; i++) {                                    // strike on the shield
@@ -8121,17 +9229,17 @@ VFX.arrow = (x0, y0, z0, x1, y1, z1) => {
   E.rot = er() * 6.28; E.lead = -T; push(BB);
 };
 
-// â”€â”€ warbanner raised (SPEC2 Â§C) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── warbanner raised (SPEC2 §C) ──────────────────────────────────────────────
 // A support tower has no muzzle flash to sell it, so the moment it is planted the whole
 // aura has to announce itself once: a blue ground pulse out to the real aura radius (so
 // the player learns the shape), a flash at the standard's head and a lift of pennant
-// scraps. The standing glow is the per-tick emitter further down â€” this is the attack.
+// scraps. The standing glow is the per-tick emitter further down — this is the attack.
 VFX.banner = (x, z, rad) => {
   const gy = G.groundY(x, z), R = rad || 9;
   eseed((x * 211 + z * 97) | 0, (G.vt() * 617) | 0);
   // LEADS, as in VFX.explosion: the pulse is a one-shot, so without back-dating it the
   // very first rendered frame catches a ring of radius zero. 0.3 s in, it is a hoop
-  // halfway to the aura edge â€” which is the frame worth looking at.
+  // halfway to the aura edge — which is the frame worth looking at.
   decal(x, z, R, 1, 1.05, 0.30, 0.46, 0.92, er(), 0.34);           // pulse out to the aura edge
   eReset();
   E.x = x; E.y = gy + 0.14; E.z = z; E.tile = T_RING; E.mode = 1;
@@ -8162,7 +9270,7 @@ VFX.banner = (x, z, rad) => {
   }
 };
 
-// â”€â”€ directional arrow / bolt impact (sparks kick back along the shaft) â”€â”€â”€â”€â”€â”€â”€â”€
+// ── directional arrow / bolt impact (sparks kick back along the shaft) ────────
 VFX.impact = (x, y, z, dx, dy, dz, s) => {
   eseed((x * 71 + z * 113) | 0, (G.vt() * 997) | 0);
   const L = Math.hypot(dx, dy, dz) || 1; dx /= L; dy /= L; dz /= L;
@@ -8186,13 +9294,13 @@ VFX.impact = (x, y, z, dx, dy, dz, s) => {
   E.rot = er() * 6.28; E.rotV = es1() * 1.6; E.lead = 0.04; push(BA);
 };
 
-// â”€â”€ catapult impact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── catapult impact ──────────────────────────────────────────────────────────
 // Deliberately DIRT-led, not light-led: the hero read is an earth fountain and a
 // smoke column, with the fireball only a small hot base. Additive light is kept on a
-// short leash â€” stacked additive quads saturate to white instantly under ACES and the
+// short leash — stacked additive quads saturate to white instantly under ACES and the
 // first pass of this effect looked like a nuclear flash, not a boulder strike.
 // EJECTA PALETTE: a blast throws up the ground it lands ON. The Vale's warm tan fountain
-// dropped unchanged onto Frostfell reads as mud smeared across a white field â€” it was the
+// dropped unchanged onto Frostfell reads as mud smeared across a white field — it was the
 // loudest wrong note in shots\battle2.png, and the critic took it for a burn decal. Snow
 // ejecta is pale and neutral; Ember's is a shade sootier than the Vale's.
 const EJ = (id => id === 2 ? [1.50, 1.85, 2.50] : id === 3 ? [0.95, 0.90, 0.82] : null)((G.MAP && G.MAP.id) || 1);
@@ -8234,14 +9342,14 @@ VFX.explosion = (x, y, z, power) => {
   E.x = x; E.y = gy + 1.5 * p; E.z = z; E.tile = T_SOFT;
   E.s0 = 2.6 * p; E.s1 = 6.0 * p; E.r = 0.95; E.g = 0.42; E.b = 0.12;
   E.a = 0.38; E.life = 0.62; E.lead = 0.16; E.fade = 2; push(BB);
-  // EARTH FOUNTAIN â€” the hero element, and the reason this effect reads as a boulder
+  // EARTH FOUNTAIN — the hero element, and the reason this effect reads as a boulder
   // strike rather than a light show. Kept DARK and brown on purpose: the particle shader
   // ramps every quad toward the sun colour at its top edge and the atlas art is already
   // near-white, so a nominally "grey smoke" tint comes out pale sand. Earth needs a base
   // weight around 0.2, not 0.5. Leads are staggered 0.12..0.62 s so the fountain is a
   // continuous column from the crater to its apex on the very first rendered frame.
   // VFX-FIX2: the fountain used to leave the crater at up to 34 u/s against grav 15 with
-  // almost no drag, which put its apex ~38 world units over a lens standing 41 away â€” i.e.
+  // almost no drag, which put its apex ~38 world units over a lens standing 41 away — i.e.
   // it ran clean off the top of the hero frame and took the wave title with it. Muzzle
   // velocity, gravity and drag retuned to top out around a third of that; the fountain is
   // still the loudest thing in the effect, it just stays inside the picture.
@@ -8283,7 +9391,7 @@ VFX.explosion = (x, y, z, power) => {
     E.life = 0.5 + er() * 0.9; E.lead = 0.12; E.fade = 2; push(BB);
   }
   // low dirt fan: ground-aligned so it never intersects the terrain. Spawned on a ring
-  // rather than at the centre â€” concentric quads at the impact point collapse into one
+  // rather than at the centre — concentric quads at the impact point collapse into one
   // flat pale disc, which is what made the first pass read as a decal, not a blast.
   for (let i = 0; i < 10; i++) {
     eReset();
@@ -8295,20 +9403,20 @@ VFX.explosion = (x, y, z, power) => {
     if (EJ) { E.r *= EJ[0]; E.g *= EJ[1]; E.b *= EJ[2]; }
     E.rot = er() * 6.28; E.rotV = es1() * 0.7; E.lead = 0.18 + er() * 0.20; push(BA);
   }
-  // â”€â”€ lingering smoke column. VFX-FIX2, four defects in one pass:
+  // ── lingering smoke column. VFX-FIX2, four defects in one pass:
   // (1) HEIGHT. It was born as high as 9p above the crater and kept climbing for 5.6 s, so
   //     a hero frame contained 450 px of chimney running off the top edge and occluding
   //     both the wave title and a third of the horde. Birth band and lift are cut hard and
-  //     the life capped near 1.8 s â€” the plume now tops out around a third of the blast's
+  //     the life capped near 1.8 s — the plume now tops out around a third of the blast's
   //     own screen height.
   // (2) LIGHT. It sat directly above a 255-white fireball in a golden-hour scene and
-  //     sampled #2B2113 â€” unlit neutral near-black, which reads as a smudge. Each puff now
+  //     sampled #2B2113 — unlit neutral near-black, which reads as a smudge. Each puff now
   //     carries an age ramp from hot #ffc27a at birth to cool #9b8f7e at death (staggered
   //     leads mean the column has a lit base and a cold apex on any single frame), and the
   //     sun-facing half is pushed toward #ffdfae so it has a lit side at all.
   // (3) WEIGHT. Opacity down ~40%.
   // (4) DRIFT. Lateral wind trebled so the column LEANS instead of standing as a pillar.
-  const SMH = [1.00, 0.76, 0.49], SMC = [0.61, 0.56, 0.49];        // #ffc27a â†’ #9b8f7e
+  const SMH = [1.00, 0.76, 0.49], SMC = [0.61, 0.56, 0.49];        // #ffc27a → #9b8f7e
   for (let i = 0; i < 14; i++) {
     eReset();
     const an = er() * 6.2832, rr = er() * 1.7 * p, lead = 0.20 + er() * 1.05;
@@ -8325,7 +9433,7 @@ VFX.explosion = (x, y, z, power) => {
     E.g = w * (SMH[1] + (SMC[1] - SMH[1]) * k) + sun * 0.87;
     E.b = w * (SMH[2] + (SMC[2] - SMH[2]) * k) + sun * 0.68;
     E.a = 0.44 + er() * 0.14;
-    // The column keeps its smoke weight â€” only its HUE follows the ground, so a Frostfell
+    // The column keeps its smoke weight — only its HUE follows the ground, so a Frostfell
     // plume is cold grey rather than a tan cloud parked over a white valley.
     if (EJ) { const m = 3 / (EJ[0] + EJ[1] + EJ[2]); E.r *= EJ[0] * m; E.g *= EJ[1] * m; E.b *= EJ[2] * m; }
     E.life = 1.5 + er() * 0.7; E.rot = er() * 6.28; E.rotV = es1() * 0.85; E.lead = lead;
@@ -8333,16 +9441,16 @@ VFX.explosion = (x, y, z, power) => {
   }
 };
 
-// â”€â”€ burning ground (HOOK for TOWERS-2 / SPEC2 Â§C) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── burning ground (HOOK for TOWERS-2 / SPEC2 §C) ─────────────────────────────
 // The pyre's fire pot shatters and sets the ground alight. SIM owns the patch (damage,
-// lifetime) and TOWERS draws the standing flames; this is the one-shot dressing â€”
+// lifetime) and TOWERS draws the standing flames; this is the one-shot dressing —
 // scorch decal, a gout of fire, thrown embers and an oily smoke curl. Deliberately
 // modest: VFX-2 owns the upgrade (a proper spreading fire and lit smoke).
 VFX.firePatch = (x, z, rad) => {
   const gy = G.groundY(x, z), R = rad || 3;
   eseed((x * 197 + z * 89) | 0, (G.vt() * 811) | 0);
   decal(x, z, R * 1.35, 0, 9.5, 0.070, 0.050, 0.038, er());        // scorched ring
-  eReset();                                                        // ignition flash â€” kept
+  eReset();                                                        // ignition flash — kept
   E.x = x; E.y = gy + 0.5; E.z = z; E.tile = T_FLASH;              // SMALL: a wide additive
   E.s0 = R * 0.26; E.s1 = R * 0.62; E.r = 1.7; E.g = 0.86; E.b = 0.30;   // flash on open ground
   E.a = 0.55; E.life = 0.14; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.02; push(BB);
@@ -8380,21 +9488,227 @@ VFX.firePatch = (x, z, rad) => {
 };
 G.firePatch = VFX.firePatch;
 
-// â”€â”€ per-archetype death: dust collapse, gear glints, thud ring, coin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// SPEC2 Â§D/Â§E roster. `hound` takes its own short branch (see below) and the boss
+// ══ POWERS & ROAD TRAPS (SPEC4 §C/§D) ════════════════════════════════════════
+// Every one of these is assembled out of the house kit — decal(), the E/push emitter, the
+// same tiles and the same shakeAt — so a power reads as part of BANNERFALL rather than as
+// an effects package bolted onto it. Each is a ONE-SHOT called from SIM; nothing here holds
+// state, and every lead is back-dated so a headless capture that renders the frame after
+// the call still catches the effect mid-flight rather than at radius zero.
+
+// ── Fire of Heaven: the 1.2 s telegraph ──────────────────────────────────────
+// The whole ability is the WARNING. A gold hoop that CONTRACTS (a shockwave expands; a
+// thing about to fall closes in) over exactly the wind-up, a boundary decal that holds the
+// circle for the same time, and motes drawn upward out of the ground — the column is coming
+// from above, and the ground already knows.
+VFX.telegraph = (x, z, rad, dur) => {
+  const gy = G.groundY(x, z), R = rad || 4, D = dur || 1.2;
+  eseed((x * 233 + z * 71) | 0, (G.vt() * 733) | 0);
+  decal(x, z, R * 1.12, 2, D, 1.00, 0.74, 0.28, er(), 0.02);        // the circle, held for the wind-up
+  for (let k = 0; k < 3; k++) {                                     // three hoops closing in
+    eReset();
+    E.x = x; E.y = gy + 0.16; E.z = z; E.tile = T_RING; E.mode = 1;
+    E.s0 = R * (3.4 - k * 0.5); E.s1 = R * 1.85;
+    E.r = 1.55; E.g = 1.05; E.b = 0.36;
+    E.a = 0.40; E.life = D * 0.62; E.fade = 2; E.lead = k * D * 0.30; push(BB);
+  }
+  for (let i = 0; i < 10; i++) {                                    // the ground drawn upward
+    eReset();
+    const an = i / 10 * 6.2832 + er() * 0.5, rr = R * (0.35 + er() * 0.6);
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.10; E.z = z + Math.sin(an) * rr;
+    E.vy = 2.6 + er() * 2.2; E.vx = -Math.cos(an) * 0.5; E.vz = -Math.sin(an) * 0.5;
+    E.drag = 1.1; E.grav = -0.5; E.tile = er() < 0.4 ? T_GLINT : T_MOTE;
+    E.s0 = 0.16 + er() * 0.12; E.s1 = 0.04;
+    E.r = 1.45; E.g = 1.10; E.b = 0.44; E.a = 0.78; E.life = D * (0.5 + er() * 0.5); E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 3; E.lead = er() * D * 0.5; push(BB);
+  }
+};
+// ── ...and the blow. A white-gold COLUMN, not a fireball: three stacked flashes up the
+// shaft so the eye reads a pillar standing for an instant, then the fire it leaves behind.
+VFX.smite = (x, z, rad) => {
+  const gy = G.groundY(x, z), R = rad || 4;
+  eseed((x * 181 + z * 137) | 0, (G.vt() * 881) | 0);
+  for (let k = 0; k < 4; k++) {                                     // the shaft
+    eReset();
+    E.x = x; E.y = gy + 1.1 + k * 3.1; E.z = z; E.tile = T_FLASH; E.mode = 3;
+    E.s0 = R * (1.35 - k * 0.20); E.s1 = R * (0.55 - k * 0.09);
+    E.r = 2.30; E.g = 1.90; E.b = 1.05;
+    E.a = 0.90 - k * 0.12; E.life = 0.20 + k * 0.03; E.fade = 2;
+    E.rot = er() * 6.28; E.lead = 0.02 + k * 0.012; push(BB);
+  }
+  eReset();                                                         // the strike ring on the grass
+  E.x = x; E.y = gy + 0.18; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = R * 0.5; E.s1 = R * 3.1; E.r = 1.90; E.g = 1.35; E.b = 0.55;
+  E.a = 0.62; E.life = 0.42; E.fade = 2; E.lead = 0.03; push(BB);
+  for (let i = 0; i < 18; i++) {                                    // holy fire thrown outward
+    eReset();
+    const an = er() * 6.2832, sp = 5 + er() * 11;
+    E.x = x; E.y = gy + 0.5; E.z = z;
+    E.vx = Math.cos(an) * sp; E.vy = sp * (0.42 + er() * 0.9); E.vz = Math.sin(an) * sp;
+    E.grav = 13; E.drag = 1.5; E.tile = T_EMBER;
+    E.s0 = 0.13 + er() * 0.16; E.s1 = 0.04;
+    E.r = 2.5; E.g = 1.35 + er() * 0.4; E.b = 0.40; E.a = 1;
+    E.life = 0.7 + er() * 0.9; E.fade = 2; E.lead = 0.02 + er() * 0.1; push(BB);
+  }
+  VFX.firePatch(x, z, R);                                           // the ground it leaves burning
+};
+// ── Rally of the Vale: a standard planted for twelve seconds ─────────────────
+// Deliberately the warbanner's own language at a third the scale — heraldic blue, a ground
+// pulse out to the hold radius and a puff of banner scraps. The vale answers its own call,
+// and it has exactly one visual vocabulary for that.
+VFX.rally = (x, z, rad) => {
+  const gy = G.groundY(x, z), R = rad || 4;
+  eseed((x * 157 + z * 191) | 0, (G.vt() * 641) | 0);
+  decal(x, z, R * 1.05, 1, 0.85, 0.30, 0.48, 0.95, er(), 0.22);
+  eReset();
+  E.x = x; E.y = gy + 0.15; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 1.2; E.s1 = R * 2.15; E.r = 0.48; E.g = 0.76; E.b = 1.50;
+  E.a = 0.46; E.life = 0.62; E.fade = 2; E.lead = 0.18; push(BB);
+  eReset();                                                         // the banner going up
+  E.x = x; E.y = gy + 3.1; E.z = z; E.tile = T_FLASH; E.s0 = 0.9; E.s1 = 2.3;
+  E.r = 1.15; E.g = 1.45; E.b = 2.05; E.a = 0.62; E.life = 0.36; E.fade = 2;
+  E.rot = er() * 6.28; E.lead = 0.10; push(BB);
+  for (let i = 0; i < 10; i++) {                                    // heraldic scraps
+    eReset();
+    const an = er() * 6.2832, rr = er() * 1.7;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.5 + er() * 2.4; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 1.0 + WX * 0.5; E.vy = 2.0 + er() * 2.2; E.vz = Math.sin(an) * 1.0 + WZ * 0.5;
+    E.drag = 1.3; E.grav = -0.3; E.tile = er() < 0.45 ? T_GLINT : T_MOTE;
+    E.s0 = 0.17 + er() * 0.15; E.s1 = 0.04;
+    E.r = 0.88; E.g = 1.22; E.b = 2.05; E.a = 0.85; E.life = 0.8 + er() * 0.6; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 3.5; E.lead = er() * 0.18; push(BB);
+  }
+  for (let i = 0; i < 5; i++) {                                     // boots hitting the turf
+    eReset();
+    const an = er() * 6.2832;
+    E.x = x + Math.cos(an) * 1.2; E.y = gy + 0.25; E.z = z + Math.sin(an) * 1.2;
+    E.vx = Math.cos(an) * 2.1; E.vz = Math.sin(an) * 2.1; E.vy = 0.4; E.drag = 2.5;
+    E.tile = T_DUST; E.mode = 1; E.s0 = 0.6; E.s1 = 2.4;
+    E.r = 0.72; E.g = 0.64; E.b = 0.50; E.a = 0.26; E.life = 0.9 + er() * 0.4;
+    E.rot = er() * 6.28; E.lead = 0.03; push(BA);
+  }
+};
+// ── traps: laid, sprung, lit, blown ──────────────────────────────────────────
+// TINTS per trap so the three are tellable apart at gameplay zoom without reading a label:
+// caltrops are cold steel glints, tar is a black sheen, the keg is powder-grey dust.
+const TRAP_TINT = { caltrops: [0.86, 0.94, 1.10], tar: [0.30, 0.27, 0.26], keg: [0.78, 0.70, 0.56] };
+VFX.trapArm = (x, z, k, rad) => {
+  const gy = G.groundY(x, z), R = rad || 2.5, C = TRAP_TINT[k] || TRAP_TINT.caltrops;
+  eseed((x * 127 + z * 227) | 0, (G.vt() * 569) | 0);
+  // the mark on the road: tar gets a real dark stain (decal 0 is the scorch shader and
+  // reads as spilt pitch), the other two get a brief boundary so the player sees the area
+  decal(x, z, R * (k === 'tar' ? 1.15 : 1.0), k === 'tar' ? 0 : 2, k === 'tar' ? 30 : 0.8,
+    C[0] * (k === 'tar' ? 0.10 : 0.42), C[1] * (k === 'tar' ? 0.09 : 0.44), C[2] * (k === 'tar' ? 0.09 : 0.48), er(), 0.02);
+  for (let i = 0; i < 7; i++) {                                     // set down, dust off the road
+    eReset();
+    const an = er() * 6.2832, rr = er() * R * 0.8;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.22; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 1.5; E.vz = Math.sin(an) * 1.5; E.vy = 0.5 + er() * 0.4; E.drag = 2.8;
+    E.tile = T_DUST; E.mode = 1; E.s0 = 0.45; E.s1 = 1.6 + er() * 0.7;
+    E.r = 0.70; E.g = 0.62; E.b = 0.48; E.a = 0.28; E.life = 0.8 + er() * 0.4;
+    E.rot = er() * 6.28; E.lead = er() * 0.05; push(BA);
+  }
+  if (k === 'caltrops') for (let i = 0; i < 8; i++) {               // iron catching the sun
+    eReset();
+    const an = er() * 6.2832, rr = Math.sqrt(er()) * R * 0.9;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.22 + er() * 0.2; E.z = z + Math.sin(an) * rr;
+    E.tile = T_GLINT; E.s0 = 0.16 + er() * 0.10; E.s1 = 0.03;
+    E.r = 1.10; E.g = 1.28; E.b = 1.60; E.a = 0.80; E.life = 0.5 + er() * 0.4; E.fade = 2;
+    E.rot = er() * 6.28; E.lead = er() * 0.25; push(BB);
+  }
+};
+// something walked into it: the bite. Caltrops spit steel, tar throws a slow black sheen.
+VFX.trapSpring = (x, z, k, rad) => {
+  const gy = G.groundY(x, z), R = rad || 2.5;
+  eseed((x * 149 + z * 251) | 0, (G.vt() * 787) | 0);
+  eReset();
+  E.x = x; E.y = gy + 0.15; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = R * 0.6; E.s1 = R * 2.2;
+  if (k === 'tar') { E.r = 0.42; E.g = 0.36; E.b = 0.34; E.a = 0.30; }
+  else { E.r = 0.95; E.g = 1.12; E.b = 1.45; E.a = 0.38; }
+  E.life = 0.34; E.fade = 2; E.lead = 0.02; push(BB);
+  const n = k === 'tar' ? 8 : 12;
+  for (let i = 0; i < n; i++) {
+    eReset();
+    const an = er() * 6.2832, sp = (k === 'tar' ? 1.6 : 4.5) + er() * (k === 'tar' ? 2 : 6);
+    E.x = x + Math.cos(an) * R * 0.4; E.y = gy + 0.28; E.z = z + Math.sin(an) * R * 0.4;
+    E.vx = Math.cos(an) * sp; E.vy = sp * (0.35 + er() * 0.7); E.vz = Math.sin(an) * sp;
+    E.grav = k === 'tar' ? 16 : 20; E.drag = k === 'tar' ? 3.2 : 1.4;
+    if (k === 'tar') { E.tile = T_CHUNK; E.s0 = 0.10 + er() * 0.12; E.s1 = E.s0;
+      E.r = 0.20; E.g = 0.18; E.b = 0.17; E.a = 1; E.life = 0.55 + er() * 0.4;
+      E.rot = er() * 6.28; E.rotV = es1() * 7; E.lead = 0.02; push(BA); }
+    else { E.tile = T_SPARK; E.mode = 2; E.s0 = 0.11 + er() * 0.08; E.s1 = 0.03;
+      E.r = 1.45; E.g = 1.60; E.b = 2.00; E.a = 0.95; E.life = 0.28 + er() * 0.22; E.fade = 2;
+      E.lead = 0.01 + er() * 0.05; push(BB); }
+  }
+};
+// the §D synergy, stated in one frame: the pitch takes fire and the whole pool goes up.
+VFX.tarLit = (x, z, rad) => {
+  const gy = G.groundY(x, z), R = rad || 2.5;
+  eseed((x * 199 + z * 173) | 0, (G.vt() * 613) | 0);
+  eReset();
+  E.x = x; E.y = gy + 0.18; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = R * 0.4; E.s1 = R * 2.4; E.r = 1.75; E.g = 0.72; E.b = 0.20;
+  E.a = 0.58; E.life = 0.40; E.fade = 2; E.lead = 0.02; push(BB);
+  for (let i = 0; i < 12; i++) {                                    // flame running over the pool
+    eReset();
+    const an = er() * 6.2832, rr = Math.sqrt(er()) * R * 0.92;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.28; E.z = z + Math.sin(an) * rr;
+    E.vy = 2.0 + er() * 2.0; E.vx = es1() * 0.7; E.vz = es1() * 0.7;
+    E.drag = 1.5; E.grav = -1.1; E.tile = T_SOFT;
+    E.s0 = 0.38 + er() * 0.30; E.s1 = 1.05 + er() * 0.6;
+    E.r = 1.60; E.g = 0.50; E.b = 0.12; E.a = 0.50; E.life = 0.5 + er() * 0.45; E.fade = 2;
+    E.lead = er() * 0.22; push(BB);
+  }
+  for (let i = 0; i < 6; i++) {                                     // oily smoke, as pitch does
+    eReset();
+    const an = er() * 6.2832, rr = er() * R * 0.7;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.7 + er() * 0.9; E.z = z + Math.sin(an) * rr;
+    E.vx = WX * 1.1 + es1() * 0.4; E.vy = 1.4 + er() * 1.2; E.vz = WZ * 1.1 + es1() * 0.4;
+    E.drag = 0.9; E.grav = -0.3; E.tile = T_SOOT;
+    E.s0 = 0.8 + er() * 0.7; E.s1 = 2.8 + er() * 1.8;
+    const w = 0.12 + er() * 0.08;
+    E.r = w; E.g = w * 0.82; E.b = w * 0.70; E.a = 0.58; E.life = 1.5 + er() * 1.2;
+    E.rot = er() * 6.28; E.rotV = es1() * 0.7; E.lead = 0.08 + er() * 0.4; push(BA);
+  }
+};
+// the keg. VFX.explosion is the house blast and this IS a blast — so it is the house blast
+// plus barrel staves, which is the only thing that makes it read as a barrel and not a
+// catapult stone.
+VFX.kegBlast = (x, z, rad) => {
+  const gy = G.groundY(x, z), R = rad || 3.5;
+  VFX.explosion(x, gy, z, 0.85);
+  eseed((x * 211 + z * 139) | 0, (G.vt() * 941) | 0);
+  for (let i = 0; i < 10; i++) {                                    // staves and hoops thrown clear
+    eReset();
+    const an = er() * 6.2832, sp = 6 + er() * 12;
+    E.x = x + Math.cos(an) * 0.4; E.y = gy + 0.5; E.z = z + Math.sin(an) * 0.4;
+    E.vx = Math.cos(an) * sp; E.vy = sp * (0.5 + er() * 1.0); E.vz = Math.sin(an) * sp;
+    E.grav = 25; E.drag = 0.5; E.tile = T_CHUNK;
+    E.s0 = 0.14 + er() * 0.20; E.s1 = E.s0;
+    E.r = 0.52; E.g = 0.40; E.b = 0.26; E.a = 1;
+    E.life = 0.75 + er() * 0.5; E.rot = er() * 6.28; E.rotV = es1() * 11; E.lead = 0.02; push(BA);
+  }
+  eReset();                                                         // powder flash ring
+  E.x = x; E.y = gy + 0.2; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = R * 0.5; E.s1 = R * 2.6; E.r = 1.60; E.g = 1.05; E.b = 0.45;
+  E.a = 0.50; E.life = 0.34; E.fade = 2; E.lead = 0.02; push(BB);
+};
+
+// ── per-archetype death: dust collapse, gear glints, thud ring, coin ──────────
+// SPEC2 §D/§E roster. `hound` takes its own short branch (see below) and the boss
 // VARIANTS inherit the warlord's weight but carry their palette into the debris, so a
 // Frost Matriarch does not fall in the Warlord's warm dust.
 const U_H = { grunt: 1.80, runner: 1.63, brute: 2.52, boss: 3.90,
               shield: 1.92, marauder: 1.78, hound: 0.98, ogre: 3.10,
               matriarch: 4.30, emberlord: 3.95, cinderqueen: 3.40,
-              // SPEC3 Â§B â€” real model heights, so the newcomers shed their gear from the
+              // SPEC3 §B — real model heights, so the newcomers shed their gear from the
               // right altitude instead of from a guess off `def.scale`
               ironclad: 2.34, ashwraith: 1.74, frostrevenant: 1.98, warshaman: 1.74, ram: 2.34 };
 VFX.death = (e) => {
   const x = e.px, z = e.pz, gy = G.groundY(x, z);
   const h = U_H[e.type] || (e.def.scale || 1) * 1.6, big = h > 3 ? 2.4 : h > 2.2 ? 1.5 : 1;
   eseed(e.id * 2654435761, (G.vt() * 631) | 0);
-  // HOUND: a light body at a dead run. No gear to shed and no weight to land with â€” it
+  // HOUND: a light body at a dead run. No gear to shed and no weight to land with — it
   // trips, throws a low skid of dust forward and leaves a tuft of coat in the air. Kept
   // to five particles: a pack burst is thirty of these inside two seconds.
   if (e.type === 'hound') {
@@ -8429,9 +9743,9 @@ VFX.death = (e) => {
     E.vy = 0.5 + er() * 0.8; E.drag = 2.6;
     E.tile = er() < 0.5 ? T_DUST : SMK(); E.mode = er() < 0.55 ? 1 : 0;
     E.s0 = 0.5 * big; E.s1 = (2.0 + er() * 1.3) * big;
-    // VFX-FIX2: warm dirt #b09070 at a third less peak alpha. At 0.74/0.63/0.45 Ã— the
+    // VFX-FIX2: warm dirt #b09070 at a third less peak alpha. At 0.74/0.63/0.45 × the
     // shader's sun ramp these puffs resolved near-white, and with six of them per brute
-    // death a melee scrum â€” the best-modelled content in the game â€” spent most of a frame
+    // death a melee scrum — the best-modelled content in the game — spent most of a frame
     // behind a bank of pale blobs.
     E.r = 0.69; E.g = 0.56; E.b = 0.44; E.a = 0.24 + er() * 0.11;
     E.life = 0.9 + er() * 0.8; E.rot = er() * 6.28; E.rotV = es1() * 1.1; E.lead = 0.04;
@@ -8456,7 +9770,7 @@ VFX.death = (e) => {
     E.a = 0.42; E.life = 0.6; E.fade = 2; E.lead = 0.05; push(BB);
   }
   // A finale boss goes out with its own colour: a slow soul-light bloom in the variant's
-  // tint (or the warlord's gold). One quad â€” the death of a 3000 hp body needs a beat,
+  // tint (or the warlord's gold). One quad — the death of a 3000 hp body needs a beat,
   // not a firework, and a bright additive column here would fight the horde behind it.
   if (h > 3.5) {
     eReset();
@@ -8468,9 +9782,9 @@ VFX.death = (e) => {
   if (e.def.bounty >= 4 || er() < 0.30) VFX.coin(x, gy + h * 0.6, z);
 };
 
-// â”€â”€ coin pop: world arc, then a screen-space handoff to the HUD gold counter â”€â”€
+// ── coin pop: world arc, then a screen-space handoff to the HUD gold counter ──
 const COIN_N = 14, CF = 6, CT1 = 0.38, CT2 = 1.16, CGR = 15;
-const CO = new Float32Array(COIN_N * CF);            // birth Â· x Â· y Â· z Â· vy Â· spin
+const CO = new Float32Array(COIN_N * CF);            // birth · x · y · z · vy · spin
 let _co = 0;
 VFX.coin = (x, y, z) => {
   const o = _co * CF; _co = (_co + 1) % COIN_N;
@@ -8491,7 +9805,7 @@ function hudPoint(out) {
   return out;
 }
 // One closed form for a coin's flight, shared by the coin quad and by its trail and
-// specular pip â€” the pip has to sit ON the face and the trail has to leave from behind it,
+// specular pip — the pip has to sit ON the face and the trail has to leave from behind it,
 // so all three must read the same curve. Writes px,py,pz,size into _cp.
 const _cp = new Float32Array(4);
 function coinAt(o, age) {
@@ -8518,7 +9832,7 @@ function coinsLive(t) {
 const coinAlpha = (age) => Math.min(1, age * 14) * (age > CT2 - 0.10 ? (CT2 - age) / 0.10 : 1);
 // TUMBLE. A coin that holds one face at the camera for its whole flight is a status pip,
 // not a coin. iSize is applied AFTER the billboard rotation, so squeezing iSize.x alone
-// spins the disc about a screen-vertical axis: face-on â†’ ellipse â†’ edge-on sliver â†’ back.
+// spins the disc about a screen-vertical axis: face-on → ellipse → edge-on sliver → back.
 const coinFlip = (o, age) => Math.abs(Math.cos(CO[o + 5] + age * 8));
 function stepCoins(t, n) {
   if (!coinsLive(t)) return n;
@@ -8581,7 +9895,7 @@ function stepCoinFX(t, n) {
   return n;
 }
 
-// â”€â”€ melee clash: sparks + a small weapon flash quad between the two fighters â”€â”€
+// ── melee clash: sparks + a small weapon flash quad between the two fighters ──
 function clash(x, y, z, k) {
   for (let i = 0; i < 5; i++) {
     eReset();
@@ -8599,7 +9913,7 @@ function clash(x, y, z, k) {
   push(BB);
 }
 
-// â•â• tower fire events (TOWERS' onFire hook) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ tower fire events (TOWERS' onFire hook) ══════════════════════════════════
 Towers.onFire = (tw, tgt, ev) => {
   eseed((ev.x * 149 + ev.z * 79) | 0, (tw.shots || 0) * 7919);
   const gy = G.groundY(tw.x, tw.z), sy = Math.sin(ev.yaw), cy = Math.cos(ev.yaw);
@@ -8646,13 +9960,13 @@ Towers.onFire = (tw, tgt, ev) => {
   }
 };
 
-// â•â• per-sim-tick continuous emitters â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ per-sim-tick continuous emitters ═════════════════════════════════════════
 // Called once per distinct sim tick (and PQ.prime times on the first update, with a
 // back-dated lead, so a headless frame carries the same atmosphere a live one does).
 const DBIN = 6.5, NBIN = Math.ceil(PT.len / DBIN) + 2;
 const binN = new Int16Array(NBIN);
 const _ev3 = new THREE.Vector3();
-// SPEC2 Â§C/Â§E state for the continuous emitters below.
+// SPEC2 §C/§E state for the continuous emitters below.
 const MAPID = (G.MAP && G.MAP.id) || 1;
 // Phone budget: the burning-ground dressing is the one new emitter that can run four
 // instances at once, and the mobile additive bucket is 520 slots wide against 1900.
@@ -8661,7 +9975,7 @@ const _bnSeen = new Set();                           // warbanner uids already d
 let _bnInit = false;                                 // ...and whether first sight has passed
 // Ember Wastes: fixed scorch vents that breathe sparks. Chosen ONCE off the private
 // emitter stream (never G.rng) on ground that is off the road but not out on the scree,
-// and cached â€” a per-tick search would be both slow and non-deterministic in feel.
+// and cached — a per-tick search would be both slow and non-deterministic in feel.
 const _vents = [];
 let _ventsB = false;
 function vents() {
@@ -8680,7 +9994,7 @@ function vents() {
 function emitTick(tick, lead) {
   _lead = lead;
   const EN = G.enemies;
-  // â”€â”€ marching dust: density histogram along the road; dust only where it is thick
+  // ── marching dust: density histogram along the road; dust only where it is thick
   binN.fill(0);
   let nAlive = 0;
   for (let i = 0; i < EN.length; i++) { const e = EN[i]; if (!e.alive) continue; nAlive++; binN[(e.d / DBIN) | 0]++; }
@@ -8695,17 +10009,17 @@ function emitTick(tick, lead) {
       G.pathPos((b + er()) * DBIN - back, _ev3, es1() * 2.5);
       eReset();
       E.x = _ev3.x; E.z = _ev3.z;
-      // â•â• PATH DUST (VFX-FIX2) â•â• This was the single most damaging effect in the game.
+      // ══ PATH DUST (VFX-FIX2) ══ This was the single most damaging effect in the game.
       // It was a near-neutral grey-white veil, drawn tall and drawn thick, and it sat in
       // FRONT of the mid-column: identical grunts read deep crimson outside the plume and
       // pale salmon inside it, which is the art direction's one colour being eaten by its
       // own atmosphere. Three changes, in order of what they buy:
-      //   (a) HUE â€” warm ochre (#c9a877 sun side / #8a6f52 shadow side) instead of neutral
+      //   (a) HUE — warm ochre (#c9a877 sun side / #8a6f52 shadow side) instead of neutral
       //       grey-white, so the plume TINTS the horde warm instead of desaturating it.
-      //   (b) ALPHA â€” cut ~60%, and the "wisp lifting out of the column" branch (the one
+      //   (b) ALPHA — cut ~60%, and the "wisp lifting out of the column" branch (the one
       //       that veiled torsos, shields and helmets) demoted from 40% of emissions to
       //       18% and given a third of its old opacity. Dust hugs boots now.
-      //   (c) HEIGHT â€” the ground branch is born under a metre and lifts slowly, so the
+      //   (c) HEIGHT — the ground branch is born under a metre and lifts slowly, so the
       //       veil dies out around the knee rather than reaching the helmet line.
       if (er() < 0.82) {                             // ground-hugging haze patch
         E.y = _ev3.y + 0.16 + er() * 0.34; E.mode = 1; E.tile = er() < 0.68 ? T_DUST : T_WISP;
@@ -8738,7 +10052,7 @@ function emitTick(tick, lead) {
       }
     }
   }
-  // â”€â”€ melee clash sparks from the engaged pairs (short-lived: no deep back-fill)
+  // ── melee clash sparks from the engaged pairs (short-lived: no deep back-fill)
   if (lead < 0.30) {
     eseed(tick, 0x6d1f18);
     let np = 0;
@@ -8754,16 +10068,16 @@ function emitTick(tick, lead) {
       if (++np >= 10) break;
     }
   }
-  // â”€â”€ SPEC3 Â§B PRESENCE: the three newcomers that have to be legible at gameplay zoom
+  // ── SPEC3 §B PRESENCE: the three newcomers that have to be legible at gameplay zoom
   // before their health bar is. A mini-boss the player only identifies by reading a name
   // plate has already cost him the wave. Each of these is a CONTINUOUS read tied to what
   // the unit IS, and each is capped per tick so a swap slot that fields eleven of them
   // cannot walk over the alpha budget (the phone's additive bucket is 520 wide).
-  //   ash wraith â€” a cold shroud trail: it is the only thing on the road that leaves
+  //   ash wraith — a cold shroud trail: it is the only thing on the road that leaves
   //                something behind it, and it is the unit you must not let through.
-  //   siege ram  â€” wheel dust off both axles: mass, and the ONLY cue that says the machine
+  //   siege ram  — wheel dust off both axles: mass, and the ONLY cue that says the machine
   //                is still rolling when it is buried inside a column.
-  //   war shaman â€” chant motes between VFX.heal's pulses, so the aura never goes dark
+  //   war shaman — chant motes between VFX.heal's pulses, so the aura never goes dark
   //                mid-chant. The ring itself is VFX.heal's, drawn at the true heal radius.
   if (lead < 1.2) {
     eseed(tick, 0x5ea17d);
@@ -8833,7 +10147,7 @@ function emitTick(tick, lead) {
       }
     }
   }
-  // â”€â”€ brazier embers off any tower carrying a flame
+  // ── brazier embers off any tower carrying a flame
   if ((tick & 3) === 0 && lead < 1.7) {
     eseed(tick, 0x1a3c5d);
     const TL = G.towersList;
@@ -8853,9 +10167,9 @@ function emitTick(tick, lead) {
       push(BB);
     }
   }
-  // â”€â”€ BURNING GROUND (SPEC2 Â§C). TOWERS' fireMesh draws the standing tongues; everything
+  // ── BURNING GROUND (SPEC2 §C). TOWERS' fireMesh draws the standing tongues; everything
   // ABOVE and AROUND the patch is emitted here, once per sim tick per patch, so a pyre
-  // field reads as a fire â€” licking flame, oily smoke off the pitch, spat embers and a
+  // field reads as a fire — licking flame, oily smoke off the pitch, spat embers and a
   // warm pool of light on the grass. Budget: a 4 s patch holds ~45 live particles.
   const PA = G.patches;
   if (PA && PA.length && lead < 2.4) {
@@ -8871,7 +10185,7 @@ function emitTick(tick, lead) {
       // TONGUES. Small, TALL (asp ~2.4) and deeply saturated, two per tick: the first pass
       // used one fat round blob per tick and the patch read as a lit dust cloud. Overlapping
       // additive quads still saturate to white under ACES, so the count goes up only because
-      // each one goes down in size and alpha â€” the same trade TOWERS' fireMesh made.
+      // each one goes down in size and alpha — the same trade TOWERS' fireMesh made.
       // VFX-3: sizes were pushed and pulled back. Additive quads at this density saturate
       // to a white blob the moment alpha OR count goes up (shots\_fire.png, two failed
       // passes), so the tongues keep their authored weight; what they gained is a per-quad
@@ -8932,10 +10246,10 @@ function emitTick(tick, lead) {
       }
     }
   }
-  // â”€â”€ WARBANNER (SPEC2 Â§C). A support tower fires nothing, so its aura has to breathe:
+  // ── WARBANNER (SPEC2 §C). A support tower fires nothing, so its aura has to breathe:
   // a slow drift of heraldic light off the standard and the odd spark lifting out of the
   // ring. Newly raised banners get the one-shot pulse (VFX.banner) the first tick they
-  // are seen â€” the seen-set is primed silently on first sight so a preset's pre-placed
+  // are seen — the seen-set is primed silently on first sight so a preset's pre-placed
   // banners do not all detonate on frame one.
   if (lead < 1.4 && (tick & 1) === 0) {
     eseed(tick, 0x2b7e15);
@@ -8967,7 +10281,7 @@ function emitTick(tick, lead) {
     }
     _bnInit = true;
   }
-  // â”€â”€ PER-MAP WEATHER (SPEC2 Â§E). The falling field itself is the mote lattice below;
+  // ── PER-MAP WEATHER (SPEC2 §E). The falling field itself is the mote lattice below;
   // these are the two cues a lattice cannot give: breath in Frostfell's cold air, and
   // embers lifting off Ember Wastes' scorched ground.
   if (MAPID === 2 && lead < 1.6 && tick % 5 === 0) {
@@ -9008,7 +10322,7 @@ function emitTick(tick, lead) {
       }
     }
   }
-  // â”€â”€ tumbling boulder smoke trail. TOWERS' projRender carries the RENDER position
+  // ── tumbling boulder smoke trail. TOWERS' projRender carries the RENDER position
   // (with the ballistic sag), so read that rather than re-deriving from the sim.
   // First sight of a boulder back-fills its whole past trail, which is what makes the
   // trail exist at all in a headless frame (the sim ran with no renders).
@@ -9038,12 +10352,12 @@ function emitTick(tick, lead) {
   _lead = 0;
 }
 
-// â•â• ambient pollen / dust motes â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ ambient pollen / dust motes ══════════════════════════════════════════════
 // A world-space lattice wrapped around the camera focus: motes are stationary in the
 // world (full parallax, nothing pops when the camera moves) and only the visible cell
 // window changes. Screen-locked size so near motes never become blobs.
-// WEATHER DENSITY (SPEC2 Â§E): pollen is a hint, a snowfall is a FIELD. A weather map gets
-// a denser lattice â€” ~500 cells instead of 256 on desktop â€” because at pollen density the
+// WEATHER DENSITY (SPEC2 §E): pollen is a hint, a snowfall is a FIELD. A weather map gets
+// a denser lattice — ~500 cells instead of 256 on desktop — because at pollen density the
 // flakes read as a handful of white dots on the lens rather than as falling snow. Still
 // one draw call; the extra cost is instances in a bucket that has the headroom.
 const WEA = !!G.weather;
@@ -9054,11 +10368,11 @@ const MX = MOTE[0], MY = MOTE[1], MZ = MOTE[2], MC = PQ.mcell;
 // size lock removes every depth cue and the round tile removes every motion cue. Snow now
 // world-locks its size (clamped to a sane pixel band, so distance genuinely shrinks a
 // flake), draws in the shader's screen-space streak mode along the map's own fall vector,
-// and trades opacity for count â€” many faint beats few opaque.
+// and trades opacity for count — many faint beats few opaque.
 // ASH is DARK. A cinder is a burnt fleck; on an additive tile over orange sand it can only
 // ever blow out to white, so map 3's field moves to the ALPHA bucket where a 0.35 tint
 // actually reads as soot, with one in eight kept hot as a live ember.
-const MOTE_ALPHA = MAPID === 3;                      // ash blends dark â†’ alpha bucket
+const MOTE_ALPHA = MAPID === 3;                      // ash blends dark → alpha bucket
 const MOTE_SUB = WEA ? 2 : 1;                        // sub-flakes per lattice cell
 const WTILE = MAPID === 2 ? T_SOFT : MAPID === 3 ? T_SOOT : T_MOTE;
 const WSTREAK = MAPID === 2 ? 2.6 : 0;               // fall-aligned motion aspect
@@ -9066,9 +10380,9 @@ const WSTREAK = MAPID === 2 ? 2.6 : 0;               // fall-aligned motion aspe
 // out brighter than the shadowed sand they sat on and read as pale dust again.
 const ASH_C = [0.24, 0.20, 0.18], ASH_E = [2.20, 0.95, 0.30];
 // Ash flakes are bigger and fluffier than snow crystals, and they have to survive being
-// read as DARK against a busy speckled sand â€” a 2 px soot dot just joins the ground noise.
+// read as DARK against a busy speckled sand — a 2 px soot dot just joins the ground noise.
 // VFX-FIX2: the band was so narrow ([2,7] px) that essentially every flake sat on one clamp
-// or the other, which restored exactly the failure the world-locking was meant to cure â€”
+// or the other, which restored exactly the failure the world-locking was meant to cure —
 // one uniform screen-space ellipse everywhere, i.e. a lens overlay rather than weather in
 // the world. Widened so perspective actually has room to work, and the per-flake size
 // spread below trebled. Embers on the Ember Wastes get their own floor: at 2 px an additive
@@ -9090,9 +10404,9 @@ function stepMotes(t, n, B) {
   // Height gate: airborne motes are a near-field atmospheric cue. Pulled back to the
   // strategic overview they blanket the whole vista uniformly and read as snow or a
   // dirty lens, so they fade out as the camera climbs away from the valley floor.
-  // WEATHER (SPEC2 Â§E): the same lattice, but the cells FALL. Each mote carries its own
+  // WEATHER (SPEC2 §E): the same lattice, but the cells FALL. Each mote carries its own
   // wrap phase, so the field recycles continuously instead of every flake jumping a cell
-  // width at the same instant. A weather map also keeps a floor under the height fade â€”
+  // width at the same instant. A weather map also keeps a floor under the height fade —
   // snowfall that stops when you pull the camera back is a bug, not an atmosphere.
   const W = G.weather;
   let zoom = 1 - sstep(58, 108, oy - G.groundY(ox, oz));
@@ -9125,7 +10439,7 @@ function stepMotes(t, n, B) {
     const ex = px - cx, ey = py - cy, ez = pz - cz;
     const q = Math.sqrt(ex * ex + ey * ey + ez * ez);
     const qc = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    // Pollen twinkles; weather does not â€” a snowflake that blinks reads as a dead pixel.
+    // Pollen twinkles; weather does not — a snowflake that blinks reads as a dead pixel.
     // Both fade OUT of the near field as well as the far one: a flake three metres off the
     // lens is a white plate across the frame, which is the "dirty sensor" failure mode.
     const tw = W ? 0.72 + 0.28 * Math.sin(t * 0.6 + ph * 2.2)
@@ -9133,7 +10447,7 @@ function stepMotes(t, n, B) {
     const a = (1 - sstep(R * 0.42, R, q)) * (1 - sstep(34, 60, qc)) * zoom * tw
             * (W ? sstep(7, 24, qc) : 1);
     if (a < 0.03) continue;
-    // Weather falls in the WORLD, not on the lens â€” so it does not fall on the HUD either.
+    // Weather falls in the WORLD, not on the lens — so it does not fall on the HUD either.
     // The top-left chip cluster and the wave card own that corner of the frame, and flakes
     // drifting across them were the single loudest cue that the field was an overlay.
     if (W) {
@@ -9148,15 +10462,15 @@ function stepMotes(t, n, B) {
       // the field has no depth and every flake is a blob. Locked to the world, distance
       // shrinks it; the clamp only stops the two extremes (a flake on the lens, a flake
       // too small to survive the resolve).
-      // SIZE SPREAD Ã—3 (VFX-FIX2): 0.075..0.150 was a 2:1 range, and once the clamp band
+      // SIZE SPREAD ×3 (VFX-FIX2): 0.075..0.150 was a 2:1 range, and once the clamp band
       // bit, every flake in the frame resolved to the same ellipse. A ~6:1 cubed spread
       // means a near flake is genuinely a different object from a far one.
       const sp3 = MH[h] * MH[h] * MH[h];
       s = (0.040 + sp3 * 0.235) * W.size * MOTE_SZ * (big ? 1.45 : 1) * (LOWQ ? 1.25 : 1);
       s = clamp(s, MOTE_PX[0] * qc / PPW, MOTE_PX[1] * qc / PPW);
       // Half the opacity, twice the flakes: many faint reads as weather, few opaque reads
-      // as dirt on the sensor. Opacity now also varies by DEPTH BAND â€” the near field is
-      // crisp, the far field washes out â€” so the fall reads as a volume with layers in it.
+      // as dirt on the sensor. Opacity now also varies by DEPTH BAND — the near field is
+      // crisp, the far field washes out — so the fall reads as a volume with layers in it.
       const band = 0.55 + 0.75 * (1 - sstep(12, 46, qc));
       av = a * 1.55 * W.alpha * band * (big ? 0.55 : 1) * (MOTE_ALPHA ? 1.4 : 0.50) * (LOWQ ? 1.30 : 1);
     } else {
@@ -9168,7 +10482,7 @@ function stepMotes(t, n, B) {
     }
     // Ash is soot, not sparkle: a dark fleck in the alpha bucket, with one in eight kept
     // hot so the field still carries the map's ember cue. VFX-FIX2: a hot cinder gets its
-    // own, much higher screen floor â€” at 2 px an additive orange dot on the Ember Wastes
+    // own, much higher screen floor — at 2 px an additive orange dot on the Ember Wastes
     // is a stuck pixel, and the map's signature particle has to have a visible body and
     // enough radiance to bloom.
     const emb = MOTE_ALPHA && MH[h + 1] > 0.875;
@@ -9196,7 +10510,7 @@ function stepMotes(t, n, B) {
   return n;
 }
 
-// â•â• per-frame entry point (MAIN's contract name preserved) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ per-frame entry point (MAIN's contract name preserved) ═══════════════════
 let _lastTick = -1;
 const MOTE_RES = MX * MY * MZ * MOTE_SUB;
 let _dbgLast = '';                                   // last VFXDBG line (shot-mode log dedupe)
@@ -9204,7 +10518,7 @@ VFX.update = (t) => {
   _vt = t;
   stepBlast(t);
   stepAura(t);
-  // world units per CSS pixel at one unit of depth â€” the screen-space floor the signature
+  // world units per CSS pixel at one unit of depth — the screen-space floor the signature
   // bursts (modes 3/4) are held above. Recomputed per frame because both the FOV and the
   // window can change under the player.
   U_PXK.value = (2 * Math.tan(G.camera.fov * 0.5 * Math.PI / 180)) / Math.max(1, innerHeight);
@@ -9218,7 +10532,7 @@ VFX.update = (t) => {
   DEC.uT.value = t;
   // The mote lattice lands in whichever bucket its material needs (ash dark = alpha,
   // snow/pollen additive) and reserves its worst case there so a busy frame can never
-  // starve the weather â€” or the weather the effects.
+  // starve the weather — or the weather the effects.
   let na = stepBucket(BA, t, BA.cap - COIN_N - (MOTE_ALPHA ? MOTE_RES : 0));
   na = stepCoins(t, na);
   if (MOTE_ALPHA) na = stepMotes(t, na, BA);
@@ -9235,7 +10549,7 @@ VFX.update = (t) => {
   }
 };
 
-// â•â• post / grade â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ post / grade ═════════════════════════════════════════════════════════════
 // Vignette + a warm sun wash as a plain alpha-composited CSS layer inserted UNDER
 // #ui: zero extra GPU passes, no blend modes (headless capture drops the GL layer
 // when the compositor has to do anything exotic), fully static so it never repaints
@@ -9251,24 +10565,24 @@ VFX.update = (t) => {
 }
 VFX.post = (composer, bloom) => {
   // Threshold stays high so only the additive sparks, flashes, embers and gilt
-  // glints bleed â€” the sunlit meadow must not smear.
+  // glints bleed — the sunlit meadow must not smear.
   if (bloom) { bloom.strength = 0.34; bloom.radius = 0.80; bloom.threshold = 0.90; }
 };
 VFX.meshes = [BA.mesh, BB.mesh, DEC.mesh];
 VFX.debug = () => ({ alpha: BA.n, add: BB.n });
 }
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: VFX â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: VFX ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: AUDIO (owner: AUDIO builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: AUDIO (owner: AUDIO builder) ══════════════════════
 // Fully synthesised medieval score + battle SFX. No sample assets, no files. One graph:
 //
-//   lute / drone / drum buses â”€â–º musicG â”€â–º duckG â”€â”
-//   sfx voices â”€â–º 9 fixed pan buses â”€â–º sfxG â”€â”€â”€â”€â”€â”€â”¤â”€â–º limiter â”€â–º softClip â”€â–º master â”€â–º out
-//   bus sends â”€â–º convolver (procedural valley IR) â”€â–º revRet â”€â”˜
+//   lute / drone / drum buses ─► musicG ─► duckG ─┐
+//   sfx voices ─► 9 fixed pan buses ─► sfxG ──────┤─► limiter ─► softClip ─► master ─► out
+//   bus sends ─► convolver (procedural valley IR) ─► revRet ─┘
 //
 // Invariants: no AudioContext is constructed when SHOT is set (a screenshot must never
-// touch audio, and audio timers would violate GAME_SPEC Â§2.3b); nothing exists before the
-// player's first gesture; and G.rng() is never consumed here â€” Audio.play() is called from
+// touch audio, and audio timers would violate GAME_SPEC §2.3b); nothing exists before the
+// player's first gesture; and G.rng() is never consumed here — Audio.play() is called from
 // inside tickSim, so touching the sim stream would desynchronise the shot harness.
 const Audio = (() => {
   let ac = null, ok = false, _muted = false, live = false;   // live = music scheduler running
@@ -9279,26 +10593,32 @@ const Audio = (() => {
   const gap = {};                                            // name -> last trigger time
   const MINGAP = { die: .055, bow: .05, clash: .03, coin: .07, ui: .02, boom: .07, ballista: .04,
     catapult: .05, build: .06, leak: 1.5, cleared: 2, horn: .5, victory: 4, defeat: 4,
-    // SPEC2 Â§C/Â§D cues. `zap` and `mbow` are the spammy pair: a storm at tier 3 with a
+    // SPEC2 §C/§D cues. `zap` and `mbow` are the spammy pair: a storm at tier 3 with a
     // banner behind it fires under a second, and a firing line of marauders looses every
-    // 0.6 s per unit â€” without these gaps both turn into a buzz.
+    // 0.6 s per unit — without these gaps both turn into a buzz.
     zap: .085, mbow: .06, banner: .5, howl: 2.4, bosshorn: 4,
-    // SPEC3 Â§A/Â§B/Â§D cues. The element impacts and `shrug` sit on the same short leash as
-    // `clash` â€” they are a TEXTURE that tells you what your towers are doing to what is on
+    // SPEC3 §A/§B/§D cues. The element impacts and `shrug` sit on the same short leash as
+    // `clash` — they are a TEXTURE that tells you what your towers are doing to what is on
     // the road, and the moment one of them becomes a per-hit event it is a rattle. `shrug`
     // is the loosest of the four on purpose: an archer wall into a frost revenant would
     // otherwise clang eleven times a second and drown the wall it is criticising.
     thud: .07, sizzle: .10, crack: .07, shrug: .11,
-    ironfoot: .085, wraith: .55, heal: .5, omen: .5 };
+    ironfoot: .085, wraith: .55, heal: .5, omen: .5,
+    // SPEC4 §C/§D. All five are player ACTS, so they are rate-limited by their own cooldowns
+    // and costs already; the gaps here only stop a double-tap from stacking two copies of
+    // the same brass into a phasing mess.
+    rally: .4, choir: .5, smitehit: .4, keg: .12, traparm: .09 };
   // Voice ceiling. A dense wave can ask for far more than it can usefully hear, so the
-  // ambient layers get culled first â€” but story cues (horn, alarm, stingers, UI) must never
+  // ambient layers get culled first — but story cues (horn, alarm, stingers, UI) must never
   // be dropped, so they raise `prio` for the duration of their scheduling call.
   let VCAP = 56, prio = false;
+  // SPEC4 §C: a power the player spent a 25/45 s cooldown on must never be culled by a
+  // dense wave's voice ceiling — that is precisely the moment it will be cast.
   const PRIO = { horn: 1, leak: 1, cleared: 1, victory: 1, defeat: 1, build: 1, ui: 1,
-    banner: 1, howl: 1, bosshorn: 1, omen: 1 };
-  const MAPID = (G.MAP && G.MAP.id) || 1;                    // per-map ambience (SPEC2 Â§E)
+    banner: 1, howl: 1, bosshorn: 1, omen: 1, rally: 1, choir: 1, smitehit: 1, keg: 1 };
+  const MAPID = (G.MAP && G.MAP.id) || 1;                    // per-map ambience (SPEC2 §E)
   const room = n => prio || voices < VCAP - n;
-  // private noise stream â€” see the header note about G.rng()
+  // private noise stream — see the header note about G.rng()
   let _as = 0x9e3779b9 >>> 0;
   const rnd = () => { _as ^= _as << 13; _as ^= _as >>> 17; _as ^= _as << 5; return (_as >>> 0) / 4294967296; };
   const rr = (a, b) => a + (b - a) * rnd();
@@ -9306,7 +10626,7 @@ const Audio = (() => {
   const _av = new THREE.Vector3();
   const LOW = tier === 'mobile';                             // thin the fattest cues on phones
 
-  // â•â• buffers â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ buffers ═══════════════════════════════════════════════════════════════════
   function noiseBuf(sec, brown) {
     const sr = ac.sampleRate, n = Math.floor(sr * sec), b = ac.createBuffer(1, n, sr), d = b.getChannelData(0);
     let lp = 0;
@@ -9360,7 +10680,7 @@ const Audio = (() => {
     return b;
   }
 
-  // â•â• graph â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ graph ═════════════════════════════════════════════════════════════════════
   function init() {
     if (ok || SHOT) return ok;
     try {
@@ -9408,7 +10728,7 @@ const Audio = (() => {
     return ok;
   }
 
-  // â•â• voice primitives â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ voice primitives ══════════════════════════════════════════════════════════
   const count = n => { voices++; n.onended = () => { voices--; }; };
   const env = (p, t, a, peak, d) => {
     p.setValueAtTime(0.0001, t);
@@ -9443,7 +10763,7 @@ const Audio = (() => {
     o.connect(g); g.connect(dest);
     o.start(t); o.stop(t + a + d + 0.03); count(o);
   }
-  // detuned-saw brass through a swept lowpass â€” horns and fanfares
+  // detuned-saw brass through a swept lowpass — horns and fanfares
   function brass(dest, t, freq, dur, peak) {
     if (!room(6)) return;
     const f = ac.createBiquadFilter();
@@ -9486,7 +10806,7 @@ const Audio = (() => {
     s.start(t); s.stop(t + s.buffer.duration + 0.02); count(s);
   }
 
-  // â•â• sfx â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ sfx ═══════════════════════════════════════════════════════════════════════
   function duck(amt, dur) {
     const t = ac.currentTime, p = duckG.gain;
     p.cancelScheduledValues(t);
@@ -9549,7 +10869,7 @@ const Audio = (() => {
       for (let i = 0, k = LOW ? 3 : 7; i < k; i++) nz(d, t + 0.09 + rnd() * 0.42, 0.055, 0.001, 0.05, 'bandpass', rr(700, 2600), 0, 3);
       nz(d, t + 0.1, 0.11, 0.12, 0.85, 'lowpass', 520, 180, 0.8, true);
     },
-    stomp(d, t) {                                          // SPEC2 Â§D â€” the ogre's foot
+    stomp(d, t) {                                          // SPEC2 §D — the ogre's foot
       duck(0.34, 0.46);                                    // sub thud, body slap, earth roll
       // VFX/AUDIO-2: a second, slower sub an octave down. The single 62 Hz thud read as a
       // big drum; the ogre needs weight you feel through the floor, and the long tail is
@@ -9628,7 +10948,7 @@ const Audio = (() => {
       for (const [n, o] of C) { brass(d, t + o, mf(n), 2.2, 0.13); tone(d, t + o, 'sine', mf(n - 12), 0, 0.16, 0.5, 2.2); }
       nz(d, t, 0.09, 1.2, 3.0, 'lowpass', 340, 150, 0.8, true);
     },
-    // â•â• SPEC2 Â§C/Â§D/Â§E â€” VFX/AUDIO-2 cues â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══ SPEC2 §C/§D/§E — VFX/AUDIO-2 cues ════════════════════════════════════
     zap(d, t) {                                            // chain lightning striking home
       nz(d, t, 0.30, 0.0006, 0.032, 'highpass', 5400, 0, 0.7);     // the crack, all top end
       nz(d, t, 0.22, 0.001, 0.075, 'bandpass', 2400, 6200, 1.4);
@@ -9637,7 +10957,7 @@ const Audio = (() => {
       nz(d, t + 0.03, 0.085, 0.012, 0.28, 'lowpass', 850, 240, 0.9);   // short rolling tail
     },
     // The marauder carries a short bow, not a war bow: the tower cue at -3 dB with the
-    // string and the fletch whoosh pitched down a fourth (SPEC2 Â§D).
+    // string and the fletch whoosh pitched down a fourth (SPEC2 §D).
     mbow(d, t) {
       pluckSfx(d, t, rr(205, 258), 0.16, 0.39);
       nz(d, t, 0.20, 0.002, 0.05, 'bandpass', rr(1180, 1680), 620, 4);
@@ -9645,7 +10965,7 @@ const Audio = (() => {
     },
     banner(d, t) {                                         // a standard planted: mallets, then brass
       SFX.build(d, t);
-      const f = mf(57);                                    // A2 â€” a fifth under the war horn
+      const f = mf(57);                                    // A2 — a fifth under the war horn
       brass(d, t + 0.30, f, 0.64, 0.22);
       brass(d, t + 0.33, f * 1.5, 0.58, 0.11);
       drum(d, t + 0.30, 0.34, true);
@@ -9681,10 +11001,10 @@ const Audio = (() => {
       for (let i = 0, k = 2 + (rnd() * 3 | 0); i < k; i++)
         tone(d, t + i * rr(0.06, 0.11), 'sine', f * rr(0.9, 1.15), f * rr(1.2, 1.5), 0.028, 0.006, 0.055);
     },
-    // â•â• SPEC3 Â§A â€” element impact variants â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══ SPEC3 §A — element impact variants ═══════════════════════════════════
     // Pierce keeps the bow report it always had and adds NOTHING at the hit: four arrows a
     // second into a wall of shields would turn any per-hit cue into a buzz, and the wheel's
-    // job here is contrast â€” you learn what pierce sounds like by hearing the other three.
+    // job here is contrast — you learn what pierce sounds like by hearing the other three.
     thud(d, t) {                                           // crush: a rock caving in plate
       tone(d, t, 'sine', 126, 50, 0.36, 0.003, 0.17, 0.09);
       tone(d, t, 'triangle', 212, 94, 0.15, 0.002, 0.085);
@@ -9713,12 +11033,12 @@ const Audio = (() => {
       nz(d, t, 0.12, 0.001, 0.034, 'bandpass', f * 3.2, f * 1.6, 3);
       nz(d, t + 0.012, 0.05, 0.005, 0.055, 'lowpass', 860, 300, 0.9);
     },
-    // â•â• SPEC3 Â§B â€” the newcomers announce themselves â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══ SPEC3 §B — the newcomers announce themselves ═════════════════════════
     // The war shaman is a PRIORITY KILL the player has to find inside a column of three
     // hundred, so he has to be audible before he is visible: a struck bowl over a bowed
     // drone, the only consonant thing on the road and the only cue that rings.
     heal(d, t) {
-      bell(d, t, 622, 0.085, 1.5);                         // D#5 â€” outside the score's D minor
+      bell(d, t, 622, 0.085, 1.5);                         // D#5 — outside the score's D minor
       bell(d, t + 0.10, 932, 0.045, 1.1);
       tone(d, t, 'sine', 155, 0, 0.075, 0.10, 0.85);       // the bowed drone under it
       tone(d, t + 0.01, 'triangle', 233, 0, 0.032, 0.14, 0.7);
@@ -9737,7 +11057,7 @@ const Audio = (() => {
       nz(d, t + 0.10, 0.038, 0.12, 0.45, 'bandpass', f * 2.2, f * 0.7, 2.6);
       tone(d, t + 0.04, 'sine', f * 0.26, f * 0.19, 0.028, 0.16, 0.42);
     },
-    // â•â• SPEC3 Â§D â€” the muster's own stinger â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // ══ SPEC3 §D — the muster's own stinger ══════════════════════════════════
     // Taking an omen is the only decision in BANNERFALL that is not a purchase, so it gets
     // a page turn (two brushed noise strokes, the second longer, as a leaf falls back) and
     // a low choir swell underneath. Ducked, because it happens over the music, not under it.
@@ -9753,6 +11073,65 @@ const Audio = (() => {
       }
       bell(d, t + 0.30, 1046, 0.045, 1.7);                               // the seal set on it
     },
+    // ══ SPEC4 §C/§D — the two powers and the three traps ═════════════════════
+    // Rally is the war horn's LITTLE BROTHER: same brass, one note instead of two, a fifth
+    // above and half the length. It has to be instantly placeable as "ours, and smaller
+    // than a wave" — a second full horn would read as the horde arriving.
+    rally(d, t) {
+      const f = mf(57);                                                  // A2, above the horn's D3
+      brass(d, t, f, 0.30, 0.24);
+      brass(d, t + 0.02, f * 1.5, 0.26, 0.11);
+      drum(d, t, 0.30, true);
+      nz(d, t + 0.05, 0.07, 0.02, 0.16, 'bandpass', 1600, 900, 1.6);     // boots forming up
+    },
+    // Fire of Heaven's WIND-UP. The telegraph is the ability, so the sound is a rising
+    // choir — the only sustained vocal-ish thing in the mix — climbing for the 1.2 s the
+    // ring takes to close. Nothing else in BANNERFALL swells; that is what makes it read as
+    // "something is about to happen HERE".
+    choir(d, t) {
+      duck(0.28, 1.4);
+      const R = mf(62);                                                  // D3 root, open fifth
+      for (const [m, a, o] of [[1, .075, 0], [1.5, .055, .04], [2, .042, .08], [3, .026, .12]]) {
+        tone(d, t + o, 'sine', R * m * 0.995, R * m, a, 0.62, 0.62);
+        if (!LOW) tone(d, t + o + 0.01, 'triangle', R * m * 1.006, R * m * 1.01, a * 0.40, 0.66, 0.58);
+      }
+      nz(d, t, 0.05, 0.55, 0.65, 'bandpass', 900, 2600, 0.9);            // air gathering
+      bell(d, t + 0.95, 1568, 0.05, 0.9);                                // the cue that it is due
+    },
+    // ...and the strike. A bell struck THROUGH a crack: consonant where boom() is not, so a
+    // smite never gets mistaken for a catapult stone landing.
+    smitehit(d, t) {
+      duck(0.44, 0.9);
+      nz(d, t, 0.34, 0.0006, 0.036, 'highpass', 5000, 0, 0.7);           // the crack
+      tone(d, t, 'sine', 96, 34, 0.80, 0.005, 0.42, 0.24);               // the weight under it
+      tone(d, t, 'triangle', 196, 72, 0.30, 0.003, 0.20, 0.12);
+      bell(d, t + 0.01, 1046, 0.16, 2.1);                                // C6, the consonant ring
+      bell(d, t + 0.06, 1568, 0.09, 1.6);
+      nz(d, t + 0.02, 0.26, 0.02, 0.50, 'lowpass', 1100, 300, 0.85);     // the fire taking
+      for (let i = 0, k = LOW ? 3 : 6; i < k; i++)
+        nz(d, t + 0.06 + rnd() * 0.30, 0.05, 0.001, 0.045, 'bandpass', rr(1600, 4200), 0, 5);
+    },
+    // A keg is boom() with the low end traded for POWDER: brighter, shorter, and with the
+    // barrel coming apart on top of it, so it is tellable from a catapult at any distance.
+    keg(d, t) {
+      duck(0.38, 0.48);
+      tone(d, t, 'sine', 104, 34, 0.72, 0.004, 0.32, 0.17);
+      tone(d, t, 'triangle', 176, 60, 0.34, 0.003, 0.19, 0.11);
+      nz(d, t, 0.46, 0.001, 0.10, 'highpass', 2200, 0, 0.8);             // the flash, all top
+      nz(d, t, 0.40, 0.002, 0.26, 'lowpass', 1800, 320, 0.9);
+      for (let i = 0, k = LOW ? 4 : 9; i < k; i++)                       // staves cracking off
+        nz(d, t + 0.05 + rnd() * 0.30, 0.075, 0.001, 0.055, 'bandpass', rr(900, 3000), 0, 3.5);
+      nz(d, t + 0.08, 0.09, 0.09, 0.55, 'lowpass', 480, 170, 0.8, true);
+    },
+    // Laying a trap is a CLICK and a scatter — a mechanism seated, then iron settling on
+    // packed dirt. Short and dry: it happens between waves, over the score, four times a map.
+    traparm(d, t) {
+      tone(d, t, 'square', 880, 520, 0.055, 0.001, 0.035);               // the catch seating
+      nz(d, t, 0.14, 0.001, 0.028, 'bandpass', 3000, 1600, 6);
+      for (let i = 0, k = LOW ? 2 : 4; i < k; i++)
+        nz(d, t + 0.035 + rnd() * 0.09, 0.055, 0.001, 0.03, 'bandpass', rr(2400, 5200), 0, 7);
+      tone(d, t + 0.03, 'triangle', 168, 96, 0.10, 0.002, 0.07);         // the weight of it down
+    },
   };
   // a plucked-string transient for the bow (short, damped, sent to the sfx bus not the lute bus)
   function pluckSfx(d, t, freq, dur, amp) {
@@ -9764,10 +11143,10 @@ const Audio = (() => {
     s.start(t); s.stop(t + s.buffer.duration + 0.02); count(s);
   }
 
-  // â•â• fire bed (SPEC2 Â§C/Â§E) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ fire bed (SPEC2 §C/§E) ════════════════════════════════════════════════════
   // ONE looping voice for every burning patch on the map: a pyre wall must not become a
   // wall of noise, and per-patch loops would be per-patch node churn on top of it. Two
-  // layers â€” a filtered roar off the brown-noise buffer and a sparse crackle buffer â€” and
+  // layers — a filtered roar off the brown-noise buffer and a sparse crackle buffer — and
   // the level is driven from sched(), which is the ONE timer this file owns. Deliberately
   // quiet: it is a bed under the music, not an event. Ember Wastes keeps a floor under it
   // even with no pyre on the map, because that ground smoulders on its own.
@@ -9804,10 +11183,10 @@ const Audio = (() => {
     fireLP.frequency.setTargetAtTime(380 + 560 * bed, now, 0.35);
     crackG.gain.setTargetAtTime(0.50 * bed, now, 0.25);
   }
-  // â•â• standing layers (SPEC3 Â§B/Â§D) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ standing layers (SPEC3 §B/§D) ════════════════════════════════════════════
   // Two things in v3 are STATES, not events: a siege ram grinding down the road, and a wave
   // warded against one of the player's schools. Both last a minute or more, so both would
-  // be nonsense as repeated one-shots â€” they are BEDS, exactly like the fire bed above:
+  // be nonsense as repeated one-shots — they are BEDS, exactly like the fire bed above:
   // one voice each, built lazily, level driven from sched(), which is the one timer this
   // file owns. The ram's "cap 1" is therefore structural rather than a counter: there is
   // one bed no matter how many rams a swap slot fields.
@@ -9831,7 +11210,7 @@ const Audio = (() => {
     const wg = ac.createGain(); wg.gain.value = 0.55;
     w.connect(wf); wf.connect(wg); wg.connect(creakG); w.start(t);
   }
-  // The ward names its school by PITCH â€” same chord, four roots â€” so a player who has heard
+  // The ward names its school by PITCH — same chord, four roots — so a player who has heard
   // it once knows which of his towers has just been shut out without reading the banner.
   const WARDN = { pierce: 0, crush: -4, fire: 5, storm: 9 };
   const WARDP = [[1, 'sawtooth', 0.85, 0], [1, 'triangle', 0.5, 8], [2, 'triangle', 0.26, -7], [3, 'sine', 0.14, 5]];
@@ -9842,7 +11221,7 @@ const Audio = (() => {
     wardLP = ac.createBiquadFilter(); wardLP.type = 'lowpass'; wardLP.Q.value = 1.4; wardLP.frequency.value = 760;
     // The shimmer rides its OWN gain stage in series, never wardG's. An LFO connected to an
     // AudioParam is ADDITIVE, so hanging it on the level control would keep swinging the bed
-    // between âˆ’0.3 and +0.3 long after the level had been taken to silence â€” i.e. a hum that
+    // between −0.3 and +0.3 long after the level had been taken to silence — i.e. a hum that
     // never stops. One extra node is the whole fix.
     wardTremG = ac.createGain(); wardTremG.gain.value = 1;
     wardLP.connect(wardTremG); wardTremG.connect(wardG);
@@ -9858,7 +11237,7 @@ const Audio = (() => {
     trem.frequency.value = 0.37; trem.connect(tg); tg.connect(wardTremG.gain); trem.start(t);
   }
   function beds(now) {
-    // â”€â”€ the ram: one bed, level from how many are rolling and how close the nearest is
+    // ── the ram: one bed, level from how many are rolling and how close the nearest is
     let rams = 0;
     const EN = G.enemies;
     for (let i = 0; i < EN.length; i++) { const e = EN[i]; if (e.alive && e.type === 'ram') rams++; }
@@ -9868,7 +11247,7 @@ const Audio = (() => {
       creakG.gain.setTargetAtTime(0.10 * lv, now, rams ? 0.45 : 0.9);
       creakBP.Q.setTargetAtTime(rams ? 9 : 4, now, 1.0);
     }
-    // â”€â”€ the ward: only while the wave it rides is actually on the road
+    // ── the ward: only while the wave it rides is actually on the road
     const FX = G.OMEN_FX, on = FX.ward > 0 && FX.wardEl && G.state.phase === 'wave';
     if (wardG || on) {
       startWardBed();
@@ -9880,7 +11259,7 @@ const Audio = (() => {
       wardLP.frequency.setTargetAtTime(on ? 780 : 380, now, 1.2);
     }
   }
-  // â”€â”€ SPEC3 Â§B presence: footfalls, whispers, and fire refusing to take hold â”€â”€â”€â”€â”€â”€
+  // ── SPEC3 §B presence: footfalls, whispers, and fire refusing to take hold ──────
   // Rate-derived exactly like melee(): the number of each species on the road sets a rate,
   // an accumulator spends it, and MINGAP does the rest. Emitted here rather than from the
   // sim so a headless catch-up of ten thousand ticks cannot queue ten thousand footsteps.
@@ -9916,16 +11295,16 @@ const Audio = (() => {
     } else whAcc = 0;
   }
 
-  // Per-map ambience (SPEC2 Â§E): the Vale hears songbirds over a soft valley draught;
+  // Per-map ambience (SPEC2 §E): the Vale hears songbirds over a soft valley draught;
   // Frostfell hears a colder, brighter wind and the odd crow; Ember Wastes hears almost
-  // no wildlife at all â€” the fire bed above is its ambience.
+  // no wildlife at all — the fire bed above is its ambience.
   const AMB = MAPID === 2 ? 'crow' : MAPID === 3 ? null : 'bird';
   const WIND = MAPID === 2 ? { g: 0.075, f: 780, b: 0.055, s: 0.030 }
              : MAPID === 3 ? { g: 0.052, f: 300, b: 0.040, s: 0.022 }
              : { g: 0.040, f: 480, b: 0.032, s: 0.026 };
 
-  // â•â• music â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // D aeolian, iâ€“VIIâ€“VIâ€“V (Dm C Bb A): the descending medieval cadence. One 8-step (eighth
+  // ══ music ═════════════════════════════════════════════════════════════════════
+  // D aeolian, i–VII–VI–V (Dm C Bb A): the descending medieval cadence. One 8-step (eighth
   // note) grid; `mode` selects density, `intens` follows the size of the horde on the road.
   const CH = [[62, 65, 69, 74], [60, 64, 67, 72], [58, 62, 65, 70], [57, 61, 64, 69]];
   const CALM_S = [0, 3, 4, 6], CALM_I = [0, 1, 2, 1];
@@ -10036,7 +11415,7 @@ const Audio = (() => {
     }
   }
 
-  // â•â• public api â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ══ public api ════════════════════════════════════════════════════════════════
   function play(name, x, z, vol) {
     if (SHOT || !ok || _muted || ac.state !== 'running') return;
     const f = SFX[name];
@@ -10059,10 +11438,10 @@ const Audio = (() => {
     else { const g = ac.createGain(); g.gain.value = att; g.connect(dest); f(g, t); }
     prio = false;
   }
-  // The war horn, then whatever the wave is actually MADE OF (SPEC2 Â§D/Â§E). SIM hands the
+  // The war horn, then whatever the wave is actually MADE OF (SPEC2 §D/§E). SIM hands the
   // group list straight from the wave table, so this needs no per-map knowledge: a pack
   // wave answers with hounds, a finale with its own low sting. Both are scheduled ahead on
-  // the audio clock (WebAudio time, not a timer â€” GAME_SPEC Â§2.3b).
+  // the audio clock (WebAudio time, not a timer — GAME_SPEC §2.3b).
   function waveCue(groups) {
     if (SHOT || !ok || _muted || ac.state !== 'running') { play('horn'); return; }
     play('horn');
@@ -10120,35 +11499,35 @@ if (!SHOT) {
     if (document.hidden) c.suspend(); else c.resume();
   });
 }
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: AUDIO â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: AUDIO ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: UI (owner: UI builder) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ SECTION: UI (owner: UI builder) ══════════════════════
 // Medieval-AAA interface. Everything is procedural: SVG filigree lives in SECTION: UI-CSS
 // and UI-HTML; the parchment/iron grain and every tower portrait / enemy bust below are
 // drawn with 2d canvas at init. No external assets, nothing fetched.
 //
-// SHOT-MODE CONTRACT (see GAME_SPEC Â§2.3):
-//  Â· no setTimeout/setInterval ever runs when SHOT is set;
-//  Â· CSS base state == shipped look, so the harness's `animation:none` freeze is a no-op;
-//  Â· UI.frame() (damage floaters, count-up, Ken-Burns) is called from MAIN's render() and
+// SHOT-MODE CONTRACT (see GAME_SPEC §2.3):
+//  · no setTimeout/setInterval ever runs when SHOT is set;
+//  · CSS base state == shipped look, so the harness's `animation:none` freeze is a no-op;
+//  · UI.frame() (damage floaters, count-up, Ken-Burns) is called from MAIN's render() and
 //    self-disables after the 2nd shot render, so the FINAL shot frame mutates no DOM.
 const $ = id => document.getElementById(id);
 const UI = {};
 G.UI = UI;
 
-// â”€â”€ deterministic cosmetic noise (never touches the sim rng stream) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── deterministic cosmetic noise (never touches the sim rng stream) ────────────
 let _us = 0x1a2b3c4d;
 const urng = () => { _us ^= _us << 13; _us ^= _us >>> 17; _us ^= _us << 5; return ((_us >>> 0) % 100000) / 100000; };
 const ur = (a, b) => a + (b - a) * urng();
 function pcv(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
-// â”€â”€ grain tiles pushed into CSS custom properties â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── grain tiles pushed into CSS custom properties ──────────────────────────────
 {
   const c = pcv(180, 180), g = c.getContext('2d');           // hammered dark iron
-  // FIX2-UI Â§4a: the old tile scattered 2300 BRIGHT single pixels across the dark panels,
-  // which at panel scale is a starfield â€” every iron plate read as a space nebula instead
+  // FIX2-UI §4a: the old tile scattered 2300 BRIGHT single pixels across the dark panels,
+  // which at panel scale is a starfield — every iron plate read as a space nebula instead
   // of metal. Iron has no isolated white points: it has dark tooth, planished facets and
-  // directional tool marks. So the highlight is only ever an elongated STROKE at â‰¤6% alpha,
+  // directional tool marks. So the highlight is only ever an elongated STROKE at ≤6% alpha,
   // never a lone pixel, and every point-sized speck is a dark pit.
   for (let i = 0; i < 9000; i++) {                            // dark tooth / pitting
     g.fillStyle = 'rgba(0,0,0,' + (0.03 + urng() * 0.11) + ')';
@@ -10162,7 +11541,7 @@ function pcv(w, h) { const c = document.createElement('canvas'); c.width = w; c.
     g.lineWidth = 0.7 + urng() * 1.1;
     g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
   }
-  for (let i = 0; i < 110; i++) {                             // hammer dishing â€” shallow facets
+  for (let i = 0; i < 110; i++) {                             // hammer dishing — shallow facets
     g.globalAlpha = 0.05 + urng() * 0.06;
     const r = 7 + urng() * 20, x = urng() * 180, y = urng() * 180;
     const rg = g.createRadialGradient(x - r * .34, y - r * .34, 0, x, y, r);
@@ -10191,8 +11570,8 @@ function pcv(w, h) { const c = document.createElement('canvas'); c.width = w; c.
   document.documentElement.style.setProperty('--grain', 'url("' + c.toDataURL('image/png') + '")');
 }
 
-// â•â• canvas-drawn tower portraits â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// Authored in a hand-friendly space: x âˆ’50..50, y = 0 at the ground line and +y up.
+// ══ canvas-drawn tower portraits ═══════════════════════════════════════════════
+// Authored in a hand-friendly space: x −50..50, y = 0 at the ground line and +y up.
 // Every asset is silhouette-first with a warm upper-left key and a cool sky bounce,
 // mirroring the scene's golden-hour lighting so the icons read as the real towers.
 const PAL = {
@@ -10372,7 +11751,7 @@ const TOWER_ART = {
       for (let i = 0; i < 3; i++) { g.fillStyle = i % 2 ? PAL.stone[1] : PAL.stone[0];
         g.beginPath(); g.arc(-24 + (i % 2) * 3.6, H + 5.4 + i * 3.2, 2.8, 0, 7); g.fill(); } }
   },
-  // SPEC2 Â§C towers. Silhouette first: spire + crystal, brazier + davit, mast + banner.
+  // SPEC2 §C towers. Silhouette first: spire + crystal, brazier + davit, mast + banner.
   storm(g, lv) {
     const H = lv >= 3 ? 40 : lv >= 2 ? 34 : 28;                           // drum height
     const NC = lv >= 3 ? 6 : 5;
@@ -10547,14 +11926,103 @@ const TOWER_ART = {
       g.fillStyle = fg; g.beginPath(); g.ellipse(-20, 9.6, 3.8, 5.6, 0, 0, 7); g.fill();
     }
   },
+  // ══ SPEC4 §D — the three road traps ═══════════════════════════════════════════
+  // Same authoring space as the towers (x −50..50, ground at y=0, +y up) and the same PAL,
+  // so a trap card and a tower card are drawn by one hand. They are all LOW and WIDE: a
+  // trap lies on the road, and the card has to say that before the writ does.
+  caltrops(g) {
+    // a bar of packed road under them, so the spikes read as strewn ON something
+    const rd = g.createLinearGradient(0, 0, 0, 5);
+    rd.addColorStop(0, '#6b5842'); rd.addColorStop(1, '#4a3d2c');
+    g.fillStyle = rd; g.beginPath(); g.ellipse(0, 2.2, 34, 6.2, 0, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(24,18,10,.45)'; g.lineWidth = 0.8;
+    g.beginPath(); g.ellipse(0, 2.2, 34, 6.2, 0, 0, 7); g.stroke();
+    const spike = (x, y, s, rot) => {
+      g.save(); g.translate(x, y); g.rotate(rot); g.scale(s, s);
+      // four-point caltrop: three legs down, one standing straight up — the shape that
+      // always lands point-first, which is the whole idea and the whole silhouette
+      for (const [dx, dy] of [[-5.4, -0.6], [5.4, -0.6], [0.9, 2.2]]) {
+        g.strokeStyle = PAL.iron[2]; g.lineWidth = 2.6; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(0, 1.6); g.lineTo(dx, dy); g.stroke();
+        g.strokeStyle = '#9aa6b4'; g.lineWidth = 1.2;
+        g.beginPath(); g.moveTo(0, 1.6); g.lineTo(dx * 0.86, dy * 0.86); g.stroke();
+      }
+      g.strokeStyle = PAL.iron[2]; g.lineWidth = 2.8; g.lineCap = 'round';   // the up point
+      g.beginPath(); g.moveTo(0, 1.6); g.lineTo(-0.4, 9.2); g.stroke();
+      g.strokeStyle = '#c8d2de'; g.lineWidth = 1.3;
+      g.beginPath(); g.moveTo(0, 1.9); g.lineTo(-0.35, 8.4); g.stroke();
+      g.fillStyle = '#eaf1f8'; g.beginPath(); g.arc(-0.4, 9.2, 0.85, 0, 7); g.fill();
+      g.restore();
+    };
+    for (const [x, y, s, r] of [[-24, 1.4, 0.78, 0.22], [-11, 0.6, 1.02, -0.14], [2.5, 2.0, 0.86, 0.34],
+                                [15, 0.7, 1.10, -0.30], [27, 1.8, 0.74, 0.10], [-17.5, 3.2, 0.62, -0.42],
+                                [9, 3.4, 0.60, 0.5]]) spike(x, y, s, r);
+  },
+  tar(g) {
+    // a black mirror in a dirt rim. The read is WET: a hard specular streak across the pool
+    // and a rim of dry crust round it, both of which vanish if the pool is drawn flat black.
+    g.fillStyle = '#5b4b36';
+    g.beginPath(); g.ellipse(0, 3.4, 33, 9.4, 0, 0, 7); g.fill();
+    const pg = g.createRadialGradient(-8, 6, 1, 0, 4, 32);
+    pg.addColorStop(0, '#2c2822'); pg.addColorStop(0.45, '#181510'); pg.addColorStop(1, '#0a0907');
+    g.fillStyle = pg; g.beginPath(); g.ellipse(0, 3.6, 29, 7.8, 0, 0, 7); g.fill();
+    g.save();                                                         // the sky caught on it
+    g.beginPath(); g.ellipse(0, 3.6, 29, 7.8, 0, 0, 7); g.clip();
+    const sh = g.createLinearGradient(-24, 0, 12, 12);
+    sh.addColorStop(0, 'rgba(150,176,206,0)'); sh.addColorStop(0.45, 'rgba(168,196,226,.46)');
+    sh.addColorStop(0.72, 'rgba(120,146,178,.16)'); sh.addColorStop(1, 'rgba(120,146,178,0)');
+    g.fillStyle = sh; g.fillRect(-33, -4, 66, 20);
+    g.fillStyle = 'rgba(255,232,186,.20)';
+    g.beginPath(); g.ellipse(12, 7.4, 9, 2.0, -0.16, 0, 7); g.fill();
+    g.restore();
+    for (const [x, y, r] of [[-13, 4.6, 2.5], [4, 6.2, 1.7], [15, 3.2, 2.0], [-3, 2.2, 1.3]]) {
+      const bg = g.createRadialGradient(x - r * 0.4, y + r * 0.5, 0.2, x, y, r);
+      bg.addColorStop(0, '#4a4238'); bg.addColorStop(0.6, '#1d1a15'); bg.addColorStop(1, '#0c0b09');
+      g.fillStyle = bg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+      g.fillStyle = 'rgba(214,232,250,.35)'; g.beginPath(); g.arc(x - r * 0.36, y + r * 0.42, r * 0.26, 0, 7); g.fill();
+    }
+  },
+  keg(g) {
+    const H = 30, W = 15;
+    g.fillStyle = 'rgba(16,10,3,.42)';                                // it sits on ground
+    g.beginPath(); g.ellipse(2, 1.2, 20, 4.2, 0, 0, 7); g.fill();
+    const bg = g.createLinearGradient(-W, 0, W, 0);
+    bg.addColorStop(0, '#4e3a20'); bg.addColorStop(0.32, '#8f6a3c'); bg.addColorStop(0.62, '#6e5029'); bg.addColorStop(1, '#3d2c17');
+    // barrel: staves bulging at the waist, drawn as one body then scored into staves
+    g.fillStyle = bg;
+    g.beginPath();
+    g.moveTo(-W * 0.78, 0); g.bezierCurveTo(-W * 1.10, H * 0.34, -W * 1.10, H * 0.66, -W * 0.78, H);
+    g.lineTo(W * 0.78, H); g.bezierCurveTo(W * 1.10, H * 0.66, W * 1.10, H * 0.34, W * 0.78, 0);
+    g.closePath(); g.fill();
+    g.strokeStyle = 'rgba(38,24,10,.55)'; g.lineWidth = 0.9;
+    for (const i of [-2, -1, 0, 1, 2]) {
+      const x = i * W * 0.36;
+      g.beginPath(); g.moveTo(x * 0.78, 0.6); g.bezierCurveTo(x * 1.06, H * 0.34, x * 1.06, H * 0.66, x * 0.78, H - 0.6); g.stroke();
+    }
+    for (const [y, hw] of [[H * 0.16, W * 1.02], [H * 0.84, W * 1.02], [H * 0.5, W * 1.09]]) {  // iron hoops
+      const hg = g.createLinearGradient(-hw, 0, hw, 0);
+      hg.addColorStop(0, '#25211c'); hg.addColorStop(0.34, '#7d7a74'); hg.addColorStop(0.62, '#454239'); hg.addColorStop(1, '#1e1b17');
+      g.fillStyle = hg; g.fillRect(-hw, y - 1.7, hw * 2, 3.4);
+      g.fillStyle = 'rgba(255,240,206,.22)'; g.fillRect(-hw, y + 0.7, hw * 2, 0.7);
+    }
+    poly(g, [-W * 0.80, H, W * 0.80, H, W * 0.70, H + 2.4, -W * 0.70, H + 2.4], '#3a2b17', '#241a0d', 0.9);  // lid
+    g.strokeStyle = '#a08a5e'; g.lineWidth = 2.0; g.lineCap = 'round';                          // fuse
+    g.beginPath(); g.moveTo(2, H + 2); g.quadraticCurveTo(9, H + 8, 6.5, H + 14); g.stroke();
+    const fg = g.createRadialGradient(6.5, H + 14, 0.3, 6.5, H + 14.6, 7);   // ...and its lit end
+    fg.addColorStop(0, '#fff6d2'); fg.addColorStop(0.34, '#ffb03a'); fg.addColorStop(1, 'rgba(255,90,0,0)');
+    g.fillStyle = fg; g.beginPath(); g.ellipse(6.5, H + 14.4, 5.0, 6.2, 0, 0, 7); g.fill();
+    g.fillStyle = '#fff8e0'; g.beginPath(); g.arc(6.5, H + 14, 1.3, 0, 7); g.fill();
+  },
 };
 // per-type framing: the ballista/catapult/barracks are low and wide, so they need a bigger
 // scale than the tall watchtower to fill the same plate. Every asset is scaled so its TIER-3
 // silhouette just fills it.
 const POR_SC = { archer: 0.88, ballista: 1.34, catapult: 1.36, barracks: 1.66,
-                 storm: 1.02, pyre: 1.26, banner: 1.24 };
-// â”€â”€ icon tier 2: the phone's flat silhouette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// A 51px downscale of the diorama portrait is brown mush â€” the catapult, the ballista and
+                 storm: 1.02, pyre: 1.26, banner: 1.24,
+                 // traps are low and wide: pushed in hard so the plate is not 80% sky
+                 caltrops: 1.90, tar: 1.95, keg: 1.62 };
+// ── icon tier 2: the phone's flat silhouette ───────────────────────────────────
+// A 51px downscale of the diorama portrait is brown mush — the catapult, the ballista and
 // the pyre became the same smudge. At thumb size a tower has exactly one job: be tellable
 // apart by OUTLINE. So the same art is drawn with crews suppressed and then flattened to a
 // single warm ink on a dark plate, which is the highest-contrast form the shape can take.
@@ -10611,7 +12079,7 @@ function towerPortrait(type, lv, cw, ch) {
   g.fillStyle = vg; g.fillRect(0, 0, W, H);
   return c;   // display size is CSS-driven so the phone breakpoint can shrink it
 }
-// â•â• canvas-drawn enemy busts for the wave preview â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ canvas-drawn enemy busts for the wave preview ══════════════════════════════
 function enemyIcon(type, px) {
   // a map finale borrows its archetype's bust as well as its mesh
   type = (ENEMY_DEFS[type] && ENEMY_DEFS[type].art) || type;
@@ -10631,7 +12099,7 @@ function enemyIcon(type, px) {
                x + r * 0.18, y + r * 0.95, x + r * 0.5, y + r * 1.9, x + r, y + r * 0.7], '#e8b64c'); }
   };
   // Levy and skirmisher used to be the same bust with a 2.4u lean and a shield swapped in
-  // and out â€” two 24px red smudges that differed by spear-vs-sword and nothing else. They
+  // and out — two 24px red smudges that differed by spear-vs-sword and nothing else. They
   // are now separated by MASS: the levy is a wide braced block behind a full kite shield,
   // the skirmisher a thin leaning diagonal, mid-stride, with a scarf streaming off it.
   if (type === 'grunt') {
@@ -10665,7 +12133,7 @@ function enemyIcon(type, px) {
     g.strokeStyle = ST; g.lineWidth = 1.7;                                        // short sword, raised
     g.beginPath(); g.moveTo(10.2, 20.4); g.lineTo(15.0, 28.6); g.stroke();
     g.fillStyle = ST; poly(g, [15.0, 28.6, 16.6, 31.6, 13.2, 29.2], ST);
-  } else if (type === 'shield') {                                                  // SPEC2 Â§D
+  } else if (type === 'shield') {                                                  // SPEC2 §D
     g.strokeStyle = '#4a3520'; g.lineWidth = 2.6; g.lineCap = 'round';             // legs
     g.beginPath(); g.moveTo(-1.4, 8); g.lineTo(-2.8, 0.4); g.stroke();
     g.beginPath(); g.moveTo(3.0, 8); g.lineTo(4.6, 0.4); g.stroke();
@@ -10726,7 +12194,7 @@ function enemyIcon(type, px) {
     g.fillStyle = '#191c14'; g.fillRect(-3.0, 23.0, 2.0, 1.4); g.fillRect(1.0, 23.0, 2.0, 1.4);
     poly(g, [-2.8, 21.2, -4.2, 25.2, -1.7, 21.5], '#efe3c8');                      // tusks
     poly(g, [2.8, 21.2, 4.2, 25.2, 1.7, 21.5], '#efe3c8');
-  } else if (type === 'ironclad') {                                                // SPEC3 Â§B
+  } else if (type === 'ironclad') {                                                // SPEC3 §B
     g.strokeStyle = '#2f2a24'; g.lineWidth = 3.2; g.lineCap = 'round';             // planted legs
     g.beginPath(); g.moveTo(-1.6, 8); g.lineTo(-3.2, 0.4); g.stroke();
     g.beginPath(); g.moveTo(3.6, 8); g.lineTo(5.4, 0.4); g.stroke();
@@ -10868,37 +12336,77 @@ function enemyIcon(type, px) {
   g.restore();
   return c;
 }
-// â•â• wave copy â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-const E_NAME = { grunt: 'Levy', runner: 'Skirmishers', brute: 'Brutes', boss: 'The Warlord',
-  shield: 'The Shieldwall', hound: 'War Hounds', marauder: 'Marauders', ogre: 'The Ogre',
-  matriarch: 'The Frost Matriarch', emberlord: 'The Ember Lord', cinderqueen: 'The Cinder Queen',
-  // SPEC3 Â§B
-  ironclad: 'The Ironclads', ashwraith: 'Ash Wraiths', frostrevenant: 'Frost Revenants',
-  warshaman: 'War Shamans', ram: 'The Siege Ram' };
+// ══ power sigils (SPEC4 §C) ════════════════════════════════════════════════════
+// The two round iron buttons carry a DEVICE, not a pictogram — the same gold-on-dark
+// heraldic language as the crest and the coin, drawn at button size and nothing else. Both
+// are authored in a −16..16 square with +y UP, like the tower art, and the button's own
+// iron plate is CSS, so the canvas stays transparent behind the mark.
+function powerIcon(k, px) {
+  const c = pcv(px * 2, px * 2), g = c.getContext('2d'), S = px * 2;
+  g.save(); g.translate(S / 2, S / 2); g.scale(S / 34, -S / 34); g.lineJoin = 'round'; g.lineCap = 'round';
+  const gold = g.createLinearGradient(0, 14, 0, -14);
+  gold.addColorStop(0, '#fff3cf'); gold.addColorStop(0.44, '#e8b64c'); gold.addColorStop(1, '#a9761d');
+  if (k === 'rally') {
+    // a standard raised over two crossed spears: the summons, in one silhouette
+    g.strokeStyle = '#c8d2de'; g.lineWidth = 1.5;
+    for (const sx of [-1, 1]) {
+      g.beginPath(); g.moveTo(sx * 9.5, -10.5); g.lineTo(-sx * 6.5, 8.5); g.stroke();
+      poly(g, [-sx * 6.5, 8.5, -sx * 9.2, 12.6, -sx * 4.4, 10.2], '#eef4fb');
+    }
+    g.strokeStyle = '#4a3113'; g.lineWidth = 2.2;
+    g.beginPath(); g.moveTo(-1.5, -12); g.lineTo(-1.5, 11); g.stroke();
+    g.fillStyle = gold; g.beginPath(); g.arc(-1.5, 12.4, 1.9, 0, 7); g.fill();
+    const bl = g.createLinearGradient(-1.5, 0, 12, 0);
+    bl.addColorStop(0, '#1e4179'); bl.addColorStop(0.45, '#4a80cd'); bl.addColorStop(1, '#22497f');
+    poly(g, [-1.5, 10, 12.5, 7.2, 8.6, 3.0, 12.5, -1.2, -1.5, 1.6], bl, '#e8b64c', 1.0);
+    g.strokeStyle = 'rgba(255,231,171,.55)'; g.lineWidth = 0.8;
+    g.beginPath(); g.moveTo(-1.5, 8.2); g.lineTo(10.6, 5.8); g.stroke();
+  } else {
+    // a sun in splendour with a shaft dropped out of it — the fire comes DOWN
+    g.strokeStyle = gold; g.lineWidth = 1.5;
+    for (let i = 0; i < 12; i++) {
+      const a = i / 12 * 6.2832 + 0.26, r0 = 6.2, r1 = i % 2 ? 9.4 : 11.6;
+      g.beginPath(); g.moveTo(Math.cos(a) * r0, 6 + Math.sin(a) * r0 * 0.62);
+      g.lineTo(Math.cos(a) * r1, 6 + Math.sin(a) * r1 * 0.62); g.stroke();
+    }
+    g.fillStyle = gold; g.beginPath(); g.ellipse(0, 6, 5.4, 3.6, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,246,214,.9)'; g.beginPath(); g.ellipse(-1.2, 6.8, 2.2, 1.4, 0, 0, 7); g.fill();
+    const sh = g.createLinearGradient(0, 6, 0, -14);                 // the falling column
+    sh.addColorStop(0, 'rgba(255,238,182,.95)'); sh.addColorStop(0.6, 'rgba(255,176,58,.72)');
+    sh.addColorStop(1, 'rgba(255,120,20,0)');
+    poly(g, [-3.6, 5, 3.6, 5, 1.5, -13.5, -1.5, -13.5], sh);
+    g.strokeStyle = 'rgba(255,246,214,.75)'; g.lineWidth = 0.9;
+    g.beginPath(); g.moveTo(-1.0, 4); g.lineTo(-0.4, -12); g.stroke();
+    g.strokeStyle = '#8a5f16'; g.lineWidth = 1.1;                    // the ground it lands on
+    g.beginPath(); g.moveTo(-11, -13.5); g.lineTo(11, -13.5); g.stroke();
+  }
+  g.restore();
+  return c;
+}
+// ══ wave copy ══════════════════════════════════════════════════════════════════
+// SPEC3 §B roster + SPEC4 §B: the names live in the string layer, keyed by the same enemy
+// key the sim uses, so a new monster needs one `e.<key>` row per language and nothing else.
+const E_NAME = {};
+for (const k of ['grunt', 'runner', 'brute', 'boss', 'shield', 'hound', 'marauder', 'ogre',
+  'matriarch', 'emberlord', 'cinderqueen', 'ironclad', 'ashwraith', 'frostrevenant',
+  'warshaman', 'ram']) E_NAME[k] = L('e.' + k);
 // headline priority: whatever the player most needs to have an answer ready for. The ram
 // outranks even an ogre (nothing can block it), and the shaman outranks the units it heals
-// â€” naming him on the card is half the teaching this roster does.
+// — naming him on the card is half the teaching this roster does.
 const E_HEAD = ['matriarch', 'emberlord', 'cinderqueen', 'boss', 'ram', 'ogre', 'ironclad',
   'warshaman', 'brute', 'frostrevenant', 'shield', 'ashwraith', 'marauder', 'hound'];
-// Wave copy is per map â€” a 12- or 14-wave campaign that fell back to the Vale's ten titles
-// would print `undefined` on its last waves.
-const W_TITLES = {
-  // SPEC3 Â§B: the waves that now carry a mini-boss say so on the card. A title is the only
-  // warning a player gets before the countdown runs out, so it names the THREAT, not the mood.
-  1: ['Red Rabble', 'The Levy Swells', 'Skirmishers', 'Two Columns',
-      'Brutes at the Van', 'Running Tide', 'Drums and Bone Charms', 'The Ironclad Wall',
-      'Ram at the Gate', 'The Warlord'],
-  2: ['First Snowfall', 'Two Gates Open', 'The Pack', 'Wall of Pavises', 'The Dead Walk',
-      'Chanting in the Drifts', 'Timber and Iron', 'Bruteshield', 'The Ironclad Column',
-      'Something Huge', 'The Long Howl', 'The Frost Matriarch'],
-  3: ['Ash on the Wind', 'The Cinder Levy', 'Raiders', 'Running the Wastes', 'Skirmish Line',
-      'Wraiths off the Ash', 'Fork in the Road', 'The Ironclad Line', 'Twin Giants', 'The Ram Rolls',
-      'Everything at Once', 'The Ogre March', 'The Great Burning', 'The Ember Twins'],
-};
-const W_TITLE = W_TITLES[MAP.id] || W_TITLES[1];
+// Wave copy is per map — a 12- or 14-wave campaign that fell back to the Vale's ten titles
+// would print `undefined` on its last waves. SPEC3 §B: the waves that carry a mini-boss say
+// so on the card, because a title is the only warning a player gets before the countdown
+// runs out — it names the THREAT, not the mood. SPEC4 §B moved the titles themselves into
+// the string layer (`w.<map>.<index>`); this is the per-wave accessor over it.
+const W_TITLE = (n1) => L('w.' + MAP.id + '.' + n1);      // n1 is ZERO-based, as the array was
+// SPEC4 §E: past the finale the titles come from the generator's own small set, so every
+// dispatch card in the game still gets a name and never prints a missing key.
+const waveTitle = (n) => n > G.FINALE_W ? G.endlessTitle(n) : W_TITLE(n - 1);
 const bossy = k => !!(ENEMY_DEFS[k] && (k === 'boss' || ENEMY_DEFS[k].art === 'boss'));
 function waveMix(n) {                                   // [type,count] sorted by count desc
-  const w = WAVES[n - 1]; if (!w) return [];
+  const w = n > 0 ? G.waveDefs(n) : null; if (!w) return [];
   const m = {};
   for (const [t, c] of w) m[t] = (m[t] || 0) + c;
   return Object.entries(m).sort((a, b) => (bossy(a[0]) ? -1 : bossy(b[0]) ? 1 : b[1] - a[1]));
@@ -10909,10 +12417,10 @@ function waveHead(n) {
   let key = null;
   for (const k of E_HEAD) { key = mix.find(m => m[0] === k); if (key) break; }
   key = key || mix[0];
-  return (E_NAME[key[0]] || 'The horde') + ' incoming';
+  return L('wave.in', E_NAME[key[0]] || L('wave.horde'));
 }
 const ICO_CACHE = {};
-function icoFor(t) {                     // cloneNode does NOT copy a canvas bitmap â€” blit instead
+function icoFor(t) {                     // cloneNode does NOT copy a canvas bitmap — blit instead
   const src = ICO_CACHE[t] || (ICO_CACHE[t] = enemyIcon(t, 30));
   const c = pcv(src.width, src.height);
   c.getContext('2d').drawImage(src, 0, 0);
@@ -10921,8 +12429,8 @@ function icoFor(t) {                     // cloneNode does NOT copy a canvas bit
 // One bust + count, with the armour pip if the type shrugs off physical damage. Both the
 // live wave card and the bestiary rig build their rows through here so the two can never
 // disagree about what an armoured silhouette looks like.
-// SPEC3 Â§A â€” at most TWO pips per bust: the school this silhouette shrugs off hardest (â–²)
-// and the one that opens it up (â–¼). Four pips on a shieldbearer is a spreadsheet; two is a
+// SPEC3 §A — at most TWO pips per bust: the school this silhouette shrugs off hardest (▲)
+// and the one that opens it up (▼). Four pips on a shieldbearer is a spreadsheet; two is a
 // warning. The full resist table still goes into the tooltip for a desktop hover.
 const pipFor = (dir, school, title) => {
   const p = document.createElement('i');
@@ -10936,57 +12444,61 @@ UI.bust = (t, c) => {
   const res = (ENEMY_DEFS[t] || {}).resist || {};
   const hard = G.SCHOOLS.filter(s => (res[s] || 0) >= 0.2).sort((a, b) => res[b] - res[a]);
   const soft = G.SCHOOLS.filter(s => (res[s] || 0) <= -0.1).sort((a, b) => res[a] - res[b]);
-  const nm = E_NAME[t] || 'This foe';
+  const nm = E_NAME[t] || L('wave.foe');
   const pips = [];
-  if (hard.length) pips.push(pipFor('up', hard[0], nm + ' resists ' +
-    hard.map(s => s + ' ' + Math.round(res[s] * 100) + '%').join(', ')));
-  if (soft.length) pips.push(pipFor('dn', soft[0], nm + ' is weak to ' +
-    soft.map(s => s + ' +' + Math.round(-res[s] * 100) + '%').join(', ')));
+  if (hard.length) pips.push(pipFor('up', hard[0], L('pip.res', nm,
+    hard.map(s => L('sch.' + s) + ' ' + Math.round(res[s] * 100) + '%').join(', '))));
+  if (soft.length) pips.push(pipFor('dn', soft[0], L('pip.weak', nm,
+    soft.map(s => L('sch.' + s) + ' +' + Math.round(-res[s] * 100) + '%').join(', '))));
   pips.forEach((p, i) => { p.classList.add('p' + i); d.appendChild(p); });
-  if (pips.length) d.title = pips.map(p => p.title).join(' Â· ');
+  if (pips.length) d.title = pips.map(p => p.title).join(' · ');
   const n = document.createElement('span'); n.className = 'wpN';
-  n.textContent = bossy(t) && c <= 2 ? '' : 'Ã—' + c;
+  n.textContent = bossy(t) && c <= 2 ? '' : '×' + c;
   d.appendChild(n);
   return d;
 };
-// â•â• HUD â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ HUD ════════════════════════════════════════════════════════════════════════
 let showGold = state.gold, lastGold = state.gold, lastLives = state.lives, bumpT = -9, hitT = -9;
 const fmt = n => n >= 10000 ? (n / 1000).toFixed(1) + 'k' : '' + n;
 let msgTimer = 0;
-// height of whichever bottom panel is standing â€” the build bar or the garrison sheet. The
+// height of whichever bottom panel is standing — the build bar or the garrison sheet. The
 // wave call, the placement writ and the tutorial writ all stack on top of it.
 const barH = () => Math.max($('buildMenu').offsetHeight || 0, $('towerMenu').offsetHeight || 0);
-UI.msg = (text, sub) => {
-  // SIM passes plain sentences; the banner re-cuts them into a heraldic title + kicker so
-  // the copy stays owned here and SIM never has to know about presentation.
-  let head = text;
-  const wm = /^Wave (\d+)/.exec(text);
-  if (wm) {
-    const n = +wm[1], mix = waveMix(n), tot = mix.reduce((a, x) => a + x[1], 0);
-    if (/cleared/i.test(text)) { head = 'Wave ' + n + ' Held'; sub = sub || 'The road falls quiet'; }
-    else { head = 'Wave ' + n; sub = sub || W_TITLE[n - 1] + ' Â· ' + tot + ' on the road'; }
-  } else if (/breach/i.test(text)) { head = 'The Gate Is Breached'; sub = sub || 'Hold the vale'; }
+UI.msg = (ev, sub) => {
+  // SPEC4 §B: SIM passes a SIGNAL ({wave}, {cleared}, {breach}) and the banner writes the
+  // sentence. It used to pass an English sentence that was re-parsed with a regex here,
+  // which meant the copy could not be translated without breaking the parse. A plain string
+  // is still accepted (a preset or a future caller may want to say something literal).
+  let head = '', wave = false;
+  if (typeof ev === 'string') head = ev;
+  else if (ev && ev.cleared) { head = L('wave.held', ev.cleared); sub = sub || L('wave.quiet'); }
+  else if (ev && ev.breach) { head = L('wave.breach'); sub = sub || L('wave.hold'); }
+  else if (ev && ev.wave) {
+    const n = ev.wave, tot = waveMix(n).reduce((a, x) => a + x[1], 0);
+    head = L('wave.n', n); wave = true;
+    sub = sub || L('wave.sub', ev.finale ? MAP.finale : waveTitle(n), tot);
+  }
   const m = $('msg');
   // `wv` marks the banner as a WAVE announcement, which the phone layout suppresses while the
   // parchment card is up (same sentence twice, over the only battle content in frame). A
   // breach or a hold still gets its banner.
-  m.classList.toggle('wv', !!wm && !/cleared/i.test(text));
+  m.classList.toggle('wv', wave);
   m.innerHTML = '<div class="mT">' + head + '</div>' + (sub ? '<div class="mS">' + sub + '</div>' : '') + '<div class="mR rule"></div>';
   m.style.opacity = 1;
-  if (SHOT) return; // shot mode: no timers after render â€” a late DOM mutation forces a recomposite that drops the GL layer in headless capture
+  if (SHOT) return; // shot mode: no timers after render — a late DOM mutation forces a recomposite that drops the GL layer in headless capture
   clearTimeout(msgTimer);
   msgTimer = setTimeout(() => m.style.opacity = 0, 2400);
 };
 UI.sync = () => {
   const onTitle = state.phase === 'title', ended = state.phase === 'won' || state.phase === 'lost';
   const chrome = !onTitle && !ended;
-  // FIX2-UI Â§5 â€” one flag on the root that every keyboard-only affordance hangs off. A
+  // FIX2-UI §5 — one flag on the root that every keyboard-only affordance hangs off. A
   // `(pointer:coarse)` media query cannot see the harness's `&coarse=1`, so the class
   // carries it too; both are read by the same CSS rules.
   $('ui').classList.toggle('coarse', !!UI.coarse);
   $('hud').classList.toggle('hidden', !chrome);
   // The keyboard legend grew a sixth group (omens) and now wraps to three rows, which is
-  // fine in play and wrong in a marketing frame â€” so it steps aside wherever the build bar
+  // fine in play and wrong in a marketing frame — so it steps aside wherever the build bar
   // already has (MINBAR is exactly the "this frame has to sell the game" flag).
   $('hint').classList.toggle('hidden', !chrome || isTouch || MINBAR);
   if (state.gold > lastGold) { $('chipGold').classList.remove('bump'); void $('chipGold').offsetWidth; $('chipGold').classList.add('bump'); }
@@ -10996,25 +12508,27 @@ UI.sync = () => {
   if (SHOT) showGold = state.gold;
   $('gold').textContent = fmt(Math.round(showGold));
   $('lives').textContent = state.lives;
-  $('wave').textContent = Math.max(1, state.wave) + '/' + WAVES.length;
-  // SPEC3 Â§C â€” standards raised of standards allowed. `.full` is the state that MATTERS:
+  // SPEC4 §E: past the finale there is no denominator. "13/∞" says what the mode is in two
+  // glyphs and needs no translation.
+  $('wave').textContent = Math.max(1, state.wave) + '/' + (state.wave > G.FINALE_W ? '∞' : WAVES.length);
+  // SPEC3 §C — standards raised of standards allowed. `.full` is the state that MATTERS:
   // the next card you press is going to be refused, and the chip says so before you press it.
   const mFull = G.towersList.length >= state.muster;
   $('muster').textContent = G.towersList.length + '/' + state.muster;
   $('chipMuster').classList.toggle('full', mFull);
-  $('chipMuster').title = (mFull ? 'The muster is full â€” no more standards may take the field. ' : '') +
-    (G.musterCost() === undefined ? 'The muster is at its limit.'
-      : 'Raise the muster for ' + G.musterCost() + ' gold.');
+  $('chipMuster').title = (mFull ? L('mus.fullT') : '') +
+    (G.musterCost() === undefined ? L('mus.capT') : L('mus.raiseT', G.musterCost()));
   // wave preview card
   const nx = state.wave + (state.phase === 'prewave' ? 1 : 0);
-  const wp = $('wavePrev'), live = chrome && nx <= WAVES.length && (state.phase === 'prewave' || state.phase === 'wave');
+  const wp = $('wavePrev'), live = chrome && (state.endless || nx <= WAVES.length) && (state.phase === 'prewave' || state.phase === 'wave');
   wp.classList.toggle('hidden', !live);
   if (live) {
     const mix = waveMix(nx), tot = mix.reduce((a, m) => a + m[1], 0);
     const pre = state.phase === 'prewave';
     wp.classList.toggle('pre', pre);   // the phone keeps the subtitle only while it is a countdown
-    let h = '<div class="wpT">Wave ' + nx + ' <em>â€”</em> ' + (pre ? waveHead(nx) : W_TITLE[nx - 1]) + '</div>' +
-      '<div class="wpS">' + (pre ? 'Muster in ' + mmss(Math.max(0, Math.ceil(state.countdown))) : tot + ' strong on the road') + '</div>' +
+    let h = '<div class="wpT">' + L('wave.n', nx) + ' <em>—</em> ' + (pre ? waveHead(nx) : waveTitle(nx)) + '</div>' +
+      '<div class="wpS">' + (pre ? L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown))))
+        : L('wave.strong', tot)) + '</div>' +
       '<div class="wpRow"></div>';
     if (state.phase === 'wave') {
       const alive = G.enemies.filter(e => e.alive).length;
@@ -11030,14 +12544,24 @@ UI.sync = () => {
     }
   }
   UI.buildMenu();
+  UI.powers();
   UI.omens();
-  // The build bar is persistent (SPEC2 Â§A) and it paints OVER the bottom of the screen, so
-  // the wave call has to stand on top of it â€” at bottom:26px it was buried and unclickable.
+  // The build bar is persistent (SPEC2 §A) and it paints OVER the bottom of the screen, so
+  // the wave call has to stand on top of it — at bottom:26px it was buried and unclickable.
   // It shares the slot with the placement writ, which is why it steps aside while the
   // hammer is in hand: you are siting a tower, not calling the horde.
   const bw = $('btnWave'), callable = state.phase === 'prewave' && !SHOT && !G.place;
   bw.style.display = callable ? 'block' : 'none';
   if (callable) bw.style.bottom = (barH() + 26) + 'px';
+  // SPEC4 §C — the phone cannot pin the powers rail to a fixed fraction of the viewport.
+  // With the omen row up, the left rail runs to y≈446 on a 390×844 screen and the two discs
+  // landed ON the dispatch card (measured in-browser, and visible in shots\_omens_m.png).
+  // Anchor them to the free band between the rail and the shop instead — the phone rule
+  // lays them out as a ROW, so that band only has to be one disc tall. Written here rather
+  // than in syncPowers() because barH() forces layout and syncPowers runs every frame.
+  const pwR = $('powers');
+  if (innerWidth <= 760) { pwR.style.top = 'auto'; pwR.style.bottom = (barH() + 14) + 'px'; }
+  else { pwR.style.top = ''; pwR.style.bottom = ''; }
   // QA aids for the shot harness (opt-in via query string, inert in normal play).
   // `narrow` matters because headless Chrome floors its window at 500 CSS px and then CROPS
   // the PNG to --window-size, so a 390px phone layout can only be verified by clamping #ui.
@@ -11045,52 +12569,53 @@ UI.sync = () => {
   if (SHOT && P.has('bigport')) { document.querySelectorAll('#buildMenu .card').forEach(c => c.style.width = '340px');
     document.querySelectorAll('#buildMenu canvas.por').forEach(c => c.style.height = '235px'); }
 };
-// â•â• war omens (SPEC3 Â§D) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ war omens (SPEC3 §D) ═══════════════════════════════════════════════════════
 // Three portents on parchment, pinned above the dispatch. Contract (owned by SIM):
 // G.omens = { offer:[key,key,key], pick(i), active, forWave, picked, defIdx } and
 // G.OMENS[key] = {kind,name,desc}. Built inside UI.sync(), so it is pure static DOM with
-// no timers â€” shot-safe by construction; only the countdown ring is written afterwards,
+// no timers — shot-safe by construction; only the countdown ring is written afterwards,
 // and it is written from SIM ticks (UI.syncCountdown), never from a wall clock.
 const OM_KEYS = ['8', '9', '0'];                       // the hotkeys, in card order
-// FIX2-UI Â§3d â€” what the portent PAYS, told in the ONE money idiom this game already has:
+// FIX2-UI §3d — what the portent PAYS, told in the ONE money idiom this game already has:
 // the gold coin pill that carries every price on every card. The tinted pill beside it is
 // reserved for the trade-off, so no bare numeral on a dark badge can be read as a cost.
-const OM_PAY = { chest: ['+60', 'gold now'], thin: ['âˆ’25%', 'coin'] };
-const omPay = (k) => OM_PAY[k] || (G.OMENS[k].kind === 'challenge' ? ['+20%', 'coin'] : null);
+const OM_PAY = () => ({ chest: ['+60', L('om.now')], thin: ['−25%', L('om.coin')] });
+const omPay = (k) => OM_PAY()[k] || (G.OMENS[k].kind === 'challenge' ? ['+20%', L('om.coin')] : null);
 const omPayHtml = (k) => {
   const p = omPay(k);
-  return p ? '<span class="omCoin' + (p[0].charAt(0) === 'âˆ’' ? ' less' : '') + '"><i class="ic ic-gold"></i><b>' +
+  return p ? '<span class="omCoin' + (p[0].charAt(0) === '−' ? ' less' : '') + '"><i class="ic ic-gold"></i><b>' +
       p[0] + '</b><em>' + p[1] + '</em></span>'
-    : '<span class="omCoin none"><i class="ic ic-gold"></i><b>Â±0</b><em>coin</em></span>';
+    : '<span class="omCoin none"><i class="ic ic-gold"></i><b>±0</b><em>' + L('om.coin') + '</em></span>';
 };
-// FIX2-UI Â§2c â€” the ward names a SCHOOL, and a school is a glyph everywhere else in the
+// FIX2-UI §2c — the ward names a SCHOOL, and a school is a glyph everywhere else in the
 // game (build card, resist pip, wave dispatch). Naming it in prose alone was the one place
 // the element language was dropped, which is why the ward panel and the build bar eight
 // rows below looked like two different systems.
-const elemTag = (s) => '<i class="eg dg-' + ((DTYPE[s] || DTYPE.pierce)[0]) + '"></i>' + s;
+const elemTag = (s) => '<i class="eg dg-' + ((DTYPE[s] || DTYPE.pierce)[0]) + '"></i>' + L('sch.' + s);
 // Elemental Ward is the one omen whose text depends on how the run has been played, so it
-// is resolved against the live damage ledger rather than printed as a rule.
-const WARD_SRC = 'whichever school has spilt the most blood this campaign';
-const omDesc = (k) => k === 'ward'
-  ? G.OMENS[k].desc.replace(WARD_SRC, 'your <b>' + elemTag(G.topSchool()) + '</b> towers')
-  : G.OMENS[k].desc;
+// is resolved against the live damage ledger rather than printed as a rule. SPEC4 §B: it is
+// a SECOND key with a slot rather than a search-and-replace on the generic sentence — a
+// substring match against English prose is not a thing a translation can satisfy.
+const wardDesc = (el) => L('omen.ward.descX', '<b>' + elemTag(el) + '</b>');
+const omDesc = (k) => k === 'ward' ? wardDesc(G.topSchool()) : G.OMENS[k].desc;
 const esc = (s) => s.replace(/</g, '&lt;').replace(/"/g, '&quot;');
 function omCard(k, i, sel) {
   const o = G.OMENS[k], kind = o.kind === 'challenge' ? 'chal' : 'boon';
   return '<button class="omC parch frm ' + kind + (i === sel ? ' on' : '') + '" data-i="' + i +
-    '" title="' + (kind === 'chal' ? 'Challenge' : 'Boon') + ' â€” ' + esc(o.desc) + ' (hotkey ' + OM_KEYS[i] + ')">' +
-    // FIX2-UI Â§3c â€” one seal per OMEN, not per kind. Two cards wearing the byte-identical
+    '" title="' + L(kind === 'chal' ? 'om.chal' : 'om.boon') + ' — ' + esc(o.desc) +
+    ' (' + esc(L('om.key', OM_KEYS[i])) + ')">' +
+    // FIX2-UI §3c — one seal per OMEN, not per kind. Two cards wearing the byte-identical
     // rosette taught the player that the seal carried nothing; now the disc still says
     // challenge/boon by colour while the device says which portent it is.
     '<i class="omSig sg-' + k + '"></i>' +
     '<span class="omBody"><span class="omN">' + o.name + '</span>' +
     '<span class="omD">' + omDesc(k) + '</span></span>' +
-    '<span class="omSide">' + omPayHtml(k) + '<kbd class="omK">key ' + OM_KEYS[i] + '</kbd></span>' +
-    '<span class="omTk">Taken</span></button>';
+    '<span class="omSide">' + omPayHtml(k) + '<kbd class="omK">' + L('om.key', OM_KEYS[i]) + '</kbd></span>' +
+    '<span class="omTk">' + L('om.taken') + '</span></button>';
 }
-// FIX2-UI Â§3b â€” the countdown was a 26px unlabelled ring wedged under the wave chip: the
+// FIX2-UI §3b — the countdown was a 26px unlabelled ring wedged under the wave chip: the
 // most time-critical widget in the game, illegible and colliding. It is now the same
-// labelled clock the wave card uses one row down â€” words plus a bar, inside the plate.
+// labelled clock the wave card uses one row down — words plus a bar, inside the plate.
 const mmss = (s) => Math.floor(s / 60) + ':' + ('0' + Math.floor(s % 60)).slice(-2);
 let _omMax = 1;                                        // longest countdown seen for this offer
 UI.omenClock = () => {
@@ -11108,7 +12633,7 @@ UI.omens = () => {
   const chrome = state.phase === 'prewave' || state.phase === 'wave';
   // UI.sync() runs on every coin earned, so this row must be idempotent and cheap: nothing
   // is rebuilt unless the hand on the table actually changed. (The ring is deliberately
-  // OUTSIDE the key â€” it moves every tick and must not rebuild three cards to do it.)
+  // OUTSIDE the key — it moves every tick and must not rebuild three cards to do it.)
   const key = state.phase + '|' + O.forWave + '|' + O.offer.join(',') + '|' + O.picked + '|' +
     state.omen + '|' + G.OMEN_FX.wardEl;
   if (key === _omKey) { if (state.phase === 'prewave') UI.omenClock(); return; }
@@ -11116,7 +12641,7 @@ UI.omens = () => {
   _omKey = key;
   if (!chrome) { el.classList.add('hidden'); el.innerHTML = ''; return; }
   if (state.phase === 'wave') {
-    // The omen taken is now the omen RIDING the wave: a banner, not a card â€” there is
+    // The omen taken is now the omen RIDING the wave: a banner, not a card — there is
     // nothing left to choose, so it loses the hotkey, the ring and the hover.
     const o = G.OMENS[state.omen];
     el.classList.toggle('hidden', !o);
@@ -11125,29 +12650,28 @@ UI.omens = () => {
     el.innerHTML = '<div class="omBan frm ' + kind + '"><i class="omSig sg-' + state.omen + '"></i>' +
       '<span class="omBody"><span class="omN">' + o.name + '</span>' +
       '<span class="omD">' + (state.omen === 'ward' && G.OMEN_FX.wardEl
-        ? o.desc.replace(WARD_SRC, 'your <b>' + elemTag(G.OMEN_FX.wardEl) + '</b> towers')
-        : omDesc(state.omen)) + '</span></span>' +
-      '<span class="omSide"><span class="omLb">Omen</span>' + omPayHtml(state.omen) + '</span></div>';
+        ? wardDesc(G.OMEN_FX.wardEl) : omDesc(state.omen)) + '</span></span>' +
+      '<span class="omSide"><span class="omLb">' + L('om.label') + '</span>' + omPayHtml(state.omen) + '</span></div>';
     return;
   }
   const live = O.offer.length > 0;
   el.classList.toggle('hidden', !live);
   if (!live) { el.innerHTML = ''; return; }
   const sel = O.picked;
-  // FIX2-UI Â§3a â€” the title and the clock used to float UNPLATED on the terrain in the
+  // FIX2-UI §3a — the title and the clock used to float UNPLATED on the terrain in the
   // ~35px gap between the top-bar chips and the first card, so olive text sat on olive
   // grass and the ring's arc was overlapped by the WAVE chip above it. They now live in a
   // parchment header row that is part of the panel: the collision is structurally
   // impossible and the whole rail reads as one object.
-  el.innerHTML = '<div class="omHead parch frm"><div class="omHR"><span class="omT">War Omens</span>' +
-    '<span class="omCk" title="Time left to choose">Muster in <b>0:00</b></span></div>' +
+  el.innerHTML = '<div class="omHead parch frm"><div class="omHR"><span class="omT">' + L('om.head') + '</span>' +
+    '<span class="omCk" title="' + L('om.clockT') + '">' + L('om.clock') + ' <b>0:00</b></span></div>' +
     '<i class="omBar"><u></u></i>' +
-    '<span class="omSub">Wave ' + O.forWave + ' Â· ' + (sel < 0 ? 'take one before the muster ends' : 'omen taken') +
+    '<span class="omSub">' + L(sel < 0 ? 'om.subTake' : 'om.subTaken', O.forWave) +
     '</span></div>' + O.offer.map((k, i) => omCard(k, i, sel)).join('');
   el.querySelectorAll('.omC').forEach(b => { b.onclick = () => G.omens.pick(+b.dataset.i); });
   UI.omenClock();
 };
-// SPEC3 Â§D read-out: the dispatch always says what the NEXT muster will put on the table,
+// SPEC3 §D read-out: the dispatch always says what the NEXT muster will put on the table,
 // so the omen system announces itself a wave early instead of appearing out of nowhere.
 function omenLine(nx, pre) {
   const O = G.omens, F = G.OMEN_FROM;
@@ -11156,95 +12680,177 @@ function omenLine(nx, pre) {
     if (O.offer.length && O.forWave === nx) {
       if (O.picked >= 0) {
         const o = G.OMENS[O.offer[O.picked]];
-        txt = 'Omen taken Â· <b' + (o.kind === 'boon' ? ' class="boon"' : '') + '>' + o.name + '</b>';
-      } else txt = 'Three omens on the table Â· <b>choose one</b>';
-    } else if (nx < F) txt = 'War omens from wave <b>' + F + '</b>';
-  } else if (nx + 1 <= WAVES.length) {
-    txt = nx + 1 >= F ? 'Wave ' + (nx + 1) + ' Â· <b>omens at the muster</b>'
-                      : 'War omens from wave <b>' + F + '</b>';
+        txt = L('om.line.taken') + ' · <b' + (o.kind === 'boon' ? ' class="boon"' : '') + '>' + o.name + '</b>';
+      } else txt = L('om.line.three');
+    } else if (nx < F) txt = L('om.line.from', F);
+  } else if (state.endless || nx + 1 <= WAVES.length) {
+    txt = nx + 1 >= F ? L('om.line.at', nx + 1) : L('om.line.from', F);
   }
   return txt ? '<div class="wpOm"><i class="dg-omen"></i><span>' + txt + '</span></div>' : '';
 }
 UI.syncCountdown = () => {
   if (state.phase !== 'prewave') return;
   if (state.tick % 15 === 0) {
-    $('btnWave').innerHTML = 'âš” Call Wave ' + (state.wave + 1) + ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>';
+    $('btnWave').innerHTML = L('call.wave', state.wave + 1) +
+      ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>';
     const s = $('wavePrev').querySelector('.wpS');
-    if (s) s.textContent = 'Muster in ' + mmss(Math.max(0, Math.ceil(state.countdown)));
+    if (s) s.textContent = L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown))));
     UI.omenClock();
   }
 };
-// â•â• build menu (cards built once, then only state-updated) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ build menu (cards built once, then only state-updated) ═════════════════════
 const TK = Object.keys(TOWER_DEFS);
-// SPEC3 Â§A: the badge names the SCHOOL and NOTHING ELSE. It used to be keyed by tower
-// first, "so a weapon could look like itself" â€” but with resists on the board the school is
+// SPEC3 §A: the badge names the SCHOOL and NOTHING ELSE. It used to be keyed by tower
+// first, "so a weapon could look like itself" — but with resists on the board the school is
 // the number the player compares across cards, and a card that says CRUSH under a pair of
 // crossed swords (the barracks) taught the wrong wheel. One sigil per school, everywhere:
 // build card, resist pip, wave dispatch.
-const DTYPE = { pierce: ['pierce', 'Pierce', 'Pierce â€” shields and plate turn it aside'],
-                crush:  ['crush', 'Crush', 'Crush â€” goes through a shield wall, poor against plate'],
-                fire:   ['flame', 'Fire', 'Fire â€” cooks armour, smothered by the fireproof'],
-                storm:  ['bolt', 'Storm', 'Storm â€” leaps a crowd, grounded by the earthed'],
-                support:['bnr', 'Support', 'Support â€” strengthens your own line'] };
+const DTYPE = { pierce: ['pierce', L('sch.pierce'), L('sch.pierce.t')],
+                crush:  ['crush', L('sch.crush'), L('sch.crush.t')],
+                fire:   ['flame', L('sch.fire'), L('sch.fire.t')],
+                storm:  ['bolt', L('sch.storm'), L('sch.storm.t')],
+                support:['bnr', L('sch.support'), L('sch.support.t')] };
 const dGlyph = k => (DTYPE[TOWER_DEFS[k].element] || DTYPE.pierce)[0];
 const dLabel = k => (DTYPE[TOWER_DEFS[k].element] || DTYPE.pierce);
-const T_HINT = { archer: 'Quick volleys Â· cheap to raise',
-  ballista: 'Heavy bolt, punches through two',
-  catapult: 'Lobbed splash Â· blind up close',
-  barracks: 'Three knights hold the road',
-  storm: 'Arc leaps between four foes',
-  pyre: 'Sets the ground itself alight',
-  banner: 'Quickens every tower in its aura' };
+const T_NAME = k => L('tw.' + k);
+const T_HINT = k => L('th.' + k);
 const statRows = (k) => {
   const d = TOWER_DEFS[k];
-  const rows = d.knights ? [['Guards', d.knights], ['HP', 90], ['Rng', d.range]]
-    : d.aura ? [['Rate', '+' + Math.round(d.aura[0] * 100) + '%'], ['Aura', d.range], ['Heals', 'yes']]
-    : d.patch ? [['Burn', d.patch.dps + '/s'], ['Area', d.patch.rad], ['Rng', d.range]]
-    : [['Dmg', d.dmg], ['Rate', (1 / d.cd).toFixed(1) + '/s'], ['Rng', d.range]];
+  const rows = d.knights ? [[L('st.guards'), d.knights], [L('st.hp'), 90], [L('st.rng'), d.range]]
+    : d.aura ? [[L('st.rate'), '+' + Math.round(d.aura[0] * 100) + '%'], [L('st.aura'), d.range], [L('st.heals'), L('st.yes')]]
+    : d.patch ? [[L('st.burn'), d.patch.dps + '/s'], [L('st.area'), d.patch.rad], [L('st.rng'), d.range]]
+    : [[L('st.dmg'), d.dmg], [L('st.rate'), (1 / d.cd).toFixed(1) + '/s'], [L('st.rng'), d.range]];
   return '<div class="stats">' + rows.map(r => '<div class="srow"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join('') + '</div>';
 };
-// The phone tier gets names authored for its width rather than an ellipsis: "Warbanâ€¦" is
+// The phone tier gets names authored for its width rather than an ellipsis: "Warban…" is
 // not a tower. Only the names that do not fit are re-cut.
-const T_SHORT = { banner: 'Banner' };
+const T_SHORT = { banner: L('tw.banner.s'), caltrops: L('tw.caltrops.s'), tar: L('tw.tar.s'), keg: L('tw.keg.s') };
+// SPEC4 §D — the traps' own stat sheet. Same three-row shape and the same vocabulary as a
+// tower's, so the second row of the shop reads as part of the same shop.
+const trapRows = (k) => {
+  const d = G.TRAP_DEFS[k];
+  const rows = d.kind === 'blast'
+    ? [[L('st.dmg'), d.dmg], [L('st.blast'), d.rad], [L('st.dur'), L('st.once')]]
+    : [[L('st.slow'), '×' + d.slow.toFixed(2)], [L('st.dur'), d.dur + 's'],
+       [d.dps ? L('st.dmg') : L('st.area'), d.dps ? d.dps + '/s' : d.rad]];
+  return '<div class="stats">' + rows.map(r => '<div class="srow"><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join('') + '</div>';
+};
+const TRAP_KEY = { caltrops: 'Z', tar: 'X', keg: 'C' };
 {
   const bm = $('buildMenu');
-  // SPEC3 Â§C: "Raise the Muster" lives on the build bar because it competes for the same
-  // gold as the next tower â€” that is the decision. Placeholder styling; UI agent owns it.
-  bm.innerHTML = '<div class="pHead"><div class="pT">Build</div><div class="rule"></div>' +
-    '<button class="mus" id="btnMuster">Raise the Muster</button>' +
-    '<button class="x" id="mX2" title="Cancel">âœ•</button></div><div class="cards"></div>';
+  // SPEC3 §C: "Raise the Muster" lives on the build bar because it competes for the same
+  // gold as the next tower — that is the decision. Placeholder styling; UI agent owns it.
+  bm.innerHTML = '<div class="pHead"><div class="pT">' + L('bm.build') + '</div><div class="rule"></div>' +
+    '<button class="mus" id="btnMuster">' + L('bm.muster') + '</button>' +
+    '<button class="x" id="mX2" title="' + L('bm.cancel') + '">✕</button></div><div class="cards"></div>' +
+    // SPEC4 §D — the road traps are a SECOND ROW of the same shop, not a second panel: they
+    // spend the same gold and answer the same question ("what do I buy with this bounty"),
+    // and the only thing that separates them is the ground they go on.
+    '<div class="tHd"><span class="tHl">' + L('bm.traps') + '</span><i class="tRl"></i>' +
+      '<b class="tCt" id="trapCt"></b></div><div class="cards traps"></div>';
   const cards = bm.querySelector('.cards');
   TK.forEach((k, i) => {
     const d = TOWER_DEFS[k], b = document.createElement('button');
     b.className = 'card'; b.dataset.t = k;
     const dl = dLabel(k);
     b.innerHTML = '<span class="kb">' + (i + 1) + '</span><span class="por"></span><span class="porS"></span>' +
-      '<div class="nm">' + d.name + '</div><div class="nmS">' + (T_SHORT[k] || d.name) +
+      '<div class="nm">' + T_NAME(k) + '</div><div class="nmS">' + (T_SHORT[k] || T_NAME(k)) +
       '</div><div class="cost"><i class="ic ic-gold"></i>' + d.cost + '</div>' +
       '<div class="tags"><span class="tag" title="' + dl[2] + '"><i class="dg-' + dGlyph(k) + '"></i>' +
         '<span class="tw">' + dl[1] + '</span></span>' +
-      '<span class="tag" title="Reach at tier 1"><i class="dg-rng"></i><b>' + d.range + '</b></span></div>' +
+      '<span class="tag" title="' + L('bm.reachT') + '"><i class="dg-rng"></i><b>' + d.range + '</b></span></div>' +
       // INTEGRATE: the writ and the stat table used to stand open on all seven cards at
-      // once, which made the persistent shop 355 px tall â€” a third of every gameplay frame
+      // once, which made the persistent shop 355 px tall — a third of every gameplay frame
       // on every map. Same information, folded into a flyout that opens over the card on
       // hover (and stays open while the card is armed, so placement still explains itself).
-      '<div class="det"><div class="hnt">' + (T_HINT[k] || '') + '</div>' + statRows(k) + '</div>';
+      '<div class="det"><div class="hnt">' + T_HINT(k) + '</div>' + statRows(k) + '</div>';
     const cv = towerPortrait(k, 1, 122, 88);
     cv.style.borderRadius = '4px'; b.querySelector('.por').replaceWith(cv); cv.className = 'por';
-    // both tiers are authored up front and swapped by the breakpoint â€” a canvas cannot be
+    // both tiers are authored up front and swapped by the breakpoint — a canvas cannot be
     // re-rasterised on resize without mutating the DOM after the final shot render
     const cs = towerGlyph(k, 1, 62, 40);
     b.querySelector('.porS').replaceWith(cs); cs.className = 'porS';
     cards.appendChild(b);
   });
+  const trow = bm.querySelector('.cards.traps');
+  G.TRAPS_K.forEach((k) => {
+    const d = G.TRAP_DEFS[k], b = document.createElement('button');
+    b.className = 'card trap'; b.dataset.tr = k;
+    const dl = DTYPE[d.element] || DTYPE.pierce;
+    b.innerHTML = '<span class="kb">' + TRAP_KEY[k] + '</span><span class="por"></span><span class="porS"></span>' +
+      '<div class="nm">' + T_NAME(k) + '</div><div class="nmS">' + (T_SHORT[k] || T_NAME(k)) +
+      '</div><div class="cost"><i class="ic ic-gold"></i>' + d.cost + '</div>' +
+      '<div class="tags"><span class="tag" title="' + dl[2] + '"><i class="dg-' + dl[0] + '"></i>' +
+        '<span class="tw">' + dl[1] + '</span></span>' +
+      '<span class="tag rd" title="' + esc(L('bm.trapsT', 0, G.TRAP_MAX)) + '"><i class="dg-rng"></i><b>' + d.rad + '</b></span></div>' +
+      '<div class="det"><div class="hnt">' + T_HINT(k) + '</div>' + trapRows(k) + '</div>';
+    const cv = towerPortrait(k, 1, 122, 88);
+    cv.style.borderRadius = '4px'; b.querySelector('.por').replaceWith(cv); cv.className = 'por';
+    const cs = towerGlyph(k, 1, 62, 40);
+    b.querySelector('.porS').replaceWith(cs); cs.className = 'porS';
+    trow.appendChild(b);
+  });
 }
+// ══ POWERS RAIL (SPEC4 §C) ═════════════════════════════════════════════════════
+// Two round iron buttons at the bottom-left, out of the shop's way and out of the wave
+// call's way, because a power is not a purchase and must not compete with one for the eye.
+// Each carries its device, its hotkey and a RADIAL SWEEP that is the cooldown itself —
+// written from the sim's tick counter (G.powerFrac), never from a wall clock, so a shot
+// preset can stage a half-charged button and it will render exactly half-charged.
+{
+  const rail = document.createElement('div');
+  rail.id = 'powers'; rail.className = 'hidden';
+  for (const k of G.PW_KEYS) {
+    const P = G.POWERS[k], b = document.createElement('button');
+    // `.frm` (the border-image frame) is deliberately NOT used: it is a nine-slice rectangle
+    // and these are discs — clipped to a circle it renders as four torn corners. The disc
+    // gets a struck gold ring in CSS instead.
+    b.className = 'pwB iron'; b.dataset.pw = k;
+    b.innerHTML = '<i class="pwSweep"></i><span class="pwIc"></span><span class="pwK">' +
+      P.key.toUpperCase() + '</span><span class="pwT"></span>';
+    b.querySelector('.pwIc').replaceWith(Object.assign(powerIcon(k, 34), { className: 'pwIc' }));
+    rail.appendChild(b);
+  }
+  $('ui').appendChild(rail);
+}
+// One write per button: the sweep angle, the ready class and the tooltip. Called from
+// UI.sync() (which is what the harness runs) AND from UI.frame() in live play, where the
+// cooldown is moving between syncs — the same idiom the gold count-up already uses.
+function syncPowers() {
+  const rail = $('powers');
+  // MINBAR is the "this frame has to sell the game" flag: the collapsed shop and the
+  // keyboard legend both step aside for it, and so does this rail.
+  // The rail also stands down while something is being SITED at phone width: the touch
+  // flow's ✓/✗ pair lands in this same corner (see #placeBar.touch) and the placement writ
+  // spans it even with a mouse — measured at 390×844, writ 27..363×462..515 against discs
+  // 7..124×473..527. Nothing is lost by hiding it: you are already committing an action,
+  // and ✗ or Esc backs out. Desktop has room for both and keeps them.
+  const inGame = (state.phase === 'prewave' || state.phase === 'wave') && !MINBAR
+    && !(G.place && (UI.coarse || innerWidth <= 760));
+  rail.classList.toggle('hidden', !inGame);
+  if (!inGame) return;
+  const armed = G.place && G.place.kind === 'cast' ? G.place.power : '';
+  for (const b of rail.children) {
+    const k = b.dataset.pw, f = G.powerFrac(k), left = Math.ceil(G.powerLeft(k));
+    const rdy = f >= 1;
+    b.classList.toggle('rdy', rdy);
+    b.classList.toggle('arm', k === armed);
+    // a conic sweep that UNCOVERS the device as the cooldown runs down
+    b.querySelector('.pwSweep').style.background =
+      'conic-gradient(rgba(8,10,14,0) 0turn, rgba(8,10,14,0) ' + f.toFixed(3) + 'turn, rgba(8,10,14,.78) ' + f.toFixed(3) + 'turn, rgba(8,10,14,.78) 1turn)';
+    b.querySelector('.pwT').textContent = rdy ? '' : left;
+    b.title = rdy ? L('pw.btnT', L('pw.' + k), G.POWERS[k].key.toUpperCase(), L('ph.' + k))
+                  : L('pw.cdT', L('pw.' + k), G.POWERS[k].key.toUpperCase(), left);
+  }
+}
+UI.powers = syncPowers;
 let sellArm = false;
 // A marketing frame must not ship with the shop standing over the keep. Under the harness the
 // bar collapses to its hotkey rail for every overview/battle preset; `&ui=min` requests that
 // anywhere, `&ui=full` forces the open bar back. Normal play is untouched.
 const MINBAR = !!SHOT && (P.get('ui') === 'min' ||
   (/^(overview|battle)/.test(SHOT) && P.get('ui') !== 'full'));
-// The build bar is PERSISTENT now (SPEC2 Â§A): it is the always-available shop, and a card
+// The build bar is PERSISTENT now (SPEC2 §A): it is the always-available shop, and a card
 // arms placement mode instead of buying on the spot. Selecting a standing tower swaps it
 // for the garrison panel.
 UI.buildMenu = () => {
@@ -11259,44 +12865,44 @@ UI.buildMenu = () => {
     const dmgN = v => Math.round(d.dmg * Math.pow(1.55, v - 1));
     const rngN = v => (d.range * (1 + 0.08 * (v - 1))).toFixed(1);
     const burnN = v => Math.round((d.patch ? d.patch.dps : 0) * Math.pow(1.55, v - 1));
-    // FIX2-UI Â§4d: ONE vocabulary for the four stats. The garrison sheet used to say
-    // Damage/Range/Rate/Dps while the build card's flyout 200px away said Dmg/Rate/Rng â€”
+    // FIX2-UI §4d: ONE vocabulary for the four stats. The garrison sheet used to say
+    // Damage/Range/Rate/Dps while the build card's flyout 200px away said Dmg/Rate/Rng —
     // the same numbers named two ways, and 'Dps' is not a word. Same names, same ORDER,
     // both panels.
     const rows = d.knights
-      ? [['Guards', d.knights, null], ['Guard HP', Math.round(90 * (1 + 0.5 * (lv - 1))), max ? null : Math.round(45)],
-         ['Guard DPS', (6 * (1 + 0.55 * (lv - 1))).toFixed(1), max ? null : 3.3], ['Rally', rngN(lv), null]]
+      ? [[L('st.guards'), d.knights, null], [L('st.ghp'), Math.round(90 * (1 + 0.5 * (lv - 1))), max ? null : Math.round(45)],
+         [L('st.gdps'), (6 * (1 + 0.55 * (lv - 1))).toFixed(1), max ? null : 3.3], [L('st.rally'), rngN(lv), null]]
       : d.aura
-      ? [['Rate', '+' + Math.round(d.aura[lv - 1] * 100) + '%', max ? null : Math.round((d.aura[lv] - d.aura[lv - 1]) * 100) + '%'],
-         ['Aura', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
-         ['Heals', '+50%', null], ['Stacks', 'no', null]]
+      ? [[L('st.rate'), '+' + Math.round(d.aura[lv - 1] * 100) + '%', max ? null : Math.round((d.aura[lv] - d.aura[lv - 1]) * 100) + '%'],
+         [L('st.aura'), rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
+         [L('st.heals'), '+50%', null], [L('st.stacks'), L('st.no'), null]]
       : d.patch
-      ? [['Burn', burnN(lv) + '/s', max ? null : burnN(lv + 1) - burnN(lv)],
-         ['Area', d.patch.rad, null],
-         ['Rng', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
-         ['Fires', d.patch.max, null]]
-      : [['Dmg', dmgN(lv), max ? null : dmgN(lv + 1) - dmgN(lv)],
-         ['Rate', (1 / d.cd).toFixed(2) + '/s', null],
-         ['Rng', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
-         ['DPS', (dmgN(lv) / d.cd).toFixed(1), null]];
-    tm.innerHTML = '<div class="pHead"><div class="pT">' + (max ? 'Veteran' : 'Garrison') + '</div><div class="rule"></div>' +
-      '<button class="x" id="mX">âœ•</button></div>' +
-      '<div class="tHead"><span class="tpor"></span><div><div class="tN">' + d.name + '</div>' +
-      '<div class="tL">Tier ' + lv + (max ? ' Â· Max' : '') + '</div>' +
+      ? [[L('st.burn'), burnN(lv) + '/s', max ? null : burnN(lv + 1) - burnN(lv)],
+         [L('st.area'), d.patch.rad, null],
+         [L('st.rng'), rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
+         [L('st.fires'), d.patch.max, null]]
+      : [[L('st.dmg'), dmgN(lv), max ? null : dmgN(lv + 1) - dmgN(lv)],
+         [L('st.rate'), (1 / d.cd).toFixed(2) + '/s', null],
+         [L('st.rng'), rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
+         [L('st.dps'), (dmgN(lv) / d.cd).toFixed(1), null]];
+    tm.innerHTML = '<div class="pHead"><div class="pT">' + L(max ? 'tm.veteran' : 'tm.garrison') + '</div><div class="rule"></div>' +
+      '<button class="x" id="mX">✕</button></div>' +
+      '<div class="tHead"><span class="tpor"></span><div><div class="tN">' + T_NAME(tw.type) + '</div>' +
+      '<div class="tL">' + L('tm.tier', lv) + (max ? ' · ' + L('tm.max') : '') + '</div>' +
       '<div class="pips">' + [1, 2, 3].map(i => '<i class="' + (i <= lv ? 'on' : '') + '"></i>').join('') + '</div></div></div>' +
       '<div class="stats">' + rows.map(r => '<div class="srow"><span>' + r[0] + '</span><b>' + r[1] +
         (r[2] ? ' <span class="d">+' + r[2] + '</span>' : '') + '</b></div>').join('') + '</div>' +
       '<div class="tBtns"><button class="tBtn up" id="mUp"' + (max || state.gold < upCost ? ' disabled' : '') + '>' +
-        (max ? 'Fully Built' : 'â–² Upgrade') + (max ? '' : '<span class="s2">ðŸª™ ' + upCost + '</span>') + '</button>' +
-      '<button class="tBtn sell' + (sellArm ? ' arm' : '') + '" id="mSell">' + (sellArm ? 'Confirm?' : 'Dismantle') +
-        '<span class="s2 ref">ðŸª™ +' + Math.round(tw.invested * 0.7) + '</span></button>' +
-      // SPEC3 Â§F â€” targeting doctrine, per tower (hotkey T). A rail of the three standing
+        L(max ? 'tm.built' : 'tm.up') + (max ? '' : '<span class="s2">🪙 ' + upCost + '</span>') + '</button>' +
+      '<button class="tBtn sell' + (sellArm ? ' arm' : '') + '" id="mSell">' + L(sellArm ? 'tm.confirm' : 'tm.sell') +
+        '<span class="s2 ref">🪙 +' + Math.round(tw.invested * 0.7) + '</span></button>' +
+      // SPEC3 §F — targeting doctrine, per tower (hotkey T). A rail of the three standing
       // orders with the live one lit: the point is which of THREE it is, not the name alone.
-      // FIX2-UI Â§5 â€” the hotkey used to ride in a chip with the SAME box, border and type
+      // FIX2-UI §5 — the hotkey used to ride in a chip with the SAME box, border and type
       // as the three real modes, so [FIRST][STRONG][CLOSE][T] read as four doctrines. It is
       // now an unboxed dimmed superscript on the chips themselves, and CSS drops it entirely
-      // for a coarse pointer â€” a phone has no T to press.
-      (fights(d) ? '<button class="tBtn tgt" id="mTgt" title="Cycle this tower&apos;s standing order (T)">' +
+      // for a coarse pointer — a phone has no T to press.
+      (fights(d) ? '<button class="tBtn tgt" id="mTgt" title="' + esc(L('tm.tgtT')) + '">' +
         '<i class="tgL"></i><span class="tgS">' +
         G.MODES.map(m => '<i class="' + ((tw.mode || 'first') === m ? 'on' : '') + '">' + G.MODE_NAME[m] +
           '<u class="hk">T</u></i>').join('') +
@@ -11310,29 +12916,45 @@ UI.buildMenu = () => {
   } else {
     tm.classList.add('hidden'); sellArm = false;
     const armed = G.place ? G.place.type : '';
-    // FIX2-UI Â§2 â€” while an Elemental Ward rides the wave, the cards of the warded school
+    // FIX2-UI §2 — while an Elemental Ward rides the wave, the cards of the warded school
     // say so. The ward's whole point is "this school is blunted right now"; naming it only
     // in the omen banner's prose left the shop, where the player actually acts on it,
     // completely silent.
     const wardEl = state.phase === 'wave' ? G.OMEN_FX.wardEl : '';
-    bm.querySelectorAll('.card').forEach(b => {
+    bm.querySelectorAll('.card:not(.trap)').forEach(b => {
       const poor = state.gold < TOWER_DEFS[b.dataset.t].cost;
       b.disabled = poor; b.classList.toggle('poor', poor);
       b.classList.toggle('warded', !!wardEl && TOWER_DEFS[b.dataset.t].element === wardEl);
       b.classList.toggle('arm', b.dataset.t === armed);
       b.onclick = () => { if (G.enterPlace(b.dataset.t) && G.placeAtCursor) G.placeAtCursor(); };
     });
+    // SPEC4 §D — the trap row. Two separate refusals and they must not look alike: `poor` is
+    // "you cannot afford it", `full` is "four are already on the road" — the second is a
+    // board state the player fixes by springing one, not by earning gold.
+    const armedT = G.place && G.place.kind === 'trap' ? G.place.trap : '';
+    const tFull = G.traps.length >= G.TRAP_MAX;
+    bm.querySelectorAll('.card.trap').forEach(b => {
+      const d = G.TRAP_DEFS[b.dataset.tr], poor = state.gold < d.cost;
+      b.disabled = poor || tFull;
+      b.classList.toggle('poor', poor && !tFull);
+      b.classList.toggle('full', tFull);
+      b.classList.toggle('warded', !!wardEl && d.element === wardEl);
+      b.classList.toggle('arm', b.dataset.tr === armedT);
+      b.onclick = () => { if (G.enterTrap(b.dataset.tr) && G.placeAtCursor) G.placeAtCursor(); };
+    });
+    const tc = $('trapCt'), thd = bm.querySelector('.tHd');
+    if (tc) { tc.textContent = G.traps.length + '/' + G.TRAP_MAX; tc.classList.toggle('full', tFull); }
+    if (thd) thd.title = L('bm.trapsT', G.traps.length, G.TRAP_MAX);
     $('mX2').onclick = () => { G.exitPlace(); UI.deselect(); };
-    // SPEC3 Â§C: the muster control shares the build bar's head with the shop because it
-    // shares the shop's purse â€” one more standard OR one more tower, never both. The price
+    // SPEC3 §C: the muster control shares the build bar's head with the shop because it
+    // shares the shop's purse — one more standard OR one more tower, never both. The price
     // is on its face for the same reason every card carries its cost.
     const mb = $('btnMuster'), mc = G.musterCost();
-    mb.innerHTML = '<i class="mIc ic-must"></i><span class="lg">Raise the Muster</span>' +
+    mb.innerHTML = '<i class="mIc ic-must"></i><span class="lg">' + L('bm.muster') + '</span>' +
       '<b>' + G.towersList.length + '/' + state.muster + '</b>' +
-      (mc === undefined ? '<span class="c cap">Limit</span>'
+      (mc === undefined ? '<span class="c cap">' + L('bm.limit') + '</span>'
         : '<span class="c"><i class="ic ic-gold"></i>' + mc + '</span>');
-    mb.title = mc === undefined ? 'The muster is at its limit â€” 14 standards is all the vale can field'
-      : 'Raise the Muster â€” one more tower may take the field (' + mc + ' gold)';
+    mb.title = mc === undefined ? L('bm.capT') : L('bm.raiseT', mc);
     mb.disabled = mc === undefined || state.gold < mc;
     mb.onclick = () => { G.raiseMuster(); };
     bm.classList.toggle('min', MINBAR && !G.place);
@@ -11344,24 +12966,50 @@ UI.deselect = () => { state.selTower = -1; sellArm = false; $('towerMenu').class
 let _pmsg = '';
 UI.place = (p) => {
   const el = $('placeBar');
-  if (!p) { el.classList.add('hidden'); _pmsg = ''; tutHint(false); UI.buildMenu(); return; }
+  if (!p) { el.classList.add('hidden'); _pmsg = ''; tutHint(false); UI.buildMenu(); UI.powers(); return; }
+  // SPEC4 §C/§D — the writ answers for all three kinds of intent. A power names itself and
+  // its area and says it is FREE (the whole point of a cooldown-gated ability); a trap names
+  // its price like any other purchase. Both take the same refusal path as a tower, keyed on
+  // `why`, so a new refusal is one string and no new branch.
+  if (p.kind === 'cast' || p.kind === 'trap') {
+    const cast = p.kind === 'cast';
+    const key = cast ? p.power : p.trap;
+    const nm = cast ? L('pw.' + key) : T_NAME(key);
+    const rad = cast ? G.POWERS[key].rad : G.TRAP_DEFS[key].rad;
+    const html2 = p.ok
+      ? '<b>' + nm + '</b> · ' + rad.toFixed(0) + 'u ' + L('pl.reach') +
+        (cast ? '' : '<i class="ic ic-gold"></i>' + G.TRAP_DEFS[key].cost) +
+        (UI.coarse ? '' : L(cast ? 'pw.cast' : 'pl.lay'))
+      : '<b>' + p.reason + '</b>';
+    const pm2 = $('placeMsg');
+    if (html2 !== _pmsg) { _pmsg = html2; pm2.innerHTML = html2; }
+    pm2.classList.toggle('ok', !!p.ok); pm2.classList.toggle('bad', !p.ok);
+    el.style.bottom = ((barH() || 200) + 26) + 'px';
+    el.classList.toggle('bad', !p.ok);
+    el.classList.remove('mus');
+    el.classList.toggle('touch', !!UI.coarse);
+    el.classList.remove('hidden');
+    UI.buildMenu(); UI.powers();
+    return;
+  }
   const d = TOWER_DEFS[p.type];
-  const rr = (d.range).toFixed(0) + 'u ' + (d.aura ? 'aura' : 'reach');
-  // SPEC3 Â§C: a full muster is not bad GROUND, so it does not get the ground's refusal. It
-  // gets its own writ, naming the roster and the price of the next slot â€” otherwise the
+  const rr = (d.range).toFixed(0) + 'u ' + L(d.aura ? 'pl.aura' : 'pl.reach');
+  // SPEC3 §C: a full muster is not bad GROUND, so it does not get the ground's refusal. It
+  // gets its own writ, naming the roster and the price of the next slot — otherwise the
   // player is told "no" by a system whose control is a small button on the other panel.
-  const mFull = !p.ok && p.reason === 'The muster is full', mc = G.musterCost();
-  // on a phone the âœ“ button IS the instruction, so the writ stays one line
+  // `why` rather than a string compare: the reason is translated copy now (SPEC4 §B).
+  const mFull = !p.ok && p.why === 'mfull', mc = G.musterCost();
+  // on a phone the ✓ button IS the instruction, so the writ stays one line
   const html = p.ok
-    ? '<b>' + d.name + '</b> Â· ' + rr + '<i class="ic ic-gold"></i>' + d.cost + (UI.coarse ? '' : ' Â· click to raise')
+    ? '<b>' + T_NAME(p.type) + '</b> · ' + rr + '<i class="ic ic-gold"></i>' + d.cost + (UI.coarse ? '' : L('pl.click'))
     : mFull
-    ? '<b>The muster is full</b><span class="pSub">' + G.towersList.length + ' of ' + state.muster +
-      ' standards already in the field Â· ' + (mc === undefined ? 'no more may be raised'
-        : 'raise the muster for <i>' + mc + '</i> gold, or dismantle one') + '</span>'
+    ? '<b>' + L('cp.mfull') + '</b><span class="pSub">' +
+      L('pl.mfullSub', G.towersList.length, state.muster) +
+      (mc === undefined ? L('pl.noMore') : L('pl.raiseFor', mc)) + '</span>'
     : '<b>' + p.reason + '</b>';
   const pm = $('placeMsg');
   if (html !== _pmsg) { _pmsg = html; pm.innerHTML = html; }
-  // the plate itself says yes or no â€” see #placeMsg.ok/.bad
+  // the plate itself says yes or no — see #placeMsg.ok/.bad
   pm.classList.toggle('ok', !!p.ok); pm.classList.toggle('bad', !p.ok);
   // sit the writ clear of the build bar, whose height depends on how the cards wrapped
   el.style.bottom = ((barH() || 200) + 26) + 'px';
@@ -11373,25 +13021,57 @@ UI.place = (p) => {
   UI.buildMenu();
 };
 UI.coarse = false;   // MAIN sets this from the pointer type (or &coarse= in shot mode)
-// â•â• campaign progress + map select (SPEC2 Â§E) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// Progress is one small object: best stars per map id. It lives in localStorage â€” EXCEPT
+// ══ campaign progress + map select (SPEC2 §E) ══════════════════════════════════
+// Progress is one small object: best stars per map id. It lives in localStorage — EXCEPT
 // under the shot harness, which must never depend on what the machine happens to have
 // played. A preset stages it with UI.setProgress({1:2}); nothing is ever written back.
 const PROG_KEY = 'bannerfall.progress', TUT_KEY = 'bannerfall.tut';
 const LIVES0 = state.lives;                 // full garrison, captured before the first tick
 let PROG = {};
-function saveProg() { if (SHOT) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 1, stars: PROG })); } catch (e) { /* private mode */ } }
-if (!SHOT) try { const o = JSON.parse(localStorage.getItem(PROG_KEY) || 'null'); if (o) PROG = o.stars || o; } catch (e) { PROG = {}; }
-UI.setProgress = (o) => { PROG = Object.assign({}, o); saveProg(); if (!$('maps').classList.contains('hidden')) buildMapCards(); };
+// SPEC4 §E adds two more records beside the stars, in the SAME object and the same key:
+// `PROG_E[mapId]` = the furthest endless wave that road has ever been held to, and
+// `PROG_D[YYYYMMDD]` = what the daily war of that date came to. The file is versioned to 2
+// and a v1 record (stars only) still loads — a player mid-campaign does not lose it.
+let PROG_E = {}, PROG_D = {};
+function saveProg() { if (SHOT) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 2, stars: PROG, endless: PROG_E, daily: PROG_D })); } catch (e) { /* private mode */ } }
+if (!SHOT) try {
+  const o = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
+  if (o) { PROG = o.stars || o; PROG_E = o.endless || {}; PROG_D = o.daily || {}; }
+} catch (e) { PROG = {}; }
+// The harness stages the whole record, so a preset can show the endless line and the
+// daily chip's "best" without this machine ever having played either.
+UI.setProgress = (o, extra) => {
+  PROG = Object.assign({}, o);
+  PROG_E = Object.assign({}, (extra && extra.endless) || {});
+  PROG_D = Object.assign({}, (extra && extra.daily) || {});
+  saveProg(); if (!$('maps').classList.contains('hidden')) buildMapCards();
+};
 const starsOf = id => PROG[id] | 0;
+const endlessOf = id => PROG_E[id] | 0;
+// Called by SIM on every cleared wave past the finale. Best-ever per road, never demoted.
+UI.endlessBest = (w) => {
+  if (w <= endlessOf(MAP.id)) return;
+  PROG_E[MAP.id] = w; saveProg();
+  if (SHOT) console.log('ENDLESSLOG map=' + MAP.id + ' wave=' + w + ' lives=' + state.lives + ' gold=' + state.gold);
+};
+// The daily war's result, filed under its date. A win outranks any loss; between two runs
+// of the same kind the further wave wins. (A daily is a normal campaign — endless is a
+// separate record and does not overwrite it.)
+function dailyBest(won) {
+  if (!G.DAILY) return;
+  const prev = PROG_D[G.DAILY], stars = won ? starsFor(state.lives) : 0;
+  const rec = { map: MAP.id, wave: state.wave, won: !!won, stars };
+  if (prev && (prev.won > rec.won || (prev.won === rec.won && prev.wave >= rec.wave && prev.stars >= rec.stars))) return;
+  PROG_D[G.DAILY] = rec; saveProg();
+}
 const unlocked = id => id === 1 || P.has('unlock') || starsOf(id - 1) >= 1;
-// SPEC2 Â§E: three stars for â‰¥90% of the garrison still standing, two for â‰¥50%, one for a win.
+// SPEC2 §E: three stars for ≥90% of the garrison still standing, two for ≥50%, one for a win.
 const starsFor = lives => lives <= 0 ? 0 : lives >= LIVES0 * 0.9 ? 3 : lives >= LIVES0 * 0.5 ? 2 : 1;
 
-// â”€â”€ map chart: an engraved parchment plate, not a vector top-down â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── map chart: an engraved parchment plate, not a vector top-down ──────────────
 // A flat top-down of the mesh pasted over a lit 3D diorama reads as an editor minimap: it
 // shares no light direction with anything behind it, and a saturated lime fill is the first
-// thing an art director calls programmer art. So the card carries a DIEGETIC object instead â€”
+// thing an art director calls programmer art. So the card carries a DIEGETIC object instead —
 // the quartermaster's chart of that road: ink and wash on parchment, hachured relief, ruled
 // border, compass rose, the route dashed. Same data as before (the real spline waypoints, the
 // real gate positions, that map's own palette as the wash hue), told in its own register, so
@@ -11411,7 +13091,7 @@ function mapMini(m) {
   const wash = mixv(mixv(pal.gLit, pal.dry1, 0.36), mixv(pal.snowC, [0.46, 0.54, 0.66], 0.28), snow * 0.86);
   const wsh = a => 'rgba(' + s8(wash[0]) + ',' + s8(wash[1]) + ',' + s8(wash[2]) + ',' + a + ')';
 
-  // â”€â”€ the sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── the sheet ────────────────────────────────────────────────────────────────
   const pg = g.createLinearGradient(0, 0, W * 0.35, H);
   pg.addColorStop(0, '#e6d7b4'); pg.addColorStop(0.48, '#d9c9a3'); pg.addColorStop(1, '#c4ad83');
   g.fillStyle = pg; g.fillRect(0, 0, W, H);
@@ -11426,7 +13106,7 @@ function mapMini(m) {
     g.beginPath(); g.ellipse(urng() * W, urng() * H, ur(5, 26), ur(4, 18), urng() * 3, 0, 7); g.fill();
   }
 
-  // â”€â”€ the coastline of the bowl, from the same harmonics the diorama is cut to â”€â”€
+  // ── the coastline of the bowl, from the same harmonics the diorama is cut to ──
   const TAU = 6.283185307, RX = W * 0.436, RY = H * 0.418, ph = m.id * 2.1;
   const rk = a => 1 + 0.062 * Math.sin(a * 3 + ph) + 0.040 * Math.sin(a * 5 - ph * 1.7)
                     + 0.024 * Math.sin(a * 9 + 1.1) - 0.030 * Math.sin(a * 2 - ph);
@@ -11437,7 +13117,7 @@ function mapMini(m) {
     g.closePath();
   };
 
-  // â”€â”€ hachures: relief is drawn, not shaded â€” short strokes falling off the rim â”€â”€
+  // ── hachures: relief is drawn, not shaded — short strokes falling off the rim ──
   g.lineCap = 'round';
   for (let i = 0; i < 210; i++) {
     const a = i / 210 * TAU, p = at(a, 1.0);
@@ -11458,7 +13138,7 @@ function mapMini(m) {
     g.strokeStyle = ink(0.16); g.lineWidth = 1.2; g.setLineDash([9, 7]); blob(k); g.stroke();
   }
   g.setLineDash([]);
-  // woodland: an ink symbol repeated, the way a chart says "trees" â€” never a filled dot
+  // woodland: an ink symbol repeated, the way a chart says "trees" — never a filled dot
   const tuft = (x, y, s) => {
     g.strokeStyle = ink(0.44); g.lineWidth = 1.4;
     g.beginPath(); g.moveTo(x, y + s * 0.95); g.lineTo(x, y - s * 0.1); g.stroke();
@@ -11537,7 +13217,7 @@ function mapMini(m) {
   c.className = 'mini';
   return c;
 }
-// The copy already says "Chained until Frostfell Pass is held", so the art says chains â€” not
+// The copy already says "Chained until Frostfell Pass is held", so the art says chains — not
 // dashed hazard tape over a black void. The chart stays readable underneath (that is what
 // makes it worth unlocking); the iron is what is between you and it.
 function lockArt() {
@@ -11576,21 +13256,54 @@ function buildMapCards() {
     const nw = (WAVE_TABLES[m.id] || []).length;
     const b = document.createElement('button');
     b.className = 'mCard' + (open ? '' : ' lock') + (open && m === nextM ? ' next' : '');
+    const prevN = prev ? prev.name : L('maps.first');
     b.innerHTML = '<div class="mWrap"></div><div class="mTxt"><div class="mN">' + m.name + '</div>' +
-      '<div class="mB">' + (open ? m.blurb : 'Chained until ' + (prev ? prev.name : 'the first road') + ' is held.') + '</div>' +
-      '<div class="mFoot"><span class="mW">' + nw + ' waves</span>' +
+      '<div class="mB">' + (open ? m.blurb : L('maps.chained', prevN)) + '</div>' +
+      '<div class="mFoot"><span class="mW">' + L('maps.waves', nw) + '</span>' +
       (open ? '<div class="stars">' + (st ? '<b class="ck"></b>' : '') +
                 [1, 2, 3].map(k => '<i class="' + (k <= st ? 'on' : '') + '"></i>').join('') + '</div>'
-            : '<span class="mLk">Chained</span>') + '</div></div>' +
-      (open && m === nextM ? '<span class="rib">' + (st ? 'Replay' : 'Continue') + '</span>' : '');
+            : '<span class="mLk">' + L('maps.chain') + '</span>') + '</div>' +
+      // SPEC4 §E — the endless record only appears on a road that HAS one, so a card the
+      // player has never held past its finale reads exactly as it always did.
+      (open && endlessOf(m.id) ? '<div class="mE"><i>∞</i>' + L('maps.endless', endlessOf(m.id)) + '</div>' : '') +
+      '</div>' +
+      (open && m === nextM ? '<span class="rib">' + L(st ? 'maps.replay' : 'maps.cont') + '</span>' : '');
     b.querySelector('.mWrap').appendChild(MINI_CACHE[m.id] || (MINI_CACHE[m.id] = mapMini(m)));
     if (!open) { const lk = document.createElement('div'); lk.className = 'mChain'; lk.innerHTML = lockArt();
       b.querySelector('.mWrap').appendChild(lk); }
-    b.title = open ? m.name + ' Â· ' + nw + ' waves Â· best ' + st + '/3 stars'
-                   : m.name + ' â€” locked until ' + (prev ? prev.name : 'the first road') + ' is held';
+    b.title = open ? L('maps.cardT', m.name, nw, st) : L('maps.lockT', m.name, prevN);
     if (open) b.onclick = () => chooseMap(m.id);
     host.appendChild(b);
   });
+  buildDaily();
+}
+// ── DAILY WAR chip (SPEC4 §E) ─────────────────────────────────────────────────
+// One road, one seed, the same hand for everybody who plays today. The stamp and the road
+// were both resolved at boot in CORE (never from a clock inside the sim); this only draws
+// them. It plays a NORMAL campaign — the daily is a shared deal, not a separate mode — and
+// files its result under the date, so tomorrow's war starts a fresh record.
+function buildDaily() {
+  const host = $('dailyRow');
+  if (!host) return;
+  const dm = MAPS.find(m => m.id === G.DAILY_MAP) || MAPS[0];
+  const rec = PROG_D[G.TODAY];
+  const foot = !rec ? L('daily.new')
+    : rec.won ? L('daily.held', rec.stars) : L('daily.best', rec.wave);
+  const b = document.createElement('button');
+  b.id = 'dailyWar'; b.className = 'iron frm' + (G.DAILY === G.TODAY ? ' on' : '');
+  b.title = L('daily.T');
+  b.innerHTML = '<i class="dwI"></i><span class="dwB"><span class="dwT">' + L('daily.title') + '</span>' +
+    '<span class="dwS">' + L('daily.sub', dm.name, G.DAILY_SEED) + '</span></span>' +
+    '<span class="dwR' + (rec && rec.won ? ' won' : '') + '">' + foot + '</span>';
+  host.innerHTML = '';
+  host.appendChild(b);
+  b.onclick = () => {
+    Audio.play('ui');
+    const q = new URLSearchParams(location.search);
+    q.set('map', String(G.DAILY_MAP)); q.set('seed', String(G.DAILY_SEED));
+    q.set('daily', G.TODAY); q.set('auto', '1'); q.delete('maps'); q.delete('endless');
+    location.search = q.toString();
+  };
 }
 function chooseMap(id) {
   Audio.play('ui');
@@ -11619,7 +13332,7 @@ UI.startGame = (gesture) => {
   } else Audio.music();
   UI.sync();
 };
-// â”€â”€ first-placement writ (localStorage-gated, never shown under the harness) â”€â”€â”€â”€
+// ── first-placement writ (localStorage-gated, never shown under the harness) ────
 let tutDone = true;
 if (!SHOT) try { tutDone = !!localStorage.getItem(TUT_KEY); } catch (e) { tutDone = true; }
 function tutSeen() { if (tutDone) return; tutDone = true; try { localStorage.setItem(TUT_KEY, '1'); } catch (e) {} }
@@ -11629,12 +13342,12 @@ function tutHint(on) {
   // `&tut=1` forces the writ under the harness (it is otherwise unreachable there, since
   // SHOT mode never has a "first ever" flag to read) so it can be art-directed like the rest.
   if (!on || (tutDone && !(SHOT && P.has('tut')))) { el.classList.add('hidden'); return; }
-  el.innerHTML = '<div class="tH">Raising a tower</div>Set it on open ground clear of the road â€” the <b>ring</b> is how far it will reach. ' +
-    (UI.coarse ? 'Drag to aim, then tap <b>âœ“</b>.' : 'Click to raise it Â· <b>Shift</b> keeps the hammer in hand Â· <b>Esc</b> puts it down.');
+  el.innerHTML = '<div class="tH">' + L('tut.title') + '</div>' + L('tut.body') +
+    L(UI.coarse ? 'tut.touch' : 'tut.mouse');
   el.style.bottom = ((barH() || 200) + 88) + 'px';
   el.classList.remove('hidden');
 }
-// â•â• victory / defeat â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ victory / defeat ═══════════════════════════════════════════════════════════
 // Struck-gold medallion: scalloped rim, blue enamel field, a device, and a ribbon fold.
 function scallop(n, cx, cy, r1, r2) {
   let p = '';
@@ -11666,46 +13379,71 @@ const medal = (on, label, dev) => '<div class="md' + (on ? '' : ' off') + '">' +
   '<span class="mL">' + label + '</span></div>';
 UI.showEnd = (won) => {
   const total = state.kills + state.leaked;
-  // SPEC2 Â§E: a win writes its stars into the campaign record, which is what opens the
+  // SPEC4 §E: a run that went PAST the finale can only end one way, and "the road is lost"
+  // is the wrong sentence for it — the road was held, and then held some more.
+  const endl = state.endless && state.wave > G.FINALE_W;
+  // SPEC2 §E: a win writes its stars into the campaign record, which is what opens the
   // next road. Best-ever is kept, so a scrappy re-run never demotes a clean one.
   const st = won ? starsFor(state.lives) : 0, was = starsOf(MAP.id), best = Math.max(st, was);
   if (st > was) { PROG[MAP.id] = st; saveProg(); }
+  dailyBest(won);
   const nx = won ? MAPS.find(m => m.id === MAP.id + 1) : null;
-  $('endTitle').textContent = won ? 'VICTORY' : MAP.id === 1 ? 'THE VALE HAS FALLEN' : 'THE ROAD IS LOST';
+  $('endTitle').textContent = L(won ? 'end.win' : endl ? 'end.endless' : MAP.id === 1 ? 'end.fallen' : 'end.lost');
   $('endTitle').style.color = won ? '#f0c96a' : '#d0563c';
-  $('endSub').textContent = won ? MAP.name + ' holds' : 'The banners fall on ' + MAP.name;
+  $('endSub').textContent = endl && !won ? L('end.endSub', Math.max(0, state.wave - 1 - G.FINALE_W))
+    : L(won ? 'end.holds' : 'end.fall', MAP.name);
   $('endStars').classList.toggle('hidden', !won);
   $('endStarL').classList.toggle('hidden', !won);
   if (won) {
     $('endStars').innerHTML = [1, 2, 3].map(i => '<i class="' + (i <= st ? 'on' : '') + '"></i>').join('');
     // INTEGRATE: the top star is 90% of the garrison, not a clean sheet, so "not a banner
-    // lost" was a lie on any 3-star run that leaked â€” and the plate says "Breached the gate:
+    // lost" was a lie on any 3-star run that leaked — and the plate says "Breached the gate:
     // 3" four rows below it. The clean-sheet line is now earned by an actual clean sheet.
-    $('endStarL').textContent = (state.leaked === 0 ? 'Not a banner lost' : st >= 3 ? 'The line never broke'
-      : st === 2 ? 'A costly hold' : 'Held by a thread') +
-      (st > was ? ' Â· new best' : was > st ? ' Â· best ' + best + '/3' : '');
+    $('endStarL').textContent = L(state.leaked === 0 ? 'end.clean' : st >= 3 ? 'end.never'
+      : st === 2 ? 'end.costly' : 'end.thread') +
+      (st > was ? L('end.newbest') : was > st ? L('end.best', best) : '');
   }
   const bn = $('btnNext');
   bn.classList.toggle('hidden', !nx);
   if (nx) {
-    bn.textContent = nx.name + ' awaits';
+    bn.textContent = L('end.next', nx.name);
     bn.onclick = () => chooseMap(nx.id);
   }
-  $('btnRestart').textContent = won ? 'Choose Your Road' : 'Try Again';
-  $('btnRestart').classList.toggle('sec', !!nx);   // the next road is the headline, not this
+  // SPEC4 §E — the second call. It is offered on a finale victory and nowhere else: a
+  // defeat has no line left to hold, and a run already past the finale never wins again.
+  const bh = $('btnHold');
+  bh.classList.toggle('hidden', !won);
+  if (won) {
+    bh.textContent = L('end.hold'); bh.title = L('end.holdT');
+    bh.onclick = () => {
+      if (!G.holdTheLine()) return;
+      $('end').classList.add('hidden');
+      Audio.play('horn'); UI.msg({ wave: state.wave + 1, endless: true }, L('wave.endless'));
+      UI.sync();
+    };
+  }
+  $('btnRestart').textContent = L(won ? 'end.road' : 'end.again');
+  $('btnRestart').classList.toggle('sec', !!nx || won);   // the next road is the headline, not this
   const m1 = state.wave >= 5 || won, m2 = won && state.lives >= 16, m3 = won && state.leaked === 0;
   // the campaign has three roads now, so a medal cannot be named after the Vale
-  $('medals').innerHTML = medal(m1, 'Held', 'shield') + medal(m2, 'Garrison Kept', 'tower') + medal(m3, 'Flawless', 'star');
+  $('medals').innerHTML = medal(m1, L('md.held'), 'shield') + medal(m2, L('md.garrison'), 'tower') +
+    medal(m3, L('md.flawless'), 'star');
   $('endStats').innerHTML = '<table>' +
-    '<tr><td>Foes slain</td><td>' + state.kills + '</td></tr>' +
-    '<tr><td>Breached the gate</td><td>' + state.leaked + '</td></tr>' +
-    '<tr><td>Waves held</td><td>' + (won ? WAVES.length : Math.max(0, state.wave - 1)) + ' / ' + WAVES.length + '</td></tr>' +
-    '<tr><td>Garrison left</td><td>' + Math.max(0, state.lives) + ' / ' + LIVES0 + '</td></tr>' +
-    '<tr><td>Kill ratio</td><td>' + (total ? Math.round(state.kills / total * 100) : 0) + '%</td></tr></table>';
+    '<tr><td>' + L('es.slain') + '</td><td>' + state.kills + '</td></tr>' +
+    '<tr><td>' + L('es.breach') + '</td><td>' + state.leaked + '</td></tr>' +
+    '<tr><td>' + L('es.waves') + '</td><td>' + (won ? WAVES.length : Math.min(WAVES.length, Math.max(0, state.wave - 1))) + ' / ' + WAVES.length + '</td></tr>' +
+    // the endless tally is its own row, under the campaign one: a run that went past the
+    // finale held BOTH, and collapsing them into one number would hide which.
+    (endl ? '<tr><td>' + L('es.endless') + '</td><td>' + Math.max(0, state.wave - 1 - G.FINALE_W) + ' <i class="inf">∞</i></td></tr>' : '') +
+    '<tr><td>' + L('es.left') + '</td><td>' + Math.max(0, state.lives) + ' / ' + LIVES0 + '</td></tr>' +
+    '<tr><td>' + L('es.ratio') + '</td><td>' + (total ? Math.round(state.kills / total * 100) : 0) + '%</td></tr>' +
+    // last row, because it is not a statistic: it says which hand this was, and everyone
+    // who fought today fought the same one.
+    (G.DAILY ? '<tr><td>' + L('es.daily') + '</td><td>' + G.DAILY + '</td></tr>' : '') + '</table>';
   $('end').classList.remove('hidden');
   UI.sync();
 };
-// â•â• damage floaters (pooled DOM, projected world â†’ screen) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ damage floaters (pooled DOM, projected world → screen) ═════════════════════
 const FLN = 20, flEl = [], flR = [];
 {
   const host = $('floaters');
@@ -11717,7 +13455,7 @@ const FLIGHT = { archer: 0.19, ballista: 0.14, catapult: 1.1 };
 function pushFloater(rec) { flR[_fw] = rec; _flHid[_fw] = 0; _fw = (_fw + 1) % FLN; }
 // The number on screen has to be the number the sim dealt. The raw `dmg * 1.55^(level-1)`
 // ignores resistance entirely, so every hit on a .7-pierce pavise was printed at 330% of
-// the truth. Mirrors SIM's dealDamage() exactly (SPEC3 Â§A) â€” same cap, same omen multiplier.
+// the truth. Mirrors SIM's dealDamage() exactly (SPEC3 §A) — same cap, same omen multiplier.
 function armMul(def, e) {
   const el = def.element;
   let r = (e && e.def) ? G.resistOf(e.def, el) : 0;
@@ -11726,7 +13464,7 @@ function armMul(def, e) {
 }
 // OCCLUSION. layoutFloaters only rejected z > 1 (behind the camera), so a number belonging
 // to a unit hidden behind a foreground conifer was painted at full opacity on top of the
-// tree with no unit anywhere near it â€” the reader has no way to attach it to anything.
+// tree with no unit anywhere near it — the reader has no way to attach it to anything.
 // One ray per floater against the instanced tree/rock/cliff meshes, refreshed every 4th
 // frame and cached in between; a hit fades the floater out entirely.
 const _flRay = new THREE.Raycaster(), _flOcc = [], _flHid = new Uint8Array(FLN);
@@ -11753,7 +13491,7 @@ function harvestFire(t) {
     const jit = s => (((tw.uid * 37 + (tw.shots | 0) * 19 + s * 53) % 11) - 5) * 5;
     pushFloater({ t0, e: ev.tgt, txt: '' + Math.round(base * (crit ? 1.85 : 1) * armMul(d, ev.tgt)),
       cls: 'fl' + (crit ? ' crit' : ''), sx: jit(0) });
-    // splash / pierce victims get their own (smaller) number â€” this is what makes a catapult
+    // splash / pierce victims get their own (smaller) number — this is what makes a catapult
     // volley read as a volley instead of a single hit.
     if (tw.type === 'catapult' || d.pierce) {
       const R = tw.type === 'catapult' ? (d.splash || 4.5) : 2.2;
@@ -11808,10 +13546,10 @@ function layoutFloaters(t) {
     console.log('FLDBG occ=' + flOccluders().length + ' live=' + live + ' hidden=' + hid);
   }
 }
-// â•â• per-frame UI: count-up gold, floaters, title Ken-Burns â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ per-frame UI: count-up gold, floaters, title Ken-Burns ═════════════════════
 // Called from MAIN's render(). In SHOT mode it stops mutating the DOM before the FINAL
 // render so the headless compositor never repaints after the GL frame is presented.
-let _uiLast = -1, _shotFrames = 0;
+let _uiLast = -1, _shotFrames = 0, _pwT = -1;
 UI.frame = (rt) => {
   if (SHOT) { if (_shotFrames++ >= 2) return; }
   const dt = _uiLast < 0 ? 0.016 : clamp(rt - _uiLast, 0, 0.1); _uiLast = rt;
@@ -11826,33 +13564,53 @@ UI.frame = (rt) => {
       CAM.dist = 152 + Math.sin(rt * 0.055) * 9;
       CAM.tx = -2 + Math.sin(rt * 0.037) * 11; CAM.tz = -18 + Math.cos(rt * 0.029) * 7;
     }
+    // SPEC4 §C — the cooldown sweeps move between UI.sync()s, so they are written here. Under
+    // the harness UI.sync() has already written them once and this branch never runs, which
+    // is what keeps the freeze contract (no DOM mutation after the final shot render).
+    if (_pwT !== state.tick) { _pwT = state.tick; syncPowers(); }
   }
   const t = G.vt();
   harvestFire(t);
   layoutFloaters(t);
 };
-// â•â• controls â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══ controls ═══════════════════════════════════════════════════════════════════
 $('btnWave').onclick = () => { if (state.phase === 'prewave') { state.gold += Math.ceil(state.countdown); startWave(state.wave + 1); } };
-$('btnSpeed').onclick = () => { state.speed = state.speed === 1 ? 2 : 1;
-  $('btnSpeed').textContent = 'Ã—' + state.speed; $('btnSpeed').classList.toggle('on', state.speed === 2); };
-// FIX2-UI Â§4c â€” the pause control was the Unicode âšâš / â–¶, a type glyph in a HUD whose every
+// SPEC4 §A — ×1 → ×2 → ×3. The frame loop already caps at 8 sim ticks per frame, so ×3
+// costs three ticks on a 30fps phone and stays inside the budget; the cap is what makes a
+// dropped frame a slow frame instead of a spiral.
+$('btnSpeed').onclick = () => { state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 3 : 1;
+  $('btnSpeed').textContent = '×' + state.speed; $('btnSpeed').classList.toggle('on', state.speed > 1); };
+// FIX2-UI §4c — the pause control was the Unicode ❚❚ / ▶, a type glyph in a HUD whose every
 // other mark is drawn steel and gold. Both states are now the same hand-drawn pair as the
 // coin and the crossed swords beside them; the label lives in the tooltip.
 $('btnPause').onclick = () => { state.paused = !state.paused;
   $('btnPause').classList.toggle('gl-play', state.paused);
   $('btnPause').classList.toggle('gl-pause', !state.paused);
-  $('btnPause').title = state.paused ? 'Resume (Space)' : 'Pause (Space)';
+  $('btnPause').title = L(state.paused ? 'hud.resume' : 'hud.pause');
   $('btnPause').classList.toggle('on', state.paused); };
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
   $('btnGear').classList.toggle('on', !s.classList.contains('hidden')); };
-$('btnMute').onclick = () => { Audio.muted = !Audio.muted; $('muteV').textContent = Audio.muted ? 'Off' : 'On'; };
+$('btnMute').onclick = () => { Audio.muted = !Audio.muted; $('muteV').textContent = L(Audio.muted ? 'snd.off' : 'snd.on'); };
+// SPEC4 §A — auto-call is a preference, so it toggles in place (no reload) and writes
+// through to localStorage; SIM reads it at the next wave clear.
+$('btnAuto').onclick = () => { $('autoV').textContent = L(G.setAutoCall(!G.autoCall()) ? 'val.on' : 'val.off'); };
+// SPEC4 §B — the language toggle RELOADS, exactly as the quality toggle does: every string
+// in the game is resolved once at module scope, so switching tongue is a new page, not a
+// live re-render of forty panels. The choice is persisted and `&lang=` is set so the reload
+// cannot be out-voted by a stale storage read.
+$('btnLang').onclick = () => {
+  const nx = LANG === 'fr' ? 'en' : 'fr';
+  try { localStorage.setItem(LANG_KEY, nx); } catch (e) { /* private mode */ }
+  const p = new URLSearchParams(location.search); p.set('lang', nx);
+  location.search = p.toString();
+};
 $('btnQual').onclick = () => {
   const order = ['mobile', 'high', 'ultra'], nx = order[(order.indexOf(tier) + 1) % 3];
   const p = new URLSearchParams(location.search); p.set('tier', nx);
   location.search = p.toString();
 };
 $('btnReset').onclick = () => location.reload();
-// Title â†’ map select â†’ game. `&map=` names a road outright, so it skips the chooser and
+// Title → map select → game. `&map=` names a road outright, so it skips the chooser and
 // Play drops straight into that map (the shot harness and any deep link rely on this).
 $('btnPlay').onclick = () => { if (P.has('map')) UI.startGame(); else UI.showMaps(); };
 $('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); };
@@ -11862,19 +13620,19 @@ $('btnRestart').onclick = () => {
   q.delete('map'); q.delete('auto'); q.set('maps', '1');
   location.search = q.toString();
 };
-$('chipWave').title = MAP.name + ' Â· ' + WAVES.length + ' waves';
+$('chipWave').title = L('hud.waveT', MAP.name, WAVES.length);
 $('wavePrev').title = MAP.name;
-// the title plinth counted four towers and one road; both grew (SPEC2 Â§C/Â§E)
-// SPEC3 Â§E: the war seed is the run's fingerprint â€” same seed, same elite swap slots and the
+// the title plinth counted four towers and one road; both grew (SPEC2 §C/§E)
+// SPEC3 §E: the war seed is the run's fingerprint — same seed, same elite swap slots and the
 // same omen draws, so a run can be replayed or handed to someone else. The die rolls a new
 // one and reloads; the number appears wherever a run is about to start (plinth + chooser).
-const seedTag = () => '<span class="sV">War Seed ' + G.runSeed + '</span>' +
-  '<button class="sD frm" data-seed="1" title="Roll a new war seed â€” new elite swaps, new omen draws">Roll</button>';
-$('titleFoot').innerHTML = MAPS.length + ' roads &nbsp;Â·&nbsp; ' + TK.length + ' fortifications &nbsp;Â·&nbsp; ' +
+const seedTag = () => '<span class="sV">' + L('seed', G.runSeed) + '</span>' +
+  '<button class="sD frm" data-seed="1" title="' + esc(L('seed.rollT')) + '">' + L('seed.roll') + '</button>';
+$('titleFoot').innerHTML = L('foot', MAPS.length, TK.length) +
   '<span class="seedTag">' + seedTag() + '</span>';
 $('mapsSeed').innerHTML = seedTag();
-// Entropy for a NEW seed comes from the same crypto source CORE captured with â€” never
-// Math.random/Date.now (SPEC3 Â§E), and never inside a sim tick: this only ever reloads.
+// Entropy for a NEW seed comes from the same crypto source CORE captured with — never
+// Math.random/Date.now (SPEC3 §E), and never inside a sim tick: this only ever reloads.
 const rollSeed = () => {
   if (!(globalThis.crypto && crypto.getRandomValues)) return;
   const q = new URLSearchParams(location.search);
@@ -11882,15 +13640,28 @@ const rollSeed = () => {
   location.search = q.toString();
 };
 document.querySelectorAll('.seedTag .sD').forEach(b => { b.onclick = rollSeed; });
-$('qualV').textContent = tier === 'mobile' ? 'Low' : tier === 'ultra' ? 'Ultra' : 'High';
+$('qualV').textContent = L(tier === 'mobile' ? 'qual.low' : tier === 'ultra' ? 'qual.ultra' : 'qual.high');
+$('autoV').textContent = L(G.autoCall() ? 'val.on' : 'val.off');
+$('langV').textContent = LANG === 'fr' ? 'Français' : 'English';
+// ── static shell copy (SPEC4 §B) ──────────────────────────────────────────────────
+// index.html carries the chrome that exists before a single frame renders (chips, hint
+// rail, title plinth, settings sheet). Each such node names its key in `data-l` (text) or
+// `data-lt` (tooltip) and is filled HERE, synchronously at module scope — a boot-time pass,
+// not a post-render timer, so the harness's freeze stylesheet has nothing to catch.
+for (const el of document.querySelectorAll('[data-l]')) el.textContent = L(el.dataset.l);
+for (const el of document.querySelectorAll('[data-lt]')) el.title = L(el.dataset.lt);
 if (!SHOT) {
-  // Interaction listeners live behind the SHOT guard (GAME_SPEC Â§2.3c).
+  // Interaction listeners live behind the SHOT guard (GAME_SPEC §2.3c).
+  // SPEC4 §C — the rail arms the same placement mode the hotkeys do, so touch gets the
+  // drag-or-tap flow (ghost follows the finger, ✓ confirms) for free.
+  for (const b of $('powers').children)
+    b.addEventListener('click', () => { UI.deselect(); if (G.enterCast(b.dataset.pw) && G.placeAtCursor) G.placeAtCursor(); });
   addEventListener('keydown', e => { if (e.key === 'g' || e.key === 'G') $('btnGear').click(); });
   $('title').addEventListener('pointerdown', e => { if (e.target === $('title')) $('btnPlay').click(); });
 }
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: UI â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: UI ══════════════════════
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SECTION: MAIN (owner: architect â€” renderer, camera, loop, SHOT HARNESS) â•â•
+// ══════════════════════ SECTION: MAIN (owner: architect — renderer, camera, loop, SHOT HARNESS) ══
 const canvas = $('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: tier !== 'mobile', powerPreference: 'high-performance', preserveDrawingBuffer: !!SHOT });
 renderer.info.autoReset = false;
@@ -11905,7 +13676,7 @@ G.renderer = renderer;
 
 const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 1, 600);
 G.camera = camera;
-// dir pitch ~50Â° (GAME_SPEC Â§1 asks for a high-angle 55â€“60Â° aerial read); azimuth puts
+// dir pitch ~50° (GAME_SPEC §1 asks for a high-angle 55–60° aerial read); azimuth puts
 // the warm sun raking in from screen-left and the road's S-curve across the frame.
 const CAM = { tx: -2, ty: 0, tz: 2, dist: 100, dir: new THREE.Vector3(0.44, 1.215, 0.92).normalize(), free: false };
 G.CAM = CAM;
@@ -11927,7 +13698,7 @@ function buildPost() {
   if (Q.bloom) { bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.28, 0.7, 0.86); composer.addPass(bloomPass); }
 }
 buildPost();
-// HOOK: VFX builder â€” extend buildPost() with additional passes (keep mobile tier clean).
+// HOOK: VFX builder — extend buildPost() with additional passes (keep mobile tier clean).
 VFX.post(composer, bloomPass);
 addEventListener('resize', () => {
   renderer.setSize(innerWidth, innerHeight);
@@ -11938,9 +13709,9 @@ addEventListener('resize', () => {
   if (SHOT) render(vt());
 });
 
-// â”€â”€ Input: tap select / drag pan / pinch+wheel zoom â”€â”€
+// ── Input: tap select / drag pan / pinch+wheel zoom ──
 // Input stays off in SHOT mode (deterministic captures need no interaction). NOTE: any
-// handler that resizes/clears the canvas must re-render in shot mode â€” see the resize
+// handler that resizes/clears the canvas must re-render in shot mode — see the resize
 // listener above. Builders: keep new interaction listeners inside this guard.
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const pointers = new Map();
@@ -11949,7 +13720,7 @@ let pinchD = 0, dragging = false, downX = 0, downY = 0;
 // (&coarse=1 lets the harness shoot the touch variant.)
 UI.coarse = SHOT ? P.has('coarse') : matchMedia('(pointer: coarse)').matches;
 let hoverX = innerWidth / 2, hoverY = innerHeight / 2;
-// Screen â†’ ground. Bisecting the heightfield beats raycasting the terrain mesh: the mesh
+// Screen → ground. Bisecting the heightfield beats raycasting the terrain mesh: the mesh
 // is edge-trimmed (a cursor past the rim would miss entirely) and it is 50k triangles.
 const _gh = new THREE.Vector3();
 function groundAt(cx, cy, out) {
@@ -12006,7 +13777,7 @@ const endPointer = e => {
   if (state.phase === 'title' || state.phase === 'won' || state.phase === 'lost') return;
   if (G.place) {                                       // placement mode owns the tap
     placeAtScreen(e.clientX, e.clientY);
-    if (!UI.coarse) G.commitPlace(e.shiftKey);         // touch: confirm with the âœ“ button
+    if (!UI.coarse) G.commitPlace(e.shiftKey);         // touch: confirm with the ✓ button
     return;
   }
   ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
@@ -12025,12 +13796,21 @@ canvas.addEventListener('wheel', e => { e.preventDefault(); CAM.dist = clamp(CAM
 addEventListener('keydown', e => {
   if (e.key === ' ') $('btnPause').click();
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
-  // SPEC3 Â§F â€” T cycles the selected tower's targeting doctrine.
+  // SPEC3 §F — T cycles the selected tower's targeting doctrine.
   if ((e.key === 't' || e.key === 'T') && state.selTower >= 0) G.cycleMode(G.towersList[state.selTower]);
-  // SPEC3 Â§D â€” 8/9/0 take the omen on the table. They sit past the seven build hotkeys on
+  // SPEC3 §D — 8/9/0 take the omen on the table. They sit past the seven build hotkeys on
   // purpose: the number row reads left-to-right as "what you build" then "what you accept".
   const oi = { '8': 0, '9': 1, '0': 2 }[e.key];
   if (oi !== undefined) { if (state.phase === 'prewave') G.omens.pick(oi); return; }
+  // SPEC4 §C/§D — Q/W call the two powers, Z/X/C arm the three road traps. They sit off the
+  // number row on purpose: 1-7 buy fortifications, 8-0 take omens, and neither of those is
+  // what these are. All five ARM placement mode exactly as a build card does, so the ghost,
+  // the ring, the writ, Esc and the touch ✓ are the same flow the player already knows.
+  const lk = e.key.toLowerCase();
+  const pw = G.PW_KEYS.find(k => G.POWERS[k].key === lk);
+  if (pw) { UI.deselect(); if (G.enterCast(pw)) G.placeAtCursor(); return; }
+  const tk = { z: 'caltrops', x: 'tar', c: 'keg' }[lk];
+  if (tk) { UI.deselect(); if (G.enterTrap(tk)) G.placeAtCursor(); return; }
   const keys = Object.keys(TOWER_DEFS), n = parseInt(e.key);
   if (n >= 1 && n <= keys.length) {                    // hotkeys ARM the hammer
     UI.deselect();
@@ -12039,7 +13819,7 @@ addEventListener('keydown', e => {
 });
 } // end !SHOT input guard
 
-// â”€â”€ Render loop â”€â”€
+// ── Render loop ──
 const statsEl = $('stats');
 if (P.get('stats')) statsEl.classList.remove('hidden');
 let acc = 0, last = performance.now(), fpsT = 0, fpsN = 0;
@@ -12049,7 +13829,7 @@ function render(rt) {
   Towers.syncProjectiles(vt());
   VFX.update(vt());
   updateCamera(rt);
-  UI.frame(rt);   // HOOK: UI â€” count-up counters, projected damage floaters, title drift (self-freezes in SHOT mode)
+  UI.frame(rt);   // HOOK: UI — count-up counters, projected damage floaters, title drift (self-freezes in SHOT mode)
   composer.render();
 }
 function frame(now) {
@@ -12060,17 +13840,17 @@ function frame(now) {
     let steps = 0;
     while (acc >= TICK && steps++ < 8) { tickSim(); acc -= TICK; }
   }
-  G.subT = acc / TICK;   // HOOK: ARMIES â€” sub-tick fraction so the 30 tps sim renders smooth at 60 fps
+  G.subT = acc / TICK;   // HOOK: ARMIES — sub-tick fraction so the 30 tps sim renders smooth at 60 fps
   render(now / 1000);
   if (statsEl && !statsEl.classList.contains('hidden')) {
     fpsN++; fpsT += dt;
-    if (fpsT >= 0.5) { statsEl.textContent = Math.round(fpsN / fpsT) + ' fps Â· ' + renderer.info.render.calls + ' calls Â· ' + renderer.info.render.triangles + ' tris'; fpsN = 0; fpsT = 0; }
+    if (fpsT >= 0.5) { statsEl.textContent = Math.round(fpsN / fpsT) + ' fps · ' + renderer.info.render.calls + ' calls · ' + renderer.info.render.triangles + ' tris'; fpsN = 0; fpsT = 0; }
   }
 }
 
-// â”€â”€ SHOT HARNESS (sacred â€” deterministic screenshots for the critic pipeline) â”€â”€
+// ── SHOT HARNESS (sacred — deterministic screenshots for the critic pipeline) ──
 // Composes an asset rig around the fight it is meant to show: look at the midpoint of
-// towerâ†’its current target, stand off perpendicular to that line so neither subject is
+// tower→its current target, stand off perpendicular to that line so neither subject is
 // behind the camera. `side` picks which flank; `h` is the camera height above the pad.
 function frameFight(cam, tw, h, side) {
   const rr = TOWER_DEFS[tw.type].range * (1 + 0.08 * (tw.level - 1));
@@ -12093,30 +13873,57 @@ function frameFight(cam, tw, h, side) {
   // can be re-pointed by hand (that is how _pyre's fixed camera was picked)
   if (P.has('dbg')) console.log('CAMFRAME ' + tw.type + ' pos=' + cam.pos.map(v => v.toFixed(1)) + ' look=' + cam.look.map(v => v.toFixed(1)));
 }
+// SPEC4 §C/§D rigs: a point ON the road, `ahead` units DOWN-road of the column's leader
+// (negative = behind it, i.e. inside the mass). Writes _v3, which the caller reads for z —
+// the same temp every other camera rig in this table already borrows.
+function roadAhead(ahead) {
+  let lead = null;
+  for (const e of G.enemies) if (e.alive && e.pathId === G.endRoute && (!lead || e.d > lead.d)) lead = e;
+  const len = G.pathLen;
+  const d = clamp((lead ? lead.d : len * 0.45) + ahead, 12, len - 22);
+  G.pathPos(d, _v3, 0, G.endRoute);
+  return _v3.x;
+}
+// Picks a spot `ahead` units down-road of the column, then TICKS THE SIM UNTIL THE COLUMN
+// GETS THERE. Both power rigs need the act to land on foes standing in the open, and at
+// t=250 the Vale's leader is inside the conifer belt where the canopy owns the frame — a
+// fixed cast point there is a bright glow behind a tree. Waiting instead of aiming means
+// the rig cannot be broken by a balance change that moves where the horde is at t=250.
+// Capped, so it terminates whatever the wave tables say.
+function openRoad(ahead) {
+  const x = roadAhead(ahead), z = _v3.z;
+  for (let i = 0; i < 460; i++) {
+    let here = false;
+    for (const e of G.enemies) if (e.alive && (e.px - x) ** 2 + (e.pz - z) ** 2 < 25) { here = true; break; }
+    if (here) break;
+    tickSim();
+  }
+  return [x, z];
+}
 const SHOT_PRESETS = {
   // WORLD: yawed off the orbit rig onto an explicit pose. The old framing put the road's
   // two arms straight out of frame left and right and cropped the keep against the edge;
-  // this bearing lays the whole S on the frame diagonal â€” keep low-left, spawn gate
-  // high-right â€” which is the single compositional line the reference sells on.
+  // this bearing lays the whole S on the frame diagonal — keep low-left, spawn gate
+  // high-right — which is the single compositional line the reference sells on.
   overview: { t: 2,   builds: [], cam: { pos: [-47, 139, 110], look: [-27, 4, 6] } },
   // TOWERS: +0.9s puts an arrow in flight. AUDIO/POLISH: the hero frame used to sit the
   // horde in the top-right eighth with half the frame empty meadow; pulled in and onto the
   // column so the crimson river is the subject, which is the whole point of the reference.
   // ARMIES r7 retimed this to t=345 because "the formation lattice shifted every wave
   // boundary and t=262 landed on an empty road". The lattice was reverted as a balance
-  // regression (see spawnEnemy), which voids that reason â€” and t=262 now measures wave 4,
+  // regression (see spawnEnemy), which voids that reason — and t=262 now measures wave 4,
   // ~100 alive, i.e. a full road. Restored to the tuned moment BALANCE.md anchors on.
   // ARMIES' composition work is kept: its own build list, because STD_BUILDS' barracks sits
-  // behind the lens, so this frame â€” the one marketing frame that is supposed to sell
-  // red-vs-blue â€” never contained a single blue defender.
+  // behind the lens, so this frame — the one marketing frame that is supposed to sell
+  // red-vs-blue — never contained a single blue defender.
   // Hand-pointed, not auto-framed: an auto-framer that stands off the road's near verge at
   // battle range lands inside the conifer belt about half the time (see _pyre for the same
   // lesson). Pulled in and shifted along the bearing so the column runs the frame's left
-  // diagonal, with the up-road barracks camp and its knights in the lower-left third â€”
+  // diagonal, with the up-road barracks camp and its knights in the lower-left third —
   // clear of the build panel, which is where the old pose buried them.
   battle:   { t: 262, builds: 'battle', cam: { pos: [16, 31, 26], look: [36, -1, -16] } },
   // ARMIES: re-aimed at the road bend so the closeup frame actually contains the horde.
-  // WORLD: the hand-placed pose sat the lens inside the conifer belt â€” one tree owned 45%
+  // WORLD: the hand-placed pose sat the lens inside the conifer belt — one tree owned 45%
   // of the frame and there was no subject at all. It now frames itself off the horde's own
   // front rank, standing just off the verge ahead of the column and looking back down it.
   closeup:  { t: 262, bare: true, builds: 'std', cam: { pos: [58, 13, 26], look: [32, 2, 2] },
@@ -12133,7 +13940,7 @@ const SHOT_PRESETS = {
     } },
   // VFX: the blast used to fire at a fixed spot on the road that the horde had long
   // since marched past, and it landed half off the bottom edge. It now lands INSIDE the
-  // column and retargets its own camera â€” pre.fx() runs before runShot applies pre.cam,
+  // column and retargets its own camera — pre.fx() runs before runShot applies pre.cam,
   // so writing cam.tgt in place is enough, and the horde position is deterministic.
   impact:   { t: 265, builds: 'std', cam: { tgt: [18, 1, 8], dist: 41 },
     fx: () => {
@@ -12150,10 +13957,10 @@ const SHOT_PRESETS = {
   // melee scrum at all: in STD_BUILDS the towers kill the horde around d=85, well short
   // of the barracks rally point, so clash sparks and knight deaths never occur there.
   _vfx:    { t: 232, bare: true, builds: [[50, 3, 'barracks', 3]], cam: { tgt: [50, 1, 3], dist: 21 },
-    // SPEC2 Â§D: the scrum rig now also has to prove the new melee. An ogre is handed to a
+    // SPEC2 §D: the scrum rig now also has to prove the new melee. An ogre is handed to a
     // knight and armed to stomp, two marauders are dropped just inside their 7u band, and
     // the sim is run on for ~0.9 s so the engagement (and the stomp) is the real thing
-    // rather than a pose â€” the frame must show dust, a shake and arrows landing.
+    // rather than a pose — the frame must show dust, a shake and arrows landing.
     fx: () => {
       const kn0 = G.knights.find(k => k.alive);
       if (kn0) {
@@ -12171,7 +13978,7 @@ const SHOT_PRESETS = {
         og.blockedBy = ki; kn0.target = og.id; og.stompT = 0.5;
         put('marauder', bd - 5.4, -2.0); put('marauder', bd - 6.1, 1.8);
         // the other two knights must be BUSY, or they simply walk out and claim the
-        // marauders â€” a claimed skirmisher fights instead of shooting, which is the exact
+        // marauders — a claimed skirmisher fights instead of shooting, which is the exact
         // behaviour this frame exists to show off. Give each a grunt it cannot finish.
         for (let i = 0; i < G.knights.length; i++) {
           const k2 = G.knights[i];
@@ -12191,13 +13998,13 @@ const SHOT_PRESETS = {
       }
       const kn = G.knights.find(k => k.alive && k.target >= 0) || G.knights[0];
       if (kn) { const c = SHOT_PRESETS._vfx.cam; c.tgt[0] = kn.x; c.tgt[2] = kn.z; } } },
-  // SPEC2 Â§D bestiary rig: one of each new type on a clear stretch of road, walking, at
+  // SPEC2 §D bestiary rig: one of each new type on a clear stretch of road, walking, at
   // asset-inspection range. Silhouettes must be tellable apart with the colour stripped
-  // out â€” that is the only test this frame exists to fail.
+  // out — that is the only test this frame exists to fail.
   _bestiary: { t: 8, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
     fx: () => {
-      // SPEC3 Â§B raises the line-up to the whole nine-strong non-boss roster, ordered by
-      // MASS so neighbouring silhouettes are never the same height â€” nine units that all
+      // SPEC3 §B raises the line-up to the whole nine-strong non-boss roster, ordered by
+      // MASS so neighbouring silhouettes are never the same height — nine units that all
       // read alike is the failure this frame exists to catch, and it can only be judged
       // when the biggest and the smallest are not sorted into two separate halves.
       const kinds = ['ogre', 'shield', 'ram', 'marauder', 'ironclad', 'hound',
@@ -12230,19 +14037,19 @@ const SHOT_PRESETS = {
       for (const [t, c] of [['ironclad', 4], ['ram', 1], ['ashwraith', 12], ['frostrevenant', 8],
                             ['warshaman', 4], ['ogre', 1]])
         row.appendChild(UI.bust(t, c));      // UI-2: same builder as the live card, resist pips and all
-      // "Bestiary â€” The Siege Ram incoming" overran the card's 322 px (which now ellipses
+      // "Bestiary — The Siege Ram incoming" overran the card's 322 px (which now ellipses
       // rather than bleeding, but an elided hero frame is still a bad hero frame).
-      if (ttl) ttl.innerHTML = 'Bestiary <em>â€”</em> the roster';
+      if (ttl) ttl.innerHTML = 'Bestiary <em>—</em> the roster';
     } },
   _spawn:  { t: 40,  bare: true, builds: [], cam: { pos: [52, 34, 4], look: [86, 8, -52] } },
-  // â•â• VFX/AUDIO-3 inspection rigs (not in the default suite) â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // `_elem` â€” the element wheel as a LINE-UP: the same blow landing on a body that takes
+  // ══ VFX/AUDIO-3 inspection rigs (not in the default suite) ═══════════════════
+  // `_elem` — the element wheel as a LINE-UP: the same blow landing on a body that takes
   // it and on a body that does not, four schools in a row, so the two readings can be
   // compared inside one frame rather than across two runs. Left to right:
-  //   pierce â†’ brute (the pale spark baseline) Â· frost revenant (.6 â€” it skitters off)
-  //   crush  â†’ ironclad (âˆ’.25 â€” chips fly)     Â· ram (.8 â€” a dull nothing)
-  //   fire   â†’ brute (ember burst)             Â· ash wraith (.85 â€” the embers deflect, cold)
-  //   storm  â†’ brute (violet crack)            Â· ironclad (.85 â€” the arc earths itself)
+  //   pierce → brute (the pale spark baseline) · frost revenant (.6 — it skitters off)
+  //   crush  → ironclad (−.25 — chips fly)     · ram (.8 — a dull nothing)
+  //   fire   → brute (ember burst)             · ash wraith (.85 — the embers deflect, cold)
+  //   storm  → brute (violet crack)            · ironclad (.85 — the arc earths itself)
   // The storm pair deliberately goes through VFX.zapHit, not VFX.hit, because the deferral
   // from the strike to the deflection path is the thing being proven.
   _elem: { t: 8, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
@@ -12267,24 +14074,24 @@ const SHOT_PRESETS = {
       }
       // ...then let a fifth of a second pass. Every effect in this section is a closed form
       // of its AGE, so a rig that fires at the render's own virtual time catches all eight
-      // of them on their birth frame â€” every spark still at the muzzle, every ring at radius
+      // of them on their birth frame — every spark still at the muzzle, every ring at radius
       // zero. Three ticks puts all eight between a fifth and four fifths of their own life,
       // which is the only window where a hit and a shrug can be compared side by side.
       for (let i = 0; i < 3; i++) tickSim();
       const dm = D0 + (P.has('bi') ? +P.get('bi') : (PAIRS.length - 1) / 2) * GAP;
       G.pathPos(dm, _v3);
       const mx = _v3.x, mz = _v3.z, gy = G.groundY(mx, mz), tn = G.pathTan(dm);
-      // 15 held six of the eight pairs; the line is 8 Ã— 3.6 u wide and the ram on the end
+      // 15 held six of the eight pairs; the line is 8 × 3.6 u wide and the ram on the end
       // was cropped, which defeats a rig whose whole point is the side-by-side comparison.
       const c = SHOT_PRESETS._elem.cam, ZM = +(P.get('zm') || 22);
       c.look = [mx, gy + 1.4, mz];
       c.pos = [mx - tn.z * ZM + tn.x * ZM * 0.42, gy + ZM * 0.42, mz + tn.x * ZM + tn.z * ZM * 0.42];
     } },
-  // `_aura` â€” the three CONTINUOUS presences (SPEC3 Â§B), which no single-frame effect rig
+  // `_aura` — the three CONTINUOUS presences (SPEC3 §B), which no single-frame effect rig
   // can show: the war shaman mid-chant with his ring lit and motes coming off the staff, a
   // file of ash wraiths dragging their shroud, and the ram grinding dust off both axles.
   // Staged then SIMULATED for a second and a half, because all three are emitted per sim
-  // tick â€” a rig that only stages them would prove nothing.
+  // tick — a rig that only stages them would prove nothing.
   _aura: { t: 8, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
     fx: () => {
       const D0 = 44;
@@ -12307,7 +14114,7 @@ const SHOT_PRESETS = {
       c.look = [mx, gy + 1.2, mz];
       c.pos = [mx - tn.z * ZM + tn.x * ZM * 0.85, gy + ZM * 0.46, mz + tn.x * ZM + tn.z * ZM * 0.85];
     } },
-  // `_wardfx` â€” the Elemental Ward shimmer at GAMEPLAY zoom. `_ward` frames the banner, and
+  // `_wardfx` — the Elemental Ward shimmer at GAMEPLAY zoom. `_ward` frames the banner, and
   // at that framing the horde is a red smear at the top of the shot; the tint pulse lives on
   // the bodies, so it needs its own rig. Same staging as `_ward`, then the column is walked
   // down the road and the lens put on it.
@@ -12331,14 +14138,14 @@ const SHOT_PRESETS = {
       c.pos = [mx + tn.x * ZM * 0.62 + tn.z * ZM * 0.62, gy + ZM * 0.40,
                mz + tn.z * ZM * 0.62 - tn.x * ZM * 0.62];
     } },
-  // â•â• SPEC3 Â§D omen rigs. Both are STAGED rather than simulated: reaching the wave-5
+  // ══ SPEC3 §D omen rigs. Both are STAGED rather than simulated: reaching the wave-5
   // muster honestly costs ~500 sim seconds, and the frame is about the CARDS, not about
-  // how the horde got there. The engine does all the work â€” the preset only moves the
+  // how the horde got there. The engine does all the work — the preset only moves the
   // clock to a wave-5 prewave and lets omenTick() deal the hand it would really deal.
   _omens:  { t: 2, builds: 'std', cam: { pos: [16, 31, 26], look: [36, -1, -16] },
     fx: () => { state.wave = OMEN_FROM - 1; state.phase = 'prewave'; state.countdown = 9; state.gold = 260;
       // A phys-leaning ledger so Elemental Ward, if the seed deals it, names a real school
-      // instead of the alphabetical fallback â€” the card's copy is run-dependent by design.
+      // instead of the alphabetical fallback — the card's copy is run-dependent by design.
       dmgBySchool.pierce += 1400; dmgBySchool.crush += 300;
       omenTick();
       // The rig also has to stage the CHOICE having been made: half the frame's job is the
@@ -12356,7 +14163,7 @@ const SHOT_PRESETS = {
       G.dmgBySchool.pierce += 1000;                      // a phys-leaning run, so the ward bites
       startWave(OMEN_FROM);
       for (let i = 0; i < 300; i++) tickSim(); } },
-  // â•â• SPEC2 Â§E map presets. CORE's SHOT_MAPS binds these names to their map, so
+  // ══ SPEC2 §E map presets. CORE's SHOT_MAPS binds these names to their map, so
   // `-Shots battle2` needs no -Extra; `&map=` still overrides for cross-checks.
   overview2: { t: 2, builds: [], cam: { tgt: [-2, 4, -6], dist: 158 } },
   // Finale inspection rig: puts the ACTIVE map's last-wave boss line-up on the road at
@@ -12373,7 +14180,7 @@ const SHOT_PRESETS = {
         G.pathPos(e.d, _v3, e.lane, 0); e.px = _v3.x; e.pz = _v3.z;
         e.hp = e.maxhp * 0.62;
       });
-      // ARMIES r7: he used to stand alone on an empty road, so his mass read as nothing â€”
+      // ARMIES r7: he used to stand alone on an empty road, so his mass read as nothing —
       // a boss is only "huge" next to something man-sized. Give him a column of chaff at his
       // heels and a knight line in front of him, all real units on the real road.
       const chaff = [['grunt', 16, 1], ['shield', 5, 2], ['brute', 3, 3]];
@@ -12407,21 +14214,21 @@ const SHOT_PRESETS = {
   // into the lens at once, which is the one thing this map has that the Vale does not.
   // Hand-pointed rather than auto-framed: on Frostfell the fight happens on BOTH approach
   // roads at once, east of the junction, and the orbit camera can only ever look west.
-  // ROSTER retime 620 -> 760: SPEC3 Â§B puts a siege ram in Frostfell's wave 7, and a
+  // ROSTER retime 620 -> 760: SPEC3 §B puts a siege ram in Frostfell's wave 7, and a
   // 2500-hit-point crush-proof machine holds that wave open for a further eighty seconds.
   // At 620 the hero frame was one surviving unit on an empty road; 760 lands mid wave 8
   // with ~120 on both approaches, which is what this shot exists to show.
   battle2:  { t: 760, builds: 'm2', cam: { pos: [-18, 44, 46], look: [38, 2, 4] } },
   // Ember's hero frame is the FORK, with the tower island in the near field and a column on
   // each arm. Hand-pointed, because the auto-framer it used to run (hordeFrame) aimed the
-  // orbit rig at the median of the "engaged" horde â€” which on this map is the tail still
+  // orbit rig at the median of the "engaged" horde — which on this map is the tail still
   // pouring out of the gate 60 u up the ramp. The camera ended up outside the rim shooting a
   // boulder field with the fight as a smear on the edge, so the framer is deleted rather
   // than patched (same lesson as battle/battle2/_pyre: hand-point the hero frames).
-  // RETIMED 900 â†’ 940, measured rather than guessed: Ember's approach is a serpentine ramp
+  // RETIMED 900 → 940, measured rather than guessed: Ember's approach is a serpentine ramp
   // and the wave walks it as one long file. At 900 all 113 alive are still ON the ramp
-  // (x 37â†’96) and nothing has reached the fork; by 980 the wave is dead. 940 is the one
-  // window where the whole survivorship â€” 75 of them â€” is through the fork and inside the
+  // (x 37→96) and nothing has reached the fork; by 980 the wave is dead. 940 is the one
+  // window where the whole survivorship — 75 of them — is through the fork and inside the
   // battery's reach, which is the only moment this map's geometry is legible in one frame.
   battle3:  { t: 940, builds: 'm3', cam: { pos: [-16, 42, 40], look: [26, 1, -26] } },
   // TOWERS asset-inspection rigs (not in the default suite; see tools\shots.ps1 -Shots)
@@ -12433,17 +14240,17 @@ const SHOT_PRESETS = {
   _cat3:   { t: 8, bare: true, builds: [[-21, 25, 'catapult', 3]], cam: { pos: [-11, 11, 36], look: [-21, 3.5, 25] } },
   _barr1:  { t: 8, bare: true, builds: [[-40, 4, 'barracks', 1]], cam: { pos: [-30, 12, 15], look: [-40, 2.0, 4] } },
   _barr3:  { t: 8, bare: true, builds: [[-40, 4, 'barracks', 3]], cam: { pos: [-30, 12, 15], look: [-40, 2.5, 4] } },
-  // TOWERS-2 rigs (SPEC2 Â§C). A lone tower cannot hold the road for 230 s, so each rig
+  // TOWERS-2 rigs (SPEC2 §C). A lone tower cannot hold the road for 230 s, so each rig
   // pairs its subject with the proven L3 barracks at 50,3: the horde piles into those
   // knights and the new tower fights over a real scrum instead of empty meadow.
-  // `fx` fires the subject on the spot â€” chain lightning lives 60-90 ms, so waiting for
+  // `fx` fires the subject on the spot — chain lightning lives 60-90 ms, so waiting for
   // the sim to happen to end mid-arc would be a one-in-twenty shot.
   _storm:  { t: 230, bare: true, builds: [[50, 3, 'barracks', 3], [45, -2, 'storm', 3]],
     cam: { pos: [34, 14, -14], look: [46, 6, -1] },
     fx: () => { const tw = G.towersList.find(t => t.type === 'storm');
       if (tw) { tw.cdT = 0; G.fireTower(tw); frameFight(SHOT_PRESETS._storm.cam, tw, 9, -1); } } },
   // the pyre rig fires a pot, runs the sim on until it lands and lights the ground, then
-  // lobs a second one â€” so the frame carries the whole loop: davit, pot in the air, fire
+  // lobs a second one — so the frame carries the whole loop: davit, pot in the air, fire
   // hand-framed: the auto-framer put this one inside a canopy (the tree line hugs the
   // road on the pyre's east flank), so the camera stands off to the west like _storm
   _pyre:   { t: 230, bare: true, builds: [[50, 3, 'barracks', 3], [45, -2, 'pyre', 3]],
@@ -12451,7 +14258,7 @@ const SHOT_PRESETS = {
     // STAGED, like _win/_lose: where the horde's front happens to be at t=230 depends on
     // every kill that came before it, so waiting for a lob to line itself up is a coin
     // toss. The rig lays a burning patch on the road in front of the tower and puts a
-    // second pot mid-arc above it â€” the real code paths, at a chosen moment.
+    // second pot mid-arc above it — the real code paths, at a chosen moment.
     fx: () => {
       const py = G.towersList.find(t => t.type === 'pyre');
       if (!py) return;
@@ -12490,9 +14297,9 @@ const SHOT_PRESETS = {
         VFX.firePatch(py.x + dx, py.z + dz, P.rad);
       }
     } },
-  // â•â• VFX-2 weather rigs (SPEC2 Â§E). Low cameras: the falling field is a NEAR-FIELD cue
+  // ══ VFX-2 weather rigs (SPEC2 §E). Low cameras: the falling field is a NEAR-FIELD cue
   // and the overview presets deliberately fade it out, so neither of those frames can
-  // judge it. `-Shots _snow,_ash` â€” SHOT_MAPS binds each to its map.
+  // judge it. `-Shots _snow,_ash` — SHOT_MAPS binds each to its map.
   _snow:   { t: 120, bare: true, builds: [], cam: { pos: [40, 11, 20], look: [10, 2.5, -2] } },
   _ash:    { t: 70, bare: true, builds: [[-12, -6, 'pyre', 3]], cam: { pos: [10, 10, 22], look: [-18, 2.5, -4] },
     // a live patch so the ash frame also carries the burning-ground dressing
@@ -12507,12 +14314,12 @@ const SHOT_PRESETS = {
   _new1:   { t: 8, bare: true, builds: [[22, 18, 'storm', 1], [30, 18, 'pyre', 1], [26, 21, 'banner', 1]],
     cam: { pos: [26, 13, 40], look: [26, 3.5, 19] } },
   _sel:    { t: 40, builds: [[26, 21, 'ballista', 3]], cam: { pos: [38, 16, 36], look: [26, 1, 21] }, ui: () => { state.selTower = 0; UI.buildMenu(); } },
-  // garrison panel for the two towers that carry no damage stat at all (SPEC2 Â§C): the
+  // garrison panel for the two towers that carry no damage stat at all (SPEC2 §C): the
   // warbanner's panel is built first and the pyre's is left on screen, so one shot walks
   // both of the new stat-row branches and any error in either fails the log.
   _sel2:   { t: 40, builds: [[26, 21, 'pyre', 2], [16, -3, 'banner', 3]], cam: { pos: [38, 16, 36], look: [26, 1, 21] },
     ui: () => { state.selTower = 1; UI.buildMenu(); state.selTower = 0; UI.buildMenu(); } },
-  // build bar with nothing selected â€” the always-available shop (SPEC2 Â§A)
+  // build bar with nothing selected — the always-available shop (SPEC2 §A)
   _selp:   { t: 40, builds: [], cam: { pos: [38, 16, 36], look: [26, 1, 21] }, ui: () => { UI.buildMenu(); } },
   // placement mode: ghost + footprint plate + range ring on a buildable rise, gold unspent
   _place:  { t: 40, builds: [[16, -3, 'archer', 2]], cam: { tgt: [12, 2, -6], dist: 48 },
@@ -12520,35 +14327,109 @@ const SHOT_PRESETS = {
   // the same frame refused: plate + ring turn red and the writ says why (here: spacing)
   _placeX: { t: 40, builds: [[16, -3, 'archer', 2]], cam: { tgt: [12, 2, -6], dist: 48 },
     ui: () => { G.enterPlace('ballista'); G.setPlaceAt(18, -5); } },
-  // bot harness (SPEC2 Â§F): no free builds â€” &plan= ops buy with real gold as it accrues
+  // ══ SPEC4 §C/§D critic rigs. All three stage the ability MID-EFFECT: the preset ticks the
+  // sim to a full road, acts, then ticks a few more frames by hand (the idiom _finale
+  // already uses) so the capture lands on the moment worth judging rather than on the
+  // aftermath. Cameras are computed from where the act actually happened, because the
+  // horde's position at t=250 is a property of the balance tables, not of this table.
+  // The camera is the game's OWN orbit rig (tgt+dist), not a hand-aimed pos/look: these
+  // three act at whatever point the balance tables happen to have put the column at t=250,
+  // and a hand-picked bearing there lands inside the cliff about half the time (the lesson
+  // _pyre and `battle` both learned). The orbit rig cannot.
+  _rally:  { t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 43 },
+    fx: () => {
+      const [x, z] = openRoad(20);
+      const v = G.canCast('rally', x, z);
+      if (!v.ok) console.log('CASTWARN rally ' + x.toFixed(1) + ',' + z.toFixed(1) + ' — ' + v.reason);
+      G.castPower('rally', x, z);
+      for (let i = 0; i < 60; i++) tickSim();            // let them run in and lock horns
+      SHOT_PRESETS._rally.cam.tgt = [x, G.groundY(x, z) + 2, z + 4];
+    } },
+  // the strike itself, two ticks after impact: the column is standing, the fire is not
+  _smite:  { t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 52 },
+    fx: () => {
+      const [x, z] = openRoad(20);
+      G.castPower('smite', x, z);
+      for (let i = 0; i < Math.round(G.POWERS.smite.tele * TPS) + 2; i++) tickSim();
+      SHOT_PRESETS._smite.cam.tgt = [x, G.groundY(x, z) + 2, z + 8];
+    } },
+  // all four slots armed on the road — caltrops, tar, and two kegs, one of them mid-blast
+  _traps:  { t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 60 },
+    fx: () => {
+      const lay = (k, ahead) => {
+        const x = roadAhead(ahead), z = _v3.z;
+        const v = G.canTrap(k, x, z);
+        if (!v.ok) console.log('TRAPWARN ' + k + ' ' + x.toFixed(1) + ',' + z.toFixed(1) + ' — ' + v.reason);
+        G.layTrap(k, x, z, true);                        // a preset is a POSE, not a purchase
+        return [x, z];
+      };
+      // three strung DOWN-road of the column's leader — where a player lays them, in front
+      // of what is coming — and one under the front rank, which is the one that goes off
+      const [kx, kz] = lay('keg', 7);                    // the first one the horde will reach
+      lay('caltrops', 14); lay('tar', 20); lay('keg', 27);
+      // ...then let the column WALK ONTO it. A fixed tick count would either catch the keg
+      // unsprung or catch its blast already faded, and the leader's exact position at t=250
+      // is a property of the balance tables rather than of this rig. The cap terminates it
+      // whatever those tables say.
+      for (let i = 0; i < 260 && G.traps.length >= 4; i++) tickSim();
+      for (let i = 0; i < 2; i++) tickSim();             // two ticks on, so the blast is fresh
+      SHOT_PRESETS._traps.cam.tgt = [kx, G.groundY(kx, kz) + 2, kz + 9];
+      // ...and a FOURTH being sited, so the one frame carries the whole system: the inverted
+      // gate accepting road (green plate + ring where a tower would be refused outright), the
+      // trap ghost, and the writ. Otherwise the §D placement path ships with no critic frame.
+      G.enterTrap('caltrops');
+      const gx = roadAhead(33), gz = _v3.z;
+      G.setPlaceAt(gx, gz);
+    } },
+  // bot harness (SPEC2 §F): no free builds — &plan= ops buy with real gold as it accrues
   bot:     { t: 400, builds: [], plan: true, cam: { tgt: [-2, 4, -8], dist: 152 } },
-  // POLISH: winnability rig â€” every plot at tier 3. `-Shots _full -T 1900` must end in
+  // POLISH: winnability rig — every plot at tier 3. `-Shots _full -T 1900` must end in
   // phase "won" with lives > 0, which is the standing proof that the campaign is beatable.
   _full:   { t: 900, bare: true, builds: [[32, -31, 'archer', 3], [16, -3, 'ballista', 3], [50, 3, 'archer', 3], [26, 21, 'catapult', 3],
       [2, 20, 'barracks', 3], [-21, 25, 'catapult', 3], [-40, 4, 'ballista', 3], [-58, 17, 'archer', 3]],
     cam: { tgt: [-2, 4, -8], dist: 152 } },
   // UI overlay-inspection rigs (not in the default suite; run with -Shots _win,_lose,_gear).
   // The end screens are unreachable inside a shot's tick budget, so the stats are staged.
-  // 29 of 32 lives = 91% â†’ three stars, and the staged record (two) makes it a NEW best,
+  // 29 of 32 lives = 91% → three stars, and the staged record (two) makes it a NEW best,
   // so this one frame carries the star row, the best-ever line and the next-road call.
   _win:    { t: 0, builds: [], cam: { tgt: [-2, 4, -8], dist: 132 },
     ui: () => { UI.setProgress({ 1: 2 });
-      // 29 of 32 lives means THREE banners fell â€” staging leaked:0 alongside it put a
+      // 29 of 32 lives means THREE banners fell — staging leaked:0 alongside it put a
       // contradiction on the plate (a Flawless medal over a "breached the gate: 0" row that
       // the garrison row disagreed with). Consistent staging: 3 stars, no Flawless.
       Object.assign(state, { kills: 1874, leaked: 3, wave: 10, lives: 29, phase: 'won' }); UI.showEnd(true); } },
+  // `&endless=1` restages this same rig as an ENDLESS defeat (SPEC4 §E): different title,
+  // different sub, and the extra tally row. It is the one end state a real run can only
+  // reach after a finale plus a dozen more waves, so it would otherwise ship unlooked-at.
   _lose:   { t: 0, builds: [], cam: { tgt: [-2, 4, -8], dist: 132 },
-    ui: () => { UI.setProgress({ 1: 1 });
-      Object.assign(state, { kills: 613, leaked: 21, wave: 7, lives: 0, phase: 'lost' }); UI.showEnd(false); } },
-  // SPEC2 Â§E map select with every state on screen at once: stars already earned on the
+    ui: () => { UI.setProgress({ 1: state.endless ? 3 : 1 });
+      Object.assign(state, state.endless ? { kills: 4180, leaked: 38, wave: 17, lives: 0, phase: 'lost' }
+                                         : { kills: 613, leaked: 21, wave: 7, lives: 0, phase: 'lost' });
+      UI.showEnd(false); } },
+  // SPEC2 §E map select with every state on screen at once: stars already earned on the
   // Vale, Frostfell opened by that win, Ember Wastes still chained. The record is staged in
-  // memory â€” the harness never reads whatever this machine happens to have played.
-  // SPEC3 Â§E: the chooser also carries the war seed + die, because the seed belongs to the
-  // RUN and this is the last screen before one starts â€” this rig is where that chrome is judged.
+  // memory — the harness never reads whatever this machine happens to have played.
+  // SPEC3 §E: the chooser also carries the war seed + die, because the seed belongs to the
+  // RUN and this is the last screen before one starts — this rig is where that chrome is judged.
+  // SPEC4 §E: the chooser now also carries the ENDLESS record on a card and the DAILY WAR
+  // chip. Both are staged in memory — the endless line on the Vale, a fought-but-lost daily
+  // — so the frame shows the states a real record would reach without this machine ever
+  // having played them. The date is pinned in CORE under the harness (20260101), so the
+  // chip's seed and road are the same on any machine on any day.
   _maps:   { t: 0, builds: [], cam: { tgt: [-2, 4, -18], dist: 158 },
-    ui: () => { state.phase = 'title'; UI.setProgress({ 1: 2 }); UI.showMaps(); } },
+    ui: () => { state.phase = 'title';
+      UI.setProgress({ 1: 2 }, { endless: { 1: 23 }, daily: { 20260101: { map: 2, wave: 7, won: false, stars: 0 } } });
+      UI.showMaps(); } },
+  // SPEC4 §E: endless, played for real rather than staged. The kitchen-sink tier-3 line
+  // holds the Vale's finale, takes "Hold the line", and the rig then ticks ON until the
+  // counter reads three waves past the end — `until` instead of a hand-picked `t`, so a
+  // balance change that moves where wave 13 falls cannot silently empty this frame.
+  _endless:{ t: 20, endless: true, until: 13, untilMax: 2600, untilAfter: 30,
+    builds: [[32, -31, 'archer', 3], [16, -3, 'ballista', 3], [50, 3, 'archer', 3], [26, 21, 'catapult', 3],
+      [2, 20, 'barracks', 3], [-21, 25, 'catapult', 3], [-40, 4, 'ballista', 3], [-58, 17, 'archer', 3]],
+    cam: { pos: [16, 31, 26], look: [36, -1, -16] } },
   // tier-1 tower so the upgrade path shows its stat deltas, plus the settings sheet open.
-  // SPEC3 Â§C/Â§F: it doubles as the rig for the two garrison-side additions â€” the targeting
+  // SPEC3 §C/§F: it doubles as the rig for the two garrison-side additions — the targeting
   // rail (staged off its default so the lit state is legible) and the full-muster refusal,
   // which is otherwise unreachable in a shot because a preset widens the muster to fit its
   // own composition. One standard, one slot, hammer in hand: the writ has to answer.
@@ -12561,22 +14442,24 @@ const SHOT_PRESETS = {
     ui: () => { state.selTower = 0;
       G.towersList[0].mode = 'strong';
       UI.buildMenu(); $('settings').classList.remove('hidden'); $('btnGear').classList.add('on');
-      UI.place({ type: 'ballista', ok: false, reason: canPlace(26, 6).reason || 'The muster is full' }); } },
+      // The writ has to answer with the MUSTER copy (roster + price of the next slot), which
+      // UI.place selects on `why` — so the staged refusal has to carry it, not just prose.
+      UI.place(Object.assign({ type: 'ballista' }, canPlace(26, 6), { ok: false, why: 'mfull', reason: L('cp.mfull') })); } },
 };
 // [x, z, type, level] since free placement landed. The coordinates are the eight old fixed
 // plots, so every shipped frame keeps its composition; levels are literal (see placeTower).
-// THREE of the inherited plot coordinates (37,-31 Â· 30,25 Â· -24,29) turned out to sit ON the
-// road surface â€” the old plot markers were drawn offset from their anchor, so the raw anchors
+// THREE of the inherited plot coordinates (37,-31 · 30,25 · -24,29) turned out to sit ON the
+// road surface — the old plot markers were drawn offset from their anchor, so the raw anchors
 // were never buildable ground. They only survived the port because preset builds are `free`
 // (validity-gate bypassed), which meant three shipped frames had a tower standing in the
-// middle of the highway. Each is nudged to the nearest site G.canPlace() accepts (â‰ˆ5u, road
+// middle of the highway. Each is nudged to the nearest site G.canPlace() accepts (≈5u, road
 // clearance 5.1/5.6/5.4) and the inspection-rig cameras moved by the same delta, so the
 // framing is unchanged. See BUILDWARN in runShot: a preset that builds on refused ground now
 // says so in the log instead of failing silently.
 const STD_BUILDS = [[32, -31, 'archer', 3], [16, -3, 'archer', 1], [50, 3, 'ballista', 1], [26, 21, 'catapult', 1],
   [2, 20, 'barracks', 3], [-21, 25, 'ballista', 2], [-40, 4, 'ballista', 1], [-58, 17, 'archer', 2]];
 // The hero frame's own composition: STD_BUILDS plus a second L3 barracks up-road, so the
-// reference's head-on clash â€” blue knights holding against the crimson column â€” is actually
+// reference's head-on clash — blue knights holding against the crimson column — is actually
 // IN the frame instead of behind the lens. (Balance presets keep using STD_BUILDS.)
 const BATTLE_BUILDS = STD_BUILDS.concat([[35, -12, 'barracks', 3]]);
 // Mid-campaign compositions for the new maps. Every coordinate was authored against
@@ -12586,25 +14469,32 @@ const BATTLE_BUILDS = STD_BUILDS.concat([[35, -12, 'barracks', 3]]);
 const M2_BUILDS = [[6, -2, 'archer', 3], [2, 0, 'banner', 1], [-6, 0, 'ballista', 3],
   [2, -6, 'catapult', 1], [10, -6, 'barracks', 2], [28, -6, 'archer', 3],
   [20, 6, 'ballista', 2], [36, 6, 'storm', 2]];
-// Ember Wastes: the island of ground inside the fork â€” every tower on it reaches the
+// Ember Wastes: the island of ground inside the fork — every tower on it reaches the
 // canyon AND the loop, which is the whole reason the fork is shaped that way.
 const M3_BUILDS = [[-28, -6, 'ballista', 3], [-20, -6, 'banner', 1], [-12, -6, 'storm', 2],
   [-8, -12, 'archer', 3], [4, -6, 'catapult', 1], [12, -6, 'archer', 2],
   [-40, -12, 'barracks', 2], [28, -12, 'pyre', 1]];
-// â”€â”€ bot harness v2 (SPEC2 Â§F) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// `&plan=37,-31:archer,up:0` â€” ops run IN ORDER, each waiting until the purse can pay for
+// ── bot harness v2 (SPEC2 §F) ─────────────────────────────────────────
+// `&plan=37,-31:archer,up:0` — ops run IN ORDER, each waiting until the purse can pay for
 // it out of real bounty income, so a plan is a build ORDER, not a cheat sheet. An op that
 // could never work (bad type, refused ground, tower already at tier 3) is skipped with a
 // BOTSKIP note so the balance matrix can see it went unbuilt.
-// SPEC3 Â§C/Â§G adds `muster`: buys one more standard slot when the purse can pay, and holds
-// the queue until it can â€” a plan that wants eight towers must say where the seventh slot
+// SPEC3 §C/§G adds `muster`: buys one more standard slot when the purse can pay, and holds
+// the queue until it can — a plan that wants eight towers must say where the seventh slot
 // came from, exactly like a human paying for it.
+// SPEC4 §C/§D adds two ops the DEFAULT PLANS DO NOT USE: `cast:q,x,z` calls a power at a
+// point (skipping if its cooldown refuses) and `trap:keg,x,z` lays a trap on the road. They
+// exist so the powers and the traps CAN be measured; the balance matrix keeps measuring the
+// campaign without them, because a bot that casts is not the run the r8/r9 rows describe.
 function parsePlan(str) {
-  const ops = [], re = /(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*:\s*([a-z]+)|up\s*:\s*(\d+|\*)|(muster)/gi;
+  const ops = [], re = /cast\s*:\s*([a-z])\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)|trap\s*:\s*([a-z]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)|(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*:\s*([a-z]+)|up\s*:\s*(\d+|\*)|(muster)/gi;
   let m;
-  while ((m = re.exec(str))) ops.push(m[5] !== undefined ? { k: 'muster' }
-    : m[4] === undefined ? { k: 'place', x: +m[1], z: +m[2], t: m[3].toLowerCase() }
-    : m[4] === '*' ? { k: 'upall' } : { k: 'up', i: +m[4] });
+  while ((m = re.exec(str))) ops.push(
+      m[1] !== undefined ? { k: 'cast', key: m[1].toLowerCase(), x: +m[2], z: +m[3] }
+    : m[4] !== undefined ? { k: 'trap', t: m[4].toLowerCase(), x: +m[5], z: +m[6] }
+    : m[11] !== undefined ? { k: 'muster' }
+    : m[10] === undefined ? { k: 'place', x: +m[7], z: +m[8], t: m[9].toLowerCase() }
+    : m[10] === '*' ? { k: 'upall' } : { k: 'up', i: +m[10] });
   return ops;
 }
 function botStep(ops, placed) {
@@ -12612,7 +14502,7 @@ function botStep(ops, placed) {
     const op = ops[0], skip = (why) => { console.log('BOTSKIP ' + why); ops.shift(); };
     if (op.k === 'muster') {
       const c = G.musterCost();
-      if (c === undefined) { skip('muster â€” already at the cap'); continue; }
+      if (c === undefined) { skip('muster — already at the cap'); continue; }
       if (state.gold < c) return;                        // affordable later; hold the order
       G.raiseMuster();
     } else if (op.k === 'place') {
@@ -12620,11 +14510,28 @@ function botStep(ops, placed) {
       if (!def) { skip('unknown tower "' + op.t + '"'); continue; }
       const v = canPlace(op.x, op.z);
       // "the muster is full" is a WAIT, not a refusal: a later `muster` op frees the slot.
-      if (!v.ok && v.reason === 'The muster is full') return;
-      if (!v.ok) { skip(op.x + ',' + op.z + ':' + op.t + ' â€” ' + v.reason); continue; }
+      // Keyed on `why`, not on the sentence — the sentence is translated copy now (SPEC4 §B),
+      // so a `&lang=fr` balance run would otherwise stop treating this as a wait.
+      if (!v.ok && v.why === 'mfull') return;
+      if (!v.ok) { skip(op.x + ',' + op.z + ':' + op.t + ' — ' + v.reason); continue; }
       if (state.gold < def.cost) return;               // affordable later; hold the order
       placeTower(op.x, op.z, op.t);
       placed.push(G.towersList[G.towersList.length - 1]);
+    } else if (op.k === 'cast') {
+      const pw = G.PW_KEYS.find(k => G.POWERS[k].key === op.key);
+      if (!pw) { skip('unknown power "' + op.key + '"'); continue; }
+      const v = G.canCast(pw, op.x, op.z);
+      if (!v.ok && v.why === 'cd') return;              // still on cooldown: hold the order
+      if (!v.ok) { skip('cast:' + op.key + ' — ' + v.reason); continue; }
+      G.castPower(pw, op.x, op.z);
+    } else if (op.k === 'trap') {
+      const D = G.TRAP_DEFS[op.t];
+      if (!D) { skip('unknown trap "' + op.t + '"'); continue; }
+      const v = G.canTrap(op.t, op.x, op.z);
+      if (!v.ok && v.why === 'tfull') return;           // a sprung trap frees the slot: wait
+      if (!v.ok) { skip('trap:' + op.t + ' — ' + v.reason); continue; }
+      if (state.gold < D.cost) return;                  // affordable later; hold the order
+      G.layTrap(op.t, op.x, op.z);
     } else if (op.k === 'upall') {
       // terminal sink op: models a human who keeps upgrading late-game instead of
       // banking gold. Upgrades the oldest under-levelled tower whenever affordable;
@@ -12639,8 +14546,8 @@ function botStep(ops, placed) {
       return; // upall stays queued whether or not it bought something
     } else {
       const tw = placed[op.i];
-      if (!tw) { skip('up:' + op.i + ' â€” no such placed tower'); continue; }
-      if (tw.level >= 3) { skip('up:' + op.i + ' â€” already at tier 3'); continue; }
+      if (!tw) { skip('up:' + op.i + ' — no such placed tower'); continue; }
+      if (tw.level >= 3) { skip('up:' + op.i + ' — already at tier 3'); continue; }
       const cost = Math.round(TOWER_DEFS[tw.type].cost * (tw.level === 1 ? 0.8 : 1.3));
       if (state.gold < cost) return;
       upgradeTower(tw);
@@ -12680,19 +14587,21 @@ function runShot(name) {
       : pre.builds === 'm2' ? M2_BUILDS : pre.builds === 'm3' ? M3_BUILDS : pre.builds;
     // A staged composition is a POSE, not a purchase: widen the muster to fit it so the
     // BUILDWARN oracle below still judges the GROUND rather than reporting a full muster
-    // eight times (SPEC3 Â§C). A `plan` preset stages nothing, so the bot still has to buy
+    // eight times (SPEC3 §C). A `plan` preset stages nothing, so the bot still has to buy
     // every slot it uses.
     if (builds.length > state.muster) state.muster = builds.length;
     for (const [bx, bz, ty, lv] of builds) {
       // Preset builds are `free` (no purse, no validity gate) so a shot can stage any
-      // composition â€” but a site the player could never buy is almost always a mistake in
+      // composition — but a site the player could never buy is almost always a mistake in
       // the preset table, not an intent. Say so out loud rather than quietly shipping a
       // tower standing in the road.
       const v = canPlace(bx, bz);
-      if (!v.ok) console.log('BUILDWARN ' + bx + ',' + bz + ':' + ty + ' â€” ' + v.reason);
+      if (!v.ok) console.log('BUILDWARN ' + bx + ',' + bz + ':' + ty + ' — ' + v.reason);
       placeTower(bx, bz, ty, lv, true);
     }
     state.phase = 'prewave'; state.countdown = 3;
+    // SPEC4 §E: a preset may declare that its run does not stop at the finale.
+    if (pre.endless) state.endless = true;
     const ops = pre.plan ? parsePlan(P.get('plan') || '') : null, placed = [];
     const tSec = P.has('t') ? parseFloat(P.get('t')) : pre.t;
     const ticks = Math.round(tSec * TPS);
@@ -12703,6 +14612,17 @@ function runShot(name) {
     }
     if (ops) { const left = ops.filter(o => o.k !== 'upall').length;
       if (left) console.log('BOTSKIP ' + left + ' op(s) never became affordable'); }
+    // `until`: keep ticking until the run REACHES a wave, then a fixed settle so the road
+    // has a column on it. A shot about wave 13 cannot be pinned to a `t` — every balance
+    // pass moves where wave 13 falls, and a stale `t` empties the frame instead of failing
+    // it. Capped by `untilMax` seconds, and it stops the instant the run does.
+    if (pre.until) {
+      const cap = Math.round((pre.untilMax || 2400) * TPS);
+      let i = 0;
+      for (; i < cap && state.wave < pre.until && state.phase !== 'won' && state.phase !== 'lost'; i++) tickSim();
+      for (let j = 0; j < Math.round((pre.untilAfter || 0) * TPS) && state.phase !== 'won' && state.phase !== 'lost'; j++) tickSim();
+      console.log('UNTILLOG target=' + pre.until + ' reached=' + state.wave + ' phase=' + state.phase + ' ticks=' + i);
+    }
     if (pre.fx) pre.fx();
     if (pre.ui) pre.ui();
   }
@@ -12710,8 +14630,8 @@ function runShot(name) {
   if (c.pos) { CAM.free = true; camera.position.set(...c.pos); camera.lookAt(...c.look); }
   else { CAM.tx = c.tgt[0]; CAM.ty = c.tgt[1]; CAM.tz = c.tgt[2]; CAM.dist = c.dist; }
   UI.sync();
-  // `bare`: strip the bottom chrome. The build bar is PERSISTENT now (SPEC2 Â§A), so it sits
-  // over the bottom-centre of every in-game frame â€” which is right for the gameplay shots
+  // `bare`: strip the bottom chrome. The build bar is PERSISTENT now (SPEC2 §A), so it sits
+  // over the bottom-centre of every in-game frame — which is right for the gameplay shots
   // and wrong for the asset-inspection rigs, whose entire subject it was covering. Runs
   // after UI.sync() because sync() re-shows the bar.
   if (pre.bare) for (const id of ['buildMenu', 'towerMenu', 'placeBar', 'hint']) $(id).classList.add('hidden');
@@ -12747,4 +14667,4 @@ else {
   if (P.has('auto')) UI.startGame(false); else if (P.has('maps')) UI.showMaps();
   UI.sync(); requestAnimationFrame(frame);
 }
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• END SECTION: MAIN â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════ END SECTION: MAIN ══════════════════════

@@ -105,11 +105,16 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
            display:flex; flex-direction:column; gap:8px; }
 #wavePrev{ position:relative; width:100%; padding:8px 13px 10px; border-radius:4px;
            font-size:12.5px; opacity:1; }
-/* nowrap keeps "Wave 8 — Bruteshield" on one line; the ellipsis is the guard for a long
-   wave title (or a long enemy name in a hand-dressed card) running out past the frame. */
+/* This line was nowrap+ellipsis, and MEASURED that guard fired on 14 of 16 dispatch heads
+   and 9 of 36 wave titles in ENGLISH ("Wave 12 — The Frost Matriarch inco…") — the widest
+   is 416px against a 278px card, so the truncation was the rule, not the exception. French
+   sits in the same band, so this was never a translation regression. Two lines fit every
+   head and title in both tongues at the shipped type size; the clamp keeps the old ellipsis
+   as the backstop for a third. The card grows only on the waves that need it. */
 #wavePrev .wpT{ font-size:14.5px; letter-spacing:.1em; text-transform:uppercase; color:#3b2a10;
-                text-shadow:0 1px 0 rgba(255,248,224,.55); white-space:nowrap;
-                overflow:hidden; text-overflow:ellipsis; }
+                text-shadow:0 1px 0 rgba(255,248,224,.55); line-height:1.2;
+                display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+                overflow:hidden; overflow-wrap:break-word; }
 #wavePrev .wpT em{ font-style:normal; color:#8a5f16; }
 #wavePrev .wpS{ font-size:10.5px; letter-spacing:.19em; text-transform:uppercase; color:#6b5527; opacity:.85; margin-top:2px; }
 #wavePrev .wpRow{ display:flex; flex-wrap:wrap; gap:5px 10px; margin-top:5px; align-items:center; }
@@ -366,7 +371,10 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    ATOMIC group: a flat flex row of alternating labels and keycaps wrapped mid-pair, which
    put "Keep" at the end of one line and its "Shift" cap at the head of the next — the rail
    read as six scrambled words. `b` is the group, and it never breaks. */
-#hint{ position:absolute; left:14px; bottom:12px; max-width:min(250px,30vw); font-size:10px; letter-spacing:.09em;
+/* SPEC4 §C: the legend now stands ABOVE the powers rail, which owns the bottom-left corner.
+   It also grew two groups (powers, traps), so it is given a little more width to wrap into
+   rather than becoming a five-row column. */
+#hint{ position:absolute; left:14px; bottom:86px; max-width:min(232px,28vw); font-size:10px; letter-spacing:.09em;
        text-transform:uppercase; color:#cbbb96; opacity:.62; text-shadow:0 1px 3px #000;
        display:flex; gap:5px 11px; align-items:center; flex-wrap:wrap; }
 #hint b{ display:inline-flex; align-items:center; gap:5px; font-weight:400; white-space:nowrap; }
@@ -686,6 +694,47 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12); transition:filter .14s; }
 #btnBack:hover{ filter:brightness(1.24); }
 
+/* ── endless record + Daily War (SPEC4 §E) ─────────────────────────── */
+/* The endless line is a SECOND foot on the card, under the wave count and the stars, and it
+   only exists on a road that has one — so a card with no endless record is byte-for-byte
+   the card that shipped. The ∞ carries the mode; the number carries the brag. */
+.mCard .mE{ display:flex; align-items:center; gap:6px; margin-top:5px; font-size:10px;
+   letter-spacing:.18em; text-transform:uppercase; color:#cdb078; }
+.mCard .mE i{ font-style:normal; font-size:14px; line-height:.8; color:#e8b64c;
+   text-shadow:0 0 9px rgba(232,182,76,.55); }
+.inf{ font-style:normal; color:#e8b64c; opacity:.8; }
+/* The daily chip stands between the rule and the cards: it is the one road that is not a
+   choice, so it must not sit in the row of roads that are. One plate, three registers —
+   what it is, which road and seed, and how today went. */
+/* width:100% is LOAD-BEARING. `.overlay` is a centred column, so a child with no width is
+   shrink-to-fit — and a shrink-to-fit row holding a nowrap seed line reports a min-content
+   width wider than a 390px rail, which drags the whole chooser (title, cards, back row)
+   off the right edge. Pinning the row to the container makes the chip's percentages
+   resolve against the rail, and `min-width:0` lets the seed line ellipsis instead of
+   pushing. */
+#dailyRow{ margin-top:14px; width:100%; display:flex; justify-content:center; }
+#dailyWar{ display:flex; align-items:center; gap:14px; max-width:100%; padding:9px 20px 10px 14px;
+   border-radius:6px; text-align:left; cursor:pointer; transition:filter .15s, transform .15s; }
+#dailyWar:hover{ filter:brightness(1.2); transform:translateY(-2px); }
+#dailyWar:active{ transform:translateY(0) scale(.99); }
+/* a sun over a road: the day's war, in one glyph */
+#dailyWar .dwI{ flex:0 0 auto; width:26px; height:26px; background:50% 50%/100% 100% no-repeat;
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='9.6' r='4' fill='%23e8b64c'/><g stroke='%23e8b64c' stroke-width='1.5' stroke-linecap='round'><path d='M12 1.6v2.2M12 15.4v2.2M4.5 9.6H2.3M21.7 9.6h-2.2M6.7 4.3L5.1 2.7M18.9 2.7l-1.6 1.6M6.7 14.9l-1.6 1.6M18.9 16.5l-1.6-1.6'/></g><path d='M2 22c4-2.6 6-4.4 10-4.4S18 19.4 22 22' fill='none' stroke='%23a8977a' stroke-width='1.6' stroke-linecap='round'/></svg>");
+   filter:drop-shadow(0 0 7px rgba(232,182,76,.4)); }
+#dailyWar .dwB{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+#dailyWar .dwT{ font-size:12.5px; letter-spacing:.24em; text-transform:uppercase; color:#f2e5c6;
+   text-shadow:0 1px 0 #000; }
+#dailyWar .dwS{ font-size:11px; letter-spacing:.1em; font-variant-caps:small-caps; color:#b6a488;
+   font-variant-numeric:tabular-nums; }
+#dailyWar .dwR{ margin-left:6px; padding:3px 9px 4px; border-radius:4px; font-size:9px;
+   letter-spacing:.16em; text-transform:uppercase; color:#c2b491;
+   background:rgba(0,0,0,.4); box-shadow:inset 0 0 0 1px rgba(232,182,76,.2); }
+#dailyWar .dwR.won{ color:#3a2708; background:linear-gradient(180deg,#ffe6a2,#e8b64c 60%,#ad7a1e);
+   box-shadow:inset 0 1px 0 rgba(255,250,224,.6); }
+/* the run you are IN is the daily: the chip says so rather than inviting you to start it again */
+#dailyWar.on{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.55),
+   inset 0 1px 0 rgba(255,228,178,.16); }
+
 /* ── victory stars + next-map call to action ───────────────────────── */
 #endStars{ display:flex; justify-content:center; gap:9px; margin:13px 0 2px; }
 #endStars i{ width:38px; height:38px; display:block; background:50% 50%/100% 100% no-repeat;
@@ -696,6 +745,13 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #btnNext{ display:block; margin:12px auto 0; padding:12px 22px; font-size:min(4vw,15.5px); letter-spacing:.17em;
    background-image:linear-gradient(180deg,rgba(255,222,186,.18) 0%,rgba(255,222,186,.04) 42%,rgba(0,0,0,0) 43%),
                     var(--noise),linear-gradient(178deg,#3d5a34,#1c2b16 60%,#0e1409);
+   background-size:100% 100%,180px 180px,100% 100%; }
+/* SPEC4 §E — "Hold the line". The next road is GREEN (advance); this one is the crimson of
+   the thing still coming down the road, so the two calls under a victory plate cannot be
+   confused for each other at a glance. */
+#btnHold{ display:block; margin:10px auto 0; padding:11px 22px; font-size:min(3.8vw,14.5px); letter-spacing:.17em;
+   background-image:linear-gradient(180deg,rgba(255,222,186,.16) 0%,rgba(255,222,186,.04) 42%,rgba(0,0,0,0) 43%),
+                    var(--noise),linear-gradient(178deg,#5e2a20,#2c130e 60%,#150907);
    background-size:100% 100%,180px 180px,100% 100%; }
 #endPlate .bigBtn.sec{ margin-top:9px; padding:9px 26px; font-size:min(3.6vw,14px); letter-spacing:.18em; color:#e2d4b4;
    background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
@@ -728,6 +784,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    box-shadow:0 -7px 0 -6px rgba(232,182,76,.3), 0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.1); }
 #btnReset::after{ content:'wipes every star'; display:block; margin-top:2px; font-size:8px;
    letter-spacing:.13em; color:#a8776a; opacity:.9; }
+/* SPEC4 §B — the only player-facing string in the stylesheet. CORE stamps the chosen tongue
+   on <html data-lang>, so the generated content follows the rest of the copy. */
+:root[data-lang="fr"] #btnReset::after{ content:'efface chaque étoile'; }
 #btnReset:hover{ color:#ffd0c2; border-color:rgba(232,140,110,.7);
    box-shadow:0 -7px 0 -6px rgba(232,182,76,.3), 0 4px 14px rgba(0,0,0,.5), 0 0 16px rgba(200,70,50,.34), inset 0 1px 0 rgba(255,200,180,.14); }
 
@@ -807,6 +866,75 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #stats{ position:absolute; bottom:5px; right:8px; font:11px/1.3 ui-monospace,monospace; color:#8fd48f;
         text-shadow:0 1px 2px #000; text-align:right; }
 
+/* ── SPEC4 §D: road traps — the shop's second row ──────────────────── */
+/* Deliberately a SUB-row, not a second panel: a thinner head, half-height cards on the
+   flat-silhouette tier the phone cards already use, and a live "2/4 armed" counter in the
+   rule. The trap cards spend the same purse as the towers above them, so they have to live
+   in the same box; they are smaller because a trap is a consumable, not a fortification. */
+#buildMenu .tHd{ display:flex; align-items:center; gap:8px; margin:9px 2px 6px; }
+#buildMenu .tHl{ font-size:9.5px; letter-spacing:.26em; text-transform:uppercase; color:#c8ab6a; text-shadow:0 1px 0 #000; }
+#buildMenu .tRl{ flex:1; height:1px; background:linear-gradient(90deg,rgba(232,182,76,.34),rgba(232,182,76,.05)); }
+#buildMenu .tCt{ font-size:10px; letter-spacing:.14em; color:#c2b189; font-weight:400; font-variant-numeric:tabular-nums;
+   padding:1px 7px 2px; border-radius:9px; background:rgba(8,6,4,.62); border:1px solid rgba(232,182,76,.26); }
+#buildMenu .tCt.full{ color:#ffc2a2; border-color:rgba(230,113,79,.55); background:rgba(48,16,8,.6); }
+#buildMenu .cards.traps{ gap:7px; }
+.card.trap{ width:106px; padding:5px 5px 6px; }
+/* the DIORAMA plate, not the flat glyph. towerGlyph() flattens its subject to one ink,
+   which is right for a tower (the outline is the whole read) and useless for these three:
+   a caltrop strew, a tar pool and a barrel all silhouette to the same low smear. They keep
+   their painted plate at half height instead. */
+.card.trap .por{ display:block; height:46px; margin-bottom:4px; }
+.card.trap .porS, .card.trap .nmS{ display:none; }
+/* the trap name WRAPS to two lines rather than ellipsing. French runs ~40% longer here
+   ("Chausse-trapes", "Baril de poudre") and a 106px card cannot hold either on one line —
+   ellipsed, both read as the same "…" and the card stops naming its own trap. Two lines are
+   reserved whatever the tongue, so the row's height never depends on the language. */
+.card.trap .nm{ display:flex; align-items:center; justify-content:center;
+   font-size:10px; letter-spacing:.11em; line-height:1.14; min-height:2.28em; white-space:normal; }
+.card.trap .cost{ margin-top:3px; padding:1px 7px 1px 3px; font-size:11px; }
+.card.trap .cost .ic{ width:12px; height:12px; }
+.card.trap .kb{ top:3px; left:3px; width:14px; height:14px; line-height:14px; font-size:9px; }
+.card.trap .tags{ display:block; position:absolute; top:3px; right:3px; margin:0; }
+.card.trap .tags .tag{ padding:0; background:none; border:0; }
+.card.trap .tags .tag+.tag{ display:none; }
+.card.trap .tags .tag .tw{ display:none; }
+.card.trap .tags .tag i{ width:12px; height:12px; }
+/* "four are already armed" is a BOARD state, not a purse state — it gets its own read so a
+   player does not go looking for gold that would not help. */
+.card.trap.full{ filter:grayscale(.8) brightness(.55); }
+.card.trap.full .cost{ color:#9a8f74; border-color:rgba(232,182,76,.2); }
+/* the collapsed marketing rail carries fortifications only: a frame that has to sell the
+   game is not the frame to explain consumables in (same reasoning as #hint). */
+#buildMenu.min .tHd, #buildMenu.min .cards.traps{ display:none; }
+
+/* ── SPEC4 §C: the powers rail ─────────────────────────────────────── */
+/* Two struck-iron discs at the bottom-left. They sit ABOVE the keyboard legend rather than
+   beside it, because the legend is 250px wide and the build bar starts at ~275px on a
+   1600px frame — there is no room for a third column down there, and a power must never
+   overlap the shop it is deliberately not part of. */
+#powers{ position:absolute; left:14px; bottom:12px; display:flex; gap:11px; pointer-events:auto; z-index:2; }
+.pwB{ position:relative; width:62px; height:62px; padding:0; border-radius:50%; overflow:hidden;
+   border:2px solid rgba(232,182,76,.34); display:flex; align-items:center; justify-content:center;
+   box-shadow:0 6px 16px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,228,178,.12), inset 0 -8px 16px rgba(0,0,0,.55);
+   transition:transform .13s, box-shadow .13s, filter .13s; }
+.pwB .pwIc{ position:relative; z-index:1; width:40px; height:40px; display:block; filter:saturate(.5) brightness(.6); }
+/* the sweep IS the cooldown: a conic mask that uncovers the device as the ticks run down */
+.pwB .pwSweep{ position:absolute; inset:0; z-index:2; border-radius:50%; pointer-events:none; }
+/* the hotkey rides the bottom of the DISC, centred — pinned to a corner it falls outside
+   the circle and gets clipped to a sliver by overflow:hidden */
+.pwB .pwK{ position:absolute; z-index:3; bottom:3px; left:0; right:0; text-align:center;
+   font-size:9.5px; letter-spacing:.1em; color:#d2bf94; text-shadow:0 1px 2px #000; opacity:.9; }
+.pwB .pwT{ position:absolute; z-index:4; inset:0; display:flex; align-items:center; justify-content:center;
+   font-size:19px; font-variant-numeric:tabular-nums; color:#f0e2c0; text-shadow:0 2px 4px #000; }
+.pwB.rdy{ border-color:rgba(255,216,130,.78); }
+.pwB.rdy .pwIc{ filter:none; }
+.pwB.rdy{ box-shadow:0 6px 16px rgba(0,0,0,.6), 0 0 20px rgba(232,182,76,.42),
+   inset 0 1px 0 rgba(255,228,178,.22), inset 0 -8px 16px rgba(0,0,0,.5); }
+.pwB.rdy:hover{ transform:translateY(-2px); filter:brightness(1.15); }
+.pwB.rdy:active{ transform:translateY(0) scale(.96); }
+.pwB.arm{ box-shadow:0 6px 16px rgba(0,0,0,.6), 0 0 26px rgba(232,182,76,.6), inset 0 0 0 1px rgba(255,231,171,.5); }
+.pwB:not(.rdy){ cursor:default; }
+
 /* ── flourishes (freeze-safe: base state is the shipped look) ─────── */
 @keyframes bump{ 0%{transform:scale(1)} 30%{transform:scale(1.34)} 100%{transform:scale(1)} }
 @keyframes thump{ 0%{transform:scale(1)} 18%{transform:scale(1.5) rotate(-7deg)} 55%{transform:scale(.92)} 100%{transform:scale(1)} }
@@ -857,6 +985,10 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #omenRow .omCoin .ic{ width:11px; height:11px; }
   #omenRow .omCoin em{ display:none; }          /* the coin says "coin" — the word is desktop's */
   #omenRow .omK{ display:none; }                /* no keyboard to press — the card IS the target */
+  /* The phone card is one 54px row, so the TAKEN ribbon in the top-right corner lands on
+     the coin pill (measured at 390px: ribbon y201..219 over pill y213..232, both against
+     x294..326). The corner belongs to the ribbon — the pill steps down out of its band. */
+  #omenRow .omC.on .omSide{ margin-top:15px; }
   #omenRow .omHead{ padding:4px 8px 5px; }
   #omenRow .omT{ font-size:10px; letter-spacing:.2em; }
   #omenRow .omCk{ font-size:9px; }
@@ -883,6 +1015,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   .card .nm{ display:none; }
   .card .nmS{ display:block; font-size:8.5px; letter-spacing:.09em; text-transform:uppercase; white-space:nowrap;
      text-overflow:clip; overflow:hidden; color:#f2e5c6; text-shadow:0 1px 0 #000; }
+  /* SPEC4 §B — the phone card is cut to the ENGLISH name lengths (8 characters buys
+     CATAPULT and BARRACKS). French runs a character longer at the top end (TRÉBUCHET), so
+     the narrow tier gives the tongue its own tracking rather than clipping the word or
+     inventing a second name for the same engine. English metrics are untouched. */
+  :root[data-lang="fr"] .card .nmS{ font-size:8px; letter-spacing:.015em; }
   .card .det{ display:none; }
   .card .kb{ top:2px; left:2px; width:12px; height:12px; line-height:12px; font-size:8px; border-radius:2px; }
   .cost{ font-size:10px; padding:1px 5px 1px 1px; margin-top:2px; gap:2px; }
@@ -929,9 +1066,50 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   .mCard .mWrap{ flex:0 0 118px; }
   .mCard .mTxt{ flex:1 1 auto; min-width:0; }
   .mCard .mN{ margin-top:0; font-size:15px; }
+  /* The phone card lays the name BESIDE the mini-map instead of under it, which puts the
+     name's baseline inside the top-right ribbon's band. Measured at 390px: "Frostfell Pass"
+     runs to x308 against a ribbon starting at x293, so its last glyphs sat under
+     "CONTINUE" — and reserving the ribbon's width instead just wrapped the name to two
+     lines (141px of clear run against a 156px name). So the ribbon crosses the corner of
+     the MINI-MAP here, which is art rather than type, and the name keeps the whole rail. */
+  .mCard .rib{ right:auto; left:-2px; border-radius:7px 0 8px 0; }
   .mCard .mB{ font-size:10.5px; min-height:0; }
   .mFoot{ margin-top:6px; padding-top:5px; }
-  #mapsFoot{ margin-top:14px; }
+  .mCard .mE{ margin-top:3px; font-size:9px; letter-spacing:.12em; }
+  /* Pre-existing 11px overflow, measured live at 390px and fixed here because the daily
+     chip ships into this screen: BACK (148px) + the war-seed tag (195px) + the 12px gap
+     is 355px of content on a 350px rail once French swaps "WAR SEED" for "SCEAU DE
+     GUERRE". One row of two, or two rows of one — never a clipped die. */
+  #mapsFoot{ margin-top:14px; max-width:100%; flex-wrap:wrap; justify-content:center; row-gap:8px; }
+  /* SPEC4 §E — the chip keeps all three registers on a 390px rail by dropping the seed's
+     letterspacing rather than the seed itself: the number IS the point of a daily. */
+  #dailyRow{ margin-top:10px; }
+  #dailyWar{ width:100%; gap:9px; padding:6px 11px 7px 8px; }
+  #dailyWar .dwB{ flex:1 1 auto; min-width:0; }
+  #dailyWar .dwT{ font-size:10px; letter-spacing:.18em; }
+  #dailyWar .dwS{ font-size:9px; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #dailyWar .dwR{ margin-left:0; flex:0 0 auto; font-size:8px; letter-spacing:.1em; padding:3px 6px 4px; }
+  /* SPEC4 §C — on a phone the shop is a full-width slab across the bottom, so the rail
+     cannot live in that corner: it stands on the left EDGE as a vertical pair, clear of the
+     dispatch card above it and the slab below, and inside comfortable thumb reach. */
+  /* the phone card is narrower still, so it takes the SHORT names authored for this width
+     (the same trade the tower cards already make: "Warban…" is not a tower) */
+  /* flex-BASIS, not width: the phone rail sets `flex:0 0 62px` on .card, and a plain width
+     on the trap variant loses to it however specific it is. A trap cell is wider than a
+     tower cell because it keeps its painted plate (the flat glyph is mush for these three)
+     and because its short name is still a word rather than a numeral. */
+  .card.trap{ flex:0 0 78px; width:78px; }
+  .card.trap .por{ height:34px; margin-bottom:3px; }
+  .card.trap .nm{ display:none; }
+  .card.trap .nmS{ display:block; font-size:8.5px; letter-spacing:.06em; text-transform:uppercase;
+     color:#e6d8b8; text-shadow:0 1px 0 #000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* A ROW here, not a column, and bottom-anchored: UI.sync writes the exact offset above the
+     shop (see the note there). Stacked at a fixed top:46% the pair was 117px tall and ran
+     into the dispatch card whenever the omen row was up. */
+  #powers{ left:7px; top:auto; bottom:12px; flex-direction:row; gap:9px; }
+  .pwB{ width:54px; height:54px; }
+  .pwB .pwIc{ width:34px; height:34px; }
+  .pwB .pwT{ font-size:17px; }
   #tutHint{ width:min(94vw,360px); font-size:11.5px; }
   #endStars i{ width:30px; height:30px; }
   #endPlate{ padding:18px 15px 20px; }

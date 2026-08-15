@@ -72,15 +72,15 @@
 <div id="ui">
   <div id="hud">
     <div id="hudL">
-      <div class="chip iron frm" id="chipGold"><i class="ic ic-gold"></i><div><span class="lbl">Gold</span><span class="val" id="gold">0</span></div></div>
-      <div class="chip iron frm" id="chipLives"><i class="ic ic-vale"></i><div><span class="lbl">Vale</span><span class="val" id="lives">0</span></div></div>
-      <div class="chip iron frm" id="chipWave"><i class="ic ic-sw"></i><div><span class="lbl">Wave</span><span class="val" id="wave">0/10</span></div></div>
-      <div class="chip iron frm" id="chipMuster"><i class="ic ic-must"></i><div><span class="lbl">Muster</span><span class="val" id="muster">0/6</span></div></div>
+      <div class="chip iron frm" id="chipGold"><i class="ic ic-gold"></i><div><span class="lbl" data-l="hud.gold">Gold</span><span class="val" id="gold">0</span></div></div>
+      <div class="chip iron frm" id="chipLives"><i class="ic ic-vale"></i><div><span class="lbl" data-l="hud.vale">Vale</span><span class="val" id="lives">0</span></div></div>
+      <div class="chip iron frm" id="chipWave"><i class="ic ic-sw"></i><div><span class="lbl" data-l="hud.wave">Wave</span><span class="val" id="wave">0/10</span></div></div>
+      <div class="chip iron frm" id="chipMuster"><i class="ic ic-must"></i><div><span class="lbl" data-l="hud.muster">Muster</span><span class="val" id="muster">0/6</span></div></div>
     </div>
     <div id="hudRight">
-      <button id="btnSpeed" class="ibtn frm" title="Speed">×1</button>
-      <button id="btnPause" class="ibtn frm gl gl-pause" title="Pause (Space)"></button>
-      <button id="btnGear" class="ibtn frm gl gl-gear" title="Settings"></button>
+      <button id="btnSpeed" class="ibtn frm" data-lt="hud.speed" title="Speed">×1</button>
+      <button id="btnPause" class="ibtn frm gl gl-pause" data-lt="hud.pause" title="Pause (Space)"></button>
+      <button id="btnGear" class="ibtn frm gl gl-gear" data-lt="hud.settings" title="Settings"></button>
     </div>
   </div>
   <!-- SPEC3 §D: the omen offer stands ABOVE the scout's dispatch, so the two share one rail -->
@@ -88,18 +88,22 @@
     <div id="omenRow" class="hidden"></div>
     <div id="wavePrev" class="parch frm hidden"></div>
   </div>
+  <!-- SPEC4 §A/§B: auto-call and the tongue are player preferences, so they live with sound
+       and quality. Every label is filled from the string layer at boot (data-l). -->
   <div id="settings" class="iron frm hidden">
-    <div class="sT">Settings</div>
-    <button id="btnMute">Sound <b id="muteV">On</b></button>
-    <button id="btnQual">Quality <b id="qualV">High</b></button>
-    <button id="btnReset">Restart Campaign</button>
+    <div class="sT" data-l="set.title">Settings</div>
+    <button id="btnMute"><span data-l="set.sound">Sound</span> <b id="muteV">On</b></button>
+    <button id="btnQual"><span data-l="set.qual">Quality</span> <b id="qualV">High</b></button>
+    <button id="btnAuto" data-lt="set.autoT"><span data-l="set.auto">Auto-call</span> <b id="autoV">Off</b></button>
+    <button id="btnLang"><span data-l="set.lang">Language</span> <b id="langV">English</b></button>
+    <button id="btnReset" data-l="set.reset">Restart Campaign</button>
   </div>
   <div id="msg"></div>
   <div id="floaters"></div>
-  <button id="btnWave" class="frm">⚔ Start Wave</button>
-  <div id="hint"><b><span>Build</span><kbd>1–7</kbd></b><b><span>Place</span><kbd>Click</kbd></b><b><span>Keep</span><kbd>Shift</kbd></b><b><span>Cancel</span><kbd>Esc</kbd></b><b><span>Orders</span><kbd>T</kbd></b><b><span>Omen</span><kbd>8–0</kbd></b></div>
+  <button id="btnWave" class="frm" data-l="call.start">⚔ Start Wave</button>
+  <div id="hint"><b><span data-l="hint.build">Build</span><kbd>1–7</kbd></b><b><span data-l="hint.place">Place</span><kbd data-l="key.click">Click</kbd></b><b><span data-l="hint.keep">Keep</span><kbd data-l="key.shift">Shift</kbd></b><b><span data-l="hint.cancel">Cancel</span><kbd data-l="key.esc">Esc</kbd></b><b><span data-l="hint.orders">Orders</span><kbd>T</kbd></b><b><span data-l="hint.omen">Omen</span><kbd>8–0</kbd></b><b><span data-l="hint.powers">Powers</span><kbd>Q W</kbd></b><b><span data-l="hint.traps">Traps</span><kbd>Z X C</kbd></b></div>
   <div id="placeBar" class="hidden"><div id="placeMsg" class="iron frmB ok"></div>
-    <div id="placeBtns"><button id="placeOk" class="iron frm" title="Raise">✓</button><button id="placeNo" class="iron frm" title="Cancel">✗</button></div></div>
+    <div id="placeBtns"><button id="placeOk" class="iron frm" data-lt="place.raise" title="Raise">✓</button><button id="placeNo" class="iron frm" data-lt="place.cancel" title="Cancel">✗</button></div></div>
   <div id="tutHint" class="parch frm hidden"></div>
   <div id="buildMenu" class="panel iron frmB hidden"></div>
   <div id="towerMenu" class="panel iron frmB hidden"></div>
@@ -135,19 +139,22 @@
     <div id="logoWrap"><h1 id="logo">BANNERFALL</h1></div>
     <div id="tagRow">
       <svg class="flr" viewBox="0 0 124 18"><use href="#flour"/></svg>
-      <p id="tagline">Hold the vale · Break the horde</p>
+      <p id="tagline" data-l="tag">Hold the vale · Break the horde</p>
       <svg class="flr r" viewBox="0 0 124 18"><use href="#flour"/></svg>
     </div>
-    <button id="btnPlay" class="bigBtn frm"><span>Play</span></button>
+    <button id="btnPlay" class="bigBtn frm"><span data-l="play">Play</span></button>
     <div id="titleFoot">10 waves &nbsp;·&nbsp; 4 fortifications &nbsp;·&nbsp; one road</div>
   </div>
 
   <div id="maps" class="overlay hidden">
-    <div id="mapsKick">The campaign</div>
-    <h2 id="mapsT">CHOOSE YOUR ROAD</h2>
+    <div id="mapsKick" data-l="maps.kick">The campaign</div>
+    <h2 id="mapsT" data-l="maps.title">CHOOSE YOUR ROAD</h2>
     <div id="mapsRule" class="rule"></div>
+    <!-- SPEC4 §E: the Daily War chip. Built by buildDaily() off the stamp CORE captured at
+         boot — the chooser is the last screen before a run starts, so it belongs here. -->
+    <div id="dailyRow"></div>
     <div id="mapCards"></div>
-    <div id="mapsFoot"><button id="btnBack" class="frm">← Back</button><span id="mapsSeed" class="seedTag"></span></div>
+    <div id="mapsFoot"><button id="btnBack" class="frm" data-l="maps.back">← Back</button><span id="mapsSeed" class="seedTag"></span></div>
   </div>
 
   <div id="end" class="overlay hidden">
@@ -160,7 +167,9 @@
       <div id="medals"></div>
       <div id="endStats"></div>
       <button id="btnNext" class="bigBtn frm hidden"></button>
-      <button id="btnRestart" class="bigBtn frm">Play Again</button>
+      <!-- SPEC4 §E: the endless call. Filled and wired by UI.showEnd; hidden on a defeat. -->
+      <button id="btnHold" class="bigBtn frm hidden"></button>
+      <button id="btnRestart" class="bigBtn frm" data-l="end.replay">Play Again</button>
     </div>
   </div>
   <div id="stats" class="hidden"></div>
