@@ -86,8 +86,8 @@ const MAPS = [
     ],
     palette: {
       // snow throws an enormous amount of light back up — this map keeps a fat ambient
-      sun: 0xdfe8ff, sunI: 4.90, hemiSky: 0xa8c4e8, hemiGnd: 0x9aa6b2, hemiI: 1.00,
-      fill: 0xbfd2e6, fillI: 0.46, haze: 0xc9d8e6, bg: 0xdce7f2, envI: 0.56,
+      sun: 0xffe6c4, sunI: 5.15, hemiSky: 0x9ec0ee, hemiGnd: 0x9aa6b2, hemiI: 0.70,
+      fill: 0x9fc0e8, fillI: 0.50, haze: 0xcfd9e2, bg: 0xdce7f2, envI: 0.52,
       hazeV: [0.420, 0.470, 0.545],
       skyZen: [0.055, 0.150, 0.400], skyMid: [0.300, 0.470, 0.700], skyHi: [0.660, 0.720, 0.790],
       skyHor: [0.800, 0.845, 0.900], skyLow: [0.620, 0.665, 0.720], sunGlow: [1.0, 0.97, 0.92],
@@ -100,11 +100,11 @@ const MAPS = [
       rockA: [0.0280, 0.0310, 0.0380], rockB: [0.1700, 0.1850, 0.2100],
       rockWarm: [1.10, 1.02, 0.92], rockCool: [0.84, 0.93, 1.16],
       moss: [0.0480, 0.0700, 0.0600], scree: [0.1500, 0.1600, 0.1750],
-      snow: 0.96, snowC: [0.700, 0.755, 0.865],
+      snow: 0.96, snowC: [0.735, 0.770, 0.850],
       lowG: [0.60, 0.72, 0.92], lowRiv: [0.120, 0.140, 0.175],
       ridge: [[0.070, 0.086, 0.108], [0.086, 0.104, 0.130], [0.100, 0.116, 0.142]],
-      rockK: [0.92, 0.98, 1.14], tuftK: [0.94, 0.92, 0.98],
-      blade: [138, 128, 110], bladeW: [40, 30, 20], tuftN: 0.52,
+      rockK: [0.92, 0.98, 1.14], tuftK: [1.06, 1.06, 1.10],
+      blade: [162, 164, 172], bladeW: [40, 34, 24], tuftN: 0.15,
       treeMix: [0.10, 0.26],
       oakD: [0.0180, 0.0260, 0.0230], oakL: [0.1550, 0.1900, 0.1900],
       busD: [0.0170, 0.0230, 0.0225], busL: [0.1450, 0.1720, 0.1780],
@@ -139,35 +139,35 @@ const MAPS = [
       // Ember is the one map that must NOT run a thin ambient: with a saturated orange key
       // and nothing else, every neutral surface in frame turns the same orange and the map
       // goes monochrome. The violet-slate hemisphere is doing load-bearing work here.
-      sun: 0xffb884, sunI: 4.85, hemiSky: 0x8a76b4, hemiGnd: 0x5a4f66, hemiI: 1.22,
-      fill: 0x8f9fd4, fillI: 0.62, haze: 0x8b7f9a, bg: 0xb0a6bc, envI: 0.58,
+      sun: 0xffb884, sunI: 4.80, hemiSky: 0x8a76b4, hemiGnd: 0x4a4356, hemiI: 0.80,
+      fill: 0x6fa8ff, fillI: 0.52, haze: 0x8b7f9a, bg: 0xb0a6bc, envI: 0.46,
       hazeV: [0.235, 0.205, 0.285],
       skyZen: [0.150, 0.145, 0.270], skyMid: [0.330, 0.300, 0.400], skyHi: [0.520, 0.470, 0.560],
       skyHor: [0.700, 0.560, 0.540], skyLow: [0.430, 0.385, 0.470], sunGlow: [1.0, 0.62, 0.30],
       ibl: ['#463c66', '#6f6486', '#9a90a8', '#f0d3a0', '#a89ab0', '#5d5566'],
       disc: ['rgba(255,232,196,1)', 'rgba(255,176,110,.55)', 'rgba(255,140,70,0)'],
       bgGrad: ['#5a5170', '#7d7590', '#9b93a8', '#c2b2ae', '#8b7f9a', '#5f566b'],
-      gDark: [0.0225, 0.0195, 0.0265], gMid: [0.0620, 0.0555, 0.0540], gLit: [0.1320, 0.1200, 0.1020],
-      dry0: [0.0520, 0.0400, 0.0300], dry1: [0.3100, 0.2200, 0.1050], bare: [0.1150, 0.0820, 0.0520],
-      dirt0: [0.0790, 0.0590, 0.0490], dirt1: [0.1560, 0.1250, 0.1030],
+      gDark: [0.0105, 0.0092, 0.0125], gMid: [0.0250, 0.0225, 0.0270], gLit: [0.0530, 0.0490, 0.0555],
+      dry0: [0.0300, 0.0255, 0.0235], dry1: [0.0880, 0.0740, 0.0620], bare: [0.0520, 0.0410, 0.0330],
+      dirt0: [0.0480, 0.0395, 0.0355], dirt1: [0.1000, 0.0840, 0.0740],
       // Rock is authored COOL on this map so it reads grey-violet under the orange key —
       // warm rock on warm sand was the single biggest contributor to the monochrome read.
-      rockA: [0.0270, 0.0290, 0.0330], rockB: [0.1500, 0.1580, 0.1760],
+      rockA: [0.0230, 0.0245, 0.0290], rockB: [0.1120, 0.1130, 0.1330],
       rockWarm: [1.06, 1.00, 0.92], rockCool: [0.80, 0.88, 1.14],
       moss: [0.0540, 0.0580, 0.0470], scree: [0.1300, 0.1220, 0.1180],
-      lowG: [1.10, 0.82, 0.52], lowRiv: [0.145, 0.120, 0.110],
+      lowG: [0.86, 0.78, 0.86], lowRiv: [0.145, 0.120, 0.110],
       ridge: [[0.062, 0.050, 0.052], [0.080, 0.064, 0.062], [0.098, 0.080, 0.076]],
-      rockK: [0.80, 0.88, 1.10], tuftK: [1.05, 0.92, 0.72],
-      blade: [118, 100, 74], bladeW: [52, 20, 2], tuftN: 0.46,
+      rockK: [0.80, 0.88, 1.10], tuftK: [0.86, 0.84, 0.94],
+      blade: [96, 92, 104], bladeW: [46, 26, 8], tuftN: 0.20, lava: 1,
       // Weighted hard toward dark olive conifers (58%, was 26%): a wood of bright orange
       // autumn canopies sat in exactly the same hue wedge as the sand AND the enemy
       // tabard, so the horde had nowhere to read. The remaining broadleaves go deep
       // rust-brown rather than pumpkin.
       treeMix: [0.20, 0.42],
-      oakD: [0.0280, 0.0140, 0.0080], oakL: [0.1400, 0.0620, 0.0280],
-      busD: [0.0290, 0.0190, 0.0110], busL: [0.1420, 0.0980, 0.0520],
-      ashD: [0.0330, 0.0190, 0.0090], ashL: [0.1750, 0.0980, 0.0460],
-      pinD: [0.0165, 0.0205, 0.0135], pinL: [0.0720, 0.0880, 0.0520],
+      oakD: [0.0165, 0.0155, 0.0210], oakL: [0.0690, 0.0645, 0.0850],
+      busD: [0.0165, 0.0155, 0.0205], busL: [0.0650, 0.0615, 0.0790],
+      ashD: [0.0180, 0.0170, 0.0230], ashL: [0.0770, 0.0725, 0.0950],
+      pinD: [0.0150, 0.0165, 0.0155], pinL: [0.0560, 0.0640, 0.0600],
       weather: { col: [1.30, 0.92, 0.70], fall: 1.15, dx: -2.6, dz: 1.1, size: 1.25, alpha: 0.95, floor: 0.52 },
     } },
 ];
@@ -190,24 +190,24 @@ const WPAL_BASE = {
   // Golden hour needs a warm/cool SPLIT, not just a warm tint: key goes warmer and much
   // stronger, hemisphere + fill go cool and thin, so lit grass and shadowed grass finally
   // separate in hue instead of only in brightness.
-  sun: 0xffcf8f, sunI: 6.20, hemiSky: 0x9dc2f0, hemiGnd: 0x8a7a5a, hemiI: 0.50,
-  fill: 0x8fa6c6, fillI: 0.20, haze: 0xd9c7a2, bg: 0xe6ddc4, envI: 0.40,
+  sun: 0xffdfae, sunI: 5.70, hemiSky: 0xbcd3ee, hemiGnd: 0xc0a274, hemiI: 0.98,
+  fill: 0xb9c2cc, fillI: 0.46, haze: 0xdcc9a8, bg: 0xe6ddc4, envI: 0.44,
   hazeV: [0.395, 0.360, 0.288],
-  skyZen: [0.070, 0.205, 0.500], skyMid: [0.335, 0.520, 0.745], skyHi: [0.700, 0.665, 0.560],
+  skyZen: [0.070, 0.205, 0.500], skyMid: [0.335, 0.520, 0.745], skyHi: [0.560, 0.640, 0.740],
   skyHor: [0.900, 0.755, 0.510], skyLow: [0.700, 0.610, 0.470], sunGlow: [1.0, 0.80, 0.50],
   ibl: ['#2f63b4', '#6ea0d8', '#bcd2e4', '#f0dfbc', '#c9b998', '#7d7460'],
   disc: ['rgba(255,244,214,1)', 'rgba(255,214,150,.55)', 'rgba(255,200,140,0)'],
-  bgGrad: ['#93a9c0', '#b3c0c6', '#d0c9b7', '#e4d8bd', '#d9c7a2', '#9c9078'],
-  gDark: [0.0195, 0.0570, 0.0125], gMid: [0.0700, 0.1720, 0.0290], gLit: [0.1240, 0.3060, 0.0560],
-  dry0: [0.1680, 0.1400, 0.0520], dry1: [0.3700, 0.3080, 0.1120], bare: [0.1200, 0.0930, 0.0580],
-  dirt0: [0.1120, 0.0840, 0.0552], dirt1: [0.2620, 0.2080, 0.1370],
+  bgGrad: ['#7e9dc4', '#9db6d2', '#cfe0ee', '#ddd8c8', '#dcc9a8', '#9c9078'],
+  gDark: [0.0250, 0.0640, 0.0155], gMid: [0.0900, 0.2180, 0.0355], gLit: [0.1620, 0.3480, 0.0640],
+  dry0: [0.1180, 0.1010, 0.0400], dry1: [0.2450, 0.2080, 0.0790], bare: [0.1000, 0.0790, 0.0500],
+  dirt0: [0.1480, 0.1090, 0.0700], dirt1: [0.2980, 0.2380, 0.1580],
   rockA: [0.0290, 0.0295, 0.0300], rockB: [0.1980, 0.1950, 0.1840],
   rockWarm: [1.26, 1.03, 0.76], rockCool: [0.86, 0.93, 1.06],
   moss: [0.0520, 0.1020, 0.0270], scree: [0.1320, 0.1180, 0.0910],
   snow: 0, snowC: [0.62, 0.69, 0.81],
   lowG: [0.92, 1.00, 0.44], lowRiv: [0.150, 0.172, 0.190],
   ridge: [[0.046, 0.058, 0.062], [0.062, 0.074, 0.086], [0.078, 0.088, 0.104]],
-  rockK: [1, 1, 1], tuftK: [1, 1, 1],
+  rockK: [1, 1, 1], tuftK: [1, 1, 1], lava: 0,
   blade: [78, 112, 44], bladeW: [68, 18, -12], tuftN: 1,
   treeMix: [0.42, 0.72],
   oakD: [0.0130, 0.0270, 0.0080], oakL: [0.1020, 0.1810, 0.0400],
@@ -223,7 +223,7 @@ G.WPAL = WPAL; G.weather = WPAL.weather;
 const v3s = a => 'vec3(' + a[0] + ',' + a[1] + ',' + a[2] + ')';   // JS colour -> GLSL literal
 const C_HAZE = WPAL.haze;                            // golden-hour haze (per map)
 scene.background = new THREE.Color(WPAL.bg);
-scene.fog = new THREE.Fog(C_HAZE, 168, 520);
+scene.fog = new THREE.Fog(C_HAZE, 214, 690);
 G.scene = scene;
 
 const WT = { value: 0 };                            // shared render-only time uniform
@@ -235,11 +235,12 @@ const wrng = () => { _ws |= 0; _ws = _ws + 0x6D2B79F5 | 0; let t = Math.imul(_ws
 const wr = (a, b) => a + (b - a) * wrng();
 
 // ── lighting: warm sun raking from screen-left, cool sky fill, faked bounce ──
-// Golden hour, not midday. Elevation ~34° (was 48°): shadows roughly double in length and
-// finally rake ACROSS the road instead of pooling under everything. The cliff ring does
+// Golden hour, not midday. Elevation 44° (SPEC §3 asks ~48°): long enough that shadows
+// rake ACROSS the road instead of pooling under everything, short enough that a single
+// roadside oak stand cannot throw a 30u slab of shade over the whole hero read. The cliff ring does
 // then throw a long shadow, which is why the rim's own contribution is kept out of the
 // shadow frustum's far plane rather than by raising the sun back up.
-const SUN_EL = 34 * Math.PI / 180, SUN_R = 132;
+const SUN_EL = 44 * Math.PI / 180, SUN_R = 132;
 const sun = new THREE.DirectionalLight(WPAL.sun, WPAL.sunI);
 // Azimuth from the lower-left of the game camera (SPEC §3). Swinging it further round to
 // -x does make shadows rake more laterally, but it also lights the meadow flat-on and the
@@ -642,7 +643,7 @@ function tuftTex() {
   g.clearRect(0, 0, S, S);
   // dense clump of tapered blades; darker at the base so the tuft grounds itself
   for (let i = 0; i < 190; i++) {
-    const x0 = 10 + wrng() * (S - 20), w = 3 + wrng() * 7, hh = S * (0.26 + wrng() * 0.66);
+    const x0 = 10 + wrng() * (S - 20), w = 3 + wrng() * 7, hh = S * (0.26 + wrng() * 0.56);
     const bend = (wrng() - 0.5) * S * 0.60;
     const lum = 0.38 + Math.pow(wrng(), 0.9) * 0.64;
     const warm = wrng() < 0.14 ? 1 : 0;                     // a few bleached / seeding blades
@@ -654,6 +655,11 @@ function tuftTex() {
   const sh = g.createLinearGradient(0, S, 0, S * 0.45);
   sh.addColorStop(0, 'rgba(14,22,8,.52)'); sh.addColorStop(1, 'rgba(14,22,8,0)');
   g.globalCompositeOperation = 'source-atop'; g.fillStyle = sh; g.fillRect(0, 0, S, S);
+  // Soft alpha falloff over the top ~18%: with alphaTest the card's straight top edge
+  // would otherwise cut a hard horizontal line through any blade that reached it.
+  const tf = g.createLinearGradient(0, 0, 0, S * 0.18);
+  tf.addColorStop(0, 'rgba(0,0,0,1)'); tf.addColorStop(1, 'rgba(0,0,0,0)');
+  g.globalCompositeOperation = 'destination-out'; g.fillStyle = tf; g.fillRect(0, 0, S, S * 0.18);
   g.globalCompositeOperation = 'source-over';
   return tex(c);
 }
@@ -666,6 +672,54 @@ function flameTex() {
   return tex(c);
 }
 
+// ── triplanar granite for crag / boulder instances ────────────────────────────
+// (declared here, compiled in World.build once WPAL + NOISE_GLSL exist)
+function graniteMat(o) {
+  const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.88, metalness: 0 }, o));
+  m.customProgramCacheKey = () => 'bf_granite';
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = 'varying vec3 vRP;\nvarying vec3 vRN;\nvarying float vRPh;\n' +
+      sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      {
+        vec4 _rp = vec4(transformed, 1.0);
+        vec3 _rn = objectNormal;
+        vRPh = 0.0;
+        #ifdef USE_INSTANCING
+          _rp = instanceMatrix * _rp;
+          _rn = mat3(instanceMatrix) * _rn;
+          vRPh = fract(instanceMatrix[3].x*0.317 + instanceMatrix[3].z*0.529)*6.2831;
+        #endif
+        vRP = (modelMatrix * _rp).xyz;
+        vRN = normalize(mat3(modelMatrix) * _rn);
+      }`);
+    sh.fragmentShader = 'varying vec3 vRP;\nvarying vec3 vRN;\nvarying float vRPh;\n' + NOISE_GLSL +
+      sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+      {
+        vec3 aw = abs(vRN); aw = pow(aw, vec3(3.5)); aw /= (aw.x + aw.y + aw.z + 1e-4);
+        vec2 pA = vRP.zy, pB = vRP.xz, pC = vRP.xy;
+        float w0 = fbm2(pA*0.050+21.0)*aw.x + fbm2(pB*0.050+21.0)*aw.y + fbm2(pC*0.050+21.0)*aw.z;
+        float d1 = fbm2(pA*0.520)*aw.x + fbm2(pB*0.520)*aw.y + fbm2(pC*0.520)*aw.z;
+        float d2 = fbm2(pA*1.850)*aw.x + fbm2(pB*1.850)*aw.y + fbm2(pC*1.850)*aw.z;
+        float d3 = vn2 (pA*5.400)*aw.x + vn2 (pB*5.400)*aw.y + vn2 (pC*5.400)*aw.z;
+        float warp = (w0-0.5)*1.85 + (d1-0.5)*0.62 + (d2-0.5)*0.22 + sin(vRPh)*0.35;
+        float bnd = fract(vRP.y*(0.340 + 0.240*w0) + warp);
+        float bs  = smoothstep(0.14,0.42,bnd)*smoothstep(0.96,0.62,bnd);
+        float joint = clamp(smoothstep(0.060,0.0,bnd) + smoothstep(0.940,1.0,bnd), 0.0, 1.0);
+        float k = (0.66 + 0.58*bs) * (1.0 - 0.34*joint)
+                * (0.76 + 0.48*d1) * (0.84 + 0.32*d2) * (0.90 + 0.22*d3);
+        diffuseColor.rgb *= k;
+        diffuseColor.rgb += vec3(0.030,0.027,0.021)*smoothstep(0.74,0.98, d3);   // mica
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*` + v3s(WPAL.rockWarm) + `,
+                               smoothstep(0.50,0.84, fbm2(pB*0.42+31.0))*0.42);
+        diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*` + v3s(WPAL.rockCool) + `,
+                               smoothstep(0.52,0.86, fbm2(pC*0.115+13.0))*0.36);
+        // moss weighted to up-facing normals, same colour as the cliff's
+        float mo = smoothstep(0.58,0.95, vRN.y) * smoothstep(0.40,0.76, fbm2(vRP.xz*0.150+55.0));
+        diffuseColor.rgb = mix(diffuseColor.rgb, ` + v3s(WPAL.moss) + `*1.10, mo*0.40);
+      }`);
+  };
+  return m;
+}
 // ── material factory: vertex-coloured, sway-capable prop material ──────────────
 function propMat(o) {
   const m = new THREE.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: 0.88, metalness: 0 }, o));
@@ -786,7 +840,7 @@ function cragGeo(sides, tiers, seed) {
     // Bake the read: sunlit caps, mid vertical faces, dark crevices and base.
     // NOTE: this is an ALBEDO, not a rendered value — 0.13 base already renders near
     // white under the 4.9-intensity sun. Anything higher blows out to sugar cubes.
-    const v = (0.42 + 0.62 * Math.pow(hgt, 0.70)) * (up ? 1.22 : 0.82) * (1 - 0.40 * crev)
+    const v = (0.54 + 0.56 * Math.pow(hgt, 0.70)) * (up ? 1.18 : 0.86) * (1 - 0.24 * crev)
             * (0.70 + 0.62 * fbmz(x * 5.1 + seed, z * 5.1 + y * 4.2, 2));
     const moss = up ? clamp(fbmz(x * 2.2 + 19, z * 2.2 + 5, 2) * 2.2 - 1.10, 0, 1) * 0.62 : 0;
     const g0 = 0.108 * v;      // matched to the terrain granite so crags don't read as pasted-on
@@ -1088,15 +1142,31 @@ const SNOW_GLSL = WPAL.snow > 0 ? `
       float drift = smoothstep(0.30, 0.78, nM*0.46 + nL*0.34 + nS*0.20 + vWP.y*0.0090);
       float snw = lie * drift * (0.55 + 0.45*nF) * ${WPAL.snow};
       snw *= 1.0 - 0.86*tRoad;                       // wheels and boots keep the road bare
-      vec3 sc = ${v3s(WPAL.snowC)} * (0.80 + 0.34*nG) * (0.90 + 0.22*nX);
+      vec3 sc = ${v3s(WPAL.snowC)} * mix(1.0, 0.93 + 0.14*nG, dDet) * mix(1.0, 0.955 + 0.09*nX, dDet);
       alb = mix(alb, sc, clamp(snw, 0.0, 1.0));
       // crust glitter: a few grains catch the low sun, which is what stops flat snow
-      // reading as grey paper at overview zoom
-      alb += vec3(0.055,0.060,0.070)*smoothstep(0.86,0.99, nG)*snw;
+      // reading as grey paper at overview zoom (near field only — at distance it aliases)
+      alb += vec3(0.048,0.052,0.060)*smoothstep(0.88,0.995, nG)*snw*dDet;
+    }
+` : '';
+// ── EMBER lava (SPEC3 palette `lava`) ────────────────────────────────────────
+// Wide glowing bedrock fissures, not 2px ember dots. A ridged fbm gives ~2u cracks with
+// a charred lip; they are the ONLY thing on the ash map allowed above 70% luminance, so
+// the eye has somewhere to go and the ground can stay dark enough to read the horde.
+const LAVA_GLSL = WPAL.lava ? `
+    {
+      float lv  = fbm2(wxz*0.052 + 5.0);
+      float fis = 1.0 - smoothstep(0.0, 0.021, abs(lv-0.5));
+      fis *= smoothstep(0.44,0.74, fbm2(wxz*0.028 + 17.0));      // a few runs, not a network
+      fis *= (1.0-tRoad) * (1.0-tRock) * smoothstep(0.44,0.14, slope);
+      float core = smoothstep(0.26, 0.88, fis);
+      alb *= 1.0 - 0.80*smoothstep(0.02,0.40,fis);               // charred lip
+      alb += vec3(0.55,0.160,0.026)*core;
+      totalEmissiveRadiance += vec3(1.00,0.315,0.055)*core*1.60;
     }
 ` : '';
 const TERRAIN_ALBEDO = `
-  float tRock = 0.0, tRoad = 0.0;
+  float tRock = 0.0, tRoad = 0.0, dDet = 1.0;
   {
     vec2 wxz = vWP.xz;
     float nL = fbm2(wxz*0.0185 + 61.0);      // ~55u regions
@@ -1107,6 +1177,10 @@ const TERRAIN_ALBEDO = `
     // ~0.22u: coarse enough to survive at gameplay zoom instead of aliasing to mush
     float nG = vn2 (wxz*4.60   + 71.0);
     float slope = 1.0 - clamp(vWN.y, 0.0, 1.0);
+    // procedural splats have no mip chain: without this the 1u grain aliases into what
+    // looks like mosquito noise across half the frame, and the detail never falls off
+    // with distance, so the diorama flattens.
+    dDet = 1.0 - 0.62*smoothstep(80.0, 220.0, distance(cameraPosition, vWP));
 
     // rock by slope, PLUS by altitude — the escarpment crest is a rounded (low-slope)
     // surface, and leaving it grassy makes 50u granite cliffs read as green hills.
@@ -1117,22 +1191,31 @@ const TERRAIN_ALBEDO = `
     vec3 gDark = ` + v3s(WPAL.gDark) + `;
     vec3 gMid  = ` + v3s(WPAL.gMid) + `;
     vec3 gLit  = ` + v3s(WPAL.gLit) + `;
-    float gk = clamp(0.15 + 0.27*nS + 0.53*nM + 0.40*(nL-0.5), 0.0, 1.0);
+    // three octaves, ~55u / ~12u / ~3.5u, weighted 0.55 / 0.30 / 0.15
+    float gk = clamp((0.62*nL + 0.26*nM + 0.12*nS - 0.5)*2.45 + 0.5, 0.0, 1.0);
     vec3 grass = gk < 0.5 ? mix(gDark, gMid, gk*2.0) : mix(gMid, gLit, (gk-0.5)*2.0);
-    grass *= 0.76 + 0.48*nF;
-    grass *= 0.88 + 0.24*nG;
-    grass.r += 0.048*smoothstep(0.50,0.96,gk);            // sun-bleached tips warm up
+    grass *= mix(1.0, 0.92 + 0.16*nF, dDet);              // +/-8%, near field only
+    grass *= mix(1.0, 0.95 + 0.10*nG, dDet);
+    grass.r += 0.024*smoothstep(0.50,0.96,gk);            // sun-bleached tips warm up
     grass.b += 0.015*smoothstep(0.45,0.05,gk);            // deep grass goes cool
 
     // ── dry / grazed patches (the reference meadow is never one flat green) ──
     // Driven by a ~33u fBm (nB) so the patches arrive at MEADOW scale — big enough to
     // read as pasture, not as the 3u speckle the old mask produced. ~28% coverage.
-    float nB = fbm2(wxz*0.030 + 133.0);
-    vec3 dry = mix(` + v3s(WPAL.dry0) + `, ` + v3s(WPAL.dry1) + `, nM*0.6+nS*0.4);
-    float dryM = smoothstep(0.44,0.72, nB*0.70 + nL*0.20 + nM*0.10) * (0.55 + 0.45*nS);
-    vec3 soil = mix(grass, dry, clamp(dryM, 0.0, 1.0)*0.92);
+    // The dry lerp rides an INDEPENDENT ~80u mask plus altitude, so ridges and shoulders
+    // go dry while hollows hold their green. The old mask was multiplied by the 3.5u
+    // clump layer, which shattered every patch into the speckle it was supposed to break.
+    float nB = fbm2(wxz*0.030  + 133.0);
+    float nD = fbm2(wxz*0.0125 + 311.0);
+    vec3 dry = mix(` + v3s(WPAL.dry0) + `, ` + v3s(WPAL.dry1) + `, nM*0.7+nL*0.3);
+    float dryM = smoothstep(0.400,0.620, nD*0.78 + nB*0.22)
+               * (0.80 + 0.20*nM) * (0.70 + 0.50*smoothstep(-3.0, 15.0, vWP.y));
+    vec3 soil = mix(grass, dry, clamp(dryM, 0.0, 1.0));
     // bare earth showing through in the thinnest spots
-    soil = mix(soil, ` + v3s(WPAL.bare) + `, smoothstep(0.74,0.95, dryM*0.6 + nS*0.4)*0.60);
+    soil = mix(soil, ` + v3s(WPAL.bare) + `, smoothstep(0.80,0.99, dryM*0.75 + nM*0.25)*0.50);
+    // broad lit/shaded fields: without a slow value multiplier the meadow has texture but
+    // no tonal SHAPES, which is what makes it read as wallpaper at overview zoom.
+    soil *= 0.84 + 0.32*fbm2(wxz*0.0135 + 207.0);
 
     // ── worn dirt road: dark packed centre, cut ruts, earth verge ──
     // d = lateral distance normalised by the half width, so the centre/rut/verge bands
@@ -1148,7 +1231,7 @@ const TERRAIN_ALBEDO = `
     dirt *= 0.88 + 0.26*fbm2(wxz*0.40 + 41.0);          // slow patchiness
     dirt *= 0.88 + 0.26*vn2(vec2(vRD.y*6.4, 3.7));      // longitudinal wheel-wear streaks
     dirt *= 0.94 + 0.12*nS;
-    dirt += vec3(0.028,0.025,0.020)*smoothstep(0.82,0.98, vn2(wxz*2.4));   // pebbles
+    dirt += vec3(0.028,0.025,0.020)*smoothstep(0.82,0.98, vn2(wxz*2.4))*dDet;  // pebbles
     // dither the road/grass boundary with BOTH a fine and a macro octave — a single soft
     // ramp gives an airbrushed stripe, which is exactly what the road used to read as
     tRoad = smoothstep(0.10,0.74, clamp(vRD.x*1.36 - 0.14
@@ -1195,8 +1278,8 @@ const TERRAIN_ALBEDO = `
     }
     // scree / dust apron where the slope steepens but rock hasn't taken over
     alb = mix(alb, mix(` + v3s(WPAL.scree) + `, alb, 0.50), smoothstep(0.16,0.34,slope)*(1.0-tRock)*0.60);
-` + SNOW_GLSL + `
-    alb *= 0.86 + 0.30*nX;
+` + SNOW_GLSL + LAVA_GLSL + `
+    alb *= mix(1.0, 0.94 + 0.12*nX, dDet);
     // baked contact AO from every scattered prop — this is what puts them IN the ground
     {
       float pao = texture2D(uPAO, (vWP.xz + vec2(${(FW / 2).toFixed(1)}, ${(FD / 2).toFixed(1)})) / vec2(${FW.toFixed(1)}, ${FD.toFixed(1)})).r;
@@ -1205,7 +1288,7 @@ const TERRAIN_ALBEDO = `
     // the map edge falls away into shadow — keyed well below the valley floor so the
     // meadow's own hollows (which dip to about -5) never darken.
     alb *= 1.0 - 0.94*smoothstep(-15.0,-44.0,vWP.y);
-    diffuseColor.rgb *= alb * (0.34 + 0.66*vAOf);
+    diffuseColor.rgb *= alb * (0.48 + 0.52*vAOf);
   }
 `;
 const terrainMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0 });
@@ -1218,7 +1301,7 @@ terrainMat.onBeforeCompile = (sh) => {
   sh.fragmentShader = 'varying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\nuniform sampler2D uPAO;\n' + NOISE_GLSL +
     sh.fragmentShader
       .replace('#include <map_fragment>', TERRAIN_ALBEDO)
-      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * mix(1.0, 0.74, tRock) * mix(1.0, 0.63, tRoad);')
+      .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * mix(1.0, 0.74, tRock) * mix(1.0, 0.84, tRoad);')
       // derivative bump: gives grass/dirt/rock real surface relief that catches the low sun
       .replace('#include <normal_fragment_maps>', `
       {
@@ -1227,7 +1310,7 @@ terrainMat.onBeforeCompile = (sh) => {
         // cliff faces (tRock) or it smears into vertical streaks. Rock relief comes from the
         // heightfield ribs + the triplanar albedo instead.
         float fk = 1.0 - tRock;                                // ('flat' is a reserved word)
-        float wF = fk*(1.0-tRoad)*7.0 + tRoad*0.55;            // fine grass/soil relief
+        float wF = (fk*(1.0-tRoad)*4.3 + tRoad*0.55) * mix(0.45, 1.0, dDet);   // fine relief
         float wC = fk*(0.75 + tRoad*0.95);                      // coarse ground undulation
         vec2 e = vec2(0.26, 0.0), E = vec2(1.7, 0.0);
         float f0 = fbm2(q*1.85) + 0.55*vn2(q*5.20) + 0.30*vn2(q*13.0);
@@ -1646,10 +1729,10 @@ World.build = function () {
   }
   // Rock roughness 0.86 (not 0.95): granite is not chalk, and a little specular is what
   // separates a boulder from a paper cut-out under a low sun.
-  const rockMat = propMat({ roughness: 0.86 });
-  iMesh(baseBleed(cragGeo(9, 5, 2.7), 0.42, 0.48), rockMat, cragL[0], true, 'CRAGS_A');
-  iMesh(baseBleed(cragGeo(7, 4, 13.1), 0.42, 0.48), rockMat, cragL[1], true, 'CRAGS_B');
-  iMesh(baseBleed(cragGeo(11, 5, 31.7), 0.42, 0.48), rockMat, cragL[2], true, 'CRAGS_C');
+  const rockMat = graniteMat({ roughness: 0.86 });
+  iMesh(baseBleed(cragGeo(9, 5, 2.7), 0.42, 0.48), rockMat, cragL[0], false, 'CRAGS_A');
+  iMesh(baseBleed(cragGeo(7, 4, 13.1), 0.42, 0.48), rockMat, cragL[1], false, 'CRAGS_B');
+  iMesh(baseBleed(cragGeo(11, 5, 31.7), 0.42, 0.48), rockMat, cragL[2], false, 'CRAGS_C');
   iMesh(baseBleed(rockGeo(1, 11.3, false), 0.46, 0.50), rockMat, bldL, true, 'ROCKS');
 
   // ── 8. trees + bushes ───────────────────────────────────────────────────────
@@ -1725,13 +1808,27 @@ World.build = function () {
     }
     const tuftG = mergeParts(q);
     const tuftM = new THREE.MeshStandardMaterial({ map: tuftTex(), transparent: false, alphaTest: 0.42, side: THREE.DoubleSide, roughness: 0.9, vertexColors: true });
+    // Distance fade in the vertex shader: cards this small alias into sparkle (and crawl
+    // in motion) once they are past the middle of the diorama. Scaling to zero about the
+    // card's own base removes them without a popping cull.
+    tuftM.customProgramCacheKey = () => 'bf_tuft';
+    tuftM.onBeforeCompile = (sh) => {
+      sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      #ifdef USE_INSTANCING
+        transformed *= 1.0 - smoothstep(196.0, 262.0,
+          distance(cameraPosition, (modelMatrix * vec4(instanceMatrix[3].xyz, 1.0)).xyz));
+      #endif`);
+    };
     // Clumped, not uniform: an even sprinkle at this density reads as screen noise.
     // Each patch shares a tint + scale bias so the meadow gets legible tonal shapes.
     const list = [], TK = WPAL.tuftK;
     const PATCHES = Math.round(300 * Q.density * WPAL.tuftN);
     const push = (x, z, sB, tint) => {
-      if (ringU(x, z) > 1.03 || Math.abs(bi(SDG, x, z)) < 2.5 || slopeAt(x, z) > 0.85) return;
-      const s = sB * wr(0.72, 1.30);
+      const dens = Math.min(sstep(1.15, 0.93, ringU(x, z)),
+                            sstep(1.70, 3.20, Math.abs(bi(SDG, x, z))),
+                            sstep(1.05, 0.68, slopeAt(x, z)));
+      if (dens < 0.02 || wrng() > dens) return;
+      const s = sB * wr(0.72, 1.30) * (0.58 + 0.42 * dens);
       list.push({ m: trs(x, bi(HG, x, z) - 0.06, z, wr(0, 6.283), s, s * wr(0.70, 1.36), s), c: tint });
     };
     for (let p = 0; p < PATCHES; p++) {
@@ -1741,9 +1838,9 @@ World.build = function () {
       // own value so the clutter adds texture, not noise.
       const dryish = wrng() < 0.13, dark = !dryish && wrng() < 0.40;
       const sB = wr(0.72, 1.55), rad = wr(2.4, 7.0);
-      const tint = dryish ? [wr(0.86, 1.10) * TK[0], wr(0.80, 0.96) * TK[1], wr(0.44, 0.62) * TK[2]]
-                 : dark   ? [wr(0.40, 0.58) * TK[0], wr(0.46, 0.66) * TK[1], wr(0.34, 0.54) * TK[2]]
-                          : [wr(0.60, 0.86) * TK[0], wr(0.68, 0.92) * TK[1], wr(0.48, 0.80) * TK[2]];
+      const tint = dryish ? [wr(0.90, 1.14) * TK[0], wr(0.84, 1.00) * TK[1], wr(0.48, 0.66) * TK[2]]
+                 : dark   ? [wr(0.56, 0.74) * TK[0], wr(0.62, 0.82) * TK[1], wr(0.46, 0.66) * TK[2]]
+                          : [wr(0.74, 1.00) * TK[0], wr(0.82, 1.06) * TK[1], wr(0.58, 0.90) * TK[2]];
       const n = 3 + Math.round(wr(0, 5));
       for (let i = 0; i < n; i++) push(c0[0] + wr(-rad, rad), c0[1] + wr(-rad, rad), sB, tint);
     }
@@ -1759,8 +1856,8 @@ World.build = function () {
       const p = RT.pos[j], t = RT.tan[j], off = sd * wr(2.7, 7.2);
       const dryish = wrng() < 0.34;
       push(p.x - t.z * off, p.z + t.x * off, wr(0.72, 1.42),
-        dryish ? [wr(0.84, 1.08) * TK[0], wr(0.78, 0.94) * TK[1], wr(0.42, 0.62) * TK[2]]
-               : [wr(0.52, 0.84) * TK[0], wr(0.60, 0.88) * TK[1], wr(0.44, 0.78) * TK[2]]);
+        dryish ? [wr(0.88, 1.12) * TK[0], wr(0.82, 0.98) * TK[1], wr(0.46, 0.66) * TK[2]]
+               : [wr(0.66, 0.96) * TK[0], wr(0.74, 1.00) * TK[1], wr(0.54, 0.88) * TK[2]]);
     }
     iMesh(tuftG, tuftM, list, false, 'TUFTS');
   }
@@ -2086,6 +2183,10 @@ G.subT = 0;                                  // sub-tick fraction, plumbed from 
 const _m4 = new THREE.Matrix4(), _v3 = new THREE.Vector3(), _q = new THREE.Quaternion(), _sc = new THREE.Vector3();
 const AM = {};                               // archetype key -> instanced record
 let barMesh = null, barArr = null, KITM = null;   // KITM: boss-variant attachment meshes
+const WARD_CAP = 300;                        // SPEC3 §D ground rings under a warded wave
+let wardRing = null;
+const SHAD_CAP = 700;                        // ARMIES-FIX2 §1 contact-shadow decals
+let shadDecal = null, SHAD_AZ = 0, SHAD_LEN = 1;
 const AT_U = { value: 0 };                   // shared animation clock (sim-time based)
 {
   const TAU = Math.PI * 2, YAX = new THREE.Vector3(0, 1, 0);
@@ -2163,9 +2264,18 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   // CRIM its #7e1e18 shade — the old pair sat a stop darker and, once steel highlights and
   // sun were added on top, the column squinted down to pink-grey gravel instead of crimson.
   clothTile(T.RED, '#a42a22', '#5d130e', '#d6583f', 0.88);
-  clothTile(T.BLUE, '#2b5da1', '#153468', '#5d92d4', 0.86);
+  // ARMIES-FIX2 §2. The spec's #2e5fa3 exactly, with the shade pushed down and the highlight
+  // pushed toward true blue: at the old pair the knights sampled pale steel-blue and lost to
+  // the red mass at every zoom, which is half of why the reference's red-vs-blue clash never
+  // happened on screen.
+  clothTile(T.BLUE, '#2e5fa3', '#0f2a5c', '#5b9ae8', 0.86);
   clothTile(T.CRIM, '#7e1e18', '#3a0a07', '#ab4030', 0.90);
-  clothTile(T.DIRT, '#4c4034', '#241d16', '#7a6a58', 0.92);
+  // ARMIES-FIX2 §2. This tile is the hose — the soldiers' legs — and under a 5.7-intensity
+  // golden key it was tone-mapping out to ~#af9773: the BRIGHTEST value on the whole model,
+  // brighter than the crimson torso it hangs under, so every figure read as two pale sticks
+  // with a red box on top and the mass never fused into one red river. Dark leather greaves
+  // put the value back under the tabard where it belongs.
+  clothTile(T.DIRT, '#332a20', '#171209', '#5a4634', 0.92);
   tile(T.LEATH, 0.72, 0.0, g => {
     g.fillStyle = '#4a3423'; g.fillRect(0, 0, S, S);
     blot(g, 260, '#170f08', '#8a6a46', 0.05, 0.15, 2, 11);
@@ -2411,11 +2521,14 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   // ══ SPEC3 §B materials ═══════════════════════════════════════════════════════
   // FROST: rimed plate. Cold and pale — the ONE place the red army is allowed a cool
   // value, because the frost revenant is a dead thing wearing armour the snow has eaten.
+  // ARMIES-FIX2 §4: the old ramp was a NEUTRAL grey-blue, and under a 5.7-intensity warm key
+  // it tone-mapped straight back to "pale steel soldier" — the revenant shipped with no
+  // frost cue at all. Saturated toward the spec's #9fd8ff rim so the cold survives the sun.
   tile(T.FROST, 0.44, 0.52, g => {
     const gr = g.createLinearGradient(0, 0, 0, S);
-    gr.addColorStop(0, '#cfe0ea'); gr.addColorStop(0.44, '#8ea4b4'); gr.addColorStop(1, '#4d6070');
+    gr.addColorStop(0, '#9fd8ff'); gr.addColorStop(0.44, '#5f93bd'); gr.addColorStop(1, '#2c4c68');
     g.fillStyle = gr; g.fillRect(0, 0, S, S);
-    blot(g, 120, '#2e4050', '#e8f4fa', 0.06, 0.18, 3, 17);
+    blot(g, 120, '#1b3752', '#d8f0ff', 0.07, 0.20, 3, 17);
     for (let i = 0; i < 46; i++) {                     // rime crystals along the plate edges
       const x = arng() * S, y = arng() * S, l = ar(6, 22) * u, a = ar(-1.2, -0.35);
       g.strokeStyle = 'rgba(232,246,255,' + ar(0.16, 0.44) + ')'; g.lineWidth = ar(1.2, 3.0) * u;
@@ -2643,6 +2756,17 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       }
       A(boxA(K(0.170) * B, K(0.128), K(0.29), [T.LEATH]), trs(s * hipX * 0.94, K(0.052), K(0.048)), bS, kneP, hipP, null, 0.80);
       A(boxA(K(0.176) * B, K(0.055), K(0.10), [T.IRON]), trs(s * hipX * 0.94, K(0.020), K(0.185)), bS, kneP, hipP, null, 0.88);
+      // ARMIES-FIX2 §3. A leg made of dark hose under a dark skirt is a HOLE at 3.6x: the
+      // champion read as a torso floating over a pair of boots with nothing between them.
+      // A cuisse on the thigh and a greave on the shin, both a stop brighter than the hose,
+      // bridge hip to boot so the leg silhouette is continuous at any zoom.
+      if (C.greave) {
+        const GT = C.greaveT || T.IRON;
+        A(tbox(K(0.216) * B, yHip - yKne - K(0.10), K(0.212) * B, [GT], 1.0, 0.84),
+          trs(s * hipX * 0.98, (yHip + yKne) / 2 + K(0.01), K(0.020)), bT, hipP, null, null, 1.18);
+        A(tbox(K(0.180) * B, yKne - yAnk - K(0.09), K(0.176) * B, [GT], 1.0, 0.80),
+          trs(s * hipX * 0.95, (yKne + yAnk) / 2 + K(0.01), K(0.022)), bS, kneP, hipP, null, 1.26);
+      }
     }
     // ── pelvis / skirt / torso / belt ──
     A(tbox(K(0.36) * B, K(0.18), K(0.27) * W, [C.mail], 1.0, 0.94), trs(0, yHip + K(0.05), 0), 0, null, null, null, 0.95);
@@ -2664,6 +2788,21 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     // ── shoulders ──
     for (const s of [-1, 1])
       A(tbox(K(0.145) * B, K(0.120), K(0.245) * W, [C.pauld], 1.0, 0.66), trs(s * (shX + K(0.012)), ySh + K(0.012), 0, 0, 1, 1, 1, 0, -s * 0.24), 0, null, null, null, 1.06);
+    // ARMIES-FIX2 §3. One flat-topped box per shoulder reads as a crate, which is exactly
+    // what the critic called the champion's pauldrons. `spauld` bolts a real harness on
+    // top: a domed cap that catches the key, two stepped lames falling over the upper arm,
+    // and a bevelled rim between them — the same beaten-plate language as the knight kit.
+    if (C.spauld) for (const s of [-1, 1]) {
+      const PT = C.spauldT || T.IRON, px0 = s * (shX + K(0.020));
+      A(uvAll(new THREE.SphereGeometry(K(0.098) * B, (C.seg || SEG) + 1, 5, 0, TAU, 0, 1.32), PT),
+        trs(px0, ySh + K(0.048), -K(0.006), 0, 1.10, 0.66, 1.06), 0, null, null, null, 1.24);
+      A(uvAll(new THREE.CylinderGeometry(K(0.106) * B, K(0.098) * B, K(0.030), (C.seg || SEG) + 2), PT),
+        trs(px0, ySh + K(0.044), -K(0.006)), 0, null, null, null, 1.36);      // bevelled rim
+      for (let i = 0; i < 2; i++)                                              // stepped lames
+        A(tbox(K(0.128 - i * 0.018) * B, K(0.060), K(0.216 - i * 0.020) * W, [PT], 1.0, 0.90),
+          trs(px0 + s * K(0.014) * (i + 1), ySh - K(0.052) - i * K(0.060), -K(0.004), 0, 1, 1, 1, 0, -s * 0.34),
+          0, null, null, null, 1.12 - i * 0.07);
+    }
     // ── arms: 5 = shield side (-x), 6 = weapon side (+x) ──
     const shL = [-shX, ySh, 0], shR = [shX, ySh, 0];
     const elbL = [-shX - K(0.02), ySh - K(0.255), K(0.015)], elbR = [shX + K(0.02), ySh - K(0.26), K(0.02)];
@@ -2850,19 +2989,20 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(plateGeo([[-K(0.108), K(0.150)], [K(0.108), K(0.150)], [K(0.120), -K(0.055)],
                   [0, -K(0.185)], [-K(0.120), -K(0.055)]], K(0.028), T.BONE, T.BONE, T.BONE),
         trs(0, yCrn - K(0.196), K(0.112)), 7, hp, null, null, 1.18);                // bone face mask
-      for (const s of [-1, 1]) {
+      // ARMIES-FIX2 §4. The antlers are GONE. Two big cream cones on a dome is the same
+      // silhouette the ironclad's shoulder spikes were making, and two of five newcomers
+      // sharing a read is worse than one of them losing a feature. The shaman's read is now
+      // the thing nothing else on the road has: a HUNCHED, hooded, shoulderless robe cone
+      // with a totem staff standing a head taller than he is. Hood peak flopped forward,
+      // deep cowl, bone mask in the shadow of it.
+      { const [m, L] = spanM([0, yCrn + K(0.06), -K(0.06)], [K(0.03), yCrn + K(0.15), K(0.24)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.104), L, (C.seg || SEG) + 1), T.ROBE), m, 7, hp, null, null, 0.88); }
+      A(uvAll(new THREE.CylinderGeometry(K(0.196), K(0.238), K(0.26), (C.seg || SEG) + 3, 1, true), T.ROBE),
+        trs(0, yCrn - K(0.040), -K(0.030), 0, 1, 1, 1, 0.16), 7, hp, null, null, 0.72);   // deep cowl
+      A(uvAll(new THREE.CylinderGeometry(K(0.330) * B, K(0.470) * B, K(0.46), (C.seg || SEG) + 3, 1, true), T.ROBE),
+        trs(0, ySh - K(0.14), -K(0.02)), 0, null, null, null, 0.80);                       // hunched mantle
+      for (const s of [-1, 1])
         A(boxA(K(0.044), K(0.030), K(0.026), [T.SHROUD]), trs(s * K(0.052), yCrn - K(0.166), K(0.130)), 7, hp, null, null, 0.16);
-        // The antlers ARE the war shaman's read. They have to be thick enough to survive a
-        // 12-pixel unit and wide enough to break his own outline on both sides.
-        const [m, L] = spanM([s * K(0.130), yCrn - K(0.020), -K(0.02)], [s * K(0.560), yCrn + K(0.640), -K(0.18)]);
-        A(uvAll(new THREE.CylinderGeometry(K(0.026), K(0.072), L, 6), T.BONE), m, 7, hp, null, null, 1.28);
-        for (let i = 0; i < 3; i++) {                                               // antler tines
-          const f = 0.30 + i * 0.26;
-          const o = [s * lerp(K(0.130), K(0.560), f), lerp(yCrn - K(0.020), yCrn + K(0.640), f), lerp(-K(0.02), -K(0.18), f)];
-          const [m2, L2] = spanM(o, [o[0] + s * K(0.20), o[1] + K(0.28), o[2] + (i & 1 ? K(0.22) : -K(0.20))]);
-          A(uvAll(new THREE.CylinderGeometry(K(0.014), K(0.040), L2, 5), T.BONE), m2, 7, hp, null, null, 1.30);
-        }
-      }
     }
     // ── shields (bone 5) ──
     if (C.shield === 'round' || C.shield === 'buckler') {
@@ -2886,7 +3026,12 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       // shieldS widens the pavise for the ironclad (SPEC3 §B), whose whole read is a
       // WALL: at 1.32 the plate is broader than his own shoulders and reaches his visor.
       const SS = C.shieldS || 1, hw = K(0.300) * SS, hh = K(0.540) * SS;   // knee to mouth: a real pavise
-      const pts = [[-hw, -hh], [hw, -hh], [hw, hh * 0.72], [hw * 0.62, hh], [-hw * 0.62, hh], [-hw, hh * 0.72]];
+      // ARMIES-FIX2 §4: the ironclad's board is a straight RECTANGLE, corner to corner. The
+      // tapered top was the one soft edge on a unit whose whole identity is "a wall walked
+      // onto the road", and it is what let him blur into the shieldbearer at gameplay zoom.
+      const pts = C.pavRect
+        ? [[-hw, -hh], [hw, -hh], [hw, hh * 1.06], [-hw, hh * 1.06]]
+        : [[-hw, -hh], [hw, -hh], [hw, hh * 0.72], [hw * 0.62, hh], [-hw * 0.62, hh], [-hw, hh * 0.72]];
       const cen = [hndL[0] + K(0.240), yHip + K(0.080), hndL[2] + K(0.115)];
       // shieldT: the ironclad's wall is bare bolted IRON, not the shieldbearer's painted
       // pavise — two units carrying the same red board would be one unit at gameplay zoom.
@@ -2914,26 +3059,45 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         trs(pt(K(1.44))[0], pt(K(1.44))[1], pt(K(1.44))[2] + K(0.02), 0.35), 6, shR, null, null, 1.06);
     } else if (C.weapon === 'sword' || C.weapon === 'gsword') {
       const big = C.weapon === 'gsword';
-      const bl = big ? K(1.18) : K(0.62), bw = big ? K(0.062) : K(0.058);
+      // ARMIES-FIX2 §3. The greatsword stood bolt upright out of the fist and the blade
+      // then ran straight through the pauldron and out of the top of the head — an
+      // assembly error at any zoom the champion is the focal figure at. Shouldering it
+      // OUTWARD (rz leans the blade away from the body, rx rakes it back over the
+      // shoulder) keeps the same heroic line and clears the skull entirely. Every part of
+      // the weapon is built off `grip`, which is derived from hndR, so blade, guard, grip
+      // and pommel move as one with the hand that holds them.
+      const bl = big ? K(1.10) : K(0.62), bw = big ? K(0.062) : K(0.058);
+      const lean = big ? -0.40 : 0, rake = big ? -0.34 : -0.22;
       const grip = [hndR[0] + K(0.02), hndR[1] + K(0.01), hndR[2] + K(0.045)];
       // Was a constant-width two-plane ribbon: at closeup the diagonal specular of the
       // BLADE tile banded across a flat rectangle and read as a zipper. A continuous taper
       // (0.09 -> 0.05 of its own width) plus a fuller on BOTH sizes gives it a spine.
       const pts = [[-bw, 0], [bw, 0], [bw * 0.86, bl * 0.44], [bw * 0.70, bl * 0.78],
                    [bw * 0.52, bl * 0.93], [0, bl], [-bw * 0.52, bl * 0.93], [-bw * 0.70, bl * 0.78], [-bw * 0.86, bl * 0.44]];
-      A(plateGeo(pts, big ? K(0.044) : K(0.034), T.BLADE), trs(grip[0], grip[1] + K(0.10), grip[2], 0, 1, 1, 1, -0.22), 6, shR, null, null, 1.10 * BT);
+      A(plateGeo(pts, big ? K(0.044) : K(0.034), T.BLADE), trs(grip[0], grip[1] + K(0.10), grip[2], 0, 1, 1, 1, rake, lean), 6, shR, null, null, 1.10 * BT);
       A(plateGeo([[-bw * 0.30, bl * 0.06], [bw * 0.30, bl * 0.06], [bw * 0.24, bl * 0.72], [0, bl * 0.86], [-bw * 0.24, bl * 0.72]],
-        big ? K(0.052) : K(0.040), T.IRON), trs(grip[0], grip[1] + K(0.10), grip[2], 0, 1, 1, 1, -0.22), 6, shR, null, null, 0.84);
+        big ? K(0.052) : K(0.040), T.IRON), trs(grip[0], grip[1] + K(0.10), grip[2], 0, 1, 1, 1, rake, lean), 6, shR, null, null, 0.84);
       // a real crossguard: a central block plus two down-swept quillons, not a flat bar
       const gy2 = grip[1] + K(0.085), gw = big ? K(0.11) : K(0.078);
-      A(boxA(gw, K(0.052), K(0.062), [T.IRON]), trs(grip[0], gy2, grip[2] + K(0.020), 0, 1, 1, 1, -0.22), 6, shR, null, null, 1.02);
+      A(boxA(gw, K(0.052), K(0.062), [T.IRON]), trs(grip[0], gy2, grip[2] + K(0.020), 0, 1, 1, 1, rake, lean), 6, shR, null, null, 1.02);
+      // quillons and pommel are placed from explicit points, not from a trs euler, so they
+      // have to be swung by the same lean/rake or the hilt comes apart from its own blade
+      const hubQ = [grip[0], gy2, grip[2] + K(0.020)];
+      const swing = q => {
+        if (!big) return q;
+        const x = q[0] - hubQ[0], y = q[1] - hubQ[1], z = q[2] - hubQ[2];
+        const x1 = x * Math.cos(lean) - y * Math.sin(lean), y1 = x * Math.sin(lean) + y * Math.cos(lean);
+        return [hubQ[0] + x1, hubQ[1] + y1 * Math.cos(rake) - z * Math.sin(rake),
+                hubQ[2] + y1 * Math.sin(rake) + z * Math.cos(rake)];
+      };
       for (const s of [-1, 1]) {
-        const [qm, qL] = spanM([grip[0] + s * gw * 0.4, gy2 + K(0.006), grip[2] + K(0.018)],
-                               [grip[0] + s * (big ? K(0.185) : K(0.132)), gy2 - K(0.052), grip[2] + K(0.030)]);
+        const [qm, qL] = spanM(swing([grip[0] + s * gw * 0.4, gy2 + K(0.006), grip[2] + K(0.018)]),
+                               swing([grip[0] + s * (big ? K(0.185) : K(0.132)), gy2 - K(0.052), grip[2] + K(0.030)]));
         A(uvAll(new THREE.CylinderGeometry(K(0.014), K(0.026), qL, 5), T.IRON), qm, 6, shR, null, null, 1.06);
       }
-      A(uvAll(new THREE.CylinderGeometry(K(0.026), K(0.026), big ? K(0.20) : K(0.13), 6), T.LEATH), trs(grip[0], grip[1] - K(0.02), grip[2] - K(0.012), 0, 1, 1, 1, -0.22), 6, shR, null, null, 0.9);
-      A(uvAll(new THREE.SphereGeometry(K(0.040), 6, 4), T.GOLD), trs(grip[0], grip[1] - (big ? K(0.13) : K(0.09)), grip[2] - K(0.03)), 6, shR, null, null, 1.12);
+      A(uvAll(new THREE.CylinderGeometry(K(0.026), K(0.026), big ? K(0.20) : K(0.13), 6), T.LEATH), trs(grip[0], grip[1] - K(0.02), grip[2] - K(0.012), 0, 1, 1, 1, rake, lean), 6, shR, null, null, 0.9);
+      { const pm = swing([grip[0], grip[1] - (big ? K(0.13) : K(0.09)), grip[2] - K(0.03)]);
+        A(uvAll(new THREE.SphereGeometry(K(0.040), 6, 4), T.GOLD), trs(pm[0], pm[1], pm[2]), 6, shR, null, null, 1.12); }
     } else if (C.weapon === 'axe2h') {
       const grip = [hndR[0] + K(0.02), hndR[1], hndR[2] + K(0.05)];
       const dir = [0.10, Math.cos(0.34), -Math.sin(0.34)];
@@ -3040,16 +3204,26 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     }
     // SPEC3 §B: ice grown THROUGH the armour — shards off both pauldrons and a crust down
     // the spine. Without them a pale knight is just a knight in the wrong palette.
+    // ARMIES-FIX2 §4: the shards were 0.46K stubs hugging the pauldron — invisible past
+    // 4x. Grown to nearly a head's height and pushed OUTSIDE the shoulder line so the
+    // revenant's outline has four hard ice spurs on it, plus a bright crown of rime at
+    // each shard root. That plus the resaturated T.FROST is the frost cue.
     if (C.rime) {
       for (const s of [-1, 1]) for (let i = 0; i < 3; i++) {
         const f = i / 2;
         const [m, L] = spanM([s * (shX + K(0.02)), ySh + K(0.03), -K(0.02) + f * K(0.06)],
-                             [s * (shX + K(0.14 + f * 0.16)), ySh + K(0.46 - f * 0.16), -K(0.10) - f * K(0.18)]);
-        A(uvAll(new THREE.ConeGeometry(K(0.052 - f * 0.012), L, 5), T.FROST), m, 0, null, null, null, 1.28);
+                             [s * (shX + K(0.30 + f * 0.26)), ySh + K(0.74 - f * 0.22), -K(0.16) - f * K(0.26)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.070 - f * 0.016), L, 5), T.FROST), m, 0, null, null, null, 1.42);
       }
-      for (let i = 0; i < 4; i++)
-        A(uvAll(new THREE.SphereGeometry(K(0.070 - i * 0.010), 6, 4), T.FROST),
-          trs(0, yCst - i * K(0.16), -K(0.150) * W, 0, 1.3, 0.8, 0.9), 0, null, null, null, 1.22);
+      for (const s of [-1, 1])                                       // rime crust at the roots
+        A(uvAll(new THREE.SphereGeometry(K(0.135) * B, 7, 5), T.FROST),
+          trs(s * (shX + K(0.03)), ySh + K(0.055), -K(0.02), 0, 1.05, 0.66, 1), 0, null, null, null, 1.34);
+      for (let i = 0; i < 5; i++)                                    // spine crust
+        A(uvAll(new THREE.SphereGeometry(K(0.086 - i * 0.011), 6, 4), T.FROST),
+          trs(0, yCst - i * K(0.15), -K(0.155) * W, 0, 1.4, 0.85, 0.95), 0, null, null, null, 1.32);
+      for (const s of [-1, 1])                                       // shin frost, so the cold
+        A(uvAll(new THREE.ConeGeometry(K(0.052), K(0.30), 5), T.FROST),  // reaches the ground
+          trs(s * hipX * 1.05, yKne - K(0.14), -K(0.09), 0, 1, 1, 1, 0.5, -s * 0.4), 0, null, null, null, 1.36);
     }
     // Glowing hands (SPEC3 §B war shaman): the heal is invisible at range unless the caster
     // is lit. Two ember cores riding the wrists put the light ON the unit, not on the effect.
@@ -3084,7 +3258,11 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(uvAll(new THREE.SphereGeometry(K(0.160) * B, 8, 5, 0, TAU, 0, 1.45), T.IRON),
           trs(s * (shX + K(0.020)), ySh + K(0.010), 0, 0, 1, 0.62, 1), 0, null, null, null, 1.10);
         // two long shoulder spikes per side: at overview zoom these are the only thing
-        // stopping a heavy-shouldered mini-boss from reading as a rectangle
+        // stopping a heavy-shouldered mini-boss from reading as a rectangle.
+        // ARMIES-FIX2 §4: `noSpikes` drops them for the ironclad, whose two pale spikes over
+        // a domed helm were reading as the war shaman's antlers. His read is the WALL — the
+        // full-height pavise plus the flat crown of the great helm — not a pair of horns.
+        if (C.noSpikes) continue;
         for (const [ox, oy, oz, r] of [[0.10, 0.42, -0.06, 0.062], [0.26, 0.30, 0.02, 0.048]]) {
           const [m, L] = spanM([s * (shX + K(0.070)), ySh + K(0.060), 0], [s * (shX + K(0.070 + ox * 1.5)), ySh + K(oy), K(oz)]);
           A(uvAll(new THREE.ConeGeometry(K(r), L, 6), T.IRON), m, 0, null, null, null, 1.16);
@@ -3192,6 +3370,23 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       trs(0, ySh + K(0.06), -K(0.02), 0, 1.10, 1, 0.94), 0, null, null, null, 0.62);
     A(uvAll(new THREE.CylinderGeometry(K(0.375), K(0.360), K(0.055), SG + 4, 1, true), T.SHROUD),
       trs(0, ySh + K(0.20), -K(0.02), 0, 1.10, 1, 0.94), 0, null, null, null, 0.46);
+    // ARMIES-FIX2 §4. One unbroken taper from hood to hem is a traffic cone — that is
+    // literally what the critic saw. THREE stepped skirts, each flaring wider than the one
+    // above it and each with its own ragged lower edge, cut the cone into layered robes:
+    // the wraith now has three hard horizontal breaks in its outline, which is what says
+    // "cloth on a body" instead of "solid shape". Every tier rides the cloth bone so the
+    // whole stack drifts.
+    for (let i = 0; i < 3; i++) {
+      const f = i / 2, yTop = lerp(ySh - K(0.16), yHem + K(0.40), f), hgt = K(0.44 + f * 0.12);
+      A(uvAll(new THREE.CylinderGeometry(K(0.215 + f * 0.075), K(0.330 + f * 0.115), hgt, SG + 4, 1, true), T.SHROUD),
+        trs(0, yTop - hgt / 2, -K(0.01)), 8, null, null, () => 0.35 + f * 0.55, 0.50 - f * 0.05);
+      const rr = K(0.330 + f * 0.115);
+      for (let j = 0; j < 9; j++) {                              // tattered lower edge per tier
+        const a = j / 9 * TAU + i * 0.37, L = K(0.16 + (j % 3) * 0.09);
+        A(plateGeo([[-K(0.062), 0], [K(0.062), 0], [K(0.030), -L], [-K(0.040), -L * 1.30]], K(0.011), T.SHROUD, T.SHROUD),
+          trs(Math.cos(a) * rr, yTop - hgt, Math.sin(a) * rr, -a, 1, 1, 1, 0.06), 8, null, null, () => 1.5, 0.44);
+      }
+    }
     // ragged hem: twelve long tapered strips whose weight rises to the tip, so the bottom
     // of the wraith is always drifting even when the sim has it standing still
     for (let i = 0; i < 12; i++) {
@@ -3216,20 +3411,24 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         trs(s * K(0.070), yCrn - K(0.340), K(0.140)), 7, hp, null, null, 1.55);      // light down the cheek
     }
     // skeletal arms — bare bone against the shroud, and the only hard edges on the model
+    // ARMIES-FIX2 §4: the arms were tucked inside the shroud's own width and read as
+    // "no arms". Swung OUT past the silhouette and lengthened so two long pale limbs
+    // trail off the body — the second thing (after the layered skirts) that tells the
+    // player this is a creature and not scenery.
     const shX = K(0.190), shL = [-shX, ySh - K(0.10), 0], shR = [shX, ySh - K(0.10), 0];
     for (const [s, bo, pv] of [[-1, 5, shL], [1, 6, shR]]) {
-      const el = [s * (shX + K(0.03)), ySh - K(0.40), K(0.04)], hd = [s * (shX + K(0.06)), ySh - K(0.60), K(0.24)];
-      rod(pv, el, K(0.052), K(0.040), T.BONE, bo, pv, 0.94);
-      rod(el, hd, K(0.040), K(0.032), T.BONE, bo, pv, 1.0);
-      A(uvAll(new THREE.SphereGeometry(K(0.048), 6, 4), T.BONE), trs(el[0], el[1], el[2]), bo, pv, null, null, 1.06);
+      const el = [s * (shX + K(0.20)), ySh - K(0.46), -K(0.02)], hd = [s * (shX + K(0.34)), ySh - K(0.84), K(0.20)];
+      rod(pv, el, K(0.056), K(0.042), T.BONE, bo, pv, 1.04);
+      rod(el, hd, K(0.042), K(0.030), T.BONE, bo, pv, 1.12);
+      A(uvAll(new THREE.SphereGeometry(K(0.050), 6, 4), T.BONE), trs(el[0], el[1], el[2]), bo, pv, null, null, 1.16);
       for (let i = 0; i < 3; i++) {                                                 // claws
         const a = (i - 1) * 0.42;
-        const [m, L] = spanM(hd, [hd[0] + Math.sin(a) * K(0.10), hd[1] - K(0.12), hd[2] + Math.cos(a) * K(0.16)]);
-        A(uvAll(new THREE.ConeGeometry(K(0.018), L, 4), T.BONE), m, bo, pv, null, null, 1.14);
+        const [m, L] = spanM(hd, [hd[0] + Math.sin(a) * K(0.12), hd[1] - K(0.20), hd[2] + Math.cos(a) * K(0.18)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.020), L, 4), T.BONE), m, bo, pv, null, null, 1.22);
       }
       // a torn sleeve trailing off each elbow, on the cloth channel
-      A(plateGeo([[-K(0.075), 0], [K(0.075), 0], [K(0.040), -K(0.34)], [-K(0.055), -K(0.28)]], K(0.012), T.SHROUD, T.SHROUD),
-        trs(s * (shX + K(0.05)), ySh - K(0.30), -K(0.02), s * 0.4), 8, null, null, () => 1.3, 0.80);
+      A(plateGeo([[-K(0.086), 0], [K(0.086), 0], [K(0.044), -K(0.52)], [-K(0.062), -K(0.42)]], K(0.012), T.SHROUD, T.SHROUD),
+        trs(s * (shX + K(0.15)), ySh - K(0.24), -K(0.03), s * 0.5), 8, null, null, () => 1.3, 0.72);
     }
     // two long tatters streaming off the shoulders — the wraith's motion tell at range
     for (const s of [-1, 1])
@@ -3428,15 +3627,42 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     if (vFade < dth + 0.02) discard;
   }
 `;
-  const patchAnim = (mat, hip, key) => {
+  // ── SPEC3 §D ELEMENTAL WARD SHELL ────────────────────────────────────────────
+  // The omen that turns a whole wave against the player's best school shipped with NO
+  // on-unit visual at all: a warded grunt was pixel-identical to an ordinary grunt, so the
+  // only way to learn a combat state was to read a text card — a UI crutch standing in for
+  // an art read. The shell is a FRESNEL RIM baked into the unit's own fragment shader
+  // rather than a second instanced draw of the mesh: same silhouette-hugging result, zero
+  // extra draw calls, and a phone rendering three hundred bodies pays one pow() for it.
+  // aWard is (r, g, b, strength); strength is 0 for every unwarded unit, which compiles
+  // away to a multiply by zero.
+  const WARD_VS = `attribute vec4 aWard; varying vec4 vWard;`;
+  const WARD_FS = `
+  {                                                  // Fresnel shell + scale-noise shimmer
+    float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
+    float shim = 0.70 + 0.30*sin(uT*3.4 + vWard.a*47.0 + vViewPosition.y*7.5)
+                      * sin(vViewPosition.x*9.0 - uT*1.7);
+    outgoingLight += vWard.rgb * (pow(fr, 2.5) * 1.15 * shim * step(0.001, vWard.a));
+  }
+`;
+  const patchAnim = (mat, hip, key, ward) => {
     mat.customProgramCacheKey = () => key;
     mat.onBeforeCompile = sh => {
       sh.uniforms.uT = AT_U; sh.uniforms.uHip = { value: hip };
-      sh.vertexShader = ANIM_HEAD + sh.vertexShader
-        .replace('void main() {', 'void main() {\n' + ANIM_BODY)
+      sh.vertexShader = ANIM_HEAD + (ward ? WARD_VS + '\n' : '') + sh.vertexShader
+        .replace('void main() {', 'void main() {\n' + ANIM_BODY + (ward ? '\n  vWard = aWard;' : ''))
         .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n\tobjectNormal = normalize(aBM * objectNormal);')
         .replace('#include <begin_vertex>', 'vec3 transformed = aP;');
-      sh.fragmentShader = 'varying float vFade;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n' + DITHER);
+      let fs = sh.fragmentShader.replace('void main() {', 'void main() {\n' + DITHER);
+      if (ward) {
+        // three renamed this chunk (output_fragment → opaque_fragment); resolve rather
+        // than assume, because a silently failed replace means an invisible mechanic.
+        const tag = fs.indexOf('#include <opaque_fragment>') >= 0
+          ? '#include <opaque_fragment>' : '#include <output_fragment>';
+        if (fs.indexOf(tag) < 0) console.warn('BF: ward shell found no output chunk');
+        fs = fs.replace(tag, WARD_FS + tag);
+      }
+      sh.fragmentShader = 'varying float vFade;\n' + (ward ? 'uniform float uT;\nvarying vec4 vWard;\n' : '') + fs;
     };
     return mat;
   };
@@ -3533,10 +3759,13 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // band, belt buckle, tabard hem and pommel (well under 8% of his surface).
     boss:   { h: 3.90, bulk: 1.58, hose: T.IRON, shin: T.IRON, mail: T.IRON, arm: T.IRON, hand: T.IRON,
               pauld: T.CRIM, skirt: T.CRIM, tabard: T.RED, chest: T.RED, face: T.EYES, helm: 'crown',
-              shield: 'none', weapon: 'gsword', knee: true, gait: 0.62, jit: 0.03, aim: 2.60,
-              bladeTint: 0.92, banner: true, cape: true, seg: 10, tabW: 0.94 },
+              shield: 'none', weapon: 'gsword', knee: true, kneeT: T.IRON, gait: 0.62, jit: 0.03, aim: 2.60,
+              bladeTint: 0.92, banner: true, cape: true, seg: 10, tabW: 0.94,
+              greave: true, greaveT: T.IRON, spauld: true, spauldT: T.IRON },
+    // ARMIES-FIX2 §2: the tabard is widened (0.96 -> 1.22 of the torso) and a blue breast
+    // plate added, so a knight carries a blue MASS rather than a blue ribbon over steel.
     knight: { h: 1.88, bulk: 1.06, hose: T.MAIL, shin: T.MAIL, mail: T.MAIL, arm: T.MAIL, hand: T.STEEL,
-              pauld: T.STEEL, skirt: T.BLUE, tabard: T.BLUE, chest: -1, face: T.FACE, helm: 'plume',
+              pauld: T.STEEL, skirt: T.BLUE, tabard: T.BLUE, tabW: 1.22, chest: T.BLUE, face: T.FACE, helm: 'plume',
               shield: 'kite', weapon: 'sword', knee: true, kneeT: T.STEEL, gait: 1.66, jit: 0.06, aim: 1.00, bar: 0.96 },
     // ══ SPEC2 §D: four more silhouettes, same rig, +4 draw calls ══
     // Every one of them has to be told apart from a grunt at overview zoom, so each owns
@@ -3572,8 +3801,9 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     ironclad: { h: 2.34, bulk: 1.48, hose: T.IRON, shin: T.IRON, mail: T.IRON, arm: T.IRON, hand: T.IRON,
               pauld: T.IRON, skirt: T.CRIM, tabard: -1, chest: T.IRON, face: T.EYES,
               skin: T.IRON, hair: T.IRON, helm: 'great', helmT: T.IRON,
-              shield: 'tower', shieldS: 1.34, shieldT: T.IRON, weapon: 'sword', knee: true, kneeT: T.IRON,
-              gait: 0.88, jit: 0.05, aim: 1.40, plates: true, bracer: true, bladeTint: 0.78,
+              shield: 'tower', shieldS: 1.34, shieldT: T.IRON, pavRect: true, weapon: 'sword', knee: true, kneeT: T.IRON,
+              gait: 0.88, jit: 0.05, aim: 1.40, plates: true, noSpikes: true, bracer: true, bladeTint: 0.78,
+              greave: true, greaveT: T.IRON, spauld: true, spauldT: T.IRON,
               shF: 1.20, headDrop: 0.10, bar: 1.52, seg: tier === 'mobile' ? 7 : 10 },
     ashwraith: { h: 1.92, hv: 1.74, wraith: true, seg: tier === 'mobile' ? 6 : 8,
               gait: 1.05, jit: 0.14, aim: 1.05, bar: 0.90 },
@@ -3601,15 +3831,27 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     const anim = new Float32Array(cap * 4);
     for (let i = 0; i < cap; i++) anim[i * 4 + 3] = -1;
     geo.setAttribute('aAnim', new THREE.InstancedBufferAttribute(anim, 4));
+    const ward = new Float32Array(cap * 4);          // (r,g,b,strength) — see WARD_FS
+    const wardA = new THREE.InstancedBufferAttribute(ward, 4);
+    wardA.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('aWard', wardA);
     const mat = patchAnim(new THREE.MeshStandardMaterial({
       map: albedo, roughnessMap: mrmap, metalnessMap: mrmap, roughness: 1, metalness: 1,
       vertexColors: true, envMapIntensity: 0.9,
       emissive: EMIT[key] ? 0xffffff : 0x000000,
       emissiveMap: EMIT[key] ? emmap : null,
       emissiveIntensity: EMIT[key] || 0,
-    }), C.h * 0.50 * (C.legF || 1), 'sold_' + key);
+    }), C.h * 0.50 * (C.legF || 1), 'sold_' + key, true);
     const mesh = new THREE.InstancedMesh(geo, mat, cap);
-    mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+    // ARMIES-FIX2 §1. castShadow was already on and the units DO write into the map (verified
+    // by reading the depth texels back), but a 1.8u body over a 168u shadow frustum is ~40
+    // texels of silhouette filtered by a 3x3 PCF kernel: what lands on the road is a pale
+    // smear, not a shadow, and the horde read as stickers on the grass. Two changes:
+    // receiveShadow OFF (self-shadowing inside a 200-body column only muddies the crimson
+    // mass at this camera, and every unit it darkens is a unit the eye stops reading as red),
+    // and the explicit sun-aligned contact decal below, which carries the grounding at full
+    // screen resolution regardless of what the shadow map can resolve.
+    mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false;
     mesh.count = 0; mesh.name = 'ARMY_' + key;
     const dep = patchAnim(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), C.h * 0.50 * (C.legF || 1), 'solddep_' + key);
     mesh.customDepthMaterial = dep;
@@ -3617,7 +3859,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // `hv` is the VISUAL height when the skeleton is not 6.5 heads (see legF) — the health
     // bar rides on it, so an ogre's bar sits on its skull instead of a metre above it.
     AM[key] = { mesh, anim, cap, n: 0, h: C.hv || C.h, gait: C.gait, jit: C.jit, key,
-                bar: C.bar || 0.92, quad: !!C.quad };
+                bar: C.bar || 0.92, quad: !!C.quad, ward, wardA };
     Armies.meshes.push(mesh);
   }
   Armies.enemyMesh = AM.grunt.mesh; Armies.knightMesh = AM.knight.mesh;
@@ -3638,7 +3880,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
         emissive: 0xffffff, emissiveMap: emmap, emissiveIntensity: 2.2,
       }), bC.h * 0.50, 'kit_' + kind);
       const mesh = new THREE.InstancedMesh(geo, mat, KCAP);
-      mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+      mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false;
       mesh.count = 0; mesh.name = 'ARMY_KIT_' + kind;
       mesh.customDepthMaterial = patchAnim(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), bC.h * 0.50, 'kitdep_' + kind);
       scene.add(mesh);
@@ -3694,6 +3936,86 @@ void main(){
     scene.add(barMesh);
     Armies.barMesh = barMesh;
   }
+
+  // ── 7b. ward ground rings (SPEC3 §D) ────────────────────────────────────────
+  // The Fresnel shell above is the CLOSE read; this is the read that survives overview
+  // pitch, where a rim light two pixels wide has nothing to sit on. One thin analytic ring
+  // laid flat under every warded body — one draw call, and on a wave that carries no omen
+  // its count is 0, so an unwarded campaign pays nothing for it.
+  {
+    const rg = new THREE.PlaneGeometry(1, 1);
+    rg.rotateX(-Math.PI / 2);
+    const rmat = new THREE.ShaderMaterial({
+      uniforms: { uC: { value: new THREE.Color(0x7fb2e8) }, uT: AT_U },
+      transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      vertexShader: `varying vec2 vU; varying float vPh;
+void main(){ vU = uv; vPh = instanceMatrix[3].x*0.7 + instanceMatrix[3].z*0.4;
+  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position,1.0); }`,
+      fragmentShader: `#include <common>
+uniform vec3 uC; uniform float uT; varying vec2 vU; varying float vPh;
+void main(){
+  float r = length(vU - 0.5) * 2.0;
+  float ring = exp(-pow((r - 0.86)/0.095, 2.0));
+  float a = ring * (0.30 + 0.13*sin(uT*3.1 + vPh));
+  if (a < 0.010) discard;
+  gl_FragColor = vec4(uC * (0.86 + 0.46*ring), a);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`,
+    });
+    wardRing = new THREE.InstancedMesh(rg, rmat, WARD_CAP);
+    wardRing.frustumCulled = false; wardRing.count = 0; wardRing.renderOrder = 4;
+    wardRing.name = 'ARMY_WARDRING';
+    scene.add(wardRing);
+    Armies.wardRing = wardRing;
+  }
+
+  // ── 7c. CONTACT SHADOWS (ARMIES-FIX2 §1) ────────────────────────────────────
+  // The shadow map does render the horde, but a soldier is ~40 texels of a 168-unit
+  // frustum and three-tap PCF filters that down to a grey haze the eye never reads as
+  // contact. A tower's shadow is crisp because a tower is twenty times the footprint.
+  // So the units get an explicit ground decal instead: one quad per body, laid flat,
+  // ROTATED to the sun's ground bearing and stretched to the real shadow length
+  // (height / tan(elevation)), with a soft radial core under the boots. It is one draw
+  // call for the whole army, it is resolution-independent, and — the part that matters
+  // for the horde read — a hundred of these overlapping on the road IS the crimson
+  // river's footprint: the tan between the ranks stops being empty ground.
+  {
+    const SP = G.sun.position;
+    SHAD_AZ = Math.atan2(-SP.x, -SP.z);                     // bearing the shadows run along
+    SHAD_LEN = Math.hypot(SP.x, SP.z) / Math.max(SP.y, 1e-3); // ground length per unit height
+    const sg = new THREE.PlaneGeometry(1, 1); sg.rotateX(-Math.PI / 2);
+    const smat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+      vertexShader: `varying vec2 vU; varying float vD;
+void main(){ vU = uv;
+  vec4 mvPosition = viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
+  vD = -mvPosition.z;
+  gl_Position = projectionMatrix * mvPosition; }`,
+      fragmentShader: `#include <common>
+varying vec2 vU; varying float vD;
+void main(){
+  // v runs from the boots (0.16) to the shadow tip (1.0); the core is a fat ellipse at
+  // the feet and the tail thins and fades, which is what a 44-degree key actually does.
+  vec2 d = vec2((vU.x - 0.5) / 0.46, (vU.y - 0.30) / 0.62);
+  float r = length(d);
+  float a = 1.0 - smoothstep(0.30, 1.0, r);
+  a *= a * 0.62;
+  a += (1.0 - smoothstep(0.0, 0.34, length(vec2((vU.x - 0.5) / 0.30, (vU.y - 0.26) / 0.20)))) * 0.30;
+  a *= 1.0 - smoothstep(110.0, 200.0, vD);          // hand-rolled haze: the scene fog would
+  if (a < 0.012) discard;                            // need ShaderMaterial fog uniforms
+  gl_FragColor = vec4(vec3(0.052, 0.044, 0.036), min(a, 0.74));
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`,
+    });
+    shadDecal = new THREE.InstancedMesh(sg, smat, SHAD_CAP);
+    shadDecal.frustumCulled = false; shadDecal.count = 0; shadDecal.renderOrder = 2;
+    shadDecal.name = 'ARMY_CONTACT';
+    scene.add(shadDecal);
+    Armies.shadDecal = shadDecal;
+  }
 }
 
 // ── 8. per-frame sync: sub-tick position lerp + per-unit gait jitter ──
@@ -3708,10 +4030,34 @@ const _acol = new THREE.Color();
 // and one lerp per unit — no quads, no second draw call, nothing in the alpha bucket, which
 // is the only version of this that a phone rendering three hundred bodies can afford.
 // Storm reads VIOLET here and in VFX.hit, so it never collides with pierce's steel.
+// VFX-FIX2: the tint lerp alone was invisible — a warded grunt and an ordinary grunt were
+// the same pixels — so the tint is now only the QUIET half of the read. The loud half is
+// the Fresnel shell (WARD_FS) and the ground ring, both driven from WARDS below, which is
+// the school's SHELL colour: pierce steel-blue, fire orange, crush bone, storm cyan.
 const WARDC = { pierce: [0.74, 0.88, 1.10], crush: [1.06, 0.88, 0.54],
                 fire:   [1.20, 0.58, 0.24], storm: [0.72, 0.62, 1.30] };
+const WARDS = { pierce: [0.50, 0.70, 0.91], crush: [0.80, 0.69, 0.54],
+                fire:   [1.00, 0.60, 0.29], storm: [0.50, 0.91, 0.94] };
 const _YAX = new THREE.Vector3(0, 1, 0);
-let _lastTick = -1;
+const _v3s = new THREE.Vector3();
+let _lastTick = -1, _wardWas = false;
+// ── ARMIES-FIX2 §2: RENDER-ONLY FILE SPREAD ──────────────────────────────────
+// The sim draws `lane` from a triangular distribution (see spawnEnemy): two thirds of the
+// column lands inside the middle 1.4u of a road 4.6u across, which is why 100 alive still
+// reads as a one-to-two-wide conga line instead of the reference's crimson flood. The
+// DISTRIBUTION is load-bearing sim — r7 reverted a lattice that changed it because it
+// flipped BALANCE.md's map-3 anchors — so this does not touch `e.lane` at all. It reshapes
+// the lane the RENDERER draws with: monotone, sign-preserving, fixed end points, and
+// clamped to ±0.55u of displacement (a quarter of a body width, well inside the silhouette,
+// so hit sparks and melee pairings still land on the body). Deterministic in the unit id,
+// no rng, and it collapses to zero the moment a unit is engaged so scrums stay tight.
+const LANE_MAX = 2.35;
+const vLane = (lane, id, blocked) => {
+  if (blocked) return lane;
+  const a = Math.min(1, Math.abs(lane) / LANE_MAX);
+  const push = LANE_MAX * Math.pow(a, 0.58) - Math.abs(lane);
+  return lane + (lane < 0 ? -1 : 1) * clamp(push, 0, 0.55) + (H1(id * 11 + 5) - 0.5) * 0.20;
+};
 Armies.syncVisuals = (vtNow) => {
   const sub = clamp(G.subT || 0, 0, 1);
   const at = vtNow + sub * TICK;                 // smooth, deterministic animation clock
@@ -3719,7 +4065,18 @@ Armies.syncVisuals = (vtNow) => {
   const tk = G.state.tick, shift = tk !== _lastTick; _lastTick = tk;
   for (const key in AM) AM[key].n = 0;
   for (const key in KITM) KITM[key].n = 0;
-  let bn = 0;
+  let bn = 0, nw = 0, sn = 0, wardC = null;
+  // ARMIES-FIX2 §1/§2. One flat quad per body, rotated onto the sun's ground bearing and
+  // scaled to the true shadow length. `fade` carries the death dissolve so a falling body
+  // does not leave its shadow standing on the road.
+  const pushShadow = (x, y, z, h, w, fade) => {
+    if (sn >= SHAD_CAP || fade <= 0.02) return;
+    const L = h * SHAD_LEN + w * 0.55;
+    _q.setFromAxisAngle(_YAX, SHAD_AZ);
+    _m4.compose(_v3s.set(x + Math.sin(SHAD_AZ) * L * 0.30, y + 0.045, z + Math.cos(SHAD_AZ) * L * 0.30),
+                _q, _sc.set(w * 2.05 * fade, 1, L * 1.06 * fade));
+    shadDecal.setMatrixAt(sn, _m4); sn++;
+  };
   const pushBar = (x, y, z, w, frac, kind) => {
     if (bn >= BAR_CAP) return;
     _m4.makeScale(w, w * 0.132, 1); _m4.setPosition(x, y, z);
@@ -3741,7 +4098,7 @@ Armies.syncVisuals = (vtNow) => {
       if (e._pid !== e.pathId) { e._pd = e.d; e._pid = e.pathId; }
     }
     const d = lerp(e._pd, e._cd, sub);
-    G.pathPos(d, _v3, e.lane, e.pathId);
+    G.pathPos(d, _v3, vLane(e.lane, e.id, e.blockedBy >= 0 || e.shooting), e.pathId);
     const tn = G.pathTan(d, e.pathId);
     let face = Math.atan2(tn.x, tn.z), mode = A.quad ? 4 : 0;
     if (e.alive && e.blockedBy >= 0) {
@@ -3765,16 +4122,29 @@ Armies.syncVisuals = (vtNow) => {
     const l = 0.78 + h2 * 0.32, wv = (h1 - 0.5) * 0.13, tnt = e.def.tint;
     if (tnt) _acol.setRGB(l * (1 + wv) * tnt[0], l * tnt[1], l * (1 - wv * 1.5) * tnt[2]);
     else _acol.setRGB(l * (1 + wv), l, l * (1 - wv * 1.5));
+    const WS = e.ward && WARDS[e.ward];
     if (e.ward) {                                  // SPEC3 §D — the warded wave shimmers
       const W = WARDC[e.ward];
       if (W) {
-        const k = 0.15 + 0.20 * (0.5 + 0.5 * Math.sin(at * 2.3 + h2 * 6.2831853));
+        const k = 0.11 + 0.15 * (0.5 + 0.5 * Math.sin(at * 2.3 + h2 * 6.2831853));
         _acol.setRGB(_acol.r + (W[0] * l - _acol.r) * k,
                      _acol.g + (W[1] * l - _acol.g) * k,
                      _acol.b + (W[2] * l - _acol.b) * k);
       }
     }
     A.mesh.setColorAt(A.n, _acol);
+    if (A.ward) {                                  // the Fresnel shell's per-instance row
+      const wo = A.n * 4, wd = A.ward;
+      if (WS && e.alive) {
+        const k = 0.72 + 0.28 * Math.sin(at * 1.7 + h2 * 6.2831853);
+        wd[wo] = WS[0]; wd[wo + 1] = WS[1]; wd[wo + 2] = WS[2]; wd[wo + 3] = 0.22 * k;
+        if (nw < WARD_CAP) {                       // ...and its ground ring
+          _m4.makeScale(1.05 * s, 1, 1.05 * s); _m4.setPosition(_v3.x, _v3.y + 0.09, _v3.z);
+          wardRing.setMatrixAt(nw, _m4); nw++;
+          if (!wardC) wardC = WS;
+        }
+      } else { wd[wo + 3] = 0; }
+    }
     const o = A.n * 4, an = A.anim;
     const rate = mode === 5 ? 0.45
                : mode === 3 ? 0.42 * (0.90 + h1 * 0.20)
@@ -3799,6 +4169,8 @@ Armies.syncVisuals = (vtNow) => {
     // thing walks on, so the player can see what he is about to have to kill.
     if (e.alive && (e.hp < e.maxhp || e.def.elite))
       pushBar(_v3.x, _v3.y + A.h * s + 0.34, _v3.z, A.bar * s, e.hp / e.maxhp, 0);
+    pushShadow(_v3.x, _v3.y, _v3.z, A.h * s, A.bar * s * 0.50,
+               dd < 0 ? 1 : 1 - clamp((dd - 0.30) / 0.55, 0, 1));
   }
   const KA = AM.knight;
   for (const kn of G.knights) {
@@ -3814,8 +4186,11 @@ Armies.syncVisuals = (vtNow) => {
     _q.setFromAxisAngle(_YAX, kn.face);
     _m4.compose(_v3.set(x, G.groundY(x, z), z), _q, _sc.setScalar(s));
     KA.mesh.setMatrixAt(KA.n, _m4);
-    const l = 0.92 + h2 * 0.16;
-    _acol.setRGB(l, l, l * 1.02);
+    // ARMIES-FIX2 §2: six knights buried in a hundred-body red mass were 2-3 pale pixels.
+    // The per-instance tint now pushes them COOL as well as bright, so the defenders read
+    // blue against the crimson instead of reading as steel-coloured enemies.
+    const l = 0.98 + h2 * 0.14;
+    _acol.setRGB(l * 0.90, l * 0.97, l * 1.18);
     KA.mesh.setColorAt(KA.n, _acol);
     const o = KA.n * 4, an = KA.anim;
     an[o] = h2 * 6.2831853;
@@ -3823,6 +4198,7 @@ Armies.syncVisuals = (vtNow) => {
     an[o + 2] = mode; an[o + 3] = -1;
     KA.n++;
     if (kn.hp < kn.maxhp) pushBar(x, G.groundY(x, z) + KA.h * s + 0.34, z, 0.96 * s, kn.hp / kn.maxhp, 1);
+    pushShadow(x, G.groundY(x, z), z, KA.h * s, KA.bar * s * 0.50, 1);
   }
   for (const src of [AM, KITM]) for (const key in src) {
     const A = src[key];
@@ -3834,6 +4210,17 @@ Armies.syncVisuals = (vtNow) => {
   barMesh.count = bn;
   barMesh.instanceMatrix.needsUpdate = true;
   barMesh.geometry.attributes.aBar.needsUpdate = true;
+  shadDecal.count = sn;
+  shadDecal.instanceMatrix.needsUpdate = true;
+  // SPEC3 §D: the ward buffers only move on frames a ward is (or has just stopped being)
+  // on the road, so an unwarded campaign never uploads them at all.
+  if (nw > 0 || _wardWas) {
+    for (const key in AM) if (AM[key].wardA) AM[key].wardA.needsUpdate = true;
+    wardRing.count = nw;
+    wardRing.instanceMatrix.needsUpdate = true;
+    if (wardC) wardRing.material.uniforms.uC.value.setRGB(wardC[0], wardC[1], wardC[2]);
+  }
+  _wardWas = nw > 0;
 };
 // ══════════════════════ END SECTION: ARMIES ══════════════════════
 
@@ -6789,18 +7176,25 @@ const atlasTex = (() => {
     blob(cx, cy, R * 0.28, 0.72, '255,246,214'); blob(cx, cy, R * 0.10, 1, '255,255,255');
   });
   tile(T_SOFT, (cx, cy, R) => blob(cx, cy, R * 0.99, 0.92, '255,255,255'));
+  // VFX-FIX2: at gameplay zoom a coin resolves to ~11 px, and at 11 px the old tile's
+  // 1 px rim and engraved star both vanished — what was left was a uniformly filled amber
+  // circle that a critic reasonably took for an untextured placeholder ball sitting among
+  // the burn FX. The internal contrast is now front-loaded onto the two features that
+  // survive a downsample: a heavy dark bevel around the whole edge (so the silhouette is
+  // never a flat fill) and one hard specular crescent (so it reads as struck metal).
   tile(T_COIN, (cx, cy, R) => {
     const r = R * 0.74;
-    x.beginPath(); x.arc(cx + r * 0.10, cy + r * 0.14, r * 1.02, 0, 7); x.fillStyle = 'rgba(52,32,4,.42)'; x.fill();
+    x.beginPath(); x.arc(cx + r * 0.10, cy + r * 0.16, r * 1.05, 0, 7); x.fillStyle = 'rgba(38,22,2,.52)'; x.fill();
     const gr = x.createLinearGradient(cx - r, cy - r, cx + r * 0.8, cy + r);
-    gr.addColorStop(0, '#fff2bd'); gr.addColorStop(0.34, '#f0c25a'); gr.addColorStop(0.72, '#c98f24'); gr.addColorStop(1, '#7d5512');
+    gr.addColorStop(0, '#fff6d2'); gr.addColorStop(0.28, '#f4cb68'); gr.addColorStop(0.66, '#bd8018'); gr.addColorStop(1, '#5e3c07');
     x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fillStyle = gr; x.fill();
-    x.lineWidth = r * 0.13; x.strokeStyle = '#8a5c13'; x.stroke();
-    x.beginPath(); x.arc(cx, cy, r * 0.63, 0, 7); x.strokeStyle = 'rgba(120,80,16,.7)'; x.lineWidth = r * 0.11; x.stroke();
-    x.fillStyle = '#f7dd96'; x.font = 'bold ' + Math.max(6, r * 1.05).toFixed(0) + 'px Georgia';
+    x.lineWidth = r * 0.24; x.strokeStyle = 'rgba(58,35,3,.92)'; x.stroke();   // heavy bevel
+    x.beginPath(); x.arc(cx, cy, r * 0.60, 0, 7); x.strokeStyle = 'rgba(104,66,10,.85)'; x.lineWidth = r * 0.15; x.stroke();
+    x.fillStyle = '#ffeaa8'; x.font = 'bold ' + Math.max(6, r * 1.15).toFixed(0) + 'px Georgia';
     x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('✦', cx, cy + r * 0.04);
-    x.beginPath(); x.ellipse(cx - r * 0.30, cy - r * 0.40, r * 0.32, r * 0.16, -0.75, 0, 7);
-    x.fillStyle = 'rgba(255,252,228,.9)'; x.fill();
+    x.beginPath(); x.arc(cx, cy, r * 0.86, Math.PI * 1.02, Math.PI * 1.62);    // specular crescent
+    x.strokeStyle = 'rgba(255,253,236,.95)'; x.lineWidth = r * 0.20; x.lineCap = 'round'; x.stroke();
+    feather(cx, cy, R, 0.86);
   });
   tile(T_CHUNK, (cx, cy, R) => {
     const n = 7, pts = [];
@@ -6844,33 +7238,48 @@ const U_HNF = { value: new THREE.Vector2(95, 400) };
 const U_SUN = { value: new THREE.Color(1.50, 1.30, 0.99) };   // particle tops
 const U_SKY = { value: new THREE.Color(0.52, 0.49, 0.47) };   // particle undersides
 const U_ONE = { value: new THREE.Color(1, 1, 1) };
+// world units per CSS pixel at one unit of view depth (written once per frame in
+// VFX.update); uMinPx is the floor a mode-3/4 signature burst is held above.
+const U_PXK = { value: 1 / 900 }, U_MINPX = { value: 22 };
 const P_VERT = `
 attribute vec3 iPos; attribute vec3 iVel; attribute vec2 iSize; attribute vec4 iCol; attribute vec3 iAux;
 varying vec2 vUv; varying vec4 vCol; varying float vHz; varying float vSh;
-uniform vec2 uHNF;
+uniform vec2 uHNF; uniform float uPxK; uniform float uMinPx;
 void main(){
   vec2 q = position.xy;
   vec3 R = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
   vec3 U = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
   vec3 wp; float md = iAux.z;
-  if (md < 0.5) {                                  // camera billboard, spun by iAux.x
+  // SPEC3 §A signature bursts (modes 3/4 = billboard/ground with a screen-space FLOOR).
+  // A 0.4 s school burst authored in world units is a legible shape at closeup range and
+  // three pixels of nothing at the overview pitch the game is actually watched from, so
+  // the four schools stopped being distinguishable exactly where distinguishing them
+  // matters. The floor projects a minimum radius in CSS pixels and never shrinks a quad.
+  float clampF = step(2.5, md);
+  float m = md - clampF*3.0;
+  vec2 iSz = iSize;
+  if (clampF > 0.5) {
+    float zv = max(-(viewMatrix * vec4(iPos,1.0)).z, 1.0);
+    iSz = max(iSz, vec2(uMinPx * uPxK * zv));
+  }
+  if (m < 0.5) {                                   // camera billboard, spun by iAux.x
     float c = cos(iAux.x), s = sin(iAux.x);
-    vec2 r = vec2(q.x*c - q.y*s, q.x*s + q.y*c) * iSize;
+    vec2 r = vec2(q.x*c - q.y*s, q.x*s + q.y*c) * iSz;
     wp = iPos + R*r.x + U*r.y;
     // Gentle top-lit ramp. A full 0..1 sweep put every billboard's lower half at the
     // sky colour, which at this near-top-down camera turned road dust into rows of dark
     // blobs — the quads are seen almost face-on, so the ramp reads as albedo, not light.
     vSh = q.y*0.55 + 0.72;
-  } else if (md < 1.5) {                           // ground-aligned patch: never clips terrain
+  } else if (m < 1.5) {                            // ground-aligned patch: never clips terrain
     float c = cos(iAux.x), s = sin(iAux.x);
-    vec2 r = vec2(q.x*c - q.y*s, q.x*s + q.y*c) * iSize;
+    vec2 r = vec2(q.x*c - q.y*s, q.x*s + q.y*c) * iSz;
     wp = iPos + vec3(r.x, 0.0, r.y);
     vSh = 0.80;
   } else {                                         // screen-space streak along iVel
     vec2 d = vec2(dot(iVel,R), dot(iVel,U));
     float L = length(d); d = L > 1e-4 ? d/L : vec2(1.0,0.0);
     vec2 n = vec2(-d.y, d.x);
-    vec2 r = -d*((q.x+0.5)*iSize.y) + n*(q.y*iSize.x);
+    vec2 r = -d*((q.x+0.5)*iSz.y) + n*(q.y*iSz.x);
     wp = iPos + R*r.x + U*r.y;
     vSh = 1.4;
   }
@@ -6909,7 +7318,8 @@ function mkBucket(cap, add) {
   g.instanceCount = 0;
   g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
   const m = new THREE.ShaderMaterial({
-    uniforms: { uMap: U_MAP, uHaze: U_HAZE, uHNF: U_HNF, uSunC: add ? U_ONE : U_SUN, uSkyC: add ? U_ONE : U_SKY },
+    uniforms: { uMap: U_MAP, uHaze: U_HAZE, uHNF: U_HNF, uPxK: U_PXK, uMinPx: U_MINPX,
+                uSunC: add ? U_ONE : U_SUN, uSkyC: add ? U_ONE : U_SKY },
     vertexShader: P_VERT, fragmentShader: P_FRAG(add), transparent: true, depthWrite: false,
     side: THREE.DoubleSide, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending,
   });
@@ -7040,12 +7450,29 @@ void main(){
     vec4 t = texture2D(uMap, uv*0.25 + vec2(0.5, 0.0));
     a = t.a * (1.0 - smoothstep(0.62, 1.0, r)) * smoothstep(0.0, 0.10, age) * (1.0 - smoothstep(0.55, 1.0, f));
     c = vT * (0.30 + 0.85*t.r);
-  } else {                                           // expanding ground shockwave
+  } else if (vI.z < 1.5) {                           // expanding ground shockwave
     float rr = pow(f, 0.48);
     float w = 0.09 + 0.30*f;
     float ring = exp(-pow((r - rr)/w, 2.0)*2.4);
     a = ring * pow(1.0 - f, 1.5) * 0.55;
     c = vT;
+  } else {
+    // CONTINUOUS PRESENCE AURA (the war shaman's mending circle). Not a shockwave and not
+    // a splat: a soft-shouldered volume with a bright rim at its true radius. The interior
+    // alpha is capped hard (~0.22) so the bodies standing in it keep their own colour, the
+    // falloff is a smoothstep from 0.72R out so there is no polygonal cut anywhere, and the
+    // whole thing breathes — a static tint on the ground reads as a texture bug, a
+    // breathing one reads as a spell. Terrain-conforming (see decal()), so it wraps the
+    // road/grass boundary instead of floating a flat quad through it.
+    float br  = 1.0 - smoothstep(0.72, 1.00, r);     // no hard edge, ever
+    float rim = exp(-pow((r - 0.855)/0.070, 2.0));
+    float scr = 0.5 + 0.5*sin(r*26.0 - uT*1.6 + vI.w*6.2832);   // slow inward scroll
+    float bre = 0.86 + 0.14*sin(uT*2.05 + vI.w*6.2832);         // breathing pulse
+    a = (br*(0.175 + 0.110*scr) + rim*(0.56 + 0.18*bre)) * bre
+      * smoothstep(0.0, 0.14, age) * (1.0 - smoothstep(0.42, 1.0, f));
+    // stays a warm CHANT-GREEN at the rim rather than clipping to mint-white: the rim
+    // gain is deliberately under 1.0× total so the hue survives the tone map.
+    c = vT * (0.66 + 0.34*rim);
   }
   a *= 1.0 - vHz*0.85;
   if (a < 0.004) discard;
@@ -7105,12 +7532,17 @@ VFX.shakeAt = (x, y, z, power) => {                  // distance-attenuated impu
 // pair uses for burning ground. A blast claims the least-recently-used slot; the
 // envelope is a closed form of the slot's birth time (rule 1 of this section), so a
 // headless catch-up that fires ten explosions still lights only the one on screen.
-const BLL = [], BLD = new Float32Array(2 * 5), BL_LIFE = 0.34;
-if (tier !== 'mobile') for (let i = 0; i < 2; i++) {
-  const l = new THREE.PointLight(0xffb060, 0, 24, 2);
+const BL_N = 3;
+const BLL = [], BLD = new Float32Array(BL_N * 5), BL_LIFE = 0.42;
+if (tier !== 'mobile') for (let i = 0; i < BL_N; i++) {
+  // Reach widened from 24 to 40 and the colour warmed to #ffb45a: at 24 the falloff had
+  // spent itself inside the crater, so the road four metres from a white-hot fireball came
+  // out DARKER than the same road forty metres away. A blast has to scorch the ground it
+  // sits on out to the edge of its own dust fan or it is a sticker.
+  const l = new THREE.PointLight(0xffb45a, 0, 40, 2);
   l.name = 'BLAST_L' + i; scene.add(l); BLL.push(l);
 }
-for (let i = 0; i < 2; i++) BLD[i * 5] = -99;
+for (let i = 0; i < BL_N; i++) BLD[i * 5] = -99;
 function claimBlast(x, y, z, p) {
   if (!BLL.length) return;
   let s = 0;                                         // least-recently-used slot
@@ -7123,9 +7555,37 @@ function stepBlast(t) {
   for (let i = 0; i < BLL.length; i++) {
     const o = i * 5, age = t - BLD[o], l = BLL[i];
     if (age < 0 || age >= BL_LIFE) { if (l.intensity !== 0) l.intensity = 0; continue; }
-    const k = 1 - age / BL_LIFE;
+    // ramp IN over the first 15% (a light that is already at peak on the birth frame reads
+    // as a lamp being switched on), then a squared tail.
+    const f = age / BL_LIFE, k = f < 0.15 ? f / 0.15 : (1 - f) / 0.85;
     l.position.set(BLD[o + 1], BLD[o + 2], BLD[o + 3]);
-    l.intensity = 85 * BLD[o + 4] * k * k;
+    l.intensity = 330 * BLD[o + 4] * k * k;
+  }
+}
+// ══ the mending aura's own light ══════════════════════════════════════════════
+// The one thing that turns a green circle on the ground into a green circle in the WORLD:
+// the men standing inside it have to catch some of it. Same closed-form envelope trick as
+// the blast pool, one slot (there is never more than a shaman or two chanting at once).
+const AUL = [], AUD = new Float32Array(2 * 5), AU_LIFE = 0.62;
+if (tier !== 'mobile') for (let i = 0; i < 2; i++) {
+  const l = new THREE.PointLight(0x7fd06a, 0, 14, 2);
+  l.name = 'AURA_L' + i; scene.add(l); AUL.push(l);
+}
+for (let i = 0; i < 2; i++) AUD[i * 5] = -99;
+function claimAura(x, y, z, p) {
+  if (!AUL.length) return;
+  let s = 0;
+  for (let i = 1; i < AUL.length; i++) if (AUD[i * 5] < AUD[s * 5]) s = i;
+  const o = s * 5;
+  AUD[o] = G.vt(); AUD[o + 1] = x; AUD[o + 2] = y; AUD[o + 3] = z; AUD[o + 4] = p;
+}
+function stepAura(t) {
+  for (let i = 0; i < AUL.length; i++) {
+    const o = i * 5, age = t - AUD[o], l = AUL[i];
+    if (age < 0 || age >= AU_LIFE) { if (l.intensity !== 0) l.intensity = 0; continue; }
+    const f = age / AU_LIFE;
+    l.position.set(AUD[o + 1], AUD[o + 2], AUD[o + 3]);
+    l.intensity = 44 * AUD[o + 4] * Math.sin(3.14159265 * f) * (0.82 + 0.18 * Math.cos(t * 7));
   }
 }
 
@@ -7235,9 +7695,26 @@ VFX.hit = (x, y, z, el, size, e) => {
     if (e.ward === el) res += G.OMEN_FX.ward;
     if (res > RES_CAP_V) res = RES_CAP_V;
   }
-  if (el === 'pierce' && res < SHRUG_AT) return VFX.burst(x, y, z, 0xffd090, s, 0.25);
   const gy = G.groundY(x, z), py = gy + y;
   eseed((x * 83 + z * 151) | 0, ((G.vt() * 967) | 0) + (ESALT[el] || 3));
+  if (el === 'pierce' && res < SHRUG_AT) {
+    // PIERCE — the baseline, and the only school on a hot path (every arrow in the game
+    // lands here). It keeps the cheap spark spray it always had and gains exactly two
+    // quads: a hard three-spoke shard and a thin expanding ring, both on the screen-space
+    // floor (modes 3/4) so the school is still nameable at overview pitch. Without those
+    // two the pierce hit was a 6 px smudge and the element wheel had no baseline at all.
+    VFX.burst(x, y, z, 0xffd090, s, 0.25);
+    eReset();
+    E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.mode = 3;
+    E.s0 = 0.55 * s; E.s1 = 1.50 * s; E.r = 1.70; E.g = 1.66; E.b = 1.44;
+    E.a = 0.85; E.life = 0.20; E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 3.0;
+    E.lead = 0.01; push(BB);
+    eReset();
+    E.x = x; E.y = py; E.z = z; E.tile = T_RING; E.mode = 3;
+    E.s0 = 0.35 * s; E.s1 = 2.0 * s; E.r = 1.85; E.g = 1.78; E.b = 1.55;
+    E.a = 0.50; E.life = 0.28; E.fade = 2; E.lead = 0.01; push(BB);
+    return;
+  }
   if (res >= SHRUG_AT) {
     // ══ DEFLECTION ══ nothing bit. Every variant is DIM, has no white core, and throws
     // its energy AWAY from the body rather than out of it.
@@ -7295,26 +7772,36 @@ VFX.hit = (x, y, z, el, size, e) => {
     }
     return;
   }
+  // ══ SIGNATURE BURSTS (VFX-FIX2) ══ The four schools were separated by HUE alone at
+  // sub-unit scale, which is no separation at all: at the pitch the game is watched from,
+  // a 0.5 u tinted puff is three pixels and the dedicated element frame came back empty.
+  // Each school now owns a SHAPE, runs ~0.4 s, and is authored 2.5–3× larger with its
+  // headline quads on the screen-space floor (modes 3/4):
+  //   crush — grey-brown dust DOME + ground shockwave ring + tumbling debris
+  //   fire  — orange FIREBALL + rising ember trails + a scorch mark on the ground
+  //   storm — cyan FORKED ARC to the two nearest bodies + a white flash ring
   if (el === 'crush') {
-    // A dull, WARM-GREY puff rather than a light: crush is mass. It is here at all because
-    // the first pass had no core of any kind and, at the zoom the game is actually played
-    // at, six stone chips half a metre wide are invisible — the school that answers plate
-    // has to be the one you can see working from the build bar.
-    eReset();
-    E.x = x; E.y = py; E.z = z; E.tile = T_TUFT; E.s0 = 0.55 * s; E.s1 = 1.75 * s;
-    E.r = 1.10; E.g = 0.94; E.b = 0.70; E.a = 0.60; E.life = 0.20; E.fade = 2;
+    eReset();                                                        // the dust DOME
+    E.x = x; E.y = py + 0.15 * s; E.z = z; E.tile = T_SMOKE; E.mode = 3;
+    E.vy = 1.1; E.drag = 2.4; E.s0 = 1.00 * s; E.s1 = 3.40 * s;
+    E.r = 0.50; E.g = 0.43; E.b = 0.34; E.a = 0.72; E.life = 0.42; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = 0.02; push(BA);
+    eReset();                                                        // grit thrown off it
+    E.x = x; E.y = py; E.z = z; E.tile = T_TUFT; E.mode = 3;
+    E.s0 = 0.95 * s; E.s1 = 2.70 * s; E.r = 1.45; E.g = 1.24; E.b = 0.88;
+    E.a = 0.74; E.life = 0.26; E.fade = 2;
     E.rot = er() * 6.28; E.rotV = es1() * 2.5; E.lead = 0.02; push(BB);
     eReset();                                                        // the blow, ground-aligned
-    E.x = x; E.y = gy + 0.12; E.z = z; E.tile = T_RING; E.mode = 1;
-    E.s0 = 0.6 * s; E.s1 = 3.7 * s; E.r = 0.94; E.g = 0.83; E.b = 0.62;
-    E.a = 0.32; E.life = 0.30; E.fade = 2; E.lead = 0.02; push(BB);
-    for (let i = 0; i < 7; i++) {                                    // chips off armour and bone
+    E.x = x; E.y = gy + 0.12; E.z = z; E.tile = T_RING; E.mode = 4;
+    E.s0 = 0.9 * s; E.s1 = 5.6 * s; E.r = 1.32; E.g = 1.14; E.b = 0.84;
+    E.a = 0.62; E.life = 0.40; E.fade = 2; E.lead = 0.02; push(BB);
+    for (let i = 0; i < 8; i++) {                                    // chips off armour and bone
       eReset();
-      const an = er() * 6.2832, sp = 3.5 + er() * 7;
+      const an = er() * 6.2832, sp = 4.5 + er() * 8, big = i < 4;
       E.x = x + es1() * 0.2 * s; E.y = py; E.z = z + es1() * 0.2 * s;
       E.vx = Math.cos(an) * sp; E.vy = sp * (0.45 + er() * 0.8); E.vz = Math.sin(an) * sp;
       E.grav = 26; E.drag = 0.5; E.tile = T_CHUNK;
-      E.s0 = (0.15 + er() * 0.17) * s; E.s1 = E.s0;
+      E.s0 = (big ? 0.34 + er() * 0.24 : 0.15 + er() * 0.15) * s; E.s1 = E.s0;
       E.r = 0.66; E.g = 0.60; E.b = 0.52; E.a = 1; E.life = 0.55 + er() * 0.4;
       E.rot = er() * 6.28; E.rotV = es1() * 10; E.lead = 0.02; push(BA);
     }
@@ -7322,51 +7809,101 @@ VFX.hit = (x, y, z, el, size, e) => {
       eReset();
       const an = er() * 6.2832;
       E.x = x + Math.cos(an) * 0.35 * s; E.y = py - 0.2; E.z = z + Math.sin(an) * 0.35 * s;
-      E.vx = Math.cos(an) * 2.2; E.vz = Math.sin(an) * 2.2; E.vy = 0.6; E.drag = 2.6;
-      E.tile = T_DUST; E.mode = 1; E.s0 = 0.4 * s; E.s1 = 1.9 * s;
-      E.r = 0.62; E.g = 0.55; E.b = 0.43; E.a = 0.30; E.life = 0.70 + er() * 0.4;
+      E.vx = Math.cos(an) * 2.6; E.vz = Math.sin(an) * 2.6; E.vy = 0.6; E.drag = 2.6;
+      E.tile = T_DUST; E.mode = 1; E.s0 = 0.8 * s; E.s1 = 4.2 * s;
+      E.r = 0.62; E.g = 0.55; E.b = 0.43; E.a = 0.28; E.life = 0.70 + er() * 0.4;
       E.rot = er() * 6.28; E.lead = 0.03; push(BA);
     }
   } else if (el === 'fire') {
-    eReset();                                                        // ignition
-    E.x = x; E.y = py; E.z = z; E.tile = T_FLASH; E.s0 = 0.5 * s; E.s1 = 1.35 * s;
-    E.r = 2.30; E.g = 1.05; E.b = 0.30; E.a = 0.80; E.life = 0.12; E.fade = 2;
-    E.rot = er() * 6.28; E.lead = 0.01; push(BB);
-    for (let i = 0; i < 9; i++) {                                    // the ember burst
+    eReset();                                                        // the FIREBALL
+    E.x = x; E.y = py + 0.1 * s; E.z = z; E.tile = T_SOFT; E.mode = 3;
+    E.vy = 1.6; E.drag = 2.2; E.s0 = 0.85 * s; E.s1 = 2.85 * s;
+    E.r = 3.10; E.g = 1.16; E.b = 0.26; E.a = 0.95; E.life = 0.34; E.fade = 2;
+    E.lead = 0.01; push(BB);
+    eReset();                                                        // ignition star inside it
+    E.x = x; E.y = py; E.z = z; E.tile = T_FLASH; E.mode = 3;
+    E.s0 = 0.9 * s; E.s1 = 2.4 * s; E.r = 3.20; E.g = 1.60; E.b = 0.42;
+    E.a = 0.92; E.life = 0.16; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.01; push(BB);
+    // scorch on the ground — rationed (the pool is 14 slots and a pyre lands a lot of
+    // these; every one of them would evict a catapult crater within the second).
+    if (er() < 0.30) decal(x, z, 2.5 * s, 0, 5.0, 0.075, 0.053, 0.038, er(), 0.02);
+    for (let i = 0; i < 6; i++) {                                    // rising ember TRAILS
+      eReset();
+      const an = i / 6 * 6.2832 + er() * 0.8, sp = 1.6 + er() * 2.6;
+      E.x = x + Math.cos(an) * 0.28 * s; E.y = py; E.z = z + Math.sin(an) * 0.28 * s;
+      E.vx = Math.cos(an) * sp * 0.55 + WX * 0.6; E.vy = 3.4 + er() * 3.6; E.vz = Math.sin(an) * sp * 0.55 + WZ * 0.6;
+      E.grav = -0.9; E.drag = 1.2; E.tile = T_SPARK; E.mode = 2;
+      E.s0 = 0.16 * s; E.s1 = 0.05 * s; E.asp = 4 + er() * 4;
+      E.r = 2.30; E.g = 1.00 + er() * 0.40; E.b = 0.22; E.a = 0.95; E.life = 0.50 + er() * 0.45;
+      E.fade = 2; E.lead = 0.02; push(BB);
+    }
+    for (let i = 0; i < 5; i++) {                                    // the ember burst
       eReset();
       const an = er() * 6.2832, sp = 2.5 + er() * 6;
       E.x = x + es1() * 0.2 * s; E.y = py + es1() * 0.25 * s; E.z = z + es1() * 0.2 * s;
       E.vx = Math.cos(an) * sp * 0.7; E.vy = 1.6 + er() * 3.4; E.vz = Math.sin(an) * sp * 0.7;
       E.grav = -0.7; E.drag = 1.5; E.tile = T_EMBER;
-      E.s0 = (0.10 + er() * 0.09) * s; E.s1 = 0.02;
+      E.s0 = (0.16 + er() * 0.14) * s; E.s1 = 0.03;
       E.r = 2.25; E.g = 0.95 + er() * 0.45; E.b = 0.20; E.a = 0.92; E.life = 0.55 + er() * 0.55;
       E.fade = 2; E.lead = 0.02; push(BB);
     }
     eReset();                                                        // greasy smoke off the burn
     E.x = x; E.y = py + 0.3; E.z = z;
     E.vx = WX * 1.2 + es1() * 0.4; E.vy = 1.3 + er() * 0.9; E.vz = WZ * 1.2 + es1() * 0.4;
-    E.drag = 1.1; E.tile = er() < 0.6 ? T_SOOT : SMK(); E.s0 = 0.35 * s; E.s1 = 1.7 * s;
-    E.r = 0.16; E.g = 0.13; E.b = 0.11; E.a = 0.34; E.life = 0.85 + er() * 0.5;
+    E.drag = 1.1; E.tile = er() < 0.6 ? T_SOOT : SMK(); E.s0 = 0.7 * s; E.s1 = 3.2 * s;
+    E.r = 0.16; E.g = 0.13; E.b = 0.11; E.a = 0.30; E.life = 0.85 + er() * 0.5;
     E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = 0.05; push(BA);
   } else {                                                           // storm
     eReset();                                                        // hard white core
-    E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.s0 = 0.42 * s; E.s1 = 1.05 * s;
-    E.r = 1.60; E.g = 1.40; E.b = 2.30; E.a = 0.92; E.life = 0.10; E.fade = 2;
-    E.rot = er() * 6.28; E.lead = 0.01; push(BB);
-    for (let i = 0; i < 7; i++) {                                    // the violet crack
+    E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.mode = 3;
+    E.s0 = 1.15 * s; E.s1 = 2.90 * s; E.r = 2.10; E.g = 2.15; E.b = 3.00;
+    E.a = 0.95; E.life = 0.14; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.01; push(BB);
+    eReset();                                                        // white FLASH RING
+    E.x = x; E.y = py; E.z = z; E.tile = T_RING; E.mode = 3;
+    E.s0 = 0.6 * s; E.s1 = 4.4 * s; E.r = 0.45; E.g = 2.05; E.b = 2.55;
+    E.a = 0.80; E.life = 0.32; E.fade = 2; E.lead = 0.01; push(BB);
+    // FORKED ARC — the school's whole identity is that it JUMPS, so the burst reaches for
+    // the two nearest bodies instead of spraying isotropically. The scan is bounded by the
+    // live roster and only ever runs on a storm hit, which is far from a hot path.
+    const EN = G.enemies;
+    let n1 = -1, n2 = -1, d1 = 64, d2 = 64;
+    for (let i = 0; i < EN.length; i++) {
+      const o = EN[i];
+      if (!o.alive || o === e) continue;
+      const q = (o.px - x) * (o.px - x) + (o.pz - z) * (o.pz - z);
+      if (q < d1) { d2 = d1; n2 = n1; d1 = q; n1 = i; }
+      else if (q < d2) { d2 = q; n2 = i; }
+    }
+    for (const ni of [n1, n2]) {
+      if (ni < 0) continue;
+      const o = EN[ni], tx = o.px, tz = o.pz, ty = G.groundY(tx, tz) + 0.9;
+      const SEG = 4;
+      for (let k = 0; k < SEG; k++) {                                // a jagged chain of streaks
+        const f0 = k / SEG, f1 = (k + 1) / SEG;
+        const jx = es1() * 0.55, jy = es1() * 0.42, jz = es1() * 0.55;
+        eReset();
+        E.x = x + (tx - x) * f0 + jx; E.y = py + (ty - py) * f0 + jy; E.z = z + (tz - z) * f0 + jz;
+        E.vx = (tx - x) * (f1 - f0) * 30; E.vy = (ty - py) * (f1 - f0) * 30; E.vz = (tz - z) * (f1 - f0) * 30;
+        E.drag = 40; E.tile = T_SPARK; E.mode = 2;
+        E.s0 = 0.13 * s; E.s1 = 0.05 * s; E.asp = 9 + er() * 5;
+        E.r = 0.40; E.g = 2.05; E.b = 2.55; E.a = 1; E.life = 0.15 + er() * 0.09; E.fade = 2;
+        E.lead = 0.01; push(BB);
+      }
+    }
+    for (let i = 0; i < 6; i++) {                                    // the cyan crack
       eReset();
       const an = er() * 6.2832, sp = 5 + er() * 12;
       E.x = x + es1() * 0.14 * s; E.y = py + es1() * 0.2 * s; E.z = z + es1() * 0.14 * s;
       E.vx = Math.cos(an) * sp * 0.85; E.vy = sp * (0.3 + er() * 0.85); E.vz = Math.sin(an) * sp * 0.85;
       E.grav = 15; E.drag = 4.6; E.tile = T_SPARK; E.mode = 2;
-      E.s0 = 0.07 * s; E.s1 = 0.028 * s; E.asp = 6 + er() * 8;
-      E.r = 1.55; E.g = 0.95; E.b = 2.55; E.a = 1; E.life = 0.11 + er() * 0.14; E.fade = 2;
+      E.s0 = 0.10 * s; E.s1 = 0.035 * s; E.asp = 6 + er() * 8;
+      E.r = 0.42; E.g = 1.95; E.b = 2.60; E.a = 1; E.life = 0.11 + er() * 0.14; E.fade = 2;
       E.lead = 0.01; push(BB);
     }
-    eReset();                                                        // violet bruise round the body
-    E.x = x; E.y = py; E.z = z; E.tile = T_SOFT; E.s0 = 0.7 * s; E.s1 = 1.5 * s;
-    E.r = 0.72; E.g = 0.24; E.b = 1.35; E.a = 0.30; E.life = 0.24; E.fade = 1;
-    E.lead = 0.02; push(BB);
+    eReset();                                                        // cold bruise round the body
+    E.x = x; E.y = py; E.z = z; E.tile = T_SOFT; E.mode = 3;
+    E.s0 = 1.3 * s; E.s1 = 2.9 * s; E.r = 0.18; E.g = 1.20; E.b = 1.70;
+    E.a = 0.42; E.life = 0.26; E.fade = 1; E.lead = 0.02; push(BB);
   }
 };
 
@@ -7426,17 +7963,21 @@ VFX.heal = (x, y, z, rad) => {
   // a ring that races outward like VFX.stomp's reads as a blow landing, which is the exact
   // opposite of what a healer is doing. T_RING's bright band sits at ~0.83 of the quad, so
   // the multipliers are chosen against the TRUE heal radius, not eyeballed.
-  eReset();                                                         // the area of effect
-  // Floated 0.7 above the ground rather than laid on it: a 16-unit ground-aligned quad on a
-  // banked road buries most of its own circumference in the terrain, which turned the ring
-  // into a lopsided wedge. At this camera pitch 0.7 still reads as a mark on the ground.
-  E.x = x; E.y = y + 0.70; E.z = z; E.tile = T_RING; E.mode = 1;
-  E.s0 = R * 1.05; E.s1 = R * 1.25; E.r = 0.38; E.g = 1.70; E.b = 0.26;
-  E.a = 0.40; E.life = 0.66; E.fade = 1; E.lead = 0.02; push(BB);
+  // ── the area of effect. VFX-FIX2: a floating 16-unit ground-aligned quad was the wrong
+  // primitive for this and shipped every failure mode of one — the flat plane cut a
+  // straight polygonal edge wherever the terrain climbed through it, the additive quad
+  // drew OVER the billboard grass inside its footprint (which turned the tufts solid
+  // chroma-green), and the tile's fill gave the whole thing the read of spilled paint.
+  // It is now a terrain-CONFORMING decal (type 2): radial smoothstep from 0.72R, a thin
+  // bright rim band at R, interior alpha capped near 0.22, a slow inward scroll and a
+  // breathing pulse, drawn UNDER the units and under the grass by depth rather than over
+  // them. Tinted to the warm chant-green #7fd06a rather than the old flat mint.
+  decal(x, z, R * 1.14, 2, 0.72, 0.42, 0.68, 0.35, er(), 0.02);   // #7fd06a, kept under 1.0
+  claimAura(x, y + 0.9, z, 1);                                      // ...and it LIGHTS them
   eReset();                                                         // a small pool at his feet
   E.x = x; E.y = y + 0.07; E.z = z; E.tile = T_SOFT; E.mode = 1;
-  E.s0 = R * 0.16; E.s1 = R * 0.30; E.r = 0.42; E.g = 0.95; E.b = 0.26;
-  E.a = 0.20; E.life = 0.50; E.fade = 1; E.lead = 0.02; push(BB);
+  E.s0 = R * 0.14; E.s1 = R * 0.26; E.r = 0.40; E.g = 0.88; E.b = 0.30;
+  E.a = 0.16; E.life = 0.50; E.fade = 1; E.lead = 0.02; push(BB);
   eReset();                                                         // the caster himself
   E.x = x; E.y = y + 1.15; E.z = z; E.tile = T_FLASH;
   E.s0 = 0.50; E.s1 = 1.40; E.r = 0.95; E.g = 2.10; E.b = 0.70;
@@ -7450,6 +7991,19 @@ VFX.heal = (x, y, z, rad) => {
     E.s0 = 0.14 + er() * 0.10; E.s1 = 0.04;
     E.r = 0.78 + er() * 0.45; E.g = 1.95; E.b = 0.62; E.a = 0.82; E.life = 0.75 + er() * 0.55;
     E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 2.5; E.lead = 0.02 + er() * 0.07; push(BB);
+  }
+  // Motes lifting off the whole CIRCLE, not just off the staff. This is what makes the
+  // aura a volume the men are standing in rather than a mark painted under their feet:
+  // slow, sparse, spread across the full radius and leaning with the wind.
+  for (let i = 0; i < 8; i++) {
+    eReset();
+    const an = er() * 6.2832, rr = Math.sqrt(er()) * R * 0.94;
+    E.x = x + Math.cos(an) * rr; E.y = y + 0.15 + er() * 0.5; E.z = z + Math.sin(an) * rr;
+    E.vx = WX * 0.30 + es1() * 0.20; E.vz = WZ * 0.30 + es1() * 0.20;
+    E.vy = 0.55 + er() * 0.75; E.drag = 0.9; E.grav = -0.20; E.tile = T_MOTE;
+    E.s0 = 0.10 + er() * 0.09; E.s1 = 0.03;
+    E.r = 0.62 + er() * 0.30; E.g = 1.55; E.b = 0.52; E.a = 0.46; E.life = 1.3 + er() * 0.8;
+    E.fade = 2; E.lead = er() * 0.35; push(BB);
   }
 };
 
@@ -7470,23 +8024,43 @@ VFX.zapHit = (x, y, z, hop, e) => {
   if (e && e.def && G.resistOf(e.def, 'storm') >= SHRUG_AT) { VFX.hit(x, y - gy, z, 'storm', 1, e); return; }
   eseed((x * 173 + z * 59) | 0, ((G.vt() * 907) | 0) + (hop | 0) * 131);
   eReset();                                                        // core
-  E.x = x; E.y = y; E.z = z; E.tile = T_FLASH; E.s0 = 0.42; E.s1 = 1.25;
-  E.r = 1.30; E.g = 1.80; E.b = 2.55; E.a = 0.92; E.life = 0.12; E.fade = 2;
+  E.x = x; E.y = y; E.z = z; E.tile = T_FLASH; E.mode = 3; E.s0 = 0.60; E.s1 = 1.80;
+  E.r = 1.30; E.g = 2.00; E.b = 2.60; E.a = 0.95; E.life = 0.13; E.fade = 2;
   E.rot = er() * 6.28; E.lead = 0.01; push(BB);
-  for (let i = 0; i < 8; i++) {                                    // arc-shatter sparks
-    eReset();
-    const an = er() * 6.2832, sp = 5 + er() * 13;
-    E.x = x + es1() * 0.15; E.y = y + es1() * 0.2; E.z = z + es1() * 0.15;
-    E.vx = Math.cos(an) * sp * 0.8; E.vy = sp * (0.35 + er() * 0.9); E.vz = Math.sin(an) * sp * 0.8;
-    E.grav = 15; E.drag = 4.6; E.tile = T_SPARK; E.mode = 2;
-    E.s0 = 0.075; E.s1 = 0.03; E.asp = 6 + er() * 8;
-    E.r = 1.15; E.g = 1.85; E.b = 2.60; E.a = 1; E.life = 0.12 + er() * 0.16; E.fade = 2;
-    E.lead = 0.01; push(BB);
+  eReset();                                                        // white FLASH RING
+  // VFX-FIX2: storm's whole screen-space identity used to be one 0.42 u star and a spray
+  // of hair-thin sparks, which at the pitch the game is watched from is nothing at all —
+  // the element frame came back with no storm in it. The ring is a BILLOWED burst at the
+  // body (not another hoop on the ground; see the note below) and rides the screen-space
+  // floor so it survives overview zoom.
+  E.x = x; E.y = y; E.z = z; E.tile = T_RING; E.mode = 3; E.s0 = 0.55; E.s1 = 3.60;
+  E.r = 0.50; E.g = 2.00; E.b = 2.50; E.a = 0.62; E.life = 0.28; E.fade = 2;
+  E.lead = 0.01; push(BB);
+  // FORKED, not sprayed. Three branches, each a chain of screen-space streaks with a
+  // jittered kink at every joint — a lightning arc has a shape, and eight isotropic
+  // sparks is the one shape it does not have.
+  for (let b = 0; b < 3; b++) {
+    const an = er() * 6.2832, dip = -0.25 - er() * 0.75, len = 1.5 + er() * 1.9;
+    let px = x, py = y, pz = z;
+    for (let k = 0; k < 3; k++) {
+      const f = (k + 1) / 3;
+      const nx = x + Math.cos(an) * len * f + es1() * 0.34;
+      const ny = y + dip * len * f + es1() * 0.30;
+      const nz = z + Math.sin(an) * len * f + es1() * 0.34;
+      eReset();
+      E.x = px; E.y = py; E.z = pz;
+      E.vx = (nx - px) * 26; E.vy = (ny - py) * 26; E.vz = (nz - pz) * 26;
+      E.drag = 34; E.tile = T_SPARK; E.mode = 2;
+      E.s0 = 0.20; E.s1 = 0.07; E.asp = 7 + er() * 4;
+      E.r = 0.60; E.g = 2.05; E.b = 2.60; E.a = 1; E.life = 0.14 + er() * 0.10; E.fade = 2;
+      E.lead = 0.01; push(BB);
+      px = nx; py = ny; pz = nz;
+    }
   }
   eReset();                                                        // body envelope
   E.x = x; E.y = gy + 0.95; E.z = z; E.tile = T_SOFT;
-  E.s0 = 1.05; E.s1 = 1.70; E.r = 0.20; E.g = 0.50; E.b = 1.30;
-  E.a = 0.34; E.life = 0.30; E.fade = 1; E.lead = 0.02; push(BB);
+  E.s0 = 1.25; E.s1 = 2.05; E.r = 0.14; E.g = 0.72; E.b = 1.42;
+  E.a = 0.40; E.life = 0.30; E.fade = 1; E.lead = 0.02; push(BB);
   eReset();                                                        // grounding ring at the feet
   // KEPT THIN AND SHORT. At the first pass's weight (a 3 u hoop at 0.34) three struck
   // bodies wore three white donuts and the frame read as a selection UI, not a strike.
@@ -7625,6 +8199,17 @@ VFX.explosion = (x, y, z, power) => {
   decal(x, z, 11 * p, 1, 0.95, 0.72, 0.62, 0.46, er());            // ground shockwave
 
   claimBlast(x, gy + 1.2 * p, z, p);                               // light the neighbours
+  // ...and a HOT POOL on the ground under it. The point light alone cannot say "this road
+  // is scorching": it is one frame of falloff on a diffuse surface. An additive ground
+  // patch that blooms out and dies over 0.6 s puts the blast INTO the dirt, so the crater
+  // reads as burning rather than as a sprite parked on top of the terrain.
+  for (let i = 0; i < 2; i++) {
+    eReset();
+    E.x = x; E.y = gy + 0.08 + i * 0.05; E.z = z; E.tile = T_SOFT; E.mode = 1;
+    E.s0 = (2.2 + i * 1.6) * p; E.s1 = (6.4 + i * 3.4) * p;
+    E.r = 1.55 - i * 0.55; E.g = 0.74 - i * 0.30; E.b = 0.26 - i * 0.12;
+    E.a = i ? 0.22 : 0.42; E.life = i ? 0.62 : 0.42; E.fade = 2; E.lead = 0.04; push(BB);
+  }
   // The T_FLASH star is the SPARK, not the fireball. At 2.3/1.55/0.72 and 2.9 u it blew
   // to flat 255 white with radial spikes under ACES and read as a UI sparkle; dimmed and
   // shrunk it is a small hot centre and the T_SOFT ball below is the visible body, so the
@@ -7650,20 +8235,25 @@ VFX.explosion = (x, y, z, power) => {
   // near-white, so a nominally "grey smoke" tint comes out pale sand. Earth needs a base
   // weight around 0.2, not 0.5. Leads are staggered 0.12..0.62 s so the fountain is a
   // continuous column from the crater to its apex on the very first rendered frame.
+  // VFX-FIX2: the fountain used to leave the crater at up to 34 u/s against grav 15 with
+  // almost no drag, which put its apex ~38 world units over a lens standing 41 away — i.e.
+  // it ran clean off the top of the hero frame and took the wave title with it. Muzzle
+  // velocity, gravity and drag retuned to top out around a third of that; the fountain is
+  // still the loudest thing in the effect, it just stays inside the picture.
   for (let i = 0; i < 38; i++) {
     eReset();
-    const an = er() * 6.2832, lat = (0.4 + er() * 3.4) * p, up = (13 + er() * 21) * p;
+    const an = er() * 6.2832, lat = (0.6 + er() * 3.8) * p, up = (8 + er() * 12) * p;
     E.x = x + Math.cos(an) * er() * 1.0 * p; E.y = gy + 0.35; E.z = z + Math.sin(an) * er() * 1.0 * p;
-    E.vx = Math.cos(an) * lat; E.vy = up; E.vz = Math.sin(an) * lat;
-    E.grav = 15; E.drag = 0.50;
+    E.vx = Math.cos(an) * lat + WX * 1.4; E.vy = up; E.vz = Math.sin(an) * lat + WZ * 1.4;
+    E.grav = 20; E.drag = 0.72;
     const lit = er() < 0.26;
     E.tile = er() < 0.45 ? T_SOOT : SMK();
     E.s0 = (1.05 + er() * 1.10) * p; E.s1 = E.s0 * (2.4 + er() * 1.5);
     const w = lit ? 0.52 : 0.20 + er() * 0.13;
     E.r = w; E.g = w * (lit ? 0.82 : 0.76); E.b = w * (lit ? 0.58 : 0.55);
     if (EJ && !lit) { E.r *= EJ[0]; E.g *= EJ[1]; E.b *= EJ[2]; }   // fire-lit dirt stays warm
-    E.a = 0.92 + er() * 0.08; E.life = 1.30 + er() * 1.20;
-    E.rot = er() * 6.28; E.rotV = es1() * 1.5; E.lead = 0.12 + er() * 0.50;
+    E.a = 0.78 + er() * 0.10; E.life = 1.05 + er() * 0.85;
+    E.rot = er() * 6.28; E.rotV = es1() * 1.5; E.lead = 0.12 + er() * 0.44;
     push(BA);
   }
   for (let i = 0; i < 22; i++) {                                   // tumbling debris chunks
@@ -7700,20 +8290,40 @@ VFX.explosion = (x, y, z, power) => {
     if (EJ) { E.r *= EJ[0]; E.g *= EJ[1]; E.b *= EJ[2]; }
     E.rot = er() * 6.28; E.rotV = es1() * 0.7; E.lead = 0.18 + er() * 0.20; push(BA);
   }
-  for (let i = 0; i < 16; i++) {                                   // lingering smoke column
+  // ── lingering smoke column. VFX-FIX2, four defects in one pass:
+  // (1) HEIGHT. It was born as high as 9p above the crater and kept climbing for 5.6 s, so
+  //     a hero frame contained 450 px of chimney running off the top edge and occluding
+  //     both the wave title and a third of the horde. Birth band and lift are cut hard and
+  //     the life capped near 1.8 s — the plume now tops out around a third of the blast's
+  //     own screen height.
+  // (2) LIGHT. It sat directly above a 255-white fireball in a golden-hour scene and
+  //     sampled #2B2113 — unlit neutral near-black, which reads as a smudge. Each puff now
+  //     carries an age ramp from hot #ffc27a at birth to cool #9b8f7e at death (staggered
+  //     leads mean the column has a lit base and a cold apex on any single frame), and the
+  //     sun-facing half is pushed toward #ffdfae so it has a lit side at all.
+  // (3) WEIGHT. Opacity down ~40%.
+  // (4) DRIFT. Lateral wind trebled so the column LEANS instead of standing as a pillar.
+  const SMH = [1.00, 0.76, 0.49], SMC = [0.61, 0.56, 0.49];        // #ffc27a → #9b8f7e
+  for (let i = 0; i < 14; i++) {
     eReset();
-    const an = er() * 6.2832, rr = er() * 1.8 * p;
-    E.x = x + Math.cos(an) * rr; E.y = gy + (1.5 + er() * 7.5) * p; E.z = z + Math.sin(an) * rr;
-    E.vx = Math.cos(an) * (0.4 + er() * 1.3) + WX * 1.1; E.vy = 2.2 + er() * 3.0; E.vz = Math.sin(an) * (0.4 + er() * 1.3) + WZ * 1.1;
-    E.drag = 0.80; E.grav = -0.30;
+    const an = er() * 6.2832, rr = er() * 1.7 * p, lead = 0.20 + er() * 1.05;
+    E.x = x + Math.cos(an) * rr; E.y = gy + (1.1 + er() * 2.4) * p; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * (0.3 + er() * 0.9) + WX * 3.4; E.vy = 1.5 + er() * 1.7; E.vz = Math.sin(an) * (0.3 + er() * 0.9) + WZ * 3.4;
+    E.drag = 1.05; E.grav = 0.35;
     E.tile = er() < 0.5 ? T_SOOT : SMK();
-    E.s0 = (1.2 + er() * 1.5) * p; E.s1 = (5.4 + er() * 4.6) * p;
-    const w = 0.17 + er() * 0.13;
-    E.r = w; E.g = w * 0.85; E.b = w * 0.68; E.a = 0.78 + er() * 0.22;
+    E.s0 = (1.2 + er() * 1.4) * p; E.s1 = (4.2 + er() * 3.0) * p;
+    // colour by the puff's own place in the column: the ones spawned late (small lead) are
+    // still at the crater and hot, the early ones have already risen and cooled.
+    const k = Math.min(1, lead / 1.05), w = 0.44 - 0.16 * k;
+    const sun = 0.30 * (1 - k);                                    // sun-facing wash, warm
+    E.r = w * (SMH[0] + (SMC[0] - SMH[0]) * k) + sun * 1.00;
+    E.g = w * (SMH[1] + (SMC[1] - SMH[1]) * k) + sun * 0.87;
+    E.b = w * (SMH[2] + (SMC[2] - SMH[2]) * k) + sun * 0.68;
+    E.a = 0.44 + er() * 0.14;
     // The column keeps its smoke weight — only its HUE follows the ground, so a Frostfell
     // plume is cold grey rather than a tan cloud parked over a white valley.
     if (EJ) { const m = 3 / (EJ[0] + EJ[1] + EJ[2]); E.r *= EJ[0] * m; E.g *= EJ[1] * m; E.b *= EJ[2] * m; }
-    E.life = 2.6 + er() * 3.0; E.rot = er() * 6.28; E.rotV = es1() * 0.85; E.lead = 0.22 + er() * 0.45;
+    E.life = 1.5 + er() * 0.7; E.rot = er() * 6.28; E.rotV = es1() * 0.85; E.lead = lead;
     push(BA);
   }
 };
@@ -7813,8 +8423,12 @@ VFX.death = (e) => {
     E.vx = Math.cos(an) * (1.4 + er() * 2.6) * big; E.vz = Math.sin(an) * (1.4 + er() * 2.6) * big;
     E.vy = 0.5 + er() * 0.8; E.drag = 2.6;
     E.tile = er() < 0.5 ? T_DUST : SMK(); E.mode = er() < 0.55 ? 1 : 0;
-    E.s0 = 0.5 * big; E.s1 = (2.2 + er() * 1.5) * big;
-    E.r = 0.74; E.g = 0.63; E.b = 0.45; E.a = 0.38 + er() * 0.14;
+    E.s0 = 0.5 * big; E.s1 = (2.0 + er() * 1.3) * big;
+    // VFX-FIX2: warm dirt #b09070 at a third less peak alpha. At 0.74/0.63/0.45 × the
+    // shader's sun ramp these puffs resolved near-white, and with six of them per brute
+    // death a melee scrum — the best-modelled content in the game — spent most of a frame
+    // behind a bank of pale blobs.
+    E.r = 0.69; E.g = 0.56; E.b = 0.44; E.a = 0.24 + er() * 0.11;
     E.life = 0.9 + er() * 0.8; E.rot = er() * 6.28; E.rotV = es1() * 1.1; E.lead = 0.04;
     push(BA);
   }
@@ -8076,20 +8690,30 @@ function emitTick(tick, lead) {
       G.pathPos((b + er()) * DBIN - back, _ev3, es1() * 2.5);
       eReset();
       E.x = _ev3.x; E.z = _ev3.z;
-      // warm road-dust tan. The tint weight has to account for the atlas art being
-      // near-white AND the shader's sun ramp, so ~0.8 is already a light dusty tan.
-      if (er() < 0.60) {                             // ground-hugging haze patch
-        E.y = _ev3.y + 0.30 + er() * 0.5; E.mode = 1; E.tile = er() < 0.68 ? T_DUST : T_WISP;
-        E.s0 = 1.4 + er() * 0.9; E.s1 = 5.6 + er() * 3.0;
-        E.vy = 0.26; E.vx = es1() * 0.5 + WX * 0.7; E.vz = es1() * 0.5 + WZ * 0.7;
-        E.a = 0.26 + er() * 0.13; E.life = 2.1 + er() * 1.1;
-        E.r = 0.88; E.g = 0.75; E.b = 0.54;
+      // ══ PATH DUST (VFX-FIX2) ══ This was the single most damaging effect in the game.
+      // It was a near-neutral grey-white veil, drawn tall and drawn thick, and it sat in
+      // FRONT of the mid-column: identical grunts read deep crimson outside the plume and
+      // pale salmon inside it, which is the art direction's one colour being eaten by its
+      // own atmosphere. Three changes, in order of what they buy:
+      //   (a) HUE — warm ochre (#c9a877 sun side / #8a6f52 shadow side) instead of neutral
+      //       grey-white, so the plume TINTS the horde warm instead of desaturating it.
+      //   (b) ALPHA — cut ~60%, and the "wisp lifting out of the column" branch (the one
+      //       that veiled torsos, shields and helmets) demoted from 40% of emissions to
+      //       18% and given a third of its old opacity. Dust hugs boots now.
+      //   (c) HEIGHT — the ground branch is born under a metre and lifts slowly, so the
+      //       veil dies out around the knee rather than reaching the helmet line.
+      if (er() < 0.82) {                             // ground-hugging haze patch
+        E.y = _ev3.y + 0.16 + er() * 0.34; E.mode = 1; E.tile = er() < 0.68 ? T_DUST : T_WISP;
+        E.s0 = 1.4 + er() * 0.9; E.s1 = 5.2 + er() * 2.6;
+        E.vy = 0.14; E.vx = es1() * 0.5 + WX * 0.7; E.vz = es1() * 0.5 + WZ * 0.7;
+        E.a = 0.135 + er() * 0.065; E.life = 2.1 + er() * 1.1;
+        E.r = 0.79; E.g = 0.66; E.b = 0.47;          // #c9a877 warm ochre, sun side
       } else {                                       // a wisp lifting out of the column
-        E.y = _ev3.y + 0.7 + er() * 1.3; E.tile = T_WISP;
-        E.s0 = 1.1 + er() * 0.8; E.s1 = 4.6 + er() * 2.8;
-        E.vy = 1.05 + er() * 0.9; E.vx = es1() * 0.8 + WX * 0.9; E.vz = es1() * 0.8 + WZ * 0.9;
-        E.a = 0.17 + er() * 0.09; E.life = 2.4 + er() * 1.3;
-        E.r = 0.95; E.g = 0.83; E.b = 0.62;
+        E.y = _ev3.y + 0.55 + er() * 0.7; E.tile = T_WISP;
+        E.s0 = 1.1 + er() * 0.8; E.s1 = 4.0 + er() * 2.2;
+        E.vy = 0.62 + er() * 0.5; E.vx = es1() * 0.8 + WX * 0.9; E.vz = es1() * 0.8 + WZ * 0.9;
+        E.a = 0.058 + er() * 0.030; E.life = 2.0 + er() * 1.0;
+        E.r = 0.54; E.g = 0.44; E.b = 0.32;          // #8a6f52 shadow side
       }
       E.drag = 0.8;
       E.rot = er() * 6.28; E.rotV = es1() * 0.5;
@@ -8101,10 +8725,10 @@ function emitTick(tick, lead) {
         const e = EN[(er() * EN.length) | 0];
         if (!e || !e.alive) continue;
         eReset();
-        E.x = e.px + es1() * 0.35; E.y = G.groundY(e.px, e.pz) + 0.16; E.z = e.pz + es1() * 0.35;
+        E.x = e.px + es1() * 0.35; E.y = G.groundY(e.px, e.pz) + 0.12; E.z = e.pz + es1() * 0.35;
         E.mode = 1; E.tile = T_DUST; E.s0 = 0.28; E.s1 = 1.5 + er() * 0.7;
-        E.vy = 0.25; E.drag = 2.4; E.r = 0.78; E.g = 0.66; E.b = 0.46;
-        E.a = 0.24; E.life = 0.75 + er() * 0.5; E.rot = er() * 6.28;
+        E.vy = 0.16; E.drag = 2.4; E.r = 0.72; E.g = 0.59; E.b = 0.41;
+        E.a = 0.16; E.life = 0.75 + er() * 0.5; E.rot = er() * 6.28;
         push(BA);
       }
     }
@@ -8438,15 +9062,22 @@ const WSTREAK = MAPID === 2 ? 2.6 : 0;               // fall-aligned motion aspe
 const ASH_C = [0.24, 0.20, 0.18], ASH_E = [2.20, 0.95, 0.30];
 // Ash flakes are bigger and fluffier than snow crystals, and they have to survive being
 // read as DARK against a busy speckled sand — a 2 px soot dot just joins the ground noise.
-const MOTE_PX = MAPID === 3 ? [3, 9] : [2, 7];       // screen-size clamp for weather (css px)
+// VFX-FIX2: the band was so narrow ([2,7] px) that essentially every flake sat on one clamp
+// or the other, which restored exactly the failure the world-locking was meant to cure —
+// one uniform screen-space ellipse everywhere, i.e. a lens overlay rather than weather in
+// the world. Widened so perspective actually has room to work, and the per-flake size
+// spread below trebled. Embers on the Ember Wastes get their own floor: at 2 px an additive
+// cinder is indistinguishable from a stuck pixel.
+const MOTE_PX = MAPID === 3 ? [3.5, 22] : [1.2, 19];  // screen-size clamp for weather (css px)
 const MOTE_SZ = MAPID === 3 ? 1.7 : 1;
+const EMBER_PX = 5.0;                                 // floor for the hot cinders (css px)
 const MH = new Float32Array(MX * MY * MZ * MOTE_SUB * 4);
 {
   let h = 0x9e3779b9 >>> 0;
   const r = () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
   for (let i = 0; i < MH.length; i++) MH[i] = r();
 }
-const _mf = new THREE.Vector3();
+const _mf = new THREE.Vector3(), _mp = new THREE.Vector3();
 function stepMotes(t, n, B) {
   const cam = G.camera;
   cam.getWorldDirection(_mf);
@@ -8476,7 +9107,10 @@ function stepMotes(t, n, B) {
     if (n >= B.cap) return n;
     const ph = MH[h + 3] * 6.2832;
     const jx = W ? ((MH[h] * 53.7 + t * W.dx) % MC + MC) % MC / MC : MH[h];
-    const jy = W ? 1 - (((MH[h + 1] * 71.3 + t * W.fall) % MC + MC) % MC) / MC : MH[h + 1];
+    // fall speed varies per flake (correlated with its size below, which is how real
+    // snow behaves): a field where every flake descends at one rate is a scrolling
+    // texture, not weather.
+    const jy = W ? 1 - (((MH[h + 1] * 71.3 + t * W.fall * (0.62 + MH[h] * 0.85)) % MC + MC) % MC) / MC : MH[h + 1];
     const jz = W ? ((MH[h + 2] * 37.1 + t * W.dz) % MC + MC) % MC / MC : MH[h + 2];
     const px = (fx + gx - (MX >> 1) + jx) * MC + Math.sin(t * 0.19 + ph) * 2.6;
     const py = (fy + gy - (MY >> 1) + jy) * MC + Math.sin(t * 0.33 + ph * 2.1) * 0.9;
@@ -8494,6 +9128,13 @@ function stepMotes(t, n, B) {
     const a = (1 - sstep(R * 0.42, R, q)) * (1 - sstep(34, 60, qc)) * zoom * tw
             * (W ? sstep(7, 24, qc) : 1);
     if (a < 0.03) continue;
+    // Weather falls in the WORLD, not on the lens — so it does not fall on the HUD either.
+    // The top-left chip cluster and the wave card own that corner of the frame, and flakes
+    // drifting across them were the single loudest cue that the field was an overlay.
+    if (W) {
+      _mp.set(px, py, pz).project(cam);
+      if (_mp.x < -0.53 && _mp.y > 0.52) continue;
+    }
     const big = MH[h + 2] > 0.80;
     let s, av;
     if (W) {
@@ -8502,11 +9143,17 @@ function stepMotes(t, n, B) {
       // the field has no depth and every flake is a blob. Locked to the world, distance
       // shrinks it; the clamp only stops the two extremes (a flake on the lens, a flake
       // too small to survive the resolve).
-      s = (0.075 + MH[h] * 0.075) * W.size * MOTE_SZ * (big ? 1.35 : 1) * (LOWQ ? 1.25 : 1);
+      // SIZE SPREAD ×3 (VFX-FIX2): 0.075..0.150 was a 2:1 range, and once the clamp band
+      // bit, every flake in the frame resolved to the same ellipse. A ~6:1 cubed spread
+      // means a near flake is genuinely a different object from a far one.
+      const sp3 = MH[h] * MH[h] * MH[h];
+      s = (0.040 + sp3 * 0.235) * W.size * MOTE_SZ * (big ? 1.45 : 1) * (LOWQ ? 1.25 : 1);
       s = clamp(s, MOTE_PX[0] * qc / PPW, MOTE_PX[1] * qc / PPW);
       // Half the opacity, twice the flakes: many faint reads as weather, few opaque reads
-      // as dirt on the sensor.
-      av = a * 1.55 * W.alpha * (big ? 0.62 : 1) * (MOTE_ALPHA ? 1.4 : 0.55) * (LOWQ ? 1.30 : 1);
+      // as dirt on the sensor. Opacity now also varies by DEPTH BAND — the near field is
+      // crisp, the far field washes out — so the fall reads as a volume with layers in it.
+      const band = 0.55 + 0.75 * (1 - sstep(12, 46, qc));
+      av = a * 1.55 * W.alpha * band * (big ? 0.55 : 1) * (MOTE_ALPHA ? 1.4 : 0.50) * (LOWQ ? 1.30 : 1);
     } else {
       // Screen-locked size, so a pollen mote 3 m from the lens is not a dinner plate. A
       // fifth of them are blown up and faded to read as out-of-focus bokeh, which is what
@@ -8514,6 +9161,13 @@ function stepMotes(t, n, B) {
       s = qc * (0.0031 + MH[h] * 0.0046); av = a * 1.55;
       if (big) { s *= 2.5; av *= 0.34; }
     }
+    // Ash is soot, not sparkle: a dark fleck in the alpha bucket, with one in eight kept
+    // hot so the field still carries the map's ember cue. VFX-FIX2: a hot cinder gets its
+    // own, much higher screen floor — at 2 px an additive orange dot on the Ember Wastes
+    // is a stuck pixel, and the map's signature particle has to have a visible body and
+    // enough radiance to bloom.
+    const emb = MOTE_ALPHA && MH[h + 1] > 0.875;
+    if (emb) s = Math.max(s, EMBER_PX * qc / PPW);
     const j = n * 3, j2 = n * 2, j4 = n * 4;
     aP[j] = px; aP[j + 1] = py; aP[j + 2] = pz;
     if (WSTREAK) {
@@ -8528,12 +9182,9 @@ function stepMotes(t, n, B) {
       aS[j2] = s; aS[j2 + 1] = s;
       aA[j + 2] = 0;
     }
-    // Ash is soot, not sparkle: a dark fleck in the alpha bucket, with one in eight kept
-    // hot so the field still carries the map's ember cue.
-    const emb = MOTE_ALPHA && MH[h + 1] > 0.875;
     const WC = MOTE_ALPHA ? (emb ? ASH_E : ASH_C) : W ? W.col : null;
     aC[j4] = WC ? WC[0] : 1.60; aC[j4 + 1] = WC ? WC[1] : 1.38; aC[j4 + 2] = WC ? WC[2] : 0.94;
-    aC[j4 + 3] = emb ? Math.min(1, av * 1.5) : av;
+    aC[j4 + 3] = emb ? Math.min(1, av * 2.1) : av;
     aA[j] = ph; aA[j + 1] = emb ? T_EMBER : WTILE;
     n++;
   }
@@ -8547,6 +9198,11 @@ let _dbgLast = '';                                   // last VFXDBG line (shot-m
 VFX.update = (t) => {
   _vt = t;
   stepBlast(t);
+  stepAura(t);
+  // world units per CSS pixel at one unit of depth — the screen-space floor the signature
+  // bursts (modes 3/4) are held above. Recomputed per frame because both the FOV and the
+  // window can change under the player.
+  U_PXK.value = (2 * Math.tan(G.camera.fov * 0.5 * Math.PI / 180)) / Math.max(1, innerHeight);
   const tick = Math.round(t * TPS);
   if (_lastTick < 0) {                               // first sight: back-fill the ambience
     for (let L = PQ.prime; L >= 1; L--) emitTick(tick - L, L * TICK);
@@ -9484,16 +10140,28 @@ function pcv(w, h) { const c = document.createElement('canvas'); c.width = w; c.
 // ── grain tiles pushed into CSS custom properties ──────────────────────────────
 {
   const c = pcv(180, 180), g = c.getContext('2d');           // hammered dark iron
-  for (let i = 0; i < 5200; i++) {
-    const v = urng();
-    g.fillStyle = v > 0.55 ? 'rgba(255,235,200,' + (0.012 + urng() * 0.05) + ')' : 'rgba(0,0,0,' + (0.02 + urng() * 0.10) + ')';
+  // FIX2-UI §4a: the old tile scattered 2300 BRIGHT single pixels across the dark panels,
+  // which at panel scale is a starfield — every iron plate read as a space nebula instead
+  // of metal. Iron has no isolated white points: it has dark tooth, planished facets and
+  // directional tool marks. So the highlight is only ever an elongated STROKE at ≤6% alpha,
+  // never a lone pixel, and every point-sized speck is a dark pit.
+  for (let i = 0; i < 9000; i++) {                            // dark tooth / pitting
+    g.fillStyle = 'rgba(0,0,0,' + (0.03 + urng() * 0.11) + ')';
     g.fillRect(urng() * 180 | 0, urng() * 180 | 0, 1, 1);
   }
-  for (let i = 0; i < 90; i++) {                              // faint hammer dishing
-    g.globalAlpha = 0.05 + urng() * 0.07;
-    const r = 5 + urng() * 16, x = urng() * 180, y = urng() * 180;
-    const rg = g.createRadialGradient(x - r * .3, y - r * .3, 0, x, y, r);
-    rg.addColorStop(0, '#fff0d8'); rg.addColorStop(0.6, 'rgba(0,0,0,0)'); rg.addColorStop(1, 'rgba(0,0,0,.5)');
+  g.lineCap = 'round';
+  for (let i = 0; i < 620; i++) {                             // planishing marks (tool grain)
+    const x = urng() * 180, y = urng() * 180, a = (urng() * 0.5 - 0.25) + 0.16, l = 3 + urng() * 9;
+    g.strokeStyle = urng() > 0.42 ? 'rgba(0,0,0,' + (0.05 + urng() * 0.10) + ')'
+                                  : 'rgba(255,232,196,' + (0.014 + urng() * 0.042) + ')';
+    g.lineWidth = 0.7 + urng() * 1.1;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  for (let i = 0; i < 110; i++) {                             // hammer dishing — shallow facets
+    g.globalAlpha = 0.05 + urng() * 0.06;
+    const r = 7 + urng() * 20, x = urng() * 180, y = urng() * 180;
+    const rg = g.createRadialGradient(x - r * .34, y - r * .34, 0, x, y, r);
+    rg.addColorStop(0, 'rgba(255,236,206,.72)'); rg.addColorStop(0.55, 'rgba(0,0,0,0)'); rg.addColorStop(1, 'rgba(0,0,0,.62)');
     g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
   }
   g.globalAlpha = 1;
@@ -10307,6 +10975,10 @@ UI.msg = (text, sub) => {
 UI.sync = () => {
   const onTitle = state.phase === 'title', ended = state.phase === 'won' || state.phase === 'lost';
   const chrome = !onTitle && !ended;
+  // FIX2-UI §5 — one flag on the root that every keyboard-only affordance hangs off. A
+  // `(pointer:coarse)` media query cannot see the harness's `&coarse=1`, so the class
+  // carries it too; both are read by the same CSS rules.
+  $('ui').classList.toggle('coarse', !!UI.coarse);
   $('hud').classList.toggle('hidden', !chrome);
   // The keyboard legend grew a sixth group (omens) and now wraps to three rows, which is
   // fine in play and wrong in a marketing frame — so it steps aside wherever the build bar
@@ -10337,7 +11009,7 @@ UI.sync = () => {
     const pre = state.phase === 'prewave';
     wp.classList.toggle('pre', pre);   // the phone keeps the subtitle only while it is a countdown
     let h = '<div class="wpT">Wave ' + nx + ' <em>—</em> ' + (pre ? waveHead(nx) : W_TITLE[nx - 1]) + '</div>' +
-      '<div class="wpS">' + (pre ? 'Muster in ' + Math.max(0, Math.ceil(state.countdown)) + 's' : tot + ' strong on the road') + '</div>' +
+      '<div class="wpS">' + (pre ? 'Muster in ' + mmss(Math.max(0, Math.ceil(state.countdown))) : tot + ' strong on the road') + '</div>' +
       '<div class="wpRow"></div>';
     if (state.phase === 'wave') {
       const alive = G.enemies.filter(e => e.alive).length;
@@ -10375,40 +11047,55 @@ UI.sync = () => {
 // no timers — shot-safe by construction; only the countdown ring is written afterwards,
 // and it is written from SIM ticks (UI.syncCountdown), never from a wall clock.
 const OM_KEYS = ['8', '9', '0'];                       // the hotkeys, in card order
-// What the portent PAYS. A challenge is danger money; two boons move the purse themselves.
-const OM_PAY = { chest: '+60 gold now', thin: '−25% coin' };
-const omPay = (k) => OM_PAY[k] || (G.OMENS[k].kind === 'challenge' ? '+20% coin' : 'no cost');
+// FIX2-UI §3d — what the portent PAYS, told in the ONE money idiom this game already has:
+// the gold coin pill that carries every price on every card. The tinted pill beside it is
+// reserved for the trade-off, so no bare numeral on a dark badge can be read as a cost.
+const OM_PAY = { chest: ['+60', 'gold now'], thin: ['−25%', 'coin'] };
+const omPay = (k) => OM_PAY[k] || (G.OMENS[k].kind === 'challenge' ? ['+20%', 'coin'] : null);
+const omPayHtml = (k) => {
+  const p = omPay(k);
+  return p ? '<span class="omCoin' + (p[0].charAt(0) === '−' ? ' less' : '') + '"><i class="ic ic-gold"></i><b>' +
+      p[0] + '</b><em>' + p[1] + '</em></span>'
+    : '<span class="omCoin none"><i class="ic ic-gold"></i><b>±0</b><em>coin</em></span>';
+};
+// FIX2-UI §2c — the ward names a SCHOOL, and a school is a glyph everywhere else in the
+// game (build card, resist pip, wave dispatch). Naming it in prose alone was the one place
+// the element language was dropped, which is why the ward panel and the build bar eight
+// rows below looked like two different systems.
+const elemTag = (s) => '<i class="eg dg-' + ((DTYPE[s] || DTYPE.pierce)[0]) + '"></i>' + s;
 // Elemental Ward is the one omen whose text depends on how the run has been played, so it
 // is resolved against the live damage ledger rather than printed as a rule.
+const WARD_SRC = 'whichever school has spilt the most blood this campaign';
 const omDesc = (k) => k === 'ward'
-  ? G.OMENS[k].desc.replace('whichever school has spilt the most blood this campaign',
-      'your <b>' + G.topSchool() + '</b> towers')
+  ? G.OMENS[k].desc.replace(WARD_SRC, 'your <b>' + elemTag(G.topSchool()) + '</b> towers')
   : G.OMENS[k].desc;
 const esc = (s) => s.replace(/</g, '&lt;').replace(/"/g, '&quot;');
 function omCard(k, i, sel) {
-  const o = G.OMENS[k], kind = o.kind === 'challenge' ? 'chal' : 'boon', pay = omPay(k);
+  const o = G.OMENS[k], kind = o.kind === 'challenge' ? 'chal' : 'boon';
   return '<button class="omC parch frm ' + kind + (i === sel ? ' on' : '') + '" data-i="' + i +
     '" title="' + (kind === 'chal' ? 'Challenge' : 'Boon') + ' — ' + esc(o.desc) + ' (hotkey ' + OM_KEYS[i] + ')">' +
-    '<i class="omSig sig-' + kind + '"></i>' +
+    // FIX2-UI §3c — one seal per OMEN, not per kind. Two cards wearing the byte-identical
+    // rosette taught the player that the seal carried nothing; now the disc still says
+    // challenge/boon by colour while the device says which portent it is.
+    '<i class="omSig sg-' + k + '"></i>' +
     '<span class="omBody"><span class="omN">' + o.name + '</span>' +
     '<span class="omD">' + omDesc(k) + '</span></span>' +
-    '<span class="omSide"><kbd class="omK">' + OM_KEYS[i] + '</kbd>' +
-    '<span class="omChip' + (pay.charAt(0) === '−' ? ' pay' : '') + '">' + pay + '</span></span>' +
+    '<span class="omSide">' + omPayHtml(k) + '<kbd class="omK">key ' + OM_KEYS[i] + '</kbd></span>' +
     '<span class="omTk">Taken</span></button>';
 }
-// The countdown ring. r=12.5 → circumference 78.54; the arc is a dash offset, so the ring
-// is a single attribute write on an element that already exists (no relayout, no rebuild).
-const RING_C = 78.54;
+// FIX2-UI §3b — the countdown was a 26px unlabelled ring wedged under the wave chip: the
+// most time-critical widget in the game, illegible and colliding. It is now the same
+// labelled clock the wave card uses one row down — words plus a bar, inside the plate.
+const mmss = (s) => Math.floor(s / 60) + ':' + ('0' + Math.floor(s % 60)).slice(-2);
 let _omMax = 1;                                        // longest countdown seen for this offer
-UI.omenRing = () => {
-  const el = $('omenRow'), r = el.querySelector('.rFg');
-  if (!r) return;
+UI.omenClock = () => {
+  const el = $('omenRow'), b = el.querySelector('.omBar u');
+  if (!b) return;
   const left = Math.max(0, state.countdown);
   if (left > _omMax) _omMax = left;
-  r.style.strokeDasharray = RING_C;
-  r.style.strokeDashoffset = (RING_C * (1 - left / Math.max(0.001, _omMax))).toFixed(2);
-  const n = el.querySelector('.omRing b');
-  if (n) n.textContent = Math.ceil(left);
+  b.style.width = (100 * left / Math.max(0.001, _omMax)).toFixed(1) + '%';
+  const n = el.querySelector('.omCk b');
+  if (n) n.textContent = mmss(Math.ceil(left));
 };
 let _omKey = '';
 UI.omens = () => {
@@ -10419,7 +11106,7 @@ UI.omens = () => {
   // OUTSIDE the key — it moves every tick and must not rebuild three cards to do it.)
   const key = state.phase + '|' + O.forWave + '|' + O.offer.join(',') + '|' + O.picked + '|' +
     state.omen + '|' + G.OMEN_FX.wardEl;
-  if (key === _omKey) { if (state.phase === 'prewave') UI.omenRing(); return; }
+  if (key === _omKey) { if (state.phase === 'prewave') UI.omenClock(); return; }
   if (_omKey.split('|')[1] !== String(O.forWave)) _omMax = Math.max(1, state.countdown);
   _omKey = key;
   if (!chrome) { el.classList.add('hidden'); el.innerHTML = ''; return; }
@@ -10430,27 +11117,30 @@ UI.omens = () => {
     el.classList.toggle('hidden', !o);
     if (!o) { el.innerHTML = ''; return; }
     const kind = o.kind === 'challenge' ? 'chal' : 'boon';
-    el.innerHTML = '<div class="omBan frm ' + kind + '"><i class="omSig sig-' + kind + '"></i>' +
+    el.innerHTML = '<div class="omBan frm ' + kind + '"><i class="omSig sg-' + state.omen + '"></i>' +
       '<span class="omBody"><span class="omN">' + o.name + '</span>' +
       '<span class="omD">' + (state.omen === 'ward' && G.OMEN_FX.wardEl
-        ? o.desc.replace('whichever school has spilt the most blood this campaign',
-            'your <b>' + G.OMEN_FX.wardEl + '</b> towers')
+        ? o.desc.replace(WARD_SRC, 'your <b>' + elemTag(G.OMEN_FX.wardEl) + '</b> towers')
         : omDesc(state.omen)) + '</span></span>' +
-      '<span class="omSide"><span class="omK">Omen</span>' +
-      '<span class="omChip">' + omPay(state.omen) + '</span></span></div>';
+      '<span class="omSide"><span class="omLb">Omen</span>' + omPayHtml(state.omen) + '</span></div>';
     return;
   }
   const live = O.offer.length > 0;
   el.classList.toggle('hidden', !live);
   if (!live) { el.innerHTML = ''; return; }
   const sel = O.picked;
-  el.innerHTML = '<div class="omHead"><span class="omT">War Omens</span>' +
+  // FIX2-UI §3a — the title and the clock used to float UNPLATED on the terrain in the
+  // ~35px gap between the top-bar chips and the first card, so olive text sat on olive
+  // grass and the ring's arc was overlapped by the WAVE chip above it. They now live in a
+  // parchment header row that is part of the panel: the collision is structurally
+  // impossible and the whole rail reads as one object.
+  el.innerHTML = '<div class="omHead parch frm"><div class="omHR"><span class="omT">War Omens</span>' +
+    '<span class="omCk" title="Time left to choose">Muster in <b>0:00</b></span></div>' +
+    '<i class="omBar"><u></u></i>' +
     '<span class="omSub">Wave ' + O.forWave + ' · ' + (sel < 0 ? 'take one before the muster ends' : 'omen taken') +
-    '</span><span class="omRing" title="Time left to choose"><svg viewBox="0 0 30 30">' +
-    '<circle class="rBg" cx="15" cy="15" r="12.5"/><circle class="rFg" cx="15" cy="15" r="12.5"/></svg><b></b>' +
     '</span></div>' + O.offer.map((k, i) => omCard(k, i, sel)).join('');
   el.querySelectorAll('.omC').forEach(b => { b.onclick = () => G.omens.pick(+b.dataset.i); });
-  UI.omenRing();
+  UI.omenClock();
 };
 // SPEC3 §D read-out: the dispatch always says what the NEXT muster will put on the table,
 // so the omen system announces itself a wave early instead of appearing out of nowhere.
@@ -10475,8 +11165,8 @@ UI.syncCountdown = () => {
   if (state.tick % 15 === 0) {
     $('btnWave').innerHTML = '⚔ Call Wave ' + (state.wave + 1) + ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>';
     const s = $('wavePrev').querySelector('.wpS');
-    if (s) s.textContent = 'Muster · ' + Math.max(0, Math.ceil(state.countdown)) + 's';
-    UI.omenRing();
+    if (s) s.textContent = 'Muster in ' + mmss(Math.max(0, Math.ceil(state.countdown)));
+    UI.omenClock();
   }
 };
 // ══ build menu (cards built once, then only state-updated) ═════════════════════
@@ -10502,7 +11192,7 @@ const T_HINT = { archer: 'Quick volleys · cheap to raise',
   banner: 'Quickens every tower in its aura' };
 const statRows = (k) => {
   const d = TOWER_DEFS[k];
-  const rows = d.knights ? [['Guards', d.knights], ['Hp', 90], ['Rng', d.range]]
+  const rows = d.knights ? [['Guards', d.knights], ['HP', 90], ['Rng', d.range]]
     : d.aura ? [['Rate', '+' + Math.round(d.aura[0] * 100) + '%'], ['Aura', d.range], ['Heals', 'yes']]
     : d.patch ? [['Burn', d.patch.dps + '/s'], ['Area', d.patch.rad], ['Rng', d.range]]
     : [['Dmg', d.dmg], ['Rate', (1 / d.cd).toFixed(1) + '/s'], ['Rng', d.range]];
@@ -10564,20 +11254,26 @@ UI.buildMenu = () => {
     const dmgN = v => Math.round(d.dmg * Math.pow(1.55, v - 1));
     const rngN = v => (d.range * (1 + 0.08 * (v - 1))).toFixed(1);
     const burnN = v => Math.round((d.patch ? d.patch.dps : 0) * Math.pow(1.55, v - 1));
+    // FIX2-UI §4d: ONE vocabulary for the four stats. The garrison sheet used to say
+    // Damage/Range/Rate/Dps while the build card's flyout 200px away said Dmg/Rate/Rng —
+    // the same numbers named two ways, and 'Dps' is not a word. Same names, same ORDER,
+    // both panels.
     const rows = d.knights
-      ? [['Guards', d.knights, null], ['Guard hp', Math.round(90 * (1 + 0.5 * (lv - 1))), max ? null : Math.round(45)],
-         ['Guard dps', (6 * (1 + 0.55 * (lv - 1))).toFixed(1), max ? null : 3.3], ['Rally', rngN(lv), null]]
+      ? [['Guards', d.knights, null], ['Guard HP', Math.round(90 * (1 + 0.5 * (lv - 1))), max ? null : Math.round(45)],
+         ['Guard DPS', (6 * (1 + 0.55 * (lv - 1))).toFixed(1), max ? null : 3.3], ['Rally', rngN(lv), null]]
       : d.aura
-      ? [['Fire rate', '+' + Math.round(d.aura[lv - 1] * 100) + '%', max ? null : Math.round((d.aura[lv] - d.aura[lv - 1]) * 100) + '%'],
+      ? [['Rate', '+' + Math.round(d.aura[lv - 1] * 100) + '%', max ? null : Math.round((d.aura[lv] - d.aura[lv - 1]) * 100) + '%'],
          ['Aura', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
-         ['Knight heal', '+50%', null], ['Stacks', 'no', null]]
+         ['Heals', '+50%', null], ['Stacks', 'no', null]]
       : d.patch
-      ? [['Burn dps', burnN(lv), max ? null : burnN(lv + 1) - burnN(lv)],
-         ['Range', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
-         ['Patch', d.patch.rad + 'u · ' + d.patch.dur + 's', null], ['Fires', d.patch.max, null]]
-      : [['Damage', dmgN(lv), max ? null : dmgN(lv + 1) - dmgN(lv)],
-         ['Range', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
-         ['Rate', (1 / d.cd).toFixed(2) + '/s', null], ['Dps', (dmgN(lv) / d.cd).toFixed(1), null]];
+      ? [['Burn', burnN(lv) + '/s', max ? null : burnN(lv + 1) - burnN(lv)],
+         ['Area', d.patch.rad, null],
+         ['Rng', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
+         ['Fires', d.patch.max, null]]
+      : [['Dmg', dmgN(lv), max ? null : dmgN(lv + 1) - dmgN(lv)],
+         ['Rate', (1 / d.cd).toFixed(2) + '/s', null],
+         ['Rng', rngN(lv), max ? null : (rngN(lv + 1) - rngN(lv)).toFixed(1)],
+         ['DPS', (dmgN(lv) / d.cd).toFixed(1), null]];
     tm.innerHTML = '<div class="pHead"><div class="pT">' + (max ? 'Veteran' : 'Garrison') + '</div><div class="rule"></div>' +
       '<button class="x" id="mX">✕</button></div>' +
       '<div class="tHead"><span class="tpor"></span><div><div class="tN">' + d.name + '</div>' +
@@ -10591,10 +11287,15 @@ UI.buildMenu = () => {
         '<span class="s2 ref">🪙 +' + Math.round(tw.invested * 0.7) + '</span></button>' +
       // SPEC3 §F — targeting doctrine, per tower (hotkey T). A rail of the three standing
       // orders with the live one lit: the point is which of THREE it is, not the name alone.
+      // FIX2-UI §5 — the hotkey used to ride in a chip with the SAME box, border and type
+      // as the three real modes, so [FIRST][STRONG][CLOSE][T] read as four doctrines. It is
+      // now an unboxed dimmed superscript on the chips themselves, and CSS drops it entirely
+      // for a coarse pointer — a phone has no T to press.
       (fights(d) ? '<button class="tBtn tgt" id="mTgt" title="Cycle this tower&apos;s standing order (T)">' +
         '<i class="tgL"></i><span class="tgS">' +
-        G.MODES.map(m => '<i class="' + ((tw.mode || 'first') === m ? 'on' : '') + '">' + G.MODE_NAME[m] + '</i>').join('') +
-        '</span><span class="tgK">T</span></button>' : '') + '</div>';
+        G.MODES.map(m => '<i class="' + ((tw.mode || 'first') === m ? 'on' : '') + '">' + G.MODE_NAME[m] +
+          '<u class="hk">T</u></i>').join('') +
+        '</span></button>' : '') + '</div>';
     tm.querySelector('.tpor').replaceWith(towerPortrait(tw.type, lv, 64, 64));
     tm.classList.remove('hidden');
     $('mUp').onclick = () => { sellArm = false; upgradeTower(tw); UI.buildMenu(); };
@@ -10604,9 +11305,15 @@ UI.buildMenu = () => {
   } else {
     tm.classList.add('hidden'); sellArm = false;
     const armed = G.place ? G.place.type : '';
+    // FIX2-UI §2 — while an Elemental Ward rides the wave, the cards of the warded school
+    // say so. The ward's whole point is "this school is blunted right now"; naming it only
+    // in the omen banner's prose left the shop, where the player actually acts on it,
+    // completely silent.
+    const wardEl = state.phase === 'wave' ? G.OMEN_FX.wardEl : '';
     bm.querySelectorAll('.card').forEach(b => {
       const poor = state.gold < TOWER_DEFS[b.dataset.t].cost;
       b.disabled = poor; b.classList.toggle('poor', poor);
+      b.classList.toggle('warded', !!wardEl && TOWER_DEFS[b.dataset.t].element === wardEl);
       b.classList.toggle('arm', b.dataset.t === armed);
       b.onclick = () => { if (G.enterPlace(b.dataset.t) && G.placeAtCursor) G.placeAtCursor(); };
     });
@@ -11123,8 +11830,14 @@ UI.frame = (rt) => {
 $('btnWave').onclick = () => { if (state.phase === 'prewave') { state.gold += Math.ceil(state.countdown); startWave(state.wave + 1); } };
 $('btnSpeed').onclick = () => { state.speed = state.speed === 1 ? 2 : 1;
   $('btnSpeed').textContent = '×' + state.speed; $('btnSpeed').classList.toggle('on', state.speed === 2); };
+// FIX2-UI §4c — the pause control was the Unicode ❚❚ / ▶, a type glyph in a HUD whose every
+// other mark is drawn steel and gold. Both states are now the same hand-drawn pair as the
+// coin and the crossed swords beside them; the label lives in the tooltip.
 $('btnPause').onclick = () => { state.paused = !state.paused;
-  $('btnPause').textContent = state.paused ? '▶' : '❚❚'; $('btnPause').classList.toggle('on', state.paused); };
+  $('btnPause').classList.toggle('gl-play', state.paused);
+  $('btnPause').classList.toggle('gl-pause', !state.paused);
+  $('btnPause').title = state.paused ? 'Resume (Space)' : 'Pause (Space)';
+  $('btnPause').classList.toggle('on', state.paused); };
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
   $('btnGear').classList.toggle('on', !s.classList.contains('hidden')); };
 $('btnMute').onclick = () => { Audio.muted = !Audio.muted; $('muteV').textContent = Audio.muted ? 'Off' : 'On'; };
