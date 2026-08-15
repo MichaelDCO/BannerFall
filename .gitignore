@@ -1,0 +1,10 @@
+# Dev/QA artifacts — not part of the shipped game
+shots/
+balance_runs/
+backups/
+tools/
+.claude/
+*.log
+GAME_SPEC*.md
+BALANCE.md
+PWA_PLAN.md
