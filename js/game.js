@@ -1,760 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Bannerfall</title>
-<!-- ╔══════════════════════════════════════════════════════════════════╗
-     ║ BANNERFALL — single-file AAA tower defense. See GAME_SPEC.md.     ║
-     ║ Sections are owned by builder agents; edit only your section and  ║
-     ║ marked HOOK points. The shot harness (SECTION: MAIN) is sacred.   ║
-     ╚══════════════════════════════════════════════════════════════════╝ -->
-<style>
-/* ══ SECTION: UI-CSS ══ (owner: UI builder — medieval-AAA interface)
-   Art is procedural: gold filigree frames are inline SVG border-images (static, so they
-   are decoded long before the shot harness renders); parchment/iron grain arrives as
-   canvas data-URIs pushed into --grain/--noise by SECTION: UI.
-   SHOT-FREEZE RULE: every rule's BASE state is the final look. @keyframes only add
-   flourish, because the harness injects `animation:none!important;transition:none!important`
-   and anything whose visible state depends on an animation would freeze wrong. */
-:root{
-  --gold:#e8b64c; --gold-l:#ffe7ab; --gold-m:#c9922f; --gold-d:#6d4a10;
-  --ink:#0e0b07; --parch:#ecdcb6; --blood:#7d2419; --blue:#3468b0;
-  --ok:#a2e169; --bad:#e6714f; --noise:none; --grain:none;
-  --serif:'Palatino Linotype','Book Antiqua',Georgia,'Times New Roman',serif;
-  /* fine gold filigree — chips, buttons, cards (slice 16 of 48) */
-  --fr:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><defs><g id='k'><path d='M1.6 19V8A6.4 6.4 0 0 1 8 1.6H19' fill='none' stroke='%23e8b64c' stroke-width='1.7' opacity='.95'/><path d='M5.4 21v-9A6 6 0 0 1 11.4 6h9' fill='none' stroke='%23c9922f' stroke-width='1' opacity='.45'/><path d='M1.6 26.5C8 25.6 10.2 21.6 10.8 16.4 11.4 11.4 14.2 9.2 19.2 8.6' fill='none' stroke='%23e8b64c' stroke-width='1.1' opacity='.4'/><circle cx='9.4' cy='9.4' r='1.8' fill='%23ffe7ab' opacity='.9'/></g></defs><use href='%23k'/><use href='%23k' transform='translate(48,0) scale(-1,1)'/><use href='%23k' transform='translate(0,48) scale(1,-1)'/><use href='%23k' transform='translate(48,48) scale(-1,-1)'/><g stroke='%23e8b64c' stroke-width='1.1' opacity='.36' fill='none'><path d='M18 1.6h12'/><path d='M18 46.4h12'/><path d='M1.6 18v12'/><path d='M46.4 18v12'/></g></svg>");
-  /* heavy ornate filigree — panels, overlay plates (slice 26 of 72) */
-  --frB:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72'><defs><g id='b'><path d='M2 30V11A9 9 0 0 1 11 2h19' fill='none' stroke='%23e8b64c' stroke-width='2.2' opacity='.95'/><path d='M6.5 32V14A7.5 7.5 0 0 1 14 6.5h18' fill='none' stroke='%23c9922f' stroke-width='1.2' opacity='.5'/><path d='M2 40C12 39 15.5 33 16.5 24.5 17.6 15.5 22 12 31 11' fill='none' stroke='%23e8b64c' stroke-width='1.3' opacity='.45'/><path d='M11 20c4.5 .4 7 3 7.6 7.6' fill='none' stroke='%23ffe7ab' stroke-width='1' opacity='.5'/><circle cx='12.5' cy='12.5' r='2.6' fill='%23ffe7ab' opacity='.9'/><circle cx='12.5' cy='12.5' r='4.6' fill='none' stroke='%23c9922f' stroke-width='.9' opacity='.55'/></g></defs><use href='%23b'/><use href='%23b' transform='translate(72,0) scale(-1,1)'/><use href='%23b' transform='translate(0,72) scale(1,-1)'/><use href='%23b' transform='translate(72,72) scale(-1,-1)'/><g stroke='%23e8b64c' fill='none' opacity='.42'><path d='M30 2.4h12' stroke-width='1.5'/><path d='M30 69.6h12' stroke-width='1.5'/><path d='M2.4 30v12' stroke-width='1.5'/><path d='M69.6 30v12' stroke-width='1.5'/></g><g stroke='%23c9922f' fill='none' opacity='.3'><path d='M30 6.6h12'/><path d='M30 65.4h12'/><path d='M6.6 30v12'/><path d='M65.4 30v12'/></g></svg>");
-}
-*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-family:var(--serif); }
-#gl{ position:fixed; inset:0; touch-action:none; display:block; }
-#ui{ position:fixed; inset:0; z-index:3; pointer-events:none; color:#f6ecd6; user-select:none; -webkit-user-select:none;
-     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-/* background-color MUST be reset: the UA gives every <button> `buttonface` (#efefef), and
-   any control whose gradient layer does not tile all the way into the border box paints that
-   cream through its filigree — which is how #btnGear ended up the brightest thing in the HUD. */
-#ui button{ pointer-events:auto; font-family:inherit; cursor:pointer; color:#f6ecd6; background-color:transparent; }
-/* focus reads as gold, never as the UA's white ring — and only for keyboard users */
-#ui button:focus{ outline:none; }
-#ui button:focus-visible{ outline:none;
-  box-shadow:0 5px 14px rgba(0,0,0,.55), 0 0 0 2px rgba(232,182,76,.75); }
-.hidden{ display:none !important; }
-
-/* ── shared surfaces ───────────────────────────────────────────────── */
-.iron{ background-image:var(--noise),
-        radial-gradient(120% 150% at 50% -30%, rgba(255,226,175,.10), rgba(255,226,175,0) 62%),
-        linear-gradient(178deg,#2a251e 0%,#1b1712 44%,#110e0a 100%);
-       background-size:180px 180px,100% 100%,100% 100%; background-blend-mode:normal;
-       box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,228,178,.13), inset 0 -10px 22px rgba(0,0,0,.5); }
-.parch{ background-image:var(--grain),
-        radial-gradient(ellipse 120% 100% at 50% 42%, rgba(0,0,0,0) 42%, rgba(122,88,42,.30) 78%, rgba(96,66,28,.52) 100%),
-        radial-gradient(130% 120% at 50% 0%, rgba(255,250,232,.42), rgba(255,250,232,0) 58%),
-        linear-gradient(176deg,#e3d0a3 0%,#d2ba88 54%,#b39a64 100%);
-        background-size:200px 200px,100% 100%,100% 100%,100% 100%; color:#33260f;
-        box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 22px rgba(112,80,34,.4), inset 0 1px 0 rgba(255,250,232,.4); }
-.frm{ border:9px solid transparent; border-image:var(--fr) 16 / 9px stretch; }
-.frmB{ border:15px solid transparent; border-image:var(--frB) 26 / 15px stretch; }
-.rule{ height:2px; background:linear-gradient(90deg,rgba(232,182,76,0),rgba(232,182,76,.85),rgba(232,182,76,0)); }
-
-/* ── HUD ───────────────────────────────────────────────────────────── */
-#hud{ position:absolute; top:10px; left:12px; right:12px; display:flex; gap:10px; align-items:flex-start; }
-#hudL{ display:flex; gap:9px; align-items:stretch; }
-.chip{ position:relative; display:flex; align-items:center; gap:8px; min-height:38px; padding:3px 15px 3px 5px;
-       border-radius:5px; font-size:20px; letter-spacing:.02em; font-variant-numeric:tabular-nums;
-       text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.5); }
-.chip>span{ min-width:1.6ch; text-align:left; }
-.chip .lbl{ display:block; font-size:8.5px; letter-spacing:.24em; opacity:.5; text-transform:uppercase; margin-bottom:-1px; }
-.chip .val{ display:block; line-height:1.02; }
-.ic{ position:relative; flex:0 0 auto; width:28px; height:28px; background-repeat:no-repeat; background-position:50% 50%; background-size:100% 100%; }
-#chipGold .val{ color:#ffdc8e; } #chipLives .val{ color:#ffc9bc; } #chipWave .val{ color:#e8dcc0; }
-.ic-gold{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><radialGradient id='g' cx='36%25' cy='30%25'><stop offset='0' stop-color='%23fff3c4'/><stop offset='.5' stop-color='%23f0bb4e'/><stop offset='1' stop-color='%23a06f16'/></radialGradient></defs><circle cx='16' cy='16' r='13' fill='url(%23g)' stroke='%236d4a10' stroke-width='1.6'/><circle cx='16' cy='16' r='9.4' fill='none' stroke='%23fff0c0' stroke-width='1.1' opacity='.6'/><path d='M16 8.6l2.3 4.7 5.1.7-3.7 3.6.9 5.1-4.6-2.5-4.6 2.5.9-5.1-3.7-3.6 5.1-.7z' fill='%236d4a10' opacity='.55'/></svg>"); }
-.ic-heart{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='h' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23e0574a'/><stop offset='1' stop-color='%238c1d16'/></linearGradient></defs><path d='M16 27.5S4.6 20.3 4.6 12.8C4.6 8.3 8 5.3 11.6 5.3c2.4 0 4 1.2 4.4 2.6.4-1.4 2-2.6 4.4-2.6 3.6 0 7 3 7 7.5 0 7.5-11.4 14.7-11.4 14.7z' fill='url(%23h)' stroke='%23f7cdb6' stroke-width='1.2' opacity='.97'/><path d='M10.4 9.6c-1.5.7-2.4 2.1-2.4 3.6' stroke='%23ffd8c6' stroke-width='1.6' fill='none' opacity='.7' stroke-linecap='round'/></svg>"); }
-.ic-sw{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><g stroke-linecap='round' fill='none'><path d='M7 26l17-19' stroke='%23c8d2df' stroke-width='3.2'/><path d='M25 26L8 7' stroke='%23e6eef8' stroke-width='3.2'/><path d='M7 26l17-19' stroke='%23f4f9ff' stroke-width='1.1' opacity='.8'/></g><g stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round'><path d='M5.5 20.5l5 5'/><path d='M26.5 20.5l-5 5'/></g><circle cx='9' cy='24' r='1.9' fill='%23c9922f'/><circle cx='23' cy='24' r='1.9' fill='%23c9922f'/></svg>"); }
-#hudRight{ margin-left:auto; display:flex; gap:8px; }
-.ibtn{ min-width:44px; min-height:38px; padding:2px 10px; border-radius:5px; font-size:17px; letter-spacing:.04em;
-       background-image:var(--noise),linear-gradient(178deg,#2a251e,#15120e); background-size:180px 180px,100% 100%;
-       box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12);
-       transition:filter .14s, box-shadow .14s; }
-.ibtn:hover{ filter:brightness(1.35); box-shadow:0 5px 16px rgba(0,0,0,.55), 0 0 14px rgba(232,182,76,.35), inset 0 1px 0 rgba(255,228,178,.2); }
-.ibtn:active{ filter:brightness(.85); }
-.ibtn.on{ color:#ffe2a2; box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 0 16px rgba(232,182,76,.3); }
-#btnGear{ font-size:0; background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm0 2a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2z' fill='%23f0dcae'/><path d='M10.7 1.6h2.6l.45 2.6 1.9.8 2.15-1.5 1.85 1.85-1.5 2.15.8 1.9 2.6.45v2.6l-2.6.45-.8 1.9 1.5 2.15-1.85 1.85-2.15-1.5-1.9.8-.45 2.6h-2.6l-.45-2.6-1.9-.8-2.15 1.5L4.35 18.9l1.5-2.15-.8-1.9-2.6-.45v-2.6l2.6-.45.8-1.9L4.35 7.3 6.2 5.45l2.15 1.5 1.9-.8z' fill='none' stroke='%23f0dcae' stroke-width='1.7' stroke-linejoin='round' opacity='.92'/></svg>"),
-    var(--noise),linear-gradient(178deg,#2a251e,#15120e);
-  /* the iron plate tiles (like .ibtn) so it fills the BORDER box too — with `no-repeat` the
-     9px filigree gutter fell back to the button's own background and read cream, not iron */
-  background-repeat:no-repeat,repeat,repeat; background-position:50% 50%,0 0,0 0; background-size:20px 20px,180px 180px,100% 100%; }
-
-/* ── wave preview card ─────────────────────────────────────────────── */
-/* a scout's dispatch on aged parchment — the one warm surface in an otherwise iron HUD */
-/* INTEGRATE: 272px fitted three busts, and the roster is eight types now — a wave carrying
-   four (every late wave on M2/M3) wrapped the fourth onto a lonely second row. 322px seats
-   four abreast, which is the most any wave table actually fields. */
-#wavePrev{ position:absolute; top:60px; left:12px; width:322px; padding:8px 13px 10px; border-radius:4px;
-           font-size:12.5px; opacity:1; }
-#wavePrev .wpT{ font-size:14.5px; letter-spacing:.1em; text-transform:uppercase; color:#3b2a10;
-                text-shadow:0 1px 0 rgba(255,248,224,.55); white-space:nowrap; }
-#wavePrev .wpT em{ font-style:normal; color:#8a5f16; }
-#wavePrev .wpS{ font-size:10.5px; letter-spacing:.19em; text-transform:uppercase; color:#6b5527; opacity:.85; margin-top:2px; }
-#wavePrev .wpRow{ display:flex; flex-wrap:wrap; gap:5px 10px; margin-top:5px; align-items:center; }
-#wavePrev .wpE{ position:relative; display:flex; align-items:center; gap:4px; }
-/* armoured types carry a shield pip on the bust: the one thing a player must know before
-   the wave lands is whether their arrows will bounce (SPEC2 §B) */
-#wavePrev .wpE .arm{ position:absolute; left:-3px; bottom:-2px; width:14px; height:14px;
-   background-repeat:no-repeat; background-position:50% 50%; background-size:100% 100%;
-   filter:drop-shadow(0 1px 2px rgba(40,26,6,.8)); }
-#wavePrev .wpE canvas{ width:31px; height:31px; display:block; filter:drop-shadow(0 1px 2px rgba(60,40,10,.5)); }
-#wavePrev .wpN{ font-size:14px; color:#43310f; font-variant-numeric:tabular-nums; }
-#wavePrev .bar{ margin-top:7px; height:3px; border-radius:2px; background:rgba(80,58,22,.35); overflow:hidden;
-                box-shadow:inset 0 1px 1px rgba(60,40,10,.35); }
-#wavePrev .bar i{ display:block; height:100%; background:linear-gradient(90deg,#8a2b1c,#c24a2c); }
-
-/* ── war omens (SPEC3 §D) ──────────────────────────────────────────────
-   MINIMAL FUNCTIONAL PLACEHOLDER, owned by SIMCORE only until the UI agent restyles it:
-   three choices on the left rail under the scout's dispatch, the taken one ringed in gold.
-   Everything here is static markup rebuilt by UI.omens() — no timers, so it is shot-safe. */
-#omenRow{ position:absolute; top:212px; left:12px; width:322px; display:flex; flex-direction:column; gap:5px; z-index:1; }
-#omenRow .omH{ font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:#e8d6a8; text-shadow:0 1px 2px #000; }
-#omenRow .omC{ display:block; width:100%; text-align:left; padding:5px 9px 6px; border-radius:4px;
-   font:inherit; color:#3b2a10; cursor:pointer; }
-#omenRow .omC .omN{ font-size:12.5px; letter-spacing:.09em; text-transform:uppercase; }
-#omenRow .omC .omD{ font-size:10.5px; line-height:1.25; color:#5d4a22; }
-#omenRow .omC.chal .omN{ color:#8f2d20; }
-#omenRow .omC.boon .omN{ color:#25497f; }
-#omenRow .omC.on{ box-shadow:0 0 0 2px #e8b64c inset; }
-#omenRow .omB{ font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#6b5527; }
-/* muster chip + "raise the muster" button (SPEC3 §C) — same placeholder caveat */
-.pHead .mus{ font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#f0dcae;
-   background:rgba(232,182,76,.12); border:1px solid rgba(232,182,76,.42); border-radius:3px; padding:3px 9px; cursor:pointer; }
-.pHead .mus:disabled{ opacity:.42; cursor:default; }
-.tBtn.tgt{ flex:0 0 100%; min-height:30px; padding:5px 8px; margin-top:1px; font-size:12px; }
-
-/* ── wave banner ───────────────────────────────────────────────────── */
-#msg{ position:absolute; top:13%; left:0; right:0; z-index:0; text-align:center; opacity:0; transition:opacity .35s; }
-#msg .mT{ display:inline-block; font-size:min(6.2vw,42px); letter-spacing:.19em; text-transform:uppercase;
-          padding:0 .4em; color:#ffe7ab;
-          text-shadow:0 0 1px #6d4a10,0 2px 0 #4a3208,0 3px 0 #332104,0 6px 20px rgba(0,0,0,.85),0 0 40px rgba(232,182,76,.35); }
-#msg .mS{ font-size:min(2.6vw,14px); letter-spacing:.34em; text-transform:uppercase; color:#d9c9a4; opacity:.8; margin-top:3px; }
-#msg .mR{ width:min(62vw,560px); margin:6px auto 0; }
-#msg::before{ content:''; position:absolute; left:50%; top:-46px; width:min(96vw,940px); height:220px; transform:translateX(-50%);
-              background:radial-gradient(ellipse 50% 50% at 50% 50%, rgba(8,5,1,.80) 0%, rgba(8,5,1,.5) 42%, rgba(10,6,2,0) 74%); z-index:-1; }
-
-/* ── start-wave call ───────────────────────────────────────────────── */
-#btnWave{ position:absolute; bottom:26px; left:50%; transform:translateX(-50%); display:none; border-radius:6px;
-          padding:11px 30px; font-size:19px; letter-spacing:.13em; text-transform:uppercase; color:#ffe9c2;
-          background-image:var(--noise),linear-gradient(178deg,#8f2d20,#5d1710 62%,#3d0e09);
-          background-size:180px 180px,100% 100%,100% 100%;
-          box-shadow:0 8px 22px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,200,160,.22), 0 0 0 rgba(232,182,76,0);
-          text-shadow:0 2px 0 rgba(0,0,0,.6); transition:box-shadow .18s, filter .18s; }
-#btnWave:hover{ filter:brightness(1.18); box-shadow:0 8px 26px rgba(0,0,0,.62), 0 0 26px rgba(232,182,76,.45), inset 0 1px 0 rgba(255,200,160,.3); }
-#btnWave:active{ filter:brightness(.88); }
-
-/* ── keyboard hints (desktop) ──────────────────────────────────────── */
-#hint{ position:absolute; left:14px; bottom:12px; font-size:11px; letter-spacing:.13em; text-transform:uppercase;
-       color:#cbbb96; opacity:.66; text-shadow:0 1px 3px #000; display:flex; gap:7px; align-items:center; }
-#hint em{ font-style:normal; width:3px; height:3px; border-radius:50%; background:var(--gold); opacity:.65; margin:0 3px; }
-#hint kbd{ font-family:var(--serif); font-size:11px; padding:2px 6px 3px; border-radius:3px; color:#ffe2a2;
-           background:linear-gradient(180deg,#2c2620,#16130f); box-shadow:inset 0 1px 0 rgba(255,228,178,.18),0 1px 3px rgba(0,0,0,.6);
-           border:1px solid rgba(232,182,76,.35); }
-
-/* ── build / tower panels ──────────────────────────────────────────── */
-.panel{ position:absolute; bottom:18px; left:50%; transform:translateX(-50%); pointer-events:auto;
-        border-radius:8px; padding:11px 13px 12px; }
-.pHead{ display:flex; align-items:center; gap:9px; margin:-2px 2px 9px; }
-.pHead .pT{ font-size:12px; letter-spacing:.26em; text-transform:uppercase; color:var(--gold-l); text-shadow:0 1px 0 #000; }
-.pHead .rule{ flex:1; }
-.pHead .x{ margin-left:2px; width:26px; height:26px; padding:0; border:0; background:none; font-size:15px; color:#b8a880;
-            line-height:1; border-radius:4px; transition:color .15s,background .15s; }
-.pHead .x:hover{ color:#ffe2a2; background:rgba(232,182,76,.14); }
-#buildMenu .cards{ display:flex; gap:9px; }
-.card{ position:relative; width:140px; padding:8px 8px 9px; border-radius:6px; text-align:center;
-       background-image:var(--noise),linear-gradient(176deg,#2b261f,#171310 70%,#100d0a);
-       background-size:180px 180px,100% 100%,100% 100%;
-       box-shadow:0 5px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.11);
-       border:1px solid rgba(232,182,76,.28); font-size:13px;
-       transition:transform .13s, box-shadow .13s, filter .13s; }
-.card:not(:disabled):hover{ transform:translateY(-3px); filter:brightness(1.16);
-       box-shadow:0 10px 22px rgba(0,0,0,.6), 0 0 20px rgba(232,182,76,.3), inset 0 1px 0 rgba(255,228,178,.2); }
-.card:not(:disabled):active{ transform:translateY(-1px) scale(.985); filter:brightness(.94); }
-.card:disabled{ filter:grayscale(.7) brightness(.62); cursor:default; }
-.card .por{ width:100%; max-width:100%; height:74px; display:block; border-radius:4px; margin-bottom:5px;
-            background:radial-gradient(ellipse 78% 62% at 50% 74%, rgba(255,220,160,.13), rgba(0,0,0,0) 70%),
-                       linear-gradient(180deg,#1b2a33,#171512 78%); box-shadow:inset 0 0 0 1px rgba(0,0,0,.5); }
-.card .nm{ font-size:13.5px; letter-spacing:.08em; color:#f2e5c6; text-shadow:0 1px 0 #000; }
-/* second icon tier — flat silhouette + short name, swapped in at the phone breakpoint */
-.card .nmS, .card .porS{ display:none; }
-.card .kb{ position:absolute; top:5px; left:5px; width:17px; height:17px; border-radius:3px; font-size:10.5px;
-           line-height:17px; color:#ffe2a2; background:rgba(8,6,4,.75); border:1px solid rgba(232,182,76,.45); }
-.cost{ display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 8px 2px 4px; border-radius:11px;
-       font-size:13px; font-variant-numeric:tabular-nums; color:#ffdc8e;
-       background:linear-gradient(180deg,rgba(60,44,16,.9),rgba(24,18,8,.9)); border:1px solid rgba(232,182,76,.4);
-       text-shadow:0 1px 0 #000; }
-.cost .ic{ width:15px; height:15px; }
-.card.poor .cost{ color:#e6714f; border-color:rgba(230,113,79,.5); }
-.srow{ display:flex; justify-content:space-between; font-size:10.5px; letter-spacing:.08em; color:#b8a880; margin-top:3px; }
-.srow b{ color:#e8dcc0; font-weight:400; font-variant-numeric:tabular-nums; }
-.srow .d{ color:var(--ok); }
-.stats{ margin-top:6px; padding-top:5px; border-top:1px solid rgba(232,182,76,.18); }
-
-/* ── collapsed build rail ──────────────────────────────────────────── */
-/* The shop is persistent (SPEC2 §A) and 245px tall — right for play, fatal for a frame that
-   has to sell the game, where it ate the bottom quarter and the keep with it. Collapsed, it
-   is the hotkey strip alone: same seven buttons, same order, ~56px. The harness picks this
-   for every overview/battle preset; `&ui=min` asks for it anywhere. */
-#buildMenu.min{ display:flex; align-items:center; gap:11px; padding:4px 13px 5px;
-   border-width:8px; border-image-width:8px; border-radius:7px; }
-#buildMenu.min::before{ content:'Build'; font-size:10px; letter-spacing:.26em; text-transform:uppercase;
-   color:var(--gold-l); text-shadow:0 1px 0 #000; opacity:.9; }
-#buildMenu.min .pHead{ display:none; }
-#buildMenu.min .cards{ gap:6px; align-items:center; }
-#buildMenu.min .card{ flex:0 0 40px; width:40px; min-width:0; height:34px; padding:0; border-radius:4px; }
-#buildMenu.min .card .por, #buildMenu.min .card .porS, #buildMenu.min .card .nm,
-#buildMenu.min .card .nmS, #buildMenu.min .card .cost, #buildMenu.min .card .tags,
-#buildMenu.min .card .det{ display:none; }
-#buildMenu.min .cards{ display:flex; overflow:visible; }
-#buildMenu.min .card .kb{ position:static; width:auto; height:auto; line-height:32px; font-size:15px;
-   background:none; border:0; border-radius:0; color:#ffe2a2; text-shadow:0 1px 0 #000; }
-
-/* tower menu */
-#towerMenu{ width:272px; }
-#towerMenu .tHead{ display:flex; gap:10px; align-items:center; margin-bottom:7px; }
-#towerMenu .tHead canvas{ width:64px; height:64px; flex:0 0 auto; border-radius:4px;
-   box-shadow:inset 0 0 0 1px rgba(0,0,0,.5), 0 0 0 1px rgba(232,182,76,.3), 0 3px 9px rgba(0,0,0,.5); }
-#towerMenu .tN{ font-size:15px; letter-spacing:.1em; color:#f2e5c6; text-shadow:0 1px 0 #000; }
-#towerMenu .tL{ font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:#b8a880; margin-top:2px; }
-.pips{ display:flex; gap:5px; margin-top:5px; }
-.pips i{ width:9px; height:9px; border-radius:50%; background:rgba(0,0,0,.6);
-         box-shadow:inset 0 0 0 1px rgba(232,182,76,.45); }
-.pips i.on{ background:radial-gradient(circle at 35% 32%,#fff3cf,#e8b64c 55%,#8f6519);
-            box-shadow:0 0 8px rgba(232,182,76,.6), inset 0 0 0 1px rgba(255,231,171,.7); }
-.tBtns{ display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }
-/* Both garrison actions are the SAME forged plate as every other control (.ibtn body); the
-   difference between spending and recovering is carried by a 2px accent bar and the text,
-   not by two flat web fills of green and maroon dropped into an iron-and-gold panel. */
-.tBtn{ position:relative; overflow:hidden; flex:1; min-height:40px; padding:8px 8px 7px; border-radius:5px;
-       font-size:13px; letter-spacing:.06em;
-       background-image:var(--noise),linear-gradient(178deg,#2a251e,#15120e); background-size:180px 180px,100% 100%;
-       border:1px solid rgba(232,182,76,.34); box-shadow:0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.12);
-       transition:filter .14s, box-shadow .14s; }
-.tBtn::before{ content:''; position:absolute; left:0; right:0; top:0; height:2px; }
-.tBtn:hover{ filter:brightness(1.2); box-shadow:0 4px 14px rgba(0,0,0,.5),0 0 16px rgba(232,182,76,.32), inset 0 1px 0 rgba(255,228,178,.2); }
-.tBtn:disabled{ filter:grayscale(.7) brightness(.6); cursor:default; }
-/* `#ui button` sets the default ink and carries an id, so state colour has to out-specify it */
-#ui .tBtn.up{ color:#bfe6a8; }
-.tBtn.up::before{ background:linear-gradient(90deg,rgba(143,208,122,0),#8fd07a 30%,#a8e88c 50%,#8fd07a 70%,rgba(143,208,122,0)); }
-#ui .tBtn.sell{ color:#e8a89c; }
-.tBtn.sell::before{ background:linear-gradient(90deg,rgba(214,110,92,0),#c9705e 30%,#e08b78 50%,#c9705e 70%,rgba(214,110,92,0)); }
-/* a refund is not a charge: the price line is neutral, the refund is signed and green */
-#ui .tBtn .s2{ color:#d8c9a4; opacity:.8; }
-#ui .tBtn .s2.ref{ color:#8fd07a; opacity:.95; }
-.tBtn.sell.arm{ color:#ffe9c2; border-color:var(--gold);
-  background-image:linear-gradient(100deg,rgba(255,231,171,0) 30%,rgba(255,231,171,.35) 50%,rgba(255,231,171,0) 70%),
-                   linear-gradient(178deg,#7d2419,#3d0e09);
-  box-shadow:0 4px 14px rgba(0,0,0,.5), 0 0 20px rgba(232,182,76,.5), inset 0 1px 0 rgba(255,200,160,.25);
-  animation:shim 1.1s linear infinite; background-size:220% 100%,100% 100%; }
-@keyframes shim{ from{ background-position:-60% 0,0 0 } to{ background-position:160% 0,0 0 } }
-.tBtn .s2{ display:block; font-size:10px; letter-spacing:.14em; opacity:.72; margin-top:1px; }
-
-/* ── placement mode (v2 free placement) ────────────────────────────── */
-/* The armed card and a one-line writ that says what the ground will take. Base state IS
-   the final look (shot-freeze rule); the ✓/✗ pair only appears for coarse pointers. */
-.card.arm{ transform:translateY(-3px); border-color:var(--gold); color:#fff3d4;
-  box-shadow:0 11px 24px rgba(0,0,0,.62), 0 0 22px rgba(232,182,76,.55), inset 0 0 0 1px rgba(255,231,171,.45); }
-.card.arm .nm{ color:#ffe7ab; }
-#placeBar{ position:absolute; left:50%; bottom:230px; transform:translateX(-50%); display:flex; gap:10px;
-  align-items:center; pointer-events:none; }
-/* MATERIAL RULE: parchment is the narrative voice (scout's dispatch, tutorial writ); iron is
-   the systems voice. The placement writ answers "will the ground take this?" — a systems
-   question, and it stands 20px off the iron build bar, so it is iron. Valid/invalid is carried
-   by the PLATE (green / red inner light), not by a 14px glyph on an identical brown card. */
-#placeMsg{ padding:6px 14px 7px; border-radius:4px; font-size:14px; letter-spacing:.05em; white-space:nowrap;
-  color:#f2e5c6; text-shadow:0 1px 0 rgba(0,0,0,.75); border-width:11px; border-image-width:11px; }
-#placeMsg b{ font-weight:400; color:#ffe2a2; }
-#placeMsg.ok{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 22px rgba(90,190,110,.28), inset 0 1px 0 rgba(255,228,178,.13); }
-#placeMsg.bad{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 22px rgba(200,60,45,.32), inset 0 1px 0 rgba(255,228,178,.13);
-  animation:pshake .18s ease-out 1; }
-@keyframes pshake{ 0%{transform:translateX(0)} 25%{transform:translateX(-3px)} 60%{transform:translateX(3px)} 100%{transform:translateX(0)} }
-#placeMsg .ic{ width:15px; height:15px; display:inline-block; vertical-align:-2px; margin:0 1px 0 5px; }
-#placeMsg::before{ content:''; display:inline-block; width:13px; height:13px; margin-right:7px; vertical-align:-1px;
-  background:50% 50%/100% 100% no-repeat;
-  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='%233f6b22' stroke='%231e3a0e' stroke-width='1.6'/><path d='M6.6 12.6l3.6 3.6 7-8' fill='none' stroke='%23e6ffcf' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
-#placeBar.bad #placeMsg{ color:#ffd6cb; }
-#placeBar.bad #placeMsg b{ color:#ffb2a2; }
-#placeBar.bad #placeMsg::before{
-  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='10' fill='%237d2419' stroke='%233d0e09' stroke-width='1.6'/><path d='M8 8l8 8M16 8l-8 8' fill='none' stroke='%23ffd9cc' stroke-width='2.6' stroke-linecap='round'/></svg>"); }
-#placeBtns{ display:none; gap:8px; }
-#placeBar.touch #placeBtns{ display:contents; }
-#placeBtns button{ width:52px; height:52px; border-radius:6px; font-size:24px; line-height:1; padding:0;
-  pointer-events:auto; border-width:8px; }
-#placeOk{ color:#d6ffb4; order:3; text-shadow:0 2px 0 rgba(0,0,0,.7), 0 0 14px rgba(140,230,96,.85); }
-#placeNo{ color:#ffc7b4; order:1; text-shadow:0 2px 0 rgba(0,0,0,.7), 0 0 12px rgba(226,96,64,.7); }
-#placeBar.touch #placeMsg{ order:2; }
-#placeBar.bad #placeOk{ filter:grayscale(.8) brightness(.6); }
-/* touch: the writ sits between the two thumbs rather than beside them */
-#placeBar.touch{ left:9px; right:9px; transform:none; justify-content:space-between; gap:6px; }
-#placeBar.touch #placeMsg{ white-space:normal; text-align:center; font-size:13px; }
-
-/* ── build-card damage glyphs + effect writ (SPEC2 §A/§B) ──────────── */
-/* Each card says three things at a glance: what it costs, what KIND of harm it does
-   (armour matters now), and how far it reaches. The glyph is the fastest of the three. */
-.tags{ display:flex; gap:4px; justify-content:center; margin-top:4px; }
-.tag{ display:inline-flex; align-items:center; gap:3px; padding:1px 6px 1px 3px; border-radius:9px;
-      font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:#d5c49b;
-      background:rgba(28,22,14,.85); border:1px solid rgba(232,182,76,.26); white-space:nowrap; }
-/* longhands, NOT the `background` shorthand: the shorthand resets background-image and it
-   wins on specificity over the .dg-* glyph classes, which silently blanks every icon. */
-.tag i{ width:14px; height:14px; flex:0 0 auto; background-repeat:no-repeat;
-        background-position:50% 50%; background-size:100% 100%;
-        filter:drop-shadow(0 1px 1px rgba(0,0,0,.9)); }
-.tag b{ font-weight:400; color:#e8dcc0; font-variant-numeric:tabular-nums; }
-.dg-sw{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke-linecap='round' fill='none'><path d='M4.6 19.4L17.4 4.6' stroke='%23202832' stroke-width='5'/><path d='M19.4 19.4L6.6 4.6' stroke='%23202832' stroke-width='5'/><path d='M4.6 19.4L17.4 4.6' stroke='%23c8d2df' stroke-width='3'/><path d='M19.4 19.4L6.6 4.6' stroke='%23f2f7ff' stroke-width='3'/></g><g stroke='%23e8b64c' stroke-width='2.8' stroke-linecap='round'><path d='M3.2 15l3.6 3.6'/><path d='M20.8 15l-3.6 3.6'/></g></svg>"); }
-.dg-siege{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='11' cy='13' r='7.2' fill='%23948a76' stroke='%23453f34' stroke-width='1.4'/><path d='M7.4 10.4l3 2.2-1.4 3' fill='none' stroke='%23514a3c' stroke-width='1.2'/><path d='M18 3l-2.4 4.4L20 6.2z' fill='%23e8b64c'/><path d='M15.6 7.4l2.6 2.2' stroke='%23e8b64c' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
-.dg-bolt{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13.8 2L5 13.4h5.2L9.4 22l9-12.2h-5.4z' fill='%23bfe8ff' stroke='%235fa8dd' stroke-width='1.1' stroke-linejoin='round'/></svg>"); }
-.dg-flame{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 1.6c4.4 4.6 7.4 7.6 7.4 12.2A7.4 7.4 0 0 1 4.6 13.8c0-2.6 1.4-4.6 3-6.4.2 2 1 3.2 2.2 3.6.6-3.4.6-6.4 2.2-9.4z' fill='%23ff9a2e' stroke='%23c0521a' stroke-width='1'/><path d='M12 21.4a3.6 3.6 0 0 1-3.4-3.6c0-2 1.8-3.2 2.6-5.4 1.2 1.8 4.2 3.2 4.2 5.4a3.4 3.4 0 0 1-3.4 3.6z' fill='%23ffe9a8'/></svg>"); }
-.dg-rng{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><ellipse cx='12' cy='14' rx='10' ry='5.4' fill='none' stroke='%23e8b64c' stroke-width='1.6'/><ellipse cx='12' cy='14' rx='4.6' ry='2.4' fill='none' stroke='%23c9922f' stroke-width='1.3' opacity='.7'/><circle cx='12' cy='14' r='1.5' fill='%23ffe7ab'/></svg>"); }
-.dg-shld{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 1.8l9 3v8.4c0 5-4.4 8-9 9.8-4.6-1.8-9-4.8-9-9.8V4.8z' fill='%23b9c3cf' stroke='%232a2f36' stroke-width='1.5'/><path d='M12 4.6l6.4 2.2v6.6c0 3.4-3.2 5.8-6.4 7.2z' fill='%23808c9c' opacity='.75'/><path d='M6.4 12.6l7-6.4' stroke='%23f2f7ff' stroke-width='1.4' opacity='.5' fill='none'/></svg>"); }
-.dg-bnr{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='4.4' y='2' width='2.2' height='20' rx='1' fill='%236d4a10'/><path d='M6.6 3.4h13l-3 4.6 3 4.6h-13z' fill='%233468b0' stroke='%23e8b64c' stroke-width='1'/><circle cx='5.5' cy='1.8' r='1.8' fill='%23e8b64c'/></svg>"); }
-.hnt{ font-size:10px; line-height:1.25; letter-spacing:.03em; color:#c9b78e; }
-/* Detail flyout: opens UPWARD out of the card, so revealing it never reflows the bar and
-   the bar's height is a constant the wave call / placement writ can stand on (see barH). */
-.det{ position:absolute; left:-1px; right:-1px; bottom:calc(100% + 7px); z-index:3;
-      padding:8px 9px 9px; border-radius:6px; text-align:left; pointer-events:none;
-      opacity:0; transform:translateY(5px); transition:opacity .13s, transform .13s;
-      background-image:var(--noise),linear-gradient(176deg,#332c23,#1a1611 72%,#120f0b);
-      background-size:180px 180px,100% 100%,100% 100%;
-      border:1px solid rgba(232,182,76,.36);
-      box-shadow:0 9px 22px rgba(0,0,0,.66), inset 0 1px 0 rgba(255,228,178,.13); }
-.det::after{ content:''; position:absolute; left:50%; bottom:-5px; width:9px; height:9px; margin-left:-5px;
-      transform:rotate(45deg); background:#1a1611;
-      border-right:1px solid rgba(232,182,76,.36); border-bottom:1px solid rgba(232,182,76,.36); }
-.card:hover .det, .card.arm .det{ opacity:1; transform:none; }
-.card:disabled:hover .det{ opacity:1; }     /* you may still read what you cannot afford */
-
-/* ── map select (SPEC2 §E) ─────────────────────────────────────────── */
-#maps{ background-image:
-   radial-gradient(ellipse 54% 42% at 50% 44%, rgba(5,4,2,.60), rgba(5,4,2,0) 76%),
-   linear-gradient(180deg, rgba(7,10,16,.72) 0%, rgba(9,9,10,.36) 24%, rgba(10,7,3,.44) 70%, rgba(5,3,1,.92) 100%); }
-#mapsKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#b4a37c; opacity:.9;
-           text-shadow:0 1px 4px #000; }
-#mapsT{ margin:4px 0 0; font-size:min(7.4vw,42px); line-height:1; letter-spacing:.14em; font-weight:400; color:#f2cf74;
-   text-shadow:0 1px 0 #fff6da, 1px 2px 0 #5d3d0c, 0 4px 0 #2e1e05, 0 8px 16px rgba(0,0,0,.85), 0 0 44px rgba(232,182,76,.3); }
-#mapsRule{ width:min(56vw,470px); margin:9px auto 0; }
-#mapCards{ display:flex; gap:16px; margin-top:22px; align-items:stretch; justify-content:center; }
-.mCard{ position:relative; width:274px; padding:11px 11px 12px; border-radius:7px; text-align:left; pointer-events:auto;
-   background-image:var(--noise),linear-gradient(176deg,#2b261f,#171310 68%,#100d0a);
-   background-size:180px 180px,100% 100%,100% 100%;
-   box-shadow:0 8px 20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,228,178,.12);
-   border:1px solid rgba(232,182,76,.3); font-family:var(--serif);
-   transition:transform .15s, box-shadow .15s, filter .15s; }
-.mCard:not(.lock):hover{ transform:translateY(-4px); filter:brightness(1.14);
-   box-shadow:0 14px 30px rgba(0,0,0,.66), 0 0 26px rgba(232,182,76,.34), inset 0 1px 0 rgba(255,228,178,.2); }
-.mCard:not(.lock):active{ transform:translateY(-1px) scale(.99); }
-.mWrap{ position:relative; border-radius:4px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.5); }
-.mCard canvas.mini{ width:100%; height:auto; display:block; }
-/* the chart is a sheet pinned to the card, so the plate reads warm under glass — not a
-   black gradient dragged across the bottom third of it */
-.mWrap::after{ content:''; position:absolute; inset:0; box-shadow:inset 0 0 0 1px rgba(232,182,76,.34),
-   inset 0 -14px 22px rgba(66,44,18,.30); border-radius:4px; }
-.mCard .mN{ margin-top:8px; font-size:17px; letter-spacing:.09em; color:#f2e5c6; text-shadow:0 1px 0 #000; }
-.mCard .mB{ margin-top:3px; font-size:11px; line-height:1.32; color:#a2947a; min-height:2.6em; }
-.mFoot{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:7px;
-        border-top:1px solid rgba(232,182,76,.18); }
-.mFoot .mW{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#c2b491; }
-.stars{ display:flex; gap:3px; align-items:center; }
-/* a road already held says so before you count its stars */
-.stars .ck{ width:13px; height:13px; margin-right:4px; display:block; background:50% 50%/100% 100% no-repeat;
-  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 12.6l5.2 5.4L20 6.4' fill='none' stroke='%23e8b64c' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  filter:drop-shadow(0 0 5px rgba(232,182,76,.5)); }
-/* the road you are on */
-.mCard.next{ border-color:var(--gold);
-  box-shadow:0 8px 20px rgba(0,0,0,.6), 0 0 0 2px rgba(232,182,76,.8), 0 0 22px rgba(232,182,76,.26),
-             inset 0 1px 0 rgba(255,228,178,.14); }
-.mCard .rib{ position:absolute; top:-2px; right:-2px; z-index:4; padding:3px 11px 4px; border-radius:0 7px 0 8px;
-  font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:#3a2708;
-  background:linear-gradient(180deg,#ffe6a2,#e8b64c 52%,#ad7a1e);
-  box-shadow:0 3px 9px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,250,224,.6);
-  text-shadow:0 1px 0 rgba(255,246,214,.55); }
-.stars i{ width:15px; height:15px; display:block; background:50% 50%/100% 100% no-repeat;
-  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.6l2.9 6 6.5.9-4.8 4.6 1.2 6.5L12 17.5 6.2 20.6l1.2-6.5-4.8-4.6 6.5-.9z' fill='none' stroke='%23705a2c' stroke-width='1.6' stroke-linejoin='round'/></svg>"); }
-.stars i.on{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.6l2.9 6 6.5.9-4.8 4.6 1.2 6.5L12 17.5 6.2 20.6l1.2-6.5-4.8-4.6 6.5-.9z' fill='%23e8b64c' stroke='%236d4a10' stroke-width='1.2' stroke-linejoin='round'/><path d='M12 5.4l1.9 4 .5.1-2.4 2z' fill='%23fff0c6' opacity='.85'/></svg>");
-  filter:drop-shadow(0 0 6px rgba(232,182,76,.55)); }
-/* A chained road must still show its terrain — a player cannot want what is a black void.
-   The scrim comes off the CARD and goes onto the chart alone, and the barrier is iron. */
-.mCard.lock{ cursor:default; }
-.mCard.lock canvas.mini{ filter:grayscale(.85) brightness(.55); }
-.mCard.lock .mN{ color:#cfc3a4; }
-.mCard .mChain{ position:absolute; inset:0; z-index:2; pointer-events:none; }
-.mCard .mChain svg{ width:100%; height:100%; display:block;
-   filter:drop-shadow(0 3px 6px rgba(0,0,0,.75)); }
-.mCard .mLk{ font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#c9b78e; }
-#mapsFoot{ margin-top:20px; display:flex; gap:12px; align-items:center; }
-#btnBack{ border-radius:6px; padding:10px 26px; font-size:14px; letter-spacing:.18em; text-transform:uppercase; color:#e2d4b4;
-   background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
-   box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12); transition:filter .14s; }
-#btnBack:hover{ filter:brightness(1.24); }
-
-/* ── victory stars + next-map call to action ───────────────────────── */
-#endStars{ display:flex; justify-content:center; gap:9px; margin:13px 0 2px; }
-#endStars i{ width:38px; height:38px; display:block; background:50% 50%/100% 100% no-repeat;
-  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.6l2.9 6 6.5.9-4.8 4.6 1.2 6.5L12 17.5 6.2 20.6l1.2-6.5-4.8-4.6 6.5-.9z' fill='rgba(0,0,0,.45)' stroke='%236b5a34' stroke-width='1.5' stroke-linejoin='round'/></svg>"); }
-#endStars i.on{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.6l2.9 6 6.5.9-4.8 4.6 1.2 6.5L12 17.5 6.2 20.6l1.2-6.5-4.8-4.6 6.5-.9z' fill='%23e8b64c' stroke='%236d4a10' stroke-width='1.1' stroke-linejoin='round'/><path d='M12 5.2l2 4.2 1 .2-3 2.4z' fill='%23fff3d0' opacity='.9'/></svg>");
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.7)) drop-shadow(0 0 12px rgba(232,182,76,.6)); }
-#endStarL{ font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:#c9b78e; opacity:.85; margin-top:2px; }
-#btnNext{ display:block; margin:12px auto 0; padding:12px 22px; font-size:min(4vw,15.5px); letter-spacing:.17em;
-   background-image:linear-gradient(180deg,rgba(255,222,186,.18) 0%,rgba(255,222,186,.04) 42%,rgba(0,0,0,0) 43%),
-                    var(--noise),linear-gradient(178deg,#3d5a34,#1c2b16 60%,#0e1409);
-   background-size:100% 100%,180px 180px,100% 100%; }
-#endPlate .bigBtn.sec{ margin-top:9px; padding:9px 26px; font-size:min(3.6vw,14px); letter-spacing:.18em; color:#e2d4b4;
-   background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
-   box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 0 0 1px rgba(232,182,76,.22), inset 0 1px 0 rgba(255,228,178,.12); }
-
-/* ── first-placement tutorial writ (localStorage-gated, never in SHOT) ─ */
-#tutHint{ position:absolute; left:50%; transform:translateX(-50%); width:min(88vw,410px); padding:10px 15px 11px;
-   border-radius:5px; font-size:12.5px; line-height:1.42; text-align:center; pointer-events:none; }
-#tutHint b{ font-weight:400; color:#6b3f0c; }
-#tutHint .tH{ font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:#7a5f28; margin-bottom:3px; }
-
-/* ── settings ──────────────────────────────────────────────────────── */
-#settings{ position:absolute; top:58px; right:12px; width:216px; padding:10px 12px 12px; border-radius:6px; pointer-events:auto; }
-#settings .sT{ font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--gold-l); margin-bottom:8px; }
-#settings button{ display:block; width:100%; min-height:40px; margin-top:7px; border-radius:5px; font-size:13.5px;
-      letter-spacing:.08em; text-align:left; padding:8px 12px;
-      background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
-      border:1px solid rgba(232,182,76,.3); box-shadow:0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.12);
-      transition:filter .14s; }
-#settings button:hover{ filter:brightness(1.22); }
-#settings button b{ float:right; color:#ffdc8e; font-weight:400; }
-
-/* ── damage floaters (pooled) ─────────────────────────────────────── */
-#floaters{ position:absolute; inset:0; overflow:hidden; }
-.fl{ position:absolute; left:0; top:0; opacity:0; font-size:19px; line-height:1; white-space:nowrap;
-     color:#fff4e2; text-shadow:0 2px 0 rgba(0,0,0,.85), 0 0 9px rgba(0,0,0,.8); will-change:transform,opacity; }
-.fl.crit{ font-size:27px; color:#ffdc8e; text-shadow:0 2px 0 #4a2c04, 0 0 14px rgba(255,196,80,.85), 0 3px 12px rgba(0,0,0,.85); }
-.fl.gold{ color:#ffe7ab; font-size:16px; }
-
-/* ── overlays: title / end ─────────────────────────────────────────── */
-.overlay{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-          pointer-events:auto; text-align:center; }
-/* cinematic grade, NOT a flat veil: cool sky wash up top, warm bounce through the vale,
-   a soft dark plate under the lockup for legibility, deep plinth at the bottom */
-#title{ background-image:
-   radial-gradient(ellipse 46% 34% at 50% 48%, rgba(5,4,2,.60), rgba(5,4,2,0) 74%),
-   radial-gradient(ellipse 66% 48% at 50% 62%, rgba(255,206,138,.13), rgba(255,206,138,0) 72%),
-   linear-gradient(180deg, rgba(7,10,16,.62) 0%, rgba(9,9,10,.26) 20%, rgba(8,6,4,.05) 42%, rgba(10,7,3,.44) 74%, rgba(5,3,1,.93) 100%),
-   radial-gradient(ellipse 118% 94% at 50% 46%, rgba(0,0,0,0) 42%, rgba(4,3,1,.52) 100%); }
-#crest{ width:min(31vw,238px); height:auto; display:block; margin:0 auto -8px;
-        filter:drop-shadow(0 6px 18px rgba(0,0,0,.8)) drop-shadow(0 0 30px rgba(232,182,76,.24)); }
-#logoWrap{ position:relative; }
-h1#logo{ margin:0; font-size:min(11.2vw,104px); line-height:1; letter-spacing:.085em; font-weight:400;
-   color:#f2cf74; -webkit-text-stroke:.6px rgba(84,55,10,.65);
-   text-shadow:0 1px 0 #fff6da, 0 -1px 0 rgba(120,84,20,.9), 1px 2px 0 #5d3d0c, 0 3px 0 #48310a, 0 5px 1px #2e1e05,
-               0 8px 16px rgba(0,0,0,.85), 0 0 54px rgba(232,182,76,.36); }
-#tagRow{ display:flex; align-items:center; justify-content:center; gap:min(2.4vw,20px); margin-top:15px; }
-#tagRow .flr{ width:min(24vw,192px); height:auto; opacity:.95; filter:drop-shadow(0 2px 5px rgba(0,0,0,.85)); }
-#tagRow .flr.r{ transform:scaleX(-1); }
-#tagline{ margin:0; font-size:min(3.4vw,15.5px); letter-spacing:.38em; text-transform:uppercase; color:#f0e2c0;
-          text-shadow:0 1px 0 rgba(0,0,0,.9), 0 2px 12px rgba(0,0,0,.9); white-space:nowrap; }
-/* §3 gives crimson to the ENEMY faction. The primary CTA is the player's — blue enamel over
-   steel, gold frame — so the first button in the game is the colour you are fighting for. */
-.bigBtn{ position:relative; margin-top:30px; border-radius:7px; padding:15px 58px; font-size:min(5.4vw,25px);
-   letter-spacing:.22em; text-transform:uppercase; color:#f6e9c8;
-   /* blue enamel INLAID in iron: the rim goes dark so the gold filigree has something to
-      read against — thin gold on mid-blue is the one place this frame disappears */
-   background-image:
-     linear-gradient(90deg,rgba(4,9,19,.96) 0,rgba(4,9,19,.94) 10px,rgba(4,9,19,0) 13px,rgba(4,9,19,0) calc(100% - 13px),rgba(4,9,19,.94) calc(100% - 10px),rgba(4,9,19,.96) 100%),
-     linear-gradient(180deg,rgba(4,9,19,.96) 0,rgba(4,9,19,.94) 10px,rgba(4,9,19,0) 13px,rgba(4,9,19,0) calc(100% - 13px),rgba(4,9,19,.94) calc(100% - 10px),rgba(4,9,19,.96) 100%),
-     linear-gradient(180deg,rgba(220,236,255,.20) 0%,rgba(220,236,255,.04) 40%,rgba(0,0,0,0) 41%),
-     radial-gradient(ellipse 84% 130% at 50% -34%, rgba(150,196,252,.34), rgba(150,196,252,0) 62%),
-     var(--noise),linear-gradient(178deg,#3a6cb0 0%,#2b5697 26%,#1b3c72 68%,#0d2246 100%);
-   background-size:100% 100%,100% 100%,100% 100%,100% 100%,180px 180px,100% 100%;
-   box-shadow:0 10px 30px rgba(0,0,0,.7), inset 0 0 0 1px rgba(232,182,76,.55),
-              inset 0 1px 0 rgba(206,228,255,.34), inset 0 -16px 28px rgba(0,0,0,.4);
-   text-shadow:0 2px 0 rgba(0,0,0,.7), 0 0 22px rgba(255,214,148,.4); transition:box-shadow .2s, filter .2s, transform .2s; }
-.bigBtn:hover{ filter:brightness(1.16); transform:translateY(-2px);
-   box-shadow:0 14px 34px rgba(0,0,0,.7), 0 0 34px rgba(232,182,76,.5), inset 0 1px 0 rgba(255,204,164,.32); }
-.bigBtn:active{ transform:translateY(0) scale(.985); filter:brightness(.9); }
-#titleFoot{ position:absolute; bottom:calc(18px + env(safe-area-inset-bottom)); left:0; right:0; font-size:10.5px;
-            letter-spacing:.3em; text-transform:uppercase; color:#a8977a; opacity:.8; text-shadow:0 1px 4px #000; }
-
-#end{ background-image:
-   radial-gradient(ellipse 40% 40% at 50% 48%, rgba(5,4,2,.62), rgba(5,4,2,0) 76%),
-   linear-gradient(180deg, rgba(7,9,14,.68) 0%, rgba(8,7,4,.34) 34%, rgba(8,6,3,.5) 72%, rgba(5,3,1,.9) 100%),
-   radial-gradient(ellipse 112% 90% at 50% 46%, rgba(0,0,0,0) 38%, rgba(3,2,1,.6) 100%); }
-#endPlate{ width:min(92vw,442px); padding:20px 24px 24px; border-radius:9px; }
-h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-height:1.06; font-weight:400;
-  text-shadow:0 1px 0 rgba(255,240,200,.35), 0 2px 0 #2a1a04, 0 4px 16px rgba(0,0,0,.85); }
-#endSub{ font-size:10.5px; letter-spacing:.3em; text-transform:uppercase; opacity:.6; margin:5px 0 0; }
-#endPlate .rule{ width:74%; margin:11px auto 0; }
-#medals{ display:flex; justify-content:center; gap:20px; margin:15px 0 2px; }
-#medals .md{ display:flex; flex-direction:column; align-items:center; gap:6px; }
-#medals svg{ width:68px; height:92px; filter:drop-shadow(0 3px 9px rgba(0,0,0,.85)); }
-#medals .mL{ font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:#e6c982; text-shadow:0 1px 0 #000; }
-#medals .md.off svg{ opacity:.2; filter:grayscale(1) brightness(.55); }
-#medals .md.off .mL{ color:#7d7361; opacity:.6; }
-#endStats{ margin:13px 0 0; }
-#endStats table{ width:100%; border-collapse:collapse; font-size:14px; }
-#endStats td{ padding:5px 2px; border-bottom:1px solid rgba(232,182,76,.11); }
-#endStats tr:last-child td{ border-bottom:0; }
-#endStats td:first-child{ text-align:left; letter-spacing:.14em; text-transform:uppercase; font-size:10.5px; color:#ab9c7b; }
-#endStats td:last-child{ text-align:right; color:#f2e5c6; font-variant-numeric:tabular-nums; font-size:16px; }
-#endPlate .bigBtn{ display:block; margin:20px auto 0; padding:13px 40px; font-size:min(4.6vw,19px); }
-#stats{ position:absolute; bottom:5px; right:8px; font:11px/1.3 ui-monospace,monospace; color:#8fd48f;
-        text-shadow:0 1px 2px #000; text-align:right; }
-
-/* ── flourishes (freeze-safe: base state is the shipped look) ─────── */
-@keyframes bump{ 0%{transform:scale(1)} 30%{transform:scale(1.34)} 100%{transform:scale(1)} }
-@keyframes thump{ 0%{transform:scale(1)} 18%{transform:scale(1.5) rotate(-7deg)} 55%{transform:scale(.92)} 100%{transform:scale(1)} }
-.chip.bump .ic{ animation:bump .42s ease-out; }
-#chipLives.hit .ic{ animation:thump .6s ease-out; }
-#chipLives.hit{ box-shadow:0 6px 18px rgba(0,0,0,.6), 0 0 22px rgba(226,90,64,.55), inset 0 1px 0 rgba(255,228,178,.13); }
-
-/* ── phone / short-viewport layout ─────────────────────────────────── */
-@media (max-width:760px){
-  #hud{ top:7px; left:7px; right:7px; gap:5px; flex-wrap:nowrap; }
-  #hudL{ gap:5px; min-width:0; }
-  #hudRight{ gap:5px; flex:0 0 auto; }
-  .chip{ min-height:44px; font-size:15px; gap:5px; padding:2px 7px 2px 2px; border-width:6px; }
-  .ic{ width:19px; height:19px; }
-  .chip .lbl{ display:none; }
-  .chip>div{ min-width:0; }
-  /* The wave counter is CAMPAIGN progress and the preview card never carries "4/10" — it
-     says "WAVE 4 — TWO COLUMNS". Deleting the chip left a phone with no way to know how far
-     the road runs once the banner faded. All three chips + all three controls fit 390px once
-     the chips stop padding themselves like desktop. */
-  #chipWave .val{ font-size:13px; }
-  /* ...which is exactly why the muster chip (SPEC3 §C) does NOT get a fourth seat here: a
-     fourth chip pushes speed/pause/settings off a 390px screen. The phone reads its muster
-     off the build bar's own button, which carries the same "3/6" and the price besides. */
-  #chipMuster{ display:none; }
-  #omenRow{ top:168px; left:7px; right:7px; width:auto; max-width:334px; }
-  .ibtn{ min-width:44px; min-height:44px; font-size:16px; padding:0 6px; }
-  #wavePrev{ top:56px; left:7px; right:7px; width:auto; max-width:334px; padding:6px 10px 8px; }
-  #wavePrev .wpT{ font-size:13px; }
-  #wavePrev .wpE canvas{ width:27px; height:27px; }
-  /* one line, not three: the subtitle only earns its place while it is a countdown */
-  #wavePrev:not(.pre) .wpS{ display:none; }
-  /* and the centre banner does not repeat the card's own sentence over the horde */
-  #wavePrev:not(.hidden) ~ #msg.wv{ opacity:0 !important; }
-  #hint{ display:none; }
-  .panel{ left:0; right:0; bottom:0; transform:none; width:100%; border-radius:12px 12px 0 0;
-          padding:8px 8px calc(10px + env(safe-area-inset-bottom));
-          border-width:13px 13px 0; }
-  /* INTEGRATE r2: cramming seven 51px tiles edge-to-edge made brown mush — the Catapult,
-     Ballista and Pyre miniatures were the same smudge and the name ellipsised to "Warban…".
-     The phone gets its own icon tier instead of a downscale: flat high-contrast silhouette,
-     a short name authored for the width, and BOTH chips (cost + reach), because reach is
-     the number a player compares and mobile was the only place it went missing. Five and a
-     half legible 62px cards on a snapping rail beat seven illegible ones. */
-  #buildMenu .cards{ display:flex; gap:6px; overflow-x:auto; overflow-y:hidden;
-     scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-  #buildMenu .cards::-webkit-scrollbar{ display:none; }
-  .card{ flex:0 0 62px; width:62px; min-width:0; padding:4px 2px 5px; font-size:11px; scroll-snap-align:start; }
-  .card .por{ display:none; }
-  .card .porS{ display:block; width:100%; height:40px; border-radius:3px; margin-bottom:3px;
-     box-shadow:inset 0 0 0 1px rgba(232,182,76,.22); }
-  .card .nm{ display:none; }
-  .card .nmS{ display:block; font-size:9px; letter-spacing:.02em; white-space:nowrap; text-overflow:clip;
-     overflow:hidden; color:#f2e5c6; text-shadow:0 1px 0 #000; }
-  .card .det{ display:none; }
-  .card .kb{ top:2px; left:2px; width:12px; height:12px; line-height:12px; font-size:8px; border-radius:2px; }
-  .cost{ font-size:10px; padding:1px 5px 1px 1px; margin-top:2px; gap:2px; }
-  .cost .ic{ width:11px; height:11px; }
-  .tags{ gap:3px; margin-top:2px; }
-  .tag{ padding:0 3px 0 1px; font-size:8.5px; letter-spacing:.02em; border-radius:6px; }
-  .tag .tw{ display:none; }                 /* the glyph is the word */
-  .tag i{ width:12px; height:12px; }
-  #buildMenu .pHead{ margin-bottom:5px; }
-  /* the collapsed rail spans the phone instead of scrolling: seven tabs, no label */
-  #buildMenu.min{ padding:4px 8px 5px; }
-  #buildMenu.min::before{ display:none; }
-  #buildMenu.min .cards{ flex:1; gap:4px; }
-  #buildMenu.min .card{ flex:1 1 0; width:auto; }
-  #towerMenu{ width:100%; }
-  #towerMenu .stats{ display:grid; grid-template-columns:1fr 1fr; column-gap:14px; }
-  #settings{ top:auto; bottom:calc(10px + env(safe-area-inset-bottom)); right:7px; left:7px; width:auto; }
-  #msg{ top:24%; padding:0 16px; }
-  #msg .mT{ font-size:9.6vw; letter-spacing:.12em; }
-  #msg .mS{ font-size:9px; letter-spacing:.2em; }
-  #msg .mR{ width:74vw; }
-  #btnWave{ bottom:calc(20px + env(safe-area-inset-bottom)); padding:13px 22px; font-size:16px; min-height:50px; }
-  .overlay{ padding:0 14px; }
-  #crest{ width:41vw; }
-  h1#logo{ font-size:9.8vw; letter-spacing:.02em; }
-  #tagRow{ gap:7px; margin-top:10px; }
-  #tagRow .flr{ width:9vw; }
-  #tagline{ font-size:9.5px; letter-spacing:.14em; }
-  .bigBtn{ margin-top:22px; padding:14px 44px; min-height:52px; letter-spacing:.16em; }
-  #titleFoot{ font-size:9px; letter-spacing:.16em; }
-  #maps{ justify-content:flex-start; padding-top:calc(14px + env(safe-area-inset-top)); }
-  #mapCards{ flex-direction:column; gap:9px; margin-top:14px; width:100%;
-             max-height:calc(100vh - 240px); overflow-y:auto; }
-  .mCard{ width:100%; display:flex; gap:11px; align-items:center; padding:8px; }
-  .mCard .mWrap{ flex:0 0 118px; }
-  .mCard .mTxt{ flex:1 1 auto; min-width:0; }
-  .mCard .mN{ margin-top:0; font-size:15px; }
-  .mCard .mB{ font-size:10.5px; min-height:0; }
-  .mFoot{ margin-top:6px; padding-top:5px; }
-  #mapsFoot{ margin-top:14px; }
-  #tutHint{ width:min(94vw,360px); font-size:11.5px; }
-  #endStars i{ width:30px; height:30px; }
-  #endPlate{ padding:18px 15px 20px; }
-  #medals svg{ width:42px; height:42px; }
-  #endStats table{ font-size:13px; }
-  #endStats td:last-child{ font-size:15px; }
-}
-/* ══ END SECTION: UI-CSS ══ */
-</style>
-<script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
-</script>
-</head>
-<body>
-<canvas id="gl"></canvas>
-<!-- ══ SECTION: UI-HTML ══ (owner: UI builder). All ornament is inline SVG — no external
-     files, nothing fetched, and nothing that has to decode before the first shot render. -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#fff3cf"/><stop offset=".42" stop-color="#e8b64c"/>
-    <stop offset=".72" stop-color="#a9761d"/><stop offset="1" stop-color="#f2d493"/></linearGradient>
-  <linearGradient id="gGoldR" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#ffeab4"/><stop offset=".5" stop-color="#daa338"/><stop offset="1" stop-color="#8a5f16"/></linearGradient>
-  <linearGradient id="gBlue" x1=".2" y1="0" x2=".8" y2="1">
-    <stop offset="0" stop-color="#3f74bd"/><stop offset=".55" stop-color="#2b5697"/><stop offset="1" stop-color="#15305e"/></linearGradient>
-  <linearGradient id="gSteel" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#f2f6fb"/><stop offset=".5" stop-color="#a9b6c6"/><stop offset="1" stop-color="#5f6b7a"/></linearGradient>
-  <!-- half laurel wreath: mirrored to ring the crest -->
-  <g id="laurel">
-    <path d="M52 132C26 124 10 100 9 72 8 48 18 26 34 12" fill="none" stroke="#8a5f16" stroke-width="3" stroke-linecap="round"/>
-    <g fill="url(#gGoldR)" stroke="#7a5312" stroke-width=".5">
-      <ellipse cx="27" cy="19" rx="12" ry="5" transform="rotate(-48 27 19)"/>
-      <ellipse cx="18" cy="33" rx="12.5" ry="5.2" transform="rotate(-32 18 33)"/>
-      <ellipse cx="12" cy="49" rx="12.5" ry="5.2" transform="rotate(-16 12 49)"/>
-      <ellipse cx="10" cy="66" rx="12" ry="5.1" transform="rotate(-2 10 66)"/>
-      <ellipse cx="13" cy="83" rx="11.6" ry="5" transform="rotate(15 13 83)"/>
-      <ellipse cx="21" cy="99" rx="11" ry="4.8" transform="rotate(32 21 99)"/>
-      <ellipse cx="33" cy="113" rx="10.2" ry="4.5" transform="rotate(48 33 113)"/>
-      <ellipse cx="48" cy="124" rx="9" ry="4.1" transform="rotate(63 48 124)"/>
-    </g>
-    <g fill="url(#gGoldR)" opacity=".68">
-      <ellipse cx="39" cy="24" rx="9" ry="4" transform="rotate(20 39 24)"/>
-      <ellipse cx="29" cy="40" rx="9.4" ry="4.1" transform="rotate(34 29 40)"/>
-      <ellipse cx="24" cy="57" rx="9.4" ry="4.1" transform="rotate(52 24 57)"/>
-      <ellipse cx="24" cy="75" rx="9" ry="4" transform="rotate(70 24 75)"/>
-      <ellipse cx="30" cy="92" rx="8.4" ry="3.8" transform="rotate(86 30 92)"/>
-      <ellipse cx="41" cy="106" rx="7.8" ry="3.6" transform="rotate(104 41 106)"/>
-    </g>
-  </g>
-  <!-- gold scroll flourish for the wordmark rules -->
-  <g id="flour" stroke-linecap="round">
-    <path d="M2 9h74" stroke="url(#gGoldR)" stroke-width="1.5"/>
-    <path d="M2 12.4h56" stroke="url(#gGoldR)" stroke-width=".9" opacity=".5"/>
-    <path d="M76 9c9 0 12-6.4 19-6.4s10 5 17 5" fill="none" stroke="url(#gGoldR)" stroke-width="1.9"/>
-    <path d="M76 9c9 0 12 6.4 19 6.4s10-5 17-5" fill="none" stroke="url(#gGoldR)" stroke-width="1.9"/>
-    <path d="M112 9l9-5v10z" fill="url(#gGoldR)"/>
-    <circle cx="76" cy="9" r="2.8" fill="#ffe7ab"/>
-    <circle cx="95" cy="9" r="1.7" fill="url(#gGoldR)"/>
-  </g>
-</defs></svg>
-
-<div id="ui">
-  <div id="hud">
-    <div id="hudL">
-      <div class="chip iron frm" id="chipGold"><i class="ic ic-gold"></i><div><span class="lbl">Gold</span><span class="val" id="gold">0</span></div></div>
-      <div class="chip iron frm" id="chipLives"><i class="ic ic-heart"></i><div><span class="lbl">Vale</span><span class="val" id="lives">0</span></div></div>
-      <div class="chip iron frm" id="chipWave"><i class="ic ic-sw"></i><div><span class="lbl">Wave</span><span class="val" id="wave">0/10</span></div></div>
-      <div class="chip iron frm" id="chipMuster"><i class="ic ic-sw"></i><div><span class="lbl">Muster</span><span class="val" id="muster">0/6</span></div></div>
-    </div>
-    <div id="hudRight">
-      <button id="btnSpeed" class="ibtn frm" title="Speed">×1</button>
-      <button id="btnPause" class="ibtn frm" title="Pause (Space)">❚❚</button>
-      <button id="btnGear" class="ibtn frm" title="Settings">⚙</button>
-    </div>
-  </div>
-  <div id="wavePrev" class="parch frm hidden"></div>
-  <div id="omenRow" class="hidden"></div>
-  <div id="settings" class="iron frm hidden">
-    <div class="sT">Settings</div>
-    <button id="btnMute">Sound <b id="muteV">On</b></button>
-    <button id="btnQual">Quality <b id="qualV">High</b></button>
-    <button id="btnReset">Restart Campaign</button>
-  </div>
-  <div id="msg"></div>
-  <div id="floaters"></div>
-  <button id="btnWave" class="frm">⚔ Start Wave</button>
-  <div id="hint"><span>Build</span><kbd>1</kbd><kbd>-</kbd><kbd>7</kbd><em></em><span>Place</span><kbd>Click</kbd><em></em><span>Keep placing</span><kbd>Shift</kbd><em></em><span>Cancel</span><kbd>Esc</kbd><em></em><span>Targeting</span><kbd>T</kbd></div>
-  <div id="placeBar" class="hidden"><div id="placeMsg" class="iron frmB ok"></div>
-    <div id="placeBtns"><button id="placeOk" class="iron frm" title="Raise">✓</button><button id="placeNo" class="iron frm" title="Cancel">✗</button></div></div>
-  <div id="tutHint" class="parch frm hidden"></div>
-  <div id="buildMenu" class="panel iron frmB hidden"></div>
-  <div id="towerMenu" class="panel iron frmB hidden"></div>
-
-  <div id="title" class="overlay">
-    <svg id="crest" viewBox="-22 -4 164 152" aria-label="Bannerfall crest">
-      <use href="#laurel" transform="translate(-18,6) scale(.94)"/>
-      <use href="#laurel" transform="translate(138,6) scale(-.94,.94)"/>
-      <!-- crown -->
-      <path d="M40 17h40l-3.4 9.5H43.4z" fill="url(#gGold)"/>
-      <path d="M38.5 17l4-10 6 6 5.5-9.5L60 12l6-8.5 5.5 9.5 6-6 4 10z" fill="url(#gGold)" stroke="#6d4a10" stroke-width=".8"/>
-      <circle cx="60" cy="3.5" r="2.6" fill="#ffe7ab"/><circle cx="44.5" cy="8" r="1.9" fill="#ffe7ab"/><circle cx="75.5" cy="8" r="1.9" fill="#ffe7ab"/>
-      <!-- shield -->
-      <path d="M22 30h76v42c0 26-19 43-38 53C41 115 22 98 22 72z" fill="url(#gBlue)" stroke="url(#gGold)" stroke-width="3.4"/>
-      <path d="M22 30h76v6H22z" fill="#0d1c36" opacity=".45"/>
-      <path d="M25.5 33.5h69v38.5c0 23.5-17 39.5-34.5 48.5C42.5 111.5 25.5 95.5 25.5 72z" fill="none" stroke="#ffe7ab" stroke-width="1" opacity=".3"/>
-      <!-- chevron -->
-      <path d="M22 62l38-20 38 20v11L60 53 22 73z" fill="url(#gGold)" opacity=".92"/>
-      <!-- falling banner on a staff -->
-      <g transform="rotate(-18 60 82)">
-        <rect x="58.3" y="46" width="3.4" height="56" rx="1.4" fill="#4a3113"/>
-        <path d="M61.7 52h24l-5.5 8.5 5.5 8.5h-24z" fill="#8f2d20" stroke="#6d4a10" stroke-width="1"/>
-        <path d="M61.7 52h24l-5.5 8.5 5.5 8.5h-24z" fill="none" stroke="#ffb9a2" stroke-width=".7" opacity=".35"/>
-        <circle cx="60" cy="44.5" r="3.3" fill="url(#gGold)"/>
-      </g>
-      <!-- crossed swords behind the lower shield -->
-      <g stroke-linecap="round" opacity=".95">
-        <path d="M38 104l17-19" stroke="url(#gSteel)" stroke-width="3.6"/>
-        <path d="M82 104L65 85" stroke="url(#gSteel)" stroke-width="3.6"/>
-        <path d="M35 99l6.5 6.5M85 99l-6.5 6.5" stroke="url(#gGold)" stroke-width="3"/>
-      </g>
-    </svg>
-    <div id="logoWrap"><h1 id="logo">BANNERFALL</h1></div>
-    <div id="tagRow">
-      <svg class="flr" viewBox="0 0 124 18"><use href="#flour"/></svg>
-      <p id="tagline">Hold the vale · Break the horde</p>
-      <svg class="flr r" viewBox="0 0 124 18"><use href="#flour"/></svg>
-    </div>
-    <button id="btnPlay" class="bigBtn frm"><span>Play</span></button>
-    <div id="titleFoot">10 waves &nbsp;·&nbsp; 4 fortifications &nbsp;·&nbsp; one road</div>
-  </div>
-
-  <div id="maps" class="overlay hidden">
-    <div id="mapsKick">The campaign</div>
-    <h2 id="mapsT">CHOOSE YOUR ROAD</h2>
-    <div id="mapsRule" class="rule"></div>
-    <div id="mapCards"></div>
-    <div id="mapsFoot"><button id="btnBack" class="frm">← Back</button></div>
-  </div>
-
-  <div id="end" class="overlay hidden">
-    <div id="endPlate" class="iron frmB">
-      <h1 id="endTitle"></h1>
-      <p id="endSub"></p>
-      <div class="rule"></div>
-      <div id="endStars" class="hidden"></div>
-      <div id="endStarL" class="hidden"></div>
-      <div id="medals"></div>
-      <div id="endStats"></div>
-      <button id="btnNext" class="bigBtn frm hidden"></button>
-      <button id="btnRestart" class="bigBtn frm">Play Again</button>
-    </div>
-  </div>
-  <div id="stats" class="hidden"></div>
-</div>
-<!-- ══ END SECTION: UI-HTML ══ -->
-<script type="module">
 // ══════════════════════ SECTION: CORE (owner: architect — do not restructure) ══════════════════════
 window.__errors = [];
 const __err = (m) => { window.__errors.push(String(m)); document.title = 'ERROR'; };
@@ -773,19 +16,24 @@ const SHOT = P.get('shot');                       // deterministic screenshot pr
 // long before SHOT_PRESETS exists, so the binding lives in this one small table. `&map=`
 // still wins, so any preset can be shot on any map.
 const SHOT_MAPS = { overview2: 2, battle2: 2, overview3: 3, battle3: 3, _snow: 2, _ash: 3 };
-const SEED = parseInt(P.get('seed') || '1337');
+// WORLD seed. The diorama's prop scatter (`_ws` in WORLD, `_as` in PATH) runs off this and
+// nothing else, so the Vale is the same Vale on every run — which is what makes a map a
+// place rather than a shuffle. It is a CONSTANT on purpose: it used to read `&seed=`, so a
+// seeded run moved every tree and rock as well as the threat mix, and the §G anti-staleness
+// sweep could have "passed" purely because the scenery had been reshuffled under it.
+const SEED = 1337;
 const TPS = 30, TICK = 1 / TPS;                   // fixed simulation rate
 let _s = SEED >>> 0;
 const rng = () => { _s |= 0; _s = _s + 0x6D2B79F5 | 0; let t = Math.imul(_s ^ _s >>> 15, 1 | _s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 // ── RUN SEED (SPEC3 §E) ───────────────────────────────────────────────────────
 // Determinism now means "deterministic GIVEN (map, seed)". Entropy is captured EXACTLY
 // once, here, at module scope — render-side, before any sim tick, never from Math.random
-// or Date.now. `&seed=` and every shot preset pin it, so the harness and the balance
-// matrix stay bit-identical; a real play session draws a fresh four-digit war seed.
+// or Date.now. `&seed=` names THE RUN and every shot preset pins it, so the harness and the
+// balance matrix stay bit-identical; a real play session draws a fresh four-digit war seed.
 // It then SEEDS THE SIM (`_s`), which is why a new run rolls a different column jitter.
-// World scatter has its own stream off SEED, so the map itself never moves.
-const runSeed = (SHOT || P.has('seed') || !(globalThis.crypto && crypto.getRandomValues))
-  ? (SEED >>> 0) : (1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000));
+const runSeed = P.has('seed') ? (parseInt(P.get('seed')) >>> 0)
+  : (SHOT || !(globalThis.crypto && crypto.getRandomValues)) ? (SEED >>> 0)
+  : (1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000));
 _s = runSeed >>> 0;
 // Run-level draws (elite swap slots, omen offers) must NOT consume the sim stream: they
 // happen at wave boundaries, and pulling from rng() there would shift every lane jitter
@@ -4452,6 +3700,16 @@ void main(){
 const H1 = n => { let h = Math.imul(n ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
 const DEATH_DUR = 1.45;
 const _acol = new THREE.Color();
+// HOOK: VFX builder (SPEC3 §D). Elemental Ward turns a whole wave against the school the
+// player has leaned on hardest, and a mechanic that only exists in a HUD banner is a
+// mechanic the player forgets the moment the horde walks on. So the wave WEARS it: the
+// per-instance tint is dragged toward the warded school's colour on a slow pulse, phase-
+// offset per unit so a column shimmers rather than strobing in lockstep. Costs one branch
+// and one lerp per unit — no quads, no second draw call, nothing in the alpha bucket, which
+// is the only version of this that a phone rendering three hundred bodies can afford.
+// Storm reads VIOLET here and in VFX.hit, so it never collides with pierce's steel.
+const WARDC = { pierce: [0.74, 0.88, 1.10], crush: [1.06, 0.88, 0.54],
+                fire:   [1.20, 0.58, 0.24], storm: [0.72, 0.62, 1.30] };
 const _YAX = new THREE.Vector3(0, 1, 0);
 let _lastTick = -1;
 Armies.syncVisuals = (vtNow) => {
@@ -4507,6 +3765,15 @@ Armies.syncVisuals = (vtNow) => {
     const l = 0.78 + h2 * 0.32, wv = (h1 - 0.5) * 0.13, tnt = e.def.tint;
     if (tnt) _acol.setRGB(l * (1 + wv) * tnt[0], l * tnt[1], l * (1 - wv * 1.5) * tnt[2]);
     else _acol.setRGB(l * (1 + wv), l, l * (1 - wv * 1.5));
+    if (e.ward) {                                  // SPEC3 §D — the warded wave shimmers
+      const W = WARDC[e.ward];
+      if (W) {
+        const k = 0.15 + 0.20 * (0.5 + 0.5 * Math.sin(at * 2.3 + h2 * 6.2831853));
+        _acol.setRGB(_acol.r + (W[0] * l - _acol.r) * k,
+                     _acol.g + (W[1] * l - _acol.g) * k,
+                     _acol.b + (W[2] * l - _acol.b) * k);
+      }
+    }
     A.mesh.setColorAt(A.n, _acol);
     const o = A.n * 4, an = A.anim;
     const rate = mode === 5 ? 0.45
@@ -6473,11 +5740,15 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     // W5 — an arrow battery that swept the first four waves meets a wall of pierce .6 here.
     // W6 the shamans, W7 the ram, W9 the ironclad column: two mini-boss species mid-run,
     // every one of them paid for out of the group it marches beside.
-    [['runner', 56, 0.25, 0], ['frostrevenant', 8, 1.60, 5], ['hound', 20, 0.22, 12, 1]],
-    [['shield', 14, 0.95, 0, 0], ['grunt', 66, 0.36, 2], ['warshaman', 4, 2.40, 7, 0], ['marauder', 8, 1.05, 9, 1]],
+    [['runner', 59, 0.25, 0], ['frostrevenant', 5, 2.20, 5], ['hound', 20, 0.22, 12, 1]],
+    // NO fixed shaman here. Three chanters behind a fourteen-strong pavise wall put nine
+    // lives on the floor at wave 6 in the bot matrix — a healer is a MULTIPLIER, and it
+    // multiplies hardest against exactly the unit Frostfell already leans on. The shaman
+    // still reaches this map through the wave-10 swap slot, where the purse can answer him.
+    [['shield', 14, 0.95, 0, 0], ['grunt', 70, 0.36, 2], ['marauder', 8, 1.05, 9, 1]],
     [['hound', 26, 0.17, 0, 0], ['hound', 18, 0.17, 5, 1], ['ram', 1, 0, 9, 0], ['runner', 54, 0.21, 8]],
     [['brute', 11, 1.05, 0], ['shield', 20, 0.78, 4, 1], ['grunt', 90, 0.29, 2]],
-    [['marauder', 17, 0.60, 0], ['ironclad', 4, 2.60, 6, 0], ['hound', 46, 0.15, 8, 0], ['grunt', 76, 0.31, 3]],
+    [['marauder', 18, 0.60, 0], ['ironclad', 3, 3.20, 6, 0], ['hound', 46, 0.15, 8, 0], ['grunt', 76, 0.31, 3]],
     [['ogre', 3, 3.00, 0, 0], ['shield', 30, 0.60, 3, 1], ['runner', 96, 0.17, 6]],
     [['brute', 18, 0.80, 0], ['hound', 74, 0.11, 5, 1], ['grunt', 112, 0.25, 2], ['marauder', 19, 0.62, 13]],
     [['matriarch', 1, 0, 13, 0], ['shield', 32, 0.52, 0, 1], ['hound', 54, 0.13, 6, 0],
@@ -6653,6 +5924,20 @@ function dealDamage(e, amount, element) {
   return dmg;
 }
 G.dealDamage = dealDamage;
+// HOOK: VFX/AUDIO builder (SPEC3 §A). The one place that DRESSES a landed blow. Kept next
+// to dealDamage() rather than at each call site so the picture and the sound of a school
+// can never drift apart, and so a shrug is defined once: at or above half resistance the
+// hit is a deflection, and the cue that plays is the dull one that says so. Pierce under
+// that bar stays SILENT on purpose — an archer wall firing four arrows a second would turn
+// any per-hit cue into a rattle, and the bow report already covers it.
+const HIT_SFX = { crush: 'thud', fire: 'sizzle', storm: 'crack', pierce: '' };
+function hitFX(e, x, y, z, el, size) {
+  VFX.hit(x, y, z, el, size, e);
+  let r = resistOf(e.def, el);
+  if (e.ward === el) r += OMEN_FX.ward;
+  const cue = r >= 0.5 ? 'shrug' : HIT_SFX[el];
+  if (cue) Audio.play(cue, x, z, r >= 0.5 ? 0.5 : 0.62);
+}
 
 // ══ WAR OMENS (SPEC3 §D) ═════════════════════════════════════════════
 // From wave 5 on, every muster offers three omens — always at least one challenge and at
@@ -6661,6 +5946,7 @@ G.dealDamage = dealDamage;
 // The offer is drawn from the RUN SEED (srng), never from the sim stream: the draw must be
 // the same whether the player called the wave early or let the countdown run out.
 const OMEN_FROM = 5;                                   // first wave that carries an omen
+G.OMEN_FROM = OMEN_FROM;                               // UI reads it for the dispatch's omen line
 const OMENS = {
   march:    { kind: 'challenge', name: 'Forced March',    desc: 'The horde comes on at a run — +25% speed.' },
   ironskin: { kind: 'challenge', name: 'Iron Skins',      desc: 'Boiled hide and plate — +40% hit points.' },
@@ -6731,16 +6017,22 @@ const Omens = { offer: [], forWave: 0, picked: -1, defIdx: 0, active: '', wardEl
 // active is the omen riding the wave in progress ('' = none). Everything else is private.
 G.omens = Omens;
 function drawOmens(n) {
+  // The draw index carries the MAP as well as the wave. Keyed on the wave alone, a pinned
+  // seed dealt all three roads the identical wave-N hand — visible in the shipped frames,
+  // where battle2 (W8) and battle3 (W7) both came up Elemental Ward — which makes the
+  // campaign feel scripted exactly where §D wants it to feel dealt. SWAPS already salts on
+  // MAP.id; this is the same idiom. Still deterministic given (map, seed).
+  const oi = n + MAP.id * 101;
   const keys = Object.keys(OMENS);
   const ch = keys.filter(k => OMENS[k].kind === 'challenge'), bo = keys.filter(k => OMENS[k].kind === 'boon');
   const one = (arr, r) => arr[Math.min(arr.length - 1, (r * arr.length) | 0)];
-  const a = one(ch, srng(0x0E1, n)), b = one(bo, srng(0x0E2, n));
+  const a = one(ch, srng(0x0E1, oi)), b = one(bo, srng(0x0E2, oi));
   const rest = keys.filter(k => k !== a && k !== b);
-  const c = one(rest, srng(0x0E3, n));
-  const off = (srng(0x0E4, n) * 3) | 0, trio = [a, b, c];
+  const c = one(rest, srng(0x0E3, oi));
+  const off = (srng(0x0E4, oi) * 3) | 0, trio = [a, b, c];
   Omens.offer = [trio[off], trio[(off + 1) % 3], trio[(off + 2) % 3]];
   Omens.forWave = n; Omens.picked = -1;
-  Omens.defIdx = (srng(0x0E6, n) * 3) | 0;              // what the herald picks if you dither
+  Omens.defIdx = (srng(0x0E6, oi) * 3) | 0;             // what the herald picks if you dither
   const pp = policyPick(Omens.offer, n);
   if (pp >= 0) Omens.picked = pp;
   UI.omens();
@@ -6749,7 +6041,10 @@ Omens.pick = (i) => {
   if (state.phase !== 'prewave' || !Omens.offer.length) return false;
   if (!(i >= 0 && i < Omens.offer.length)) return false;
   Omens.picked = i;
-  Audio.play('ui'); UI.omens(); UI.sync();
+  // HOOK: AUDIO builder — taking an omen is the only decision in the game that is not a
+  // purchase, so it gets its own stinger (page turn + a low choir) rather than the HUD tick.
+  // The parchment burn-in is UI-CSS's `omBurn`, which runs off the card being rebuilt.
+  Audio.play('omen'); UI.omens(); UI.sync();
   return true;
 };
 // Called every prewave tick: the offer is drawn once per muster, whoever opened the phase
@@ -6776,37 +6071,41 @@ function commitOmen(n) {
 // fraction of the count and a slower cadence. Option 0 is always the ORIGINAL group, so a
 // run can legitimately come out vanilla.
 // Options naming a species the roster does not carry YET fall back to the original group.
-// ROSTER pass: the count/interval factors were authored blind against SPEC3's hp column;
-// they are now sized against the REAL hit points, so a swapped group carries roughly the
-// hit points of the group it replaced (±30%) and takes about as long to walk out of the
-// gate. A slot is allowed to be a spike, not a different wave.
+// ROSTER pass: the count/interval factors were authored blind against SPEC3's hp column.
+// They are now sized against EFFECTIVE hit points — raw hp divided through the resist the
+// swapped species carries against the school the map's advertised comp actually shoots
+// with. Raw-hp parity is the wrong target and the bot matrix proved it: 18 frost revenants
+// carry the same 3100 hit points as the 11 brutes they replaced, but at pierce .6 against
+// Frostfell's archer wall they are worth 7700, and intended2 went from surviving to wave
+// 12 to dying on wave 8. A slot is allowed to be a spike, not a different campaign.
 const SWAP_SLOTS = {
   1: [
-    // 16 brutes = 2400 hp. ironclad 7 = 2660 · ram 2 = 2800 · ashwraith 38 = 2280.
-    { wave: 7, from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.45, 1.9], ['ram', 0.14, 5.0], ['ashwraith', 2.4, 0.42]] },
-    // 60 runners = 540 hp. A mini-swarm of 18 wraiths (1080) or 11 revenants (990) is a
-    // real spike but not a second wave: at 0.55/0.42 this slot fielded 2000+ hp of elites.
-    { wave: 9, from: 'runner', to: [['runner', 1, 1], ['ashwraith', 0.30, 2.6], ['frostrevenant', 0.18, 4.0]] },
+    // 16 brutes = 2400 hp. ironclad 5 (pierce .5 · storm .85) · ram 2 · ashwraith 32.
+    { wave: 7, from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.32, 2.7], ['ram', 0.14, 5.0], ['ashwraith', 2.0, 0.50]] },
+    // 60 runners = 540 hp. A mini-swarm of 18 wraiths or 8 revenants is a real spike but
+    // not a second wave: at the blind 0.55/0.42 this slot fielded 2000+ hp of elites.
+    { wave: 9, from: 'runner', to: [['runner', 1, 1], ['ashwraith', 0.30, 2.6], ['frostrevenant', 0.13, 5.5]] },
     // 8 pavises = 440 hp. The shaman option is the teaching one: it costs the wave almost
     // nothing in hit points and doubles how long everything ELSE on the road takes to kill.
-    { wave: 6, from: 'shield', to: [['shield', 1, 1], ['warshaman', 1.0, 1.1], ['marauder', 1.1, 0.95]] },
+    { wave: 6, from: 'shield', to: [['shield', 1, 1], ['warshaman', 0.75, 1.45], ['marauder', 1.1, 0.95]] },
   ],
   2: [
-    // 11 brutes = 1650 hp. ironclad 4 = 1520 · frostrevenant 18 = 1620.
-    { wave: 8,  from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.4, 2.2], ['frostrevenant', 1.6, 0.6]] },
-    // 30 pavises = 1650 hp. ironclad 4 = 1520 · warshaman 11 = 495 (a healer count is a
-    // force multiplier, so it is deliberately far under the hit points it replaces).
-    { wave: 10, from: 'shield', to: [['shield', 1, 1], ['ironclad', 0.14, 5.0], ['warshaman', 0.35, 2.4]] },
+    // Frostfell's advertised answer is pierce, so both elite options here are priced
+    // against pierce: ironclad .5 and frost revenant .6 both cost roughly double.
+    { wave: 8,  from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.28, 3.1], ['frostrevenant', 0.70, 1.4]] },
+    // 30 pavises. A healer count is a force multiplier, so it sits far under hp parity.
+    { wave: 10, from: 'shield', to: [['shield', 1, 1], ['ironclad', 0.10, 7.0], ['warshaman', 0.22, 3.8]] },
     // 74 hounds = 518 hp. 10 wraiths = 620 — and a wraith pack is as fast as a hound pack.
     { wave: 11, from: 'hound',  to: [['hound', 1, 1], ['ashwraith', 0.14, 6.0], ['runner', 0.9, 1.05]] },
   ],
   3: [
-    // 22 marauders = 572 hp. ashwraith 11 = 660 · warshaman 11 = 495.
-    { wave: 7,  from: 'marauder', to: [['marauder', 1, 1], ['ashwraith', 0.5, 1.9], ['warshaman', 0.5, 1.9]] },
-    // 15 brutes = 2250 hp. ram 2 = 2800 · ironclad 6 = 2280.
-    { wave: 11, from: 'brute',    to: [['brute', 1, 1], ['ram', 0.16, 5.0], ['ironclad', 0.38, 2.4]] },
-    // 23 pavises = 1265 hp. ironclad 4 = 1520 · ashwraith 21 = 1260.
-    { wave: 13, from: 'shield',   to: [['shield', 1, 1], ['ironclad', 0.16, 4.4], ['ashwraith', 0.9, 0.78]] },
+    // 22 marauders = 572 hp. ashwraith 11 = 660 (and fire, the wastes' own school, is the
+    // one thing that does not touch them) · warshaman 8.
+    { wave: 7,  from: 'marauder', to: [['marauder', 1, 1], ['ashwraith', 0.5, 1.9], ['warshaman', 0.35, 2.7]] },
+    // 15 brutes = 2250 hp. ram 2 · ironclad 4.
+    { wave: 11, from: 'brute',    to: [['brute', 1, 1], ['ram', 0.16, 5.0], ['ironclad', 0.27, 3.4]] },
+    // 23 pavises = 1265 hp. ironclad 2 · ashwraith 21 = 1260.
+    { wave: 13, from: 'shield',   to: [['shield', 1, 1], ['ironclad', 0.11, 6.2], ['ashwraith', 0.9, 0.78]] },
   ],
 };
 // Resolved ONCE per run, off the run seed — not per wave, so a slot cannot re-roll itself
@@ -7046,8 +6345,11 @@ function chainLightning(tw, tgt, dmg) {
     // HOOK: VFX/AUDIO builder — the strike dressing. One crack per CHAIN (h===0), not per
     // hop: four cracks inside 40 ms is a rattle, not lightning (MINGAP would eat them
     // anyway, but saying it here keeps the intent visible).
-    VFX.zapHit(cur.px, ey, cur.pz, h);
+    VFX.zapHit(cur.px, ey, cur.pz, h, cur);
     if (h === 0) Audio.play('zap', cur.px, cur.pz);
+    // SPEC3 §A: an ironclad earths the arc. The strike keeps its crack (the SPIRE fired,
+    // and that is what the player did) but the body answers with the deflection clang.
+    if (resistOf(cur.def, 'storm') >= 0.5) Audio.play('shrug', cur.px, cur.pz, 0.5);
     _chain.push(cur);
     sx = cur.px; sy = ey; sz = cur.pz;
     d *= 1 - def.fall;
@@ -7204,6 +6506,10 @@ function tickSim() {
     }
     // HOOK: VFX/AUDIO builder — the glow only fires when the chant actually mends someone,
     // and is throttled per unit so a shaman line does not carpet the frame in green.
+    // `healT` is a RENDER-SIDE read-out (VFX's presence emitter fills the gaps between
+    // pulses with chant motes); nothing in the sim ever reads it back, so it cannot move
+    // a tick. Unthrottled on purpose — the throttle below is a spawn budget, not a state.
+    if (lit) h.healT = vt();
     if (lit && (state.tick + h.id) % 12 === 0) {
       VFX.heal(h.px, G.groundY(h.px, h.pz), h.pz, H.r);
       Audio.play('heal', h.px, h.pz, 0.5);
@@ -7283,12 +6589,20 @@ function tickSim() {
         }
         VFX.explosion(p.ex, G.groundY(p.ex, p.ez), p.ez);
         Audio.play('boom', p.ex, p.ez);
+        // Stone chips on the BODIES, not just a crater: a boulder landing in a wall of
+        // ironclads (crush −0.25) is the single clearest picture of the wheel working, and
+        // one landing on the ram (crush .8) is the clearest picture of it not. Three
+        // victims dressed per blast — enough to read, cheap enough to spam.
+        let dressed = 0;
         for (const e of G.enemies) {
           if (!e.alive) continue;
           const dd = Math.hypot(e.px - p.ex, e.pz - p.ez);
           if (dd <= p.splash) {
             if (!e.noSlow) { e.slowT = 0.4; e.slowF = Math.min(e.slowF, 0.6); }
+            const wasElite = e.def.elite;
             dealDamage(e, p.dmg * (1 - 0.6 * dd / p.splash), p.element);
+            if (dressed < 3 && (wasElite || dd < p.splash * 0.6))
+              { dressed++; hitFX(e, e.px, 1.2, e.pz, p.element, 0.85); }
           }
         }
       }
@@ -7301,7 +6615,10 @@ function tickSim() {
         G.projectiles.splice(i, 1);
         const tx = tgt.px, tz = tgt.pz;
         dealDamage(tgt, p.dmg, p.element);
-        VFX.burst(tx, 1.4, tz, 0xffd090, 0.7, 0.25);
+        // HOOK: VFX builder — the impact states the SCHOOL and, if the target shrugged it
+        // off, states that too (SPEC3 §A). Pierce below the shrug threshold is bit-for-bit
+        // the old VFX.burst call, so the archer wall looks exactly as it did.
+        hitFX(tgt, tx, 1.4, tz, p.element, 0.7);
         if (p.pierce) { // the bolt punches on through a couple of neighbours
           let hits = 0;
           for (const e of G.enemies) {
@@ -7891,6 +7208,168 @@ VFX.burst = (x, y, z, color, size, dur) => {
   }
 };
 
+// ── element-tinted impact (SPEC3 §A) ─────────────────────────────────────────
+// Every point of damage in BANNERFALL now carries a SCHOOL, and the wheel is the whole v3
+// mechanic: a player who cannot SEE that his arrows are skittering off plate while his
+// catapult caves it in has to read a tooltip to learn what the frame is already trying to
+// tell him. So the hit site is where the school is stated —
+//   pierce — the pale gold spark it always had. It is the BASELINE the other three are
+//            read against, and it is also the hottest call site in the game (every arrow),
+//            so it delegates straight to VFX.burst: identical frame, identical cost.
+//   crush  — stone chips and a low dust ring, NO additive core. Mass, not magic.
+//   fire   — an ember burst that lifts, cools and dies.
+//   storm  — a violet crack over a hard white core.
+// ...and it is where RESISTANCE is stated too. At res >= SHRUG_AT the hit takes the
+// DEFLECTION path: the core flash is gone entirely and the energy goes sideways or into
+// the ground, so "that did nothing" is a silhouette read one frame after the shot lands —
+// which is exactly the teaching moment SPEC3 §B's ironclad and ash wraith exist to create.
+// y is RELATIVE to the ground (VFX.burst's convention — SIM calls both off the same line);
+// `e` is optional and read ONLY for its resist, never mutated.
+const SHRUG_AT = 0.5, RES_CAP_V = 0.85;
+const ESALT = { pierce: 11, crush: 29, fire: 47, storm: 71 };
+VFX.hit = (x, y, z, el, size, e) => {
+  const s = size || 1;
+  let res = 0;
+  if (e && e.def) {
+    res = G.resistOf(e.def, el);
+    if (e.ward === el) res += G.OMEN_FX.ward;
+    if (res > RES_CAP_V) res = RES_CAP_V;
+  }
+  if (el === 'pierce' && res < SHRUG_AT) return VFX.burst(x, y, z, 0xffd090, s, 0.25);
+  const gy = G.groundY(x, z), py = gy + y;
+  eseed((x * 83 + z * 151) | 0, ((G.vt() * 967) | 0) + (ESALT[el] || 3));
+  if (res >= SHRUG_AT) {
+    // ══ DEFLECTION ══ nothing bit. Every variant is DIM, has no white core, and throws
+    // its energy AWAY from the body rather than out of it.
+    if (el === 'fire') {                                             // ash wraith: embers deflect
+      for (let i = 0; i < 8; i++) {
+        eReset();
+        const an = er() * 6.2832, sp = 2.6 + er() * 4.5;
+        E.x = x + Math.cos(an) * 0.42 * s; E.y = py + es1() * 0.45 * s; E.z = z + Math.sin(an) * 0.42 * s;
+        E.vx = Math.cos(an) * sp; E.vy = 0.4 + er() * 1.1; E.vz = Math.sin(an) * sp;
+        E.grav = 7.5; E.drag = 2.2; E.tile = T_EMBER;
+        E.s0 = 0.10 + er() * 0.07; E.s1 = 0.015;
+        // they COOL as they leave: no white, and the blue lift is what says the shroud
+        // gave the flame nothing to catch.
+        E.r = 1.35; E.g = 0.52 + er() * 0.18; E.b = 0.16; E.a = 0.72; E.life = 0.45 + er() * 0.35;
+        E.fade = 2; E.lead = 0.02; push(BB);
+      }
+      eReset();                                                      // the cold refusal
+      E.x = x; E.y = py; E.z = z; E.tile = T_SOFT; E.s0 = 0.75 * s; E.s1 = 1.55 * s;
+      E.r = 0.30; E.g = 0.46; E.b = 0.62; E.a = 0.26; E.life = 0.26; E.fade = 1;
+      E.lead = 0.02; push(BB);
+    } else if (el === 'storm') {                                     // ironclad: the arc grounds out
+      for (let i = 0; i < 6; i++) {                                  // charge runs DOWN the plate
+        eReset();
+        const an = er() * 6.2832;
+        E.x = x + Math.cos(an) * 0.34 * s; E.y = py + er() * 0.5 * s; E.z = z + Math.sin(an) * 0.34 * s;
+        E.vx = Math.cos(an) * 1.4; E.vy = -3.4 - er() * 3.2; E.vz = Math.sin(an) * 1.4;
+        E.grav = 6; E.drag = 3.2; E.tile = T_SPARK; E.mode = 2;
+        E.s0 = 0.055; E.s1 = 0.02; E.asp = 5 + er() * 5;
+        E.r = 1.10; E.g = 0.86; E.b = 1.90; E.a = 0.9; E.life = 0.12 + er() * 0.10; E.fade = 2;
+        E.lead = 0.01; push(BB);
+      }
+      eReset();                                                      // it spends itself in the earth
+      E.x = x; E.y = gy + 0.10; E.z = z; E.tile = T_RING; E.mode = 1;
+      E.s0 = 0.4 * s; E.s1 = 3.4 * s; E.r = 0.62; E.g = 0.42; E.b = 1.30;
+      E.a = 0.30; E.life = 0.30; E.fade = 2; E.lead = 0.02; push(BB);
+      eReset();
+      E.x = x; E.y = gy + 0.07; E.z = z; E.tile = T_SOFT; E.mode = 1;
+      E.s0 = 1.1 * s; E.s1 = 1.9 * s; E.r = 0.34; E.g = 0.24; E.b = 0.80;
+      E.a = 0.22; E.life = 0.22; E.fade = 2; E.lead = 0.02; push(BB);
+    } else {                                                         // pierce / crush glance off plate
+      for (let i = 0; i < 5; i++) {
+        eReset();
+        const an = er() * 6.2832, sp = 5 + er() * 9;                 // TANGENTIAL, not out of a wound
+        E.x = x; E.y = py; E.z = z;
+        E.vx = Math.cos(an) * sp; E.vy = sp * (0.15 + er() * 0.45); E.vz = Math.sin(an) * sp;
+        E.grav = 18; E.drag = 5.2; E.tile = T_SPARK; E.mode = 2;
+        E.s0 = 0.06 * s; E.s1 = 0.025 * s; E.asp = 6 + er() * 7;
+        E.r = 1.75; E.g = 1.70; E.b = 1.55; E.a = 1; E.life = 0.10 + er() * 0.10; E.fade = 2;
+        E.lead = 0.01; push(BB);
+      }
+      eReset();                                                      // a hard little clang, no bloom
+      E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.s0 = 0.30 * s; E.s1 = 0.62 * s;
+      E.r = 1.55; E.g = 1.52; E.b = 1.42; E.a = 0.62; E.life = 0.09; E.fade = 2;
+      E.rot = er() * 6.28; E.lead = 0.01; push(BB);
+    }
+    return;
+  }
+  if (el === 'crush') {
+    // A dull, WARM-GREY puff rather than a light: crush is mass. It is here at all because
+    // the first pass had no core of any kind and, at the zoom the game is actually played
+    // at, six stone chips half a metre wide are invisible — the school that answers plate
+    // has to be the one you can see working from the build bar.
+    eReset();
+    E.x = x; E.y = py; E.z = z; E.tile = T_TUFT; E.s0 = 0.55 * s; E.s1 = 1.75 * s;
+    E.r = 1.10; E.g = 0.94; E.b = 0.70; E.a = 0.60; E.life = 0.20; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 2.5; E.lead = 0.02; push(BB);
+    eReset();                                                        // the blow, ground-aligned
+    E.x = x; E.y = gy + 0.12; E.z = z; E.tile = T_RING; E.mode = 1;
+    E.s0 = 0.6 * s; E.s1 = 3.7 * s; E.r = 0.94; E.g = 0.83; E.b = 0.62;
+    E.a = 0.32; E.life = 0.30; E.fade = 2; E.lead = 0.02; push(BB);
+    for (let i = 0; i < 7; i++) {                                    // chips off armour and bone
+      eReset();
+      const an = er() * 6.2832, sp = 3.5 + er() * 7;
+      E.x = x + es1() * 0.2 * s; E.y = py; E.z = z + es1() * 0.2 * s;
+      E.vx = Math.cos(an) * sp; E.vy = sp * (0.45 + er() * 0.8); E.vz = Math.sin(an) * sp;
+      E.grav = 26; E.drag = 0.5; E.tile = T_CHUNK;
+      E.s0 = (0.15 + er() * 0.17) * s; E.s1 = E.s0;
+      E.r = 0.66; E.g = 0.60; E.b = 0.52; E.a = 1; E.life = 0.55 + er() * 0.4;
+      E.rot = er() * 6.28; E.rotV = es1() * 10; E.lead = 0.02; push(BA);
+    }
+    for (let i = 0; i < 2; i++) {                                    // the dust it knocks loose
+      eReset();
+      const an = er() * 6.2832;
+      E.x = x + Math.cos(an) * 0.35 * s; E.y = py - 0.2; E.z = z + Math.sin(an) * 0.35 * s;
+      E.vx = Math.cos(an) * 2.2; E.vz = Math.sin(an) * 2.2; E.vy = 0.6; E.drag = 2.6;
+      E.tile = T_DUST; E.mode = 1; E.s0 = 0.4 * s; E.s1 = 1.9 * s;
+      E.r = 0.62; E.g = 0.55; E.b = 0.43; E.a = 0.30; E.life = 0.70 + er() * 0.4;
+      E.rot = er() * 6.28; E.lead = 0.03; push(BA);
+    }
+  } else if (el === 'fire') {
+    eReset();                                                        // ignition
+    E.x = x; E.y = py; E.z = z; E.tile = T_FLASH; E.s0 = 0.5 * s; E.s1 = 1.35 * s;
+    E.r = 2.30; E.g = 1.05; E.b = 0.30; E.a = 0.80; E.life = 0.12; E.fade = 2;
+    E.rot = er() * 6.28; E.lead = 0.01; push(BB);
+    for (let i = 0; i < 9; i++) {                                    // the ember burst
+      eReset();
+      const an = er() * 6.2832, sp = 2.5 + er() * 6;
+      E.x = x + es1() * 0.2 * s; E.y = py + es1() * 0.25 * s; E.z = z + es1() * 0.2 * s;
+      E.vx = Math.cos(an) * sp * 0.7; E.vy = 1.6 + er() * 3.4; E.vz = Math.sin(an) * sp * 0.7;
+      E.grav = -0.7; E.drag = 1.5; E.tile = T_EMBER;
+      E.s0 = (0.10 + er() * 0.09) * s; E.s1 = 0.02;
+      E.r = 2.25; E.g = 0.95 + er() * 0.45; E.b = 0.20; E.a = 0.92; E.life = 0.55 + er() * 0.55;
+      E.fade = 2; E.lead = 0.02; push(BB);
+    }
+    eReset();                                                        // greasy smoke off the burn
+    E.x = x; E.y = py + 0.3; E.z = z;
+    E.vx = WX * 1.2 + es1() * 0.4; E.vy = 1.3 + er() * 0.9; E.vz = WZ * 1.2 + es1() * 0.4;
+    E.drag = 1.1; E.tile = er() < 0.6 ? T_SOOT : SMK(); E.s0 = 0.35 * s; E.s1 = 1.7 * s;
+    E.r = 0.16; E.g = 0.13; E.b = 0.11; E.a = 0.34; E.life = 0.85 + er() * 0.5;
+    E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = 0.05; push(BA);
+  } else {                                                           // storm
+    eReset();                                                        // hard white core
+    E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.s0 = 0.42 * s; E.s1 = 1.05 * s;
+    E.r = 1.60; E.g = 1.40; E.b = 2.30; E.a = 0.92; E.life = 0.10; E.fade = 2;
+    E.rot = er() * 6.28; E.lead = 0.01; push(BB);
+    for (let i = 0; i < 7; i++) {                                    // the violet crack
+      eReset();
+      const an = er() * 6.2832, sp = 5 + er() * 12;
+      E.x = x + es1() * 0.14 * s; E.y = py + es1() * 0.2 * s; E.z = z + es1() * 0.14 * s;
+      E.vx = Math.cos(an) * sp * 0.85; E.vy = sp * (0.3 + er() * 0.85); E.vz = Math.sin(an) * sp * 0.85;
+      E.grav = 15; E.drag = 4.6; E.tile = T_SPARK; E.mode = 2;
+      E.s0 = 0.07 * s; E.s1 = 0.028 * s; E.asp = 6 + er() * 8;
+      E.r = 1.55; E.g = 0.95; E.b = 2.55; E.a = 1; E.life = 0.11 + er() * 0.14; E.fade = 2;
+      E.lead = 0.01; push(BB);
+    }
+    eReset();                                                        // violet bruise round the body
+    E.x = x; E.y = py; E.z = z; E.tile = T_SOFT; E.s0 = 0.7 * s; E.s1 = 1.5 * s;
+    E.r = 0.72; E.g = 0.24; E.b = 1.35; E.a = 0.30; E.life = 0.24; E.fade = 1;
+    E.lead = 0.02; push(BB);
+  }
+};
+
 // ── ogre stomp (SPEC2 §D) ────────────────────────────────────────────────────
 // HOOK: VFX builder. A ground-hugging dust ring, a shallow dust decal and a handful of
 // clods — deliberately EARTH only, no light: the ogre is muscle, not magic, and an
@@ -7932,25 +7411,45 @@ VFX.stomp = (x, y, z) => {
 // green-white and additive: nothing else on the road is that hue, so "there is a healer in
 // that group" is a colour cue you can act on before you have read a single health bar.
 // The ring is ground-aligned at the heal radius — it draws the exact area under threat.
+// VFX/AUDIO-3: retuned from the placeholder. Two changes that matter. (1) GREEN-GOLD, not
+// green-white: at 0.42/1.55/0.86 the aura read as a cold sci-fi shield over a medieval
+// road, and the one hue nothing else in BANNERFALL owns is a warm chant-green that leans
+// gold as it lifts — so the motes are born green and DIE gold. (2) The ring is drawn at the
+// true heal radius and held long enough to overlap the next pulse (SIM chants every 12
+// ticks = 0.4 s, the ring lives 0.66), so while the shaman is mending, the ground under
+// everything he is mending is continuously lit. That circle is the kill order.
 VFX.heal = (x, y, z, rad) => {
   const R = rad || 8;
   eseed((x * 197 + z * 61) | 0, (G.vt() * 653) | 0);
+  // THE RING IS A BOUNDARY, NOT A SHOCKWAVE. It barely moves (r7 → r8.3 over two thirds of
+  // a second) because its job is to say "everything inside this circle is being mended" —
+  // a ring that races outward like VFX.stomp's reads as a blow landing, which is the exact
+  // opposite of what a healer is doing. T_RING's bright band sits at ~0.83 of the quad, so
+  // the multipliers are chosen against the TRUE heal radius, not eyeballed.
   eReset();                                                         // the area of effect
-  E.x = x; E.y = y + 0.14; E.z = z; E.tile = T_RING; E.mode = 1;
-  E.s0 = R * 0.35; E.s1 = R * 2.0; E.r = 0.42; E.g = 1.55; E.b = 0.86;
-  E.a = 0.28; E.life = 0.62; E.fade = 1; E.lead = 0.01; push(BB);
+  // Floated 0.7 above the ground rather than laid on it: a 16-unit ground-aligned quad on a
+  // banked road buries most of its own circumference in the terrain, which turned the ring
+  // into a lopsided wedge. At this camera pitch 0.7 still reads as a mark on the ground.
+  E.x = x; E.y = y + 0.70; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = R * 1.05; E.s1 = R * 1.25; E.r = 0.38; E.g = 1.70; E.b = 0.26;
+  E.a = 0.40; E.life = 0.66; E.fade = 1; E.lead = 0.02; push(BB);
+  eReset();                                                         // a small pool at his feet
+  E.x = x; E.y = y + 0.07; E.z = z; E.tile = T_SOFT; E.mode = 1;
+  E.s0 = R * 0.16; E.s1 = R * 0.30; E.r = 0.42; E.g = 0.95; E.b = 0.26;
+  E.a = 0.20; E.life = 0.50; E.fade = 1; E.lead = 0.02; push(BB);
   eReset();                                                         // the caster himself
   E.x = x; E.y = y + 1.15; E.z = z; E.tile = T_FLASH;
-  E.s0 = 0.55; E.s1 = 1.45; E.r = 1.30; E.g = 2.30; E.b = 1.35;
-  E.a = 0.60; E.life = 0.48; E.fade = 1; E.rot = er() * 6.28; E.lead = 0.02; push(BB);
-  for (let i = 0; i < 7; i++) {                                     // motes rising off the staff
+  E.s0 = 0.50; E.s1 = 1.40; E.r = 0.95; E.g = 2.10; E.b = 0.70;
+  E.a = 0.55; E.life = 0.46; E.fade = 1; E.rot = er() * 6.28; E.lead = 0.02; push(BB);
+  for (let i = 0; i < 9; i++) {                                     // motes rising off the staff
     eReset();
-    const an = i / 7 * 6.2832 + er() * 0.7, rr = 0.35 + er() * 0.9;
-    E.x = x + Math.cos(an) * rr; E.y = y + 0.35 + er() * 0.6; E.z = z + Math.sin(an) * rr;
-    E.vx = Math.cos(an) * 0.5; E.vz = Math.sin(an) * 0.5; E.vy = 1.5 + er() * 1.4; E.drag = 1.6;
-    E.tile = T_MOTE; E.s0 = 0.16 + er() * 0.10; E.s1 = 0.05;
-    E.r = 0.60; E.g = 2.10; E.b = 1.10; E.a = 0.85; E.life = 0.65 + er() * 0.45;
-    E.fade = 2; E.lead = 0.02 + er() * 0.06; push(BB);
+    const an = i / 9 * 6.2832 + er() * 0.7, rr = 0.30 + er() * 1.0;
+    E.x = x + Math.cos(an) * rr; E.y = y + 0.30 + er() * 0.7; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 0.45; E.vz = Math.sin(an) * 0.45; E.vy = 1.4 + er() * 1.5; E.drag = 1.7;
+    E.grav = -0.35; E.tile = er() < 0.28 ? T_GLINT : T_MOTE;
+    E.s0 = 0.14 + er() * 0.10; E.s1 = 0.04;
+    E.r = 0.78 + er() * 0.45; E.g = 1.95; E.b = 0.62; E.a = 0.82; E.life = 0.75 + er() * 0.55;
+    E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 2.5; E.lead = 0.02 + er() * 0.07; push(BB);
   }
 };
 
@@ -7962,8 +7461,13 @@ VFX.heal = (x, y, z, rad) => {
 // zoom, where a 70 ms ribbon and a spark spray are both too small to parse.
 // TINT GOTCHA: the additive bucket runs uSunC/uSkyC = white, so these numbers are raw
 // radiance. Blue past ~2.6 clips to a violet-white blob under ACES + bloom.
-VFX.zapHit = (x, y, z, hop) => {
+VFX.zapHit = (x, y, z, hop, e) => {
   const gy = G.groundY(x, z);
+  // SPEC3 §A/§B: an ironclad is storm .85. Lighting one up like a struck man is a LIE —
+  // the arc reached it and did nothing. VFX.hit's deflection path already draws exactly
+  // that (charge running down the plate, spending itself in the earth), so the strike
+  // defers to it and skips its own body glow entirely.
+  if (e && e.def && G.resistOf(e.def, 'storm') >= SHRUG_AT) { VFX.hit(x, y - gy, z, 'storm', 1, e); return; }
   eseed((x * 173 + z * 59) | 0, ((G.vt() * 907) | 0) + (hop | 0) * 131);
   eReset();                                                        // core
   E.x = x; E.y = y; E.z = z; E.tile = T_FLASH; E.s0 = 0.42; E.s1 = 1.25;
@@ -8621,6 +8125,85 @@ function emitTick(tick, lead) {
       if (++np >= 10) break;
     }
   }
+  // ── SPEC3 §B PRESENCE: the three newcomers that have to be legible at gameplay zoom
+  // before their health bar is. A mini-boss the player only identifies by reading a name
+  // plate has already cost him the wave. Each of these is a CONTINUOUS read tied to what
+  // the unit IS, and each is capped per tick so a swap slot that fields eleven of them
+  // cannot walk over the alpha budget (the phone's additive bucket is 520 wide).
+  //   ash wraith — a cold shroud trail: it is the only thing on the road that leaves
+  //                something behind it, and it is the unit you must not let through.
+  //   siege ram  — wheel dust off both axles: mass, and the ONLY cue that says the machine
+  //                is still rolling when it is buried inside a column.
+  //   war shaman — chant motes between VFX.heal's pulses, so the aura never goes dark
+  //                mid-chant. The ring itself is VFX.heal's, drawn at the true heal radius.
+  if (lead < 1.2) {
+    eseed(tick, 0x5ea17d);
+    const WCAP = LOWQ ? 2 : 4, at3 = tick * TICK;
+    let nw = 0, nr = 0, ns = 0;
+    for (let i = 0; i < EN.length; i++) {
+      const e = EN[i];
+      if (!e.alive) continue;
+      const ty = e.type;
+      if (ty === 'ashwraith') {
+        if (nw >= WCAP || er() > 0.55) continue;
+        nw++;
+        const tn = G.pathTan(e.d, e.pathId), gy2 = G.groundY(e.px, e.pz);
+        eReset();                                       // the shroud it drags behind it
+        E.x = e.px - tn.x * (0.5 + er() * 0.9) + es1() * 0.25;
+        E.z = e.pz - tn.z * (0.5 + er() * 0.9) + es1() * 0.25;
+        E.y = gy2 + 0.55 + er() * 0.85;
+        E.vx = -tn.x * 0.5 + WX * 0.35; E.vy = 0.30 + er() * 0.35; E.vz = -tn.z * 0.5 + WZ * 0.35;
+        E.drag = 1.5; E.tile = T_WISP; E.s0 = 0.40 + er() * 0.26; E.s1 = 1.9 + er() * 1.0;
+        // DARK and slightly cold. A pale trail on a pale unit is fog; the wraith has to be
+        // the thing that makes the road behind it dimmer, not brighter.
+        E.r = 0.13; E.g = 0.13; E.b = 0.18; E.a = 0.38; E.life = 0.85 + er() * 0.6;
+        E.rot = er() * 6.28; E.rotV = es1() * 0.9; E.lead = er() * 0.06; push(BA);
+        if (er() < 0.34) {                              // the ember eyes, banked low
+          eReset();
+          E.x = e.px + es1() * 0.14; E.y = gy2 + 1.55; E.z = e.pz + es1() * 0.14;
+          E.vy = 0.35; E.drag = 1.2; E.grav = -0.3; E.tile = T_EMBER;
+          E.s0 = 0.09 + er() * 0.05; E.s1 = 0.02;
+          E.r = 1.85; E.g = 0.52; E.b = 0.16; E.a = 0.75; E.life = 0.55 + er() * 0.35;
+          E.fade = 2; push(BB);
+        }
+      } else if (ty === 'ram') {
+        if (nr >= 2) continue;
+        nr++;
+        const tn = G.pathTan(e.d, e.pathId);
+        for (const sgn of [-1, 1]) {                    // one axle each side, under the bed
+          if (er() < 0.45) continue;
+          const wx = e.px - tn.z * 1.25 * sgn, wz = e.pz + tn.x * 1.25 * sgn;
+          eReset();
+          E.x = wx + es1() * 0.2; E.y = G.groundY(wx, wz) + 0.16; E.z = wz + es1() * 0.2;
+          E.vx = -tn.x * 1.1 + es1() * 0.5; E.vy = 0.35 + er() * 0.4; E.vz = -tn.z * 1.1 + es1() * 0.5;
+          E.drag = 2.4; E.tile = T_DUST; E.mode = 1;
+          E.s0 = 0.42; E.s1 = 2.3 + er() * 1.0;
+          E.r = 0.72; E.g = 0.62; E.b = 0.45; E.a = 0.30; E.life = 1.0 + er() * 0.6;
+          E.rot = er() * 6.28; E.lead = er() * 0.05; push(BA);
+        }
+        if (er() < 0.22) {                              // a stone spat out from under a wheel
+          eReset();
+          const an = er() * 6.2832;
+          E.x = e.px + es1() * 1.3; E.y = G.groundY(e.px, e.pz) + 0.25; E.z = e.pz + es1() * 1.3;
+          E.vx = Math.cos(an) * 3 - tn.x * 2; E.vy = 2 + er() * 2.5; E.vz = Math.sin(an) * 3 - tn.z * 2;
+          E.grav = 26; E.drag = 0.4; E.tile = T_CHUNK; E.s0 = 0.11 + er() * 0.09; E.s1 = E.s0;
+          E.r = 0.68; E.g = 0.60; E.b = 0.50; E.a = 1; E.life = 0.55 + er() * 0.3;
+          E.rot = er() * 6.28; E.rotV = es1() * 9; push(BA);
+        }
+      } else if (ty === 'warshaman') {
+        if (ns >= 4 || at3 - (e.healT || -9) > 0.45 || er() > 0.5) continue;
+        ns++;
+        const gy2 = G.groundY(e.px, e.pz), an = er() * 6.2832, rr = 0.3 + er() * 0.8;
+        eReset();
+        E.x = e.px + Math.cos(an) * rr; E.y = gy2 + 0.4 + er() * 0.9; E.z = e.pz + Math.sin(an) * rr;
+        E.vx = Math.cos(an) * 0.30; E.vz = Math.sin(an) * 0.30; E.vy = 1.0 + er() * 1.1;
+        E.drag = 1.5; E.grav = -0.3; E.tile = T_MOTE;
+        E.s0 = 0.11 + er() * 0.08; E.s1 = 0.03;
+        E.r = 0.80 + er() * 0.4; E.g = 1.80; E.b = 0.58; E.a = 0.55; E.life = 0.9 + er() * 0.6;
+        E.fade = 2; push(BB);
+      }
+    }
+  }
   // ── brazier embers off any tower carrying a flame
   if ((tick & 3) === 0 && lead < 1.7) {
     eseed(tick, 0x1a3c5d);
@@ -9038,13 +8621,20 @@ const Audio = (() => {
     // SPEC2 §C/§D cues. `zap` and `mbow` are the spammy pair: a storm at tier 3 with a
     // banner behind it fires under a second, and a firing line of marauders looses every
     // 0.6 s per unit — without these gaps both turn into a buzz.
-    zap: .085, mbow: .06, banner: .5, howl: 2.4, bosshorn: 4 };
+    zap: .085, mbow: .06, banner: .5, howl: 2.4, bosshorn: 4,
+    // SPEC3 §A/§B/§D cues. The element impacts and `shrug` sit on the same short leash as
+    // `clash` — they are a TEXTURE that tells you what your towers are doing to what is on
+    // the road, and the moment one of them becomes a per-hit event it is a rattle. `shrug`
+    // is the loosest of the four on purpose: an archer wall into a frost revenant would
+    // otherwise clang eleven times a second and drown the wall it is criticising.
+    thud: .07, sizzle: .10, crack: .07, shrug: .11,
+    ironfoot: .085, wraith: .55, heal: .5, omen: .5 };
   // Voice ceiling. A dense wave can ask for far more than it can usefully hear, so the
   // ambient layers get culled first — but story cues (horn, alarm, stingers, UI) must never
   // be dropped, so they raise `prio` for the duration of their scheduling call.
   let VCAP = 56, prio = false;
   const PRIO = { horn: 1, leak: 1, cleared: 1, victory: 1, defeat: 1, build: 1, ui: 1,
-    banner: 1, howl: 1, bosshorn: 1 };
+    banner: 1, howl: 1, bosshorn: 1, omen: 1 };
   const MAPID = (G.MAP && G.MAP.id) || 1;                    // per-map ambience (SPEC2 §E)
   const room = n => prio || voices < VCAP - n;
   // private noise stream — see the header note about G.rng()
@@ -9430,6 +9020,78 @@ const Audio = (() => {
       for (let i = 0, k = 2 + (rnd() * 3 | 0); i < k; i++)
         tone(d, t + i * rr(0.06, 0.11), 'sine', f * rr(0.9, 1.15), f * rr(1.2, 1.5), 0.028, 0.006, 0.055);
     },
+    // ══ SPEC3 §A — element impact variants ═══════════════════════════════════
+    // Pierce keeps the bow report it always had and adds NOTHING at the hit: four arrows a
+    // second into a wall of shields would turn any per-hit cue into a buzz, and the wheel's
+    // job here is contrast — you learn what pierce sounds like by hearing the other three.
+    thud(d, t) {                                           // crush: a rock caving in plate
+      tone(d, t, 'sine', 126, 50, 0.36, 0.003, 0.17, 0.09);
+      tone(d, t, 'triangle', 212, 94, 0.15, 0.002, 0.085);
+      nz(d, t, 0.22, 0.001, 0.075, 'lowpass', 1400, 420, 0.9);
+      nz(d, t + 0.012, 0.09, 0.001, 0.04, 'bandpass', 2500, 1200, 4.5);   // grit off the strike
+    },
+    sizzle(d, t) {                                         // fire: pitch catching on cloth
+      nz(d, t, 0.18, 0.001, 0.05, 'bandpass', 3100, 1300, 3.2);
+      nz(d, t + 0.01, 0.14, 0.02, 0.36, 'bandpass', 880, 330, 0.9, true);
+      tone(d, t, 'sine', 148, 60, 0.15, 0.004, 0.12, 0.07);
+      for (let i = 0, k = LOW ? 2 : 3; i < k; i++)
+        nz(d, t + 0.02 + rnd() * 0.13, 0.045, 0.001, 0.03, 'bandpass', rr(1800, 4600), 0, 6);
+    },
+    crack(d, t) {                                          // storm: a dry snap, no roll
+      nz(d, t, 0.24, 0.0005, 0.026, 'highpass', 5200, 0, 0.7);
+      tone(d, t, 'square', 1420, 250, 0.085, 0.001, 0.055);
+      nz(d, t + 0.006, 0.13, 0.001, 0.062, 'bandpass', 2200, 5600, 1.3);
+    },
+    // NOTHING WENT IN. Deliberately dead: a damped clank with the ring taken out of it, so
+    // it is instantly tellable from clash(), which is bright and alive. This is the sound of
+    // wasted gold, and the player has to hear it that way.
+    shrug(d, t) {
+      const f = rr(420, 560);
+      tone(d, t, 'triangle', f, f * 0.54, 0.125, 0.001, 0.07);
+      tone(d, t, 'sine', f * 0.5, f * 0.31, 0.085, 0.002, 0.09);
+      nz(d, t, 0.12, 0.001, 0.034, 'bandpass', f * 3.2, f * 1.6, 3);
+      nz(d, t + 0.012, 0.05, 0.005, 0.055, 'lowpass', 860, 300, 0.9);
+    },
+    // ══ SPEC3 §B — the newcomers announce themselves ═════════════════════════
+    // The war shaman is a PRIORITY KILL the player has to find inside a column of three
+    // hundred, so he has to be audible before he is visible: a struck bowl over a bowed
+    // drone, the only consonant thing on the road and the only cue that rings.
+    heal(d, t) {
+      bell(d, t, 622, 0.085, 1.5);                         // D#5 — outside the score's D minor
+      bell(d, t + 0.10, 932, 0.045, 1.1);
+      tone(d, t, 'sine', 155, 0, 0.075, 0.10, 0.85);       // the bowed drone under it
+      tone(d, t + 0.01, 'triangle', 233, 0, 0.032, 0.14, 0.7);
+      nz(d, t, 0.035, 0.02, 0.5, 'bandpass', 2400, 3400, 2.2);
+    },
+    ironfoot(d, t) {                                       // plate, greaves and a shield rim
+      tone(d, t, 'sine', 74, 34, 0.30, 0.004, 0.20, 0.11);
+      nz(d, t, 0.16, 0.002, 0.09, 'lowpass', 700, 240, 0.9);
+      const f = rr(1500, 2300);                            // the metal on top of the weight
+      nz(d, t + 0.008, 0.085, 0.001, 0.05, 'bandpass', f, f * 0.6, 5);
+      tone(d, t + 0.008, 'triangle', f * 0.9, 0, 0.035, 0.001, 0.07);
+    },
+    wraith(d, t) {                                         // a whisper going past the lens
+      const f = rr(620, 900);
+      nz(d, t, 0.055, 0.16, 0.55, 'bandpass', f, f * 2.6, 3.4);
+      nz(d, t + 0.10, 0.038, 0.12, 0.45, 'bandpass', f * 2.2, f * 0.7, 2.6);
+      tone(d, t + 0.04, 'sine', f * 0.26, f * 0.19, 0.028, 0.16, 0.42);
+    },
+    // ══ SPEC3 §D — the muster's own stinger ══════════════════════════════════
+    // Taking an omen is the only decision in BANNERFALL that is not a purchase, so it gets
+    // a page turn (two brushed noise strokes, the second longer, as a leaf falls back) and
+    // a low choir swell underneath. Ducked, because it happens over the music, not under it.
+    omen(d, t) {
+      duck(0.30, 1.1);
+      nz(d, t, 0.16, 0.010, 0.10, 'bandpass', 2100, 4200, 1.2);          // the leaf lifting
+      nz(d, t + 0.11, 0.19, 0.012, 0.20, 'bandpass', 3000, 1100, 1.0);   // and falling back
+      nz(d, t + 0.11, 0.06, 0.004, 0.05, 'highpass', 6000, 0, 0.7);      // the paper's edge
+      const R = mf(45);                                                  // A2, under the horn
+      for (const [m, a, o] of [[1, .085, 0], [1.5, .05, .05], [2, .038, .09], [3, .022, .14]]) {
+        tone(d, t + 0.16 + o, 'sine', R * m, 0, a, 0.26, 1.05);
+        if (!LOW) tone(d, t + 0.17 + o, 'triangle', R * m * 1.005, 0, a * 0.42, 0.30, 0.95);
+      }
+      bell(d, t + 0.30, 1046, 0.045, 1.7);                               // the seal set on it
+    },
   };
   // a plucked-string transient for the bow (short, damped, sent to the sfx bus not the lute bus)
   function pluckSfx(d, t, freq, dur, amp) {
@@ -9481,6 +9143,118 @@ const Audio = (() => {
     fireLP.frequency.setTargetAtTime(380 + 560 * bed, now, 0.35);
     crackG.gain.setTargetAtTime(0.50 * bed, now, 0.25);
   }
+  // ══ standing layers (SPEC3 §B/§D) ════════════════════════════════════════════
+  // Two things in v3 are STATES, not events: a siege ram grinding down the road, and a wave
+  // warded against one of the player's schools. Both last a minute or more, so both would
+  // be nonsense as repeated one-shots — they are BEDS, exactly like the fire bed above:
+  // one voice each, built lazily, level driven from sched(), which is the one timer this
+  // file owns. The ram's "cap 1" is therefore structural rather than a counter: there is
+  // one bed no matter how many rams a swap slot fields.
+  let creakG = null, creakBP = null, wardG = null, wardLP = null, wardOsc = null, wardTremG = null;
+  function startCreakBed() {
+    if (creakG) return;
+    const t = ac.currentTime;
+    creakG = ac.createGain(); creakG.gain.value = 0.0001; creakG.connect(sfxG);
+    // the axle: brown noise through a HIGH-Q bandpass whose resonance is swept by two
+    // incommensurate LFOs, so the groan never lands on the same note twice
+    const s = ac.createBufferSource(); s.buffer = BROWN; s.loop = true; s.playbackRate.value = 0.55;
+    creakBP = ac.createBiquadFilter(); creakBP.type = 'bandpass'; creakBP.frequency.value = 230; creakBP.Q.value = 9;
+    s.connect(creakBP); creakBP.connect(creakG); s.start(t);
+    for (const [f, a] of [[0.31, 98], [0.113, 47]]) {
+      const l = ac.createOscillator(), g = ac.createGain();
+      l.frequency.value = f; g.gain.value = a; l.connect(g); g.connect(creakBP.frequency); l.start(t);
+    }
+    // and the timber weight under it
+    const w = ac.createBufferSource(); w.buffer = BROWN; w.loop = true; w.playbackRate.value = 0.4;
+    const wf = ac.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = 155; wf.Q.value = 0.9;
+    const wg = ac.createGain(); wg.gain.value = 0.55;
+    w.connect(wf); wf.connect(wg); wg.connect(creakG); w.start(t);
+  }
+  // The ward names its school by PITCH — same chord, four roots — so a player who has heard
+  // it once knows which of his towers has just been shut out without reading the banner.
+  const WARDN = { pierce: 0, crush: -4, fire: 5, storm: 9 };
+  const WARDP = [[1, 'sawtooth', 0.85, 0], [1, 'triangle', 0.5, 8], [2, 'triangle', 0.26, -7], [3, 'sine', 0.14, 5]];
+  function startWardBed() {
+    if (wardG) return;
+    const t = ac.currentTime;
+    wardG = ac.createGain(); wardG.gain.value = 0.0001; wardG.connect(sfxG); wardG.connect(revIn);
+    wardLP = ac.createBiquadFilter(); wardLP.type = 'lowpass'; wardLP.Q.value = 1.4; wardLP.frequency.value = 760;
+    // The shimmer rides its OWN gain stage in series, never wardG's. An LFO connected to an
+    // AudioParam is ADDITIVE, so hanging it on the level control would keep swinging the bed
+    // between −0.3 and +0.3 long after the level had been taken to silence — i.e. a hum that
+    // never stops. One extra node is the whole fix.
+    wardTremG = ac.createGain(); wardTremG.gain.value = 1;
+    wardLP.connect(wardTremG); wardTremG.connect(wardG);
+    wardOsc = [];
+    for (const [m, ty, a, det] of WARDP) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = ty; o.frequency.value = mf(45) * m; o.detune.value = det;
+      g.gain.value = a; o.connect(g); g.connect(wardLP); o.start(t);
+      wardOsc.push([o, m]);
+    }
+    const trem = ac.createOscillator();                      // the shimmer, matching the tint pulse
+    const tg = ac.createGain(); tg.gain.value = 0.32;
+    trem.frequency.value = 0.37; trem.connect(tg); tg.connect(wardTremG.gain); trem.start(t);
+  }
+  function beds(now) {
+    // ── the ram: one bed, level from how many are rolling and how close the nearest is
+    let rams = 0;
+    const EN = G.enemies;
+    for (let i = 0; i < EN.length; i++) { const e = EN[i]; if (e.alive && e.type === 'ram') rams++; }
+    if (creakG || rams) {
+      startCreakBed();
+      const lv = Math.min(1, rams * 0.8);
+      creakG.gain.setTargetAtTime(0.10 * lv, now, rams ? 0.45 : 0.9);
+      creakBP.Q.setTargetAtTime(rams ? 9 : 4, now, 1.0);
+    }
+    // ── the ward: only while the wave it rides is actually on the road
+    const FX = G.OMEN_FX, on = FX.ward > 0 && FX.wardEl && G.state.phase === 'wave';
+    if (wardG || on) {
+      startWardBed();
+      if (on) {
+        const base = mf(45 + (WARDN[FX.wardEl] || 0));
+        for (const [o, m] of wardOsc) o.frequency.setTargetAtTime(base * m, now, 0.5);
+      }
+      wardG.gain.setTargetAtTime(on ? 0.062 : 0.0001, now, on ? 1.2 : 0.8);
+      wardLP.frequency.setTargetAtTime(on ? 780 : 380, now, 1.2);
+    }
+  }
+  // ── SPEC3 §B presence: footfalls, whispers, and fire refusing to take hold ──────
+  // Rate-derived exactly like melee(): the number of each species on the road sets a rate,
+  // an accumulator spends it, and MINGAP does the rest. Emitted here rather than from the
+  // sim so a headless catch-up of ten thousand ticks cannot queue ten thousand footsteps.
+  let footAcc = 0, whAcc = 0;
+  function presence(dt) {
+    let ni = 0, nw = 0, ic = null, wr = null;
+    const EN = G.enemies;
+    for (let i = 0; i < EN.length; i++) {
+      const e = EN[i];
+      if (!e.alive) continue;
+      if (e.type === 'ironclad') { ni++; if (rnd() * ni < 1) ic = e; }          // reservoir pick
+      else if (e.type === 'ashwraith') { nw++; if (rnd() * nw < 1) wr = e; }
+    }
+    if (ni && ic) {
+      footAcc += Math.min(4.5, 1.05 * Math.sqrt(ni) * 1.5) * dt;
+      let k = 0;
+      while (footAcc >= 1 && k++ < 2) { footAcc -= 1; play('ironfoot', ic.px, ic.pz, 0.46 + 0.22 * rnd()); }
+      if (footAcc > 2.5) footAcc = 2.5;
+    } else footAcc = 0;
+    if (nw && wr) {
+      whAcc += Math.min(1.3, 0.34 * Math.sqrt(nw)) * dt;
+      if (whAcc >= 1) { whAcc -= 1; play('wraith', wr.px, wr.pz, 0.42 + 0.2 * rnd()); }
+      if (whAcc > 1.6) whAcc = 1.6;
+      // fire immunity, made audible: a wraith standing IN burning ground still only hisses.
+      const PA = G.patches, vt0 = G.vt();
+      if (PA && PA.length && rnd() < dt * 0.8) {
+        for (let i = 0; i < PA.length; i++) {
+          const pa = PA[i], f = (vt0 - pa.born) / pa.dur;
+          if (f < 0 || f > 1) continue;
+          if ((wr.px - pa.x) ** 2 + (wr.pz - pa.z) ** 2 <= pa.r * pa.r) { play('sizzle', wr.px, wr.pz, 0.4); break; }
+        }
+      }
+    } else whAcc = 0;
+  }
+
   // Per-map ambience (SPEC2 §E): the Vale hears songbirds over a soft valley draught;
   // Frostfell hears a colder, brighter wind and the odd crow; Ember Wastes hears almost
   // no wildlife at all — the fire bed above is its ambience.
@@ -9588,7 +9362,9 @@ const Audio = (() => {
       windG.gain.setTargetAtTime(WIND.b + WIND.s * intens, now, 1.2);
     }
     fireBed(now);
+    beds(now);
     melee(dt);
+    presence(dt);
     if (!live) return;
     const sd = 60 / (mode === 'drive' ? 96 : 74) / 2, ahead = now + 0.28;
     if (stepT < now) stepT = now + 0.05;
@@ -10472,20 +10248,29 @@ function icoFor(t) {                     // cloneNode does NOT copy a canvas bit
 // One bust + count, with the armour pip if the type shrugs off physical damage. Both the
 // live wave card and the bestiary rig build their rows through here so the two can never
 // disagree about what an armoured silhouette looks like.
+// SPEC3 §A — at most TWO pips per bust: the school this silhouette shrugs off hardest (▲)
+// and the one that opens it up (▼). Four pips on a shieldbearer is a spreadsheet; two is a
+// warning. The full resist table still goes into the tooltip for a desktop hover.
+const pipFor = (dir, school, title) => {
+  const p = document.createElement('i');
+  p.className = 'pip ' + dir + ' sc-' + school + ' pg-' + school;
+  p.title = title;
+  return p;
+};
 UI.bust = (t, c) => {
   const d = document.createElement('div'); d.className = 'wpE';
   d.appendChild(icoFor(t));
-  // SPEC3 §A: the pip is a RESIST warning — it names every school this silhouette shrugs
-  // off, and the vulnerabilities beside them, because "shoot it with something else" is the
-  // whole lesson the wave card has to teach now.
   const res = (ENEMY_DEFS[t] || {}).resist || {};
-  const hard = G.SCHOOLS.filter(s => (res[s] || 0) >= 0.2), soft = G.SCHOOLS.filter(s => (res[s] || 0) <= -0.1);
-  if (hard.length) {
-    const a = document.createElement('i'); a.className = 'arm dg-shld';
-    a.title = (E_NAME[t] || 'This foe') + ' resists ' + hard.map(s => s + ' ' + Math.round(res[s] * 100) + '%').join(', ') +
-      (soft.length ? ' · weak to ' + soft.join(', ') : '');
-    d.appendChild(a);
-  }
+  const hard = G.SCHOOLS.filter(s => (res[s] || 0) >= 0.2).sort((a, b) => res[b] - res[a]);
+  const soft = G.SCHOOLS.filter(s => (res[s] || 0) <= -0.1).sort((a, b) => res[a] - res[b]);
+  const nm = E_NAME[t] || 'This foe';
+  const pips = [];
+  if (hard.length) pips.push(pipFor('up', hard[0], nm + ' resists ' +
+    hard.map(s => s + ' ' + Math.round(res[s] * 100) + '%').join(', ')));
+  if (soft.length) pips.push(pipFor('dn', soft[0], nm + ' is weak to ' +
+    soft.map(s => s + ' +' + Math.round(-res[s] * 100) + '%').join(', ')));
+  pips.forEach((p, i) => { p.classList.add('p' + i); d.appendChild(p); });
+  if (pips.length) d.title = pips.map(p => p.title).join(' · ');
   const n = document.createElement('span'); n.className = 'wpN';
   n.textContent = bossy(t) && c <= 2 ? '' : '×' + c;
   d.appendChild(n);
@@ -10523,7 +10308,10 @@ UI.sync = () => {
   const onTitle = state.phase === 'title', ended = state.phase === 'won' || state.phase === 'lost';
   const chrome = !onTitle && !ended;
   $('hud').classList.toggle('hidden', !chrome);
-  $('hint').classList.toggle('hidden', !chrome || isTouch);
+  // The keyboard legend grew a sixth group (omens) and now wraps to three rows, which is
+  // fine in play and wrong in a marketing frame — so it steps aside wherever the build bar
+  // already has (MINBAR is exactly the "this frame has to sell the game" flag).
+  $('hint').classList.toggle('hidden', !chrome || isTouch || MINBAR);
   if (state.gold > lastGold) { $('chipGold').classList.remove('bump'); void $('chipGold').offsetWidth; $('chipGold').classList.add('bump'); }
   if (state.lives < lastLives) { $('chipLives').classList.remove('hit'); void $('chipLives').offsetWidth; $('chipLives').classList.add('hit'); }
   else if (state.lives > lastLives) $('chipLives').classList.remove('hit');
@@ -10532,10 +10320,14 @@ UI.sync = () => {
   $('gold').textContent = fmt(Math.round(showGold));
   $('lives').textContent = state.lives;
   $('wave').textContent = Math.max(1, state.wave) + '/' + WAVES.length;
-  // SPEC3 §C — standards raised of standards allowed
+  // SPEC3 §C — standards raised of standards allowed. `.full` is the state that MATTERS:
+  // the next card you press is going to be refused, and the chip says so before you press it.
+  const mFull = G.towersList.length >= state.muster;
   $('muster').textContent = G.towersList.length + '/' + state.muster;
-  $('chipMuster').title = G.musterCost() === undefined ? 'The muster is at its limit'
-    : 'Raise the muster for ' + G.musterCost() + ' gold';
+  $('chipMuster').classList.toggle('full', mFull);
+  $('chipMuster').title = (mFull ? 'The muster is full — no more standards may take the field. ' : '') +
+    (G.musterCost() === undefined ? 'The muster is at its limit.'
+      : 'Raise the muster for ' + G.musterCost() + ' gold.');
   // wave preview card
   const nx = state.wave + (state.phase === 'prewave' ? 1 : 0);
   const wp = $('wavePrev'), live = chrome && nx <= WAVES.length && (state.phase === 'prewave' || state.phase === 'wave');
@@ -10551,6 +10343,7 @@ UI.sync = () => {
       const alive = G.enemies.filter(e => e.alive).length;
       h += '<div class="bar"><i style="width:' + clamp(100 - alive / Math.max(1, tot) * 100, 2, 100).toFixed(0) + '%"></i></div>';
     }
+    h += omenLine(nx, pre);
     wp.innerHTML = h;
     const row = wp.querySelector('.wpRow');
     for (const [t, c] of mix.slice(0, 6)) row.appendChild(UI.bust(t, c));
@@ -10576,71 +10369,129 @@ UI.sync = () => {
     document.querySelectorAll('#buildMenu canvas.por').forEach(c => c.style.height = '235px'); }
 };
 // ══ war omens (SPEC3 §D) ═══════════════════════════════════════════════════════
-// MINIMAL FUNCTIONAL PLACEHOLDER — the engine, the contract and the copy are real; the
-// treatment is not. UI agent: the contract is G.omens = { offer:[key,key,key], pick(i),
-// active, forWave, picked, defIdx } plus G.OMENS[key] = {kind,name,desc}. Replace the
-// markup below with the parchment cards; keep the calls. Built inside UI.sync(), so it is
-// pure static DOM with no timers — shot-safe by construction.
+// Three portents on parchment, pinned above the dispatch. Contract (owned by SIM):
+// G.omens = { offer:[key,key,key], pick(i), active, forWave, picked, defIdx } and
+// G.OMENS[key] = {kind,name,desc}. Built inside UI.sync(), so it is pure static DOM with
+// no timers — shot-safe by construction; only the countdown ring is written afterwards,
+// and it is written from SIM ticks (UI.syncCountdown), never from a wall clock.
+const OM_KEYS = ['8', '9', '0'];                       // the hotkeys, in card order
+// What the portent PAYS. A challenge is danger money; two boons move the purse themselves.
+const OM_PAY = { chest: '+60 gold now', thin: '−25% coin' };
+const omPay = (k) => OM_PAY[k] || (G.OMENS[k].kind === 'challenge' ? '+20% coin' : 'no cost');
+// Elemental Ward is the one omen whose text depends on how the run has been played, so it
+// is resolved against the live damage ledger rather than printed as a rule.
+const omDesc = (k) => k === 'ward'
+  ? G.OMENS[k].desc.replace('whichever school has spilt the most blood this campaign',
+      'your <b>' + G.topSchool() + '</b> towers')
+  : G.OMENS[k].desc;
+const esc = (s) => s.replace(/</g, '&lt;').replace(/"/g, '&quot;');
+function omCard(k, i, sel) {
+  const o = G.OMENS[k], kind = o.kind === 'challenge' ? 'chal' : 'boon', pay = omPay(k);
+  return '<button class="omC parch frm ' + kind + (i === sel ? ' on' : '') + '" data-i="' + i +
+    '" title="' + (kind === 'chal' ? 'Challenge' : 'Boon') + ' — ' + esc(o.desc) + ' (hotkey ' + OM_KEYS[i] + ')">' +
+    '<i class="omSig sig-' + kind + '"></i>' +
+    '<span class="omBody"><span class="omN">' + o.name + '</span>' +
+    '<span class="omD">' + omDesc(k) + '</span></span>' +
+    '<span class="omSide"><kbd class="omK">' + OM_KEYS[i] + '</kbd>' +
+    '<span class="omChip' + (pay.charAt(0) === '−' ? ' pay' : '') + '">' + pay + '</span></span>' +
+    '<span class="omTk">Taken</span></button>';
+}
+// The countdown ring. r=12.5 → circumference 78.54; the arc is a dash offset, so the ring
+// is a single attribute write on an element that already exists (no relayout, no rebuild).
+const RING_C = 78.54;
+let _omMax = 1;                                        // longest countdown seen for this offer
+UI.omenRing = () => {
+  const el = $('omenRow'), r = el.querySelector('.rFg');
+  if (!r) return;
+  const left = Math.max(0, state.countdown);
+  if (left > _omMax) _omMax = left;
+  r.style.strokeDasharray = RING_C;
+  r.style.strokeDashoffset = (RING_C * (1 - left / Math.max(0.001, _omMax))).toFixed(2);
+  const n = el.querySelector('.omRing b');
+  if (n) n.textContent = Math.ceil(left);
+};
 let _omKey = '';
 UI.omens = () => {
   const el = $('omenRow'), O = G.omens;
   const chrome = state.phase === 'prewave' || state.phase === 'wave';
   // UI.sync() runs on every coin earned, so this row must be idempotent and cheap: nothing
-  // is rebuilt unless the hand on the table actually changed.
-  const key = state.phase + '|' + O.forWave + '|' + O.offer.join(',') + '|' + O.picked + '|' + state.omen;
-  if (key === _omKey) return;
+  // is rebuilt unless the hand on the table actually changed. (The ring is deliberately
+  // OUTSIDE the key — it moves every tick and must not rebuild three cards to do it.)
+  const key = state.phase + '|' + O.forWave + '|' + O.offer.join(',') + '|' + O.picked + '|' +
+    state.omen + '|' + G.OMEN_FX.wardEl;
+  if (key === _omKey) { if (state.phase === 'prewave') UI.omenRing(); return; }
+  if (_omKey.split('|')[1] !== String(O.forWave)) _omMax = Math.max(1, state.countdown);
   _omKey = key;
   if (!chrome) { el.classList.add('hidden'); el.innerHTML = ''; return; }
-  if (state.phase === 'wave') {                          // the omen riding the wave in progress
+  if (state.phase === 'wave') {
+    // The omen taken is now the omen RIDING the wave: a banner, not a card — there is
+    // nothing left to choose, so it loses the hotkey, the ring and the hover.
     const o = G.OMENS[state.omen];
     el.classList.toggle('hidden', !o);
     if (!o) { el.innerHTML = ''; return; }
-    el.innerHTML = '<div class="omC parch frm ' + (o.kind === 'challenge' ? 'chal' : 'boon') + '">' +
-      '<div class="omN">' + o.name + '</div><div class="omD">' + o.desc +
-      (state.omen === 'ward' && G.OMEN_FX.wardEl ? ' <b>(' + G.OMEN_FX.wardEl + ')</b>' : '') +
-      '</div></div>';
+    const kind = o.kind === 'challenge' ? 'chal' : 'boon';
+    el.innerHTML = '<div class="omBan frm ' + kind + '"><i class="omSig sig-' + kind + '"></i>' +
+      '<span class="omBody"><span class="omN">' + o.name + '</span>' +
+      '<span class="omD">' + (state.omen === 'ward' && G.OMEN_FX.wardEl
+        ? o.desc.replace('whichever school has spilt the most blood this campaign',
+            'your <b>' + G.OMEN_FX.wardEl + '</b> towers')
+        : omDesc(state.omen)) + '</span></span>' +
+      '<span class="omSide"><span class="omK">Omen</span>' +
+      '<span class="omChip">' + omPay(state.omen) + '</span></span></div>';
     return;
   }
   const live = O.offer.length > 0;
   el.classList.toggle('hidden', !live);
   if (!live) { el.innerHTML = ''; return; }
-  const sel = O.picked >= 0 ? O.picked : -1;
-  let h = '<div class="omH">War omens · wave ' + O.forWave +
-    (sel < 0 ? ' · choose before the muster ends' : '') + '</div>';
-  O.offer.forEach((k, i) => {
-    const o = G.OMENS[k];
-    const desc = k === 'ward' ? o.desc.replace('whichever school has spilt the most blood this campaign',
-      'your ' + G.topSchool() + ' towers') : o.desc;
-    h += '<button class="omC parch frm ' + (o.kind === 'challenge' ? 'chal' : 'boon') + (i === sel ? ' on' : '') +
-      '" data-i="' + i + '"><div class="omN">' + o.name +
-      (o.kind === 'challenge' ? ' <span class="omB">· +20% bounty</span>' : '') + '</div>' +
-      '<div class="omD">' + desc + '</div></button>';
-  });
-  el.innerHTML = h;
+  const sel = O.picked;
+  el.innerHTML = '<div class="omHead"><span class="omT">War Omens</span>' +
+    '<span class="omSub">Wave ' + O.forWave + ' · ' + (sel < 0 ? 'take one before the muster ends' : 'omen taken') +
+    '</span><span class="omRing" title="Time left to choose"><svg viewBox="0 0 30 30">' +
+    '<circle class="rBg" cx="15" cy="15" r="12.5"/><circle class="rFg" cx="15" cy="15" r="12.5"/></svg><b></b>' +
+    '</span></div>' + O.offer.map((k, i) => omCard(k, i, sel)).join('');
   el.querySelectorAll('.omC').forEach(b => { b.onclick = () => G.omens.pick(+b.dataset.i); });
+  UI.omenRing();
 };
+// SPEC3 §D read-out: the dispatch always says what the NEXT muster will put on the table,
+// so the omen system announces itself a wave early instead of appearing out of nowhere.
+function omenLine(nx, pre) {
+  const O = G.omens, F = G.OMEN_FROM;
+  let txt = '';
+  if (pre) {
+    if (O.offer.length && O.forWave === nx) {
+      if (O.picked >= 0) {
+        const o = G.OMENS[O.offer[O.picked]];
+        txt = 'Omen taken · <b' + (o.kind === 'boon' ? ' class="boon"' : '') + '>' + o.name + '</b>';
+      } else txt = 'Three omens on the table · <b>choose one</b>';
+    } else if (nx < F) txt = 'War omens from wave <b>' + F + '</b>';
+  } else if (nx + 1 <= WAVES.length) {
+    txt = nx + 1 >= F ? 'Wave ' + (nx + 1) + ' · <b>omens at the muster</b>'
+                      : 'War omens from wave <b>' + F + '</b>';
+  }
+  return txt ? '<div class="wpOm"><i class="dg-omen"></i><span>' + txt + '</span></div>' : '';
+}
 UI.syncCountdown = () => {
   if (state.phase !== 'prewave') return;
   if (state.tick % 15 === 0) {
     $('btnWave').innerHTML = '⚔ Call Wave ' + (state.wave + 1) + ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>';
     const s = $('wavePrev').querySelector('.wpS');
     if (s) s.textContent = 'Muster · ' + Math.max(0, Math.ceil(state.countdown)) + 's';
+    UI.omenRing();
   }
 };
 // ══ build menu (cards built once, then only state-updated) ═════════════════════
 const TK = Object.keys(TOWER_DEFS);
-// SPEC2 §B made damage KINDS load-bearing (shieldbearers shrug off arrows), so every card
-// wears the kind as a glyph. Keyed by tower first so a weapon can look like itself — the
-// element fallback keeps a newly-added tower from shipping a blank badge.
-const DGLYPH = { archer: 'sw', ballista: 'sw', barracks: 'sw', catapult: 'siege',
-                 storm: 'bolt', pyre: 'flame', banner: 'bnr' };
-// SPEC3 §A: the badge names the SCHOOL, because a school is now a strength AND a weakness.
-const DTYPE = { pierce: ['sw', 'Pierce', 'Pierce — shields and plate turn it aside'],
-                crush:  ['siege', 'Crush', 'Crush — goes through a shield wall, poor against plate'],
+// SPEC3 §A: the badge names the SCHOOL and NOTHING ELSE. It used to be keyed by tower
+// first, "so a weapon could look like itself" — but with resists on the board the school is
+// the number the player compares across cards, and a card that says CRUSH under a pair of
+// crossed swords (the barracks) taught the wrong wheel. One sigil per school, everywhere:
+// build card, resist pip, wave dispatch.
+const DTYPE = { pierce: ['pierce', 'Pierce', 'Pierce — shields and plate turn it aside'],
+                crush:  ['crush', 'Crush', 'Crush — goes through a shield wall, poor against plate'],
                 fire:   ['flame', 'Fire', 'Fire — cooks armour, smothered by the fireproof'],
                 storm:  ['bolt', 'Storm', 'Storm — leaps a crowd, grounded by the earthed'],
                 support:['bnr', 'Support', 'Support — strengthens your own line'] };
-const dGlyph = k => DGLYPH[k] || (DTYPE[TOWER_DEFS[k].element] || DTYPE.pierce)[0];
+const dGlyph = k => (DTYPE[TOWER_DEFS[k].element] || DTYPE.pierce)[0];
 const dLabel = k => (DTYPE[TOWER_DEFS[k].element] || DTYPE.pierce);
 const T_HINT = { archer: 'Quick volleys · cheap to raise',
   ballista: 'Heavy bolt, punches through two',
@@ -10738,9 +10589,12 @@ UI.buildMenu = () => {
         (max ? 'Fully Built' : '▲ Upgrade') + (max ? '' : '<span class="s2">🪙 ' + upCost + '</span>') + '</button>' +
       '<button class="tBtn sell' + (sellArm ? ' arm' : '') + '" id="mSell">' + (sellArm ? 'Confirm?' : 'Dismantle') +
         '<span class="s2 ref">🪙 +' + Math.round(tw.invested * 0.7) + '</span></button>' +
-      // SPEC3 §F — targeting doctrine, per tower (hotkey T). Placeholder treatment.
-      (fights(d) ? '<button class="tBtn tgt" id="mTgt" title="Cycle targeting (T)">🎯 Target: ' +
-        G.MODE_NAME[tw.mode || 'first'] + '</button>' : '') + '</div>';
+      // SPEC3 §F — targeting doctrine, per tower (hotkey T). A rail of the three standing
+      // orders with the live one lit: the point is which of THREE it is, not the name alone.
+      (fights(d) ? '<button class="tBtn tgt" id="mTgt" title="Cycle this tower&apos;s standing order (T)">' +
+        '<i class="tgL"></i><span class="tgS">' +
+        G.MODES.map(m => '<i class="' + ((tw.mode || 'first') === m ? 'on' : '') + '">' + G.MODE_NAME[m] + '</i>').join('') +
+        '</span><span class="tgK">T</span></button>' : '') + '</div>';
     tm.querySelector('.tpor').replaceWith(towerPortrait(tw.type, lv, 64, 64));
     tm.classList.remove('hidden');
     $('mUp').onclick = () => { sellArm = false; upgradeTower(tw); UI.buildMenu(); };
@@ -10757,11 +10611,16 @@ UI.buildMenu = () => {
       b.onclick = () => { if (G.enterPlace(b.dataset.t) && G.placeAtCursor) G.placeAtCursor(); };
     });
     $('mX2').onclick = () => { G.exitPlace(); UI.deselect(); };
+    // SPEC3 §C: the muster control shares the build bar's head with the shop because it
+    // shares the shop's purse — one more standard OR one more tower, never both. The price
+    // is on its face for the same reason every card carries its cost.
     const mb = $('btnMuster'), mc = G.musterCost();
-    // short label: on a 390px phone the build bar's head has room for a chip, not a sentence
-    mb.textContent = mc === undefined ? '⚔ Muster ' + state.muster + ' · full'
-      : '⚔ Muster ' + G.towersList.length + '/' + state.muster + ' · 🪙' + mc;
-    mb.title = mc === undefined ? 'The muster is at its limit' : 'Raise the Muster — one more tower slot';
+    mb.innerHTML = '<i class="mIc ic-must"></i><span class="lg">Raise the Muster</span>' +
+      '<b>' + G.towersList.length + '/' + state.muster + '</b>' +
+      (mc === undefined ? '<span class="c cap">Limit</span>'
+        : '<span class="c"><i class="ic ic-gold"></i>' + mc + '</span>');
+    mb.title = mc === undefined ? 'The muster is at its limit — 14 standards is all the vale can field'
+      : 'Raise the Muster — one more tower may take the field (' + mc + ' gold)';
     mb.disabled = mc === undefined || state.gold < mc;
     mb.onclick = () => { G.raiseMuster(); };
     bm.classList.toggle('min', MINBAR && !G.place);
@@ -10776,9 +10635,17 @@ UI.place = (p) => {
   if (!p) { el.classList.add('hidden'); _pmsg = ''; tutHint(false); UI.buildMenu(); return; }
   const d = TOWER_DEFS[p.type];
   const rr = (d.range).toFixed(0) + 'u ' + (d.aura ? 'aura' : 'reach');
+  // SPEC3 §C: a full muster is not bad GROUND, so it does not get the ground's refusal. It
+  // gets its own writ, naming the roster and the price of the next slot — otherwise the
+  // player is told "no" by a system whose control is a small button on the other panel.
+  const mFull = !p.ok && p.reason === 'The muster is full', mc = G.musterCost();
   // on a phone the ✓ button IS the instruction, so the writ stays one line
   const html = p.ok
     ? '<b>' + d.name + '</b> · ' + rr + '<i class="ic ic-gold"></i>' + d.cost + (UI.coarse ? '' : ' · click to raise')
+    : mFull
+    ? '<b>The muster is full</b><span class="pSub">' + G.towersList.length + ' of ' + state.muster +
+      ' standards already in the field · ' + (mc === undefined ? 'no more may be raised'
+        : 'raise the muster for <i>' + mc + '</i> gold, or dismantle one') + '</span>'
     : '<b>' + p.reason + '</b>';
   const pm = $('placeMsg');
   if (html !== _pmsg) { _pmsg = html; pm.innerHTML = html; }
@@ -10787,6 +10654,7 @@ UI.place = (p) => {
   // sit the writ clear of the build bar, whose height depends on how the cards wrapped
   el.style.bottom = ((barH() || 200) + 26) + 'px';
   el.classList.toggle('bad', !p.ok);
+  el.classList.toggle('mus', mFull);
   el.classList.toggle('touch', !!UI.coarse);
   el.classList.remove('hidden');
   tutHint(true);
@@ -11279,9 +11147,23 @@ $('btnRestart').onclick = () => {
 $('chipWave').title = MAP.name + ' · ' + WAVES.length + ' waves';
 $('wavePrev').title = MAP.name;
 // the title plinth counted four towers and one road; both grew (SPEC2 §C/§E)
-// SPEC3 §E: the war seed is the run's fingerprint — same seed, same swap slots and the same
-// omen draws, so a run can be replayed or handed to someone else.
-$('titleFoot').innerHTML = MAPS.length + ' roads &nbsp;·&nbsp; ' + TK.length + ' fortifications &nbsp;·&nbsp; War Seed ' + G.runSeed;
+// SPEC3 §E: the war seed is the run's fingerprint — same seed, same elite swap slots and the
+// same omen draws, so a run can be replayed or handed to someone else. The die rolls a new
+// one and reloads; the number appears wherever a run is about to start (plinth + chooser).
+const seedTag = () => '<span class="sV">War Seed ' + G.runSeed + '</span>' +
+  '<button class="sD frm" data-seed="1" title="Roll a new war seed — new elite swaps, new omen draws">Roll</button>';
+$('titleFoot').innerHTML = MAPS.length + ' roads &nbsp;·&nbsp; ' + TK.length + ' fortifications &nbsp;·&nbsp; ' +
+  '<span class="seedTag">' + seedTag() + '</span>';
+$('mapsSeed').innerHTML = seedTag();
+// Entropy for a NEW seed comes from the same crypto source CORE captured with — never
+// Math.random/Date.now (SPEC3 §E), and never inside a sim tick: this only ever reloads.
+const rollSeed = () => {
+  if (!(globalThis.crypto && crypto.getRandomValues)) return;
+  const q = new URLSearchParams(location.search);
+  q.set('seed', String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000)));
+  location.search = q.toString();
+};
+document.querySelectorAll('.seedTag .sD').forEach(b => { b.onclick = rollSeed; });
 $('qualV').textContent = tier === 'mobile' ? 'Low' : tier === 'ultra' ? 'Ultra' : 'High';
 if (!SHOT) {
   // Interaction listeners live behind the SHOT guard (GAME_SPEC §2.3c).
@@ -11427,6 +11309,10 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
   // SPEC3 §F — T cycles the selected tower's targeting doctrine.
   if ((e.key === 't' || e.key === 'T') && state.selTower >= 0) G.cycleMode(G.towersList[state.selTower]);
+  // SPEC3 §D — 8/9/0 take the omen on the table. They sit past the seven build hotkeys on
+  // purpose: the number row reads left-to-right as "what you build" then "what you accept".
+  const oi = { '8': 0, '9': 1, '0': 2 }[e.key];
+  if (oi !== undefined) { if (state.phase === 'prewave') G.omens.pick(oi); return; }
   const keys = Object.keys(TOWER_DEFS), n = parseInt(e.key);
   if (n >= 1 && n <= keys.length) {                    // hotkeys ARM the hammer
     UI.deselect();
@@ -11488,30 +11374,6 @@ function frameFight(cam, tw, h, side) {
   // opt-in: `&dbg=1` prints the framing it chose, so a rig that lands in a tree canopy
   // can be re-pointed by hand (that is how _pyre's fixed camera was picked)
   if (P.has('dbg')) console.log('CAMFRAME ' + tw.type + ' pos=' + cam.pos.map(v => v.toFixed(1)) + ' look=' + cam.look.map(v => v.toFixed(1)));
-}
-// A map with two live columns has no single "front" to point a hand-authored camera at,
-// and the answer moves whenever the wave tables or the towers change. Aim at the MEDIAN of
-// the live horde instead: on a forked map the two arms straddle it, which frames the fork.
-function hordeFrame(cam) {
-  // Prefer the part of the horde that is actually being SHOT AT: a plain median can sit
-  // half a map away up the spawn gorge, and the resulting frame is a wall of granite.
-  const near = (e) => {
-    for (const tw of G.towersList) if ((e.px - tw.x) ** 2 + (e.pz - tw.z) ** 2 < 34 * 34) return true;
-    return false;
-  };
-  for (const pass of [1, 0]) {
-    const xs = [], zs = [];
-    for (const e of G.enemies) if (e.alive && (!pass || near(e))) { xs.push(e.px); zs.push(e.pz); }
-    if (xs.length < (pass ? 8 : 1)) continue;
-    xs.sort((a, b) => a - b); zs.sort((a, b) => a - b);
-    // The orbit camera stands ~(+24, +65, +50) off its target at these distances, so the
-    // target has to stay well inside the diorama or the camera ends up behind the rim and
-    // shoots the frame through fifty metres of granite.
-    cam.tgt[0] = clamp(xs[xs.length >> 1], -46, 46);
-    cam.tgt[2] = clamp(zs[zs.length >> 1], -36, 22);
-    if (P.has('dbg')) console.log('HORDEFRAME tgt=' + cam.tgt.map(v => v.toFixed(1)) + ' n=' + xs.length + ' engaged=' + pass);
-    return;
-  }
 }
 const SHOT_PRESETS = {
   // WORLD: yawed off the orbit rig onto an explicit pose. The old framing put the road's
@@ -11650,16 +11512,121 @@ const SHOT_PRESETS = {
       for (const [t, c] of [['ironclad', 4], ['ram', 1], ['ashwraith', 12], ['frostrevenant', 8],
                             ['warshaman', 4], ['ogre', 1]])
         row.appendChild(UI.bust(t, c));      // UI-2: same builder as the live card, resist pips and all
-      if (ttl) ttl.innerHTML = 'Bestiary <em>—</em> ' + E_NAME.ram + ' incoming';
+      // "Bestiary — The Siege Ram incoming" overran the card's 322 px (which now ellipses
+      // rather than bleeding, but an elided hero frame is still a bad hero frame).
+      if (ttl) ttl.innerHTML = 'Bestiary <em>—</em> the roster';
     } },
   _spawn:  { t: 40,  bare: true, builds: [], cam: { pos: [52, 34, 4], look: [86, 8, -52] } },
+  // ══ VFX/AUDIO-3 inspection rigs (not in the default suite) ═══════════════════
+  // `_elem` — the element wheel as a LINE-UP: the same blow landing on a body that takes
+  // it and on a body that does not, four schools in a row, so the two readings can be
+  // compared inside one frame rather than across two runs. Left to right:
+  //   pierce → brute (the pale spark baseline) · frost revenant (.6 — it skitters off)
+  //   crush  → ironclad (−.25 — chips fly)     · ram (.8 — a dull nothing)
+  //   fire   → brute (ember burst)             · ash wraith (.85 — the embers deflect, cold)
+  //   storm  → brute (violet crack)            · ironclad (.85 — the arc earths itself)
+  // The storm pair deliberately goes through VFX.zapHit, not VFX.hit, because the deferral
+  // from the strike to the deflection path is the thing being proven.
+  _elem: { t: 8, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
+    fx: () => {
+      // The ram sits LAST: at 1.6 scale on a 3.6 u pitch it eclipses whatever stands behind it.
+      const PAIRS = [['brute', 'pierce'], ['frostrevenant', 'pierce'], ['ironclad', 'crush'],
+                     ['brute', 'fire'], ['ashwraith', 'fire'], ['brute', 'storm'],
+                     ['ironclad', 'storm'], ['ram', 'crush']];
+      const D0 = 44, GAP = 3.6, hit = [];
+      PAIRS.forEach(([ty, el], i) => {
+        spawnEnemy(ty);
+        const e = G.enemies[G.enemies.length - 1];
+        e.d = D0 + i * GAP; e.lane = (i & 1 ? 1.9 : -1.9);
+        G.pathPos(e.d, _v3, e.lane); e.px = _v3.x; e.pz = _v3.z;
+        e.hp = e.maxhp * 0.66;
+        hit.push([e, el]);
+      });
+      for (const [e, el] of hit) {
+        const gy = G.groundY(e.px, e.pz), ey = gy + e.def.scale * 0.85;
+        if (el === 'storm') VFX.zapHit(e.px, ey, e.pz, 0, e);
+        else VFX.hit(e.px, ey - gy, e.pz, el, 1.0, e);
+      }
+      // ...then let a fifth of a second pass. Every effect in this section is a closed form
+      // of its AGE, so a rig that fires at the render's own virtual time catches all eight
+      // of them on their birth frame — every spark still at the muzzle, every ring at radius
+      // zero. Three ticks puts all eight between a fifth and four fifths of their own life,
+      // which is the only window where a hit and a shrug can be compared side by side.
+      for (let i = 0; i < 3; i++) tickSim();
+      const dm = D0 + (P.has('bi') ? +P.get('bi') : (PAIRS.length - 1) / 2) * GAP;
+      G.pathPos(dm, _v3);
+      const mx = _v3.x, mz = _v3.z, gy = G.groundY(mx, mz), tn = G.pathTan(dm);
+      // 15 held six of the eight pairs; the line is 8 × 3.6 u wide and the ram on the end
+      // was cropped, which defeats a rig whose whole point is the side-by-side comparison.
+      const c = SHOT_PRESETS._elem.cam, ZM = +(P.get('zm') || 22);
+      c.look = [mx, gy + 1.4, mz];
+      c.pos = [mx - tn.z * ZM + tn.x * ZM * 0.42, gy + ZM * 0.42, mz + tn.x * ZM + tn.z * ZM * 0.42];
+    } },
+  // `_aura` — the three CONTINUOUS presences (SPEC3 §B), which no single-frame effect rig
+  // can show: the war shaman mid-chant with his ring lit and motes coming off the staff, a
+  // file of ash wraiths dragging their shroud, and the ram grinding dust off both axles.
+  // Staged then SIMULATED for a second and a half, because all three are emitted per sim
+  // tick — a rig that only stages them would prove nothing.
+  _aura: { t: 8, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
+    fx: () => {
+      const D0 = 44;
+      const put = (ty, dd, ln, hf) => {
+        spawnEnemy(ty);
+        const e = G.enemies[G.enemies.length - 1];
+        e.d = dd; e.lane = ln; G.pathPos(dd, _v3, ln); e.px = _v3.x; e.pz = _v3.z;
+        if (hf) e.hp = e.maxhp * hf;
+        return e;
+      };
+      put('warshaman', D0, 0);
+      for (let i = 0; i < 8; i++)                       // wounded ranks for him to mend
+        put(i & 1 ? 'grunt' : 'brute', D0 - 4 + (i % 4) * 2.6, (i < 4 ? -3.1 : 3.1), 0.34);
+      for (let i = 0; i < 4; i++) put('ashwraith', D0 + 8 + i * 2.4, i & 1 ? 1.7 : -1.7, 0.8);
+      put('ram', D0 - 9, 0, 0.85);
+      for (let i = 0; i < 45; i++) tickSim();           // let the chant, the trail and the dust exist
+      G.pathPos(D0, _v3);
+      const mx = _v3.x, mz = _v3.z, gy = G.groundY(mx, mz), tn = G.pathTan(D0);
+      const c = SHOT_PRESETS._aura.cam, ZM = +(P.get('zm') || 17);
+      c.look = [mx, gy + 1.2, mz];
+      c.pos = [mx - tn.z * ZM + tn.x * ZM * 0.85, gy + ZM * 0.46, mz + tn.x * ZM + tn.z * ZM * 0.85];
+    } },
+  // `_wardfx` — the Elemental Ward shimmer at GAMEPLAY zoom. `_ward` frames the banner, and
+  // at that framing the horde is a red smear at the top of the shot; the tint pulse lives on
+  // the bodies, so it needs its own rig. Same staging as `_ward`, then the column is walked
+  // down the road and the lens put on it.
+  _wardfx: { t: 2, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
+    fx: () => {
+      state.wave = OMEN_FROM - 1; state.phase = 'prewave'; state.countdown = 9;
+      omenTick();
+      G.omens.offer[0] = 'ward'; G.omens.pick(0);
+      G.dmgBySchool[P.get('sch') && G.SCHOOLS.indexOf(P.get('sch')) >= 0 ? P.get('sch') : 'pierce'] += 4000;
+      startWave(OMEN_FROM);
+      for (let i = 0; i < 900; i++) tickSim();          // walk the warded column into frame
+      // Frame the MASS, not the van: the hounds run twenty units ahead of everything else
+      // and a shimmer on four dogs proves nothing. `&sch=` forces the warded school.
+      let bd = 0;
+      for (const e of G.enemies) if (e.alive && e.d > bd) bd = e.d;
+      const df = Math.max(12, bd - 24);
+      G.pathPos(df, _v3);
+      const mx = _v3.x, mz = _v3.z, gy = G.groundY(mx, mz), tn = G.pathTan(df);
+      const c = SHOT_PRESETS._wardfx.cam, ZM = +(P.get('zm') || 24);
+      c.look = [mx - tn.x * 4, gy + 1.6, mz - tn.z * 4];
+      c.pos = [mx + tn.x * ZM * 0.62 + tn.z * ZM * 0.62, gy + ZM * 0.40,
+               mz + tn.z * ZM * 0.62 - tn.x * ZM * 0.62];
+    } },
   // ══ SPEC3 §D omen rigs. Both are STAGED rather than simulated: reaching the wave-5
   // muster honestly costs ~500 sim seconds, and the frame is about the CARDS, not about
   // how the horde got there. The engine does all the work — the preset only moves the
   // clock to a wave-5 prewave and lets omenTick() deal the hand it would really deal.
   _omens:  { t: 2, builds: 'std', cam: { pos: [16, 31, 26], look: [36, -1, -16] },
     fx: () => { state.wave = OMEN_FROM - 1; state.phase = 'prewave'; state.countdown = 9; state.gold = 260;
-      omenTick(); } },
+      // A phys-leaning ledger so Elemental Ward, if the seed deals it, names a real school
+      // instead of the alphabetical fallback — the card's copy is run-dependent by design.
+      dmgBySchool.pierce += 1400; dmgBySchool.crush += 300;
+      omenTick();
+      // The rig also has to stage the CHOICE having been made: half the frame's job is the
+      // taken state (gold ring, Taken ribbon, "omen taken" in the dispatch), which no honest
+      // sim would reach inside two seconds. `&om=` picks a different card for comparison.
+      if (P.get('om') !== 'open') Omens.pick(Math.min(2, Math.max(0, +(P.get('om') || 1)))); } },
   // the same wave, one tick later: the omen taken, the wave running, the banner up. Which
   // omen it is depends only on the seed, so this frame is stable.
   _ward:   { t: 2, builds: 'std', cam: { pos: [16, 31, 26], look: [36, -1, -16] },
@@ -11727,9 +11694,18 @@ const SHOT_PRESETS = {
   // At 620 the hero frame was one surviving unit on an empty road; 760 lands mid wave 8
   // with ~120 on both approaches, which is what this shot exists to show.
   battle2:  { t: 760, builds: 'm2', cam: { pos: [-18, 44, 46], look: [38, 2, 4] } },
-  // Ember's hero frame is the island inside the fork, with a column on either side of it.
-  battle3:  { t: 900, builds: 'm3', cam: { tgt: [0, 2, 0], dist: 80 },
-    fx: () => hordeFrame(SHOT_PRESETS.battle3.cam) },
+  // Ember's hero frame is the FORK, with the tower island in the near field and a column on
+  // each arm. Hand-pointed, because the auto-framer it used to run (hordeFrame) aimed the
+  // orbit rig at the median of the "engaged" horde — which on this map is the tail still
+  // pouring out of the gate 60 u up the ramp. The camera ended up outside the rim shooting a
+  // boulder field with the fight as a smear on the edge, so the framer is deleted rather
+  // than patched (same lesson as battle/battle2/_pyre: hand-point the hero frames).
+  // RETIMED 900 → 940, measured rather than guessed: Ember's approach is a serpentine ramp
+  // and the wave walks it as one long file. At 900 all 113 alive are still ON the ramp
+  // (x 37→96) and nothing has reached the fork; by 980 the wave is dead. 940 is the one
+  // window where the whole survivorship — 75 of them — is through the fork and inside the
+  // battery's reach, which is the only moment this map's geometry is legible in one frame.
+  battle3:  { t: 940, builds: 'm3', cam: { pos: [-16, 42, 40], look: [26, 1, -26] } },
   // TOWERS asset-inspection rigs (not in the default suite; see tools\shots.ps1 -Shots)
   _arch1:  { t: 8, bare: true, builds: [[2, 20, 'archer', 1]],   cam: { pos: [13, 12, 32], look: [2, 4.5, 20] } },
   _arch3:  { t: 8, bare: true, builds: [[2, 20, 'archer', 3]],   cam: { pos: [13, 12, 32], look: [2, 5.5, 20] } },
@@ -11849,11 +11825,25 @@ const SHOT_PRESETS = {
   // SPEC2 §E map select with every state on screen at once: stars already earned on the
   // Vale, Frostfell opened by that win, Ember Wastes still chained. The record is staged in
   // memory — the harness never reads whatever this machine happens to have played.
+  // SPEC3 §E: the chooser also carries the war seed + die, because the seed belongs to the
+  // RUN and this is the last screen before one starts — this rig is where that chrome is judged.
   _maps:   { t: 0, builds: [], cam: { tgt: [-2, 4, -18], dist: 158 },
     ui: () => { state.phase = 'title'; UI.setProgress({ 1: 2 }); UI.showMaps(); } },
-  // tier-1 tower so the upgrade path shows its stat deltas, plus the settings sheet open
-  _gear:   { t: 40, builds: [[26, 21, 'archer', 1]], cam: { pos: [38, 16, 36], look: [26, 1, 21] },
-    ui: () => { state.selTower = 0; UI.buildMenu(); $('settings').classList.remove('hidden'); $('btnGear').classList.add('on'); } },
+  // tier-1 tower so the upgrade path shows its stat deltas, plus the settings sheet open.
+  // SPEC3 §C/§F: it doubles as the rig for the two garrison-side additions — the targeting
+  // rail (staged off its default so the lit state is legible) and the full-muster refusal,
+  // which is otherwise unreachable in a shot because a preset widens the muster to fit its
+  // own composition. One standard, one slot, hammer in hand: the writ has to answer.
+  // The five extra standards are what makes the muster FULL at the base 6 without inventing
+  // a state real play never reaches (a muster below 6 has no price in MUSTER_COST). They
+  // stand well behind the lens, so the frame's subject is still the one archer.
+  _gear:   { t: 40, builds: [[26, 21, 'archer', 1], [-58, 17, 'archer', 1], [-40, 4, 'ballista', 1],
+      [-21, 25, 'ballista', 1], [2, 20, 'barracks', 1], [16, -3, 'archer', 1]],
+    cam: { pos: [38, 16, 36], look: [26, 1, 21] },
+    ui: () => { state.selTower = 0;
+      G.towersList[0].mode = 'strong';
+      UI.buildMenu(); $('settings').classList.remove('hidden'); $('btnGear').classList.add('on');
+      UI.place({ type: 'ballista', ok: false, reason: canPlace(26, 6).reason || 'The muster is full' }); } },
 };
 // [x, z, type, level] since free placement landed. The coordinates are the eight old fixed
 // plots, so every shipped frame keeps its composition; levels are literal (see placeTower).
@@ -12040,6 +12030,3 @@ else {
   UI.sync(); requestAnimationFrame(frame);
 }
 // ══════════════════════ END SECTION: MAIN ══════════════════════
-</script>
-</body>
-</html>

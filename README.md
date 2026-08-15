@@ -5,6 +5,9 @@
 A medieval tower-defense game built with Three.js — procedural art, deterministic simulation,
 three campaigns, free tower placement, elemental warfare, and per-run War Omens.
 
+**Installable PWA**: works offline after first load, installs to the home screen on phones
+(fullscreen, landscape). Three.js 0.170.0 is vendored — no CDN, no build step, no dependencies.
+
 ## Play
 
 Serve the folder with any static server and open it in a browser (desktop or phone):
