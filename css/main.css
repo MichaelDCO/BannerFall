@@ -85,10 +85,21 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    against the map's own starting lives and stamps `.lo` / `.crit` on the chip.
    FREEZE-SAFE: the base state of each rule is its final look — the pulse only modulates
    opacity from a fully-opaque base, so the harness's `animation:none` leaves the lit colour. */
+/* FIX5-UI §4 — THE ALARM COSTS SOMETHING AND SO IT IS SPENT ONCE. The counter is parchment
+   ink until the vale is down to a quarter of its garrison (`.lo`, written by UI.sync from
+   `lives / LIVES0`) and blood only below a tenth (`.crit`) — but `.lo` also carried an
+   INFINITE 1.2s opacity pulse, which is a permanent animation on the most-read number in the
+   HUD: after a single early leak the counter breathes for the rest of the run and the eye
+   stops reading it as a state change at all. The pulse is now an EVENT: `.hit` is stamped by
+   UI.sync on the frame a life is actually lost (and re-stamped by an offsetWidth reflow so a
+   second loss replays it), runs once, and ends. Colour says "how bad"; motion says "it just
+   happened". FREEZE-SAFE: every base state here is the settled look. */
 #chipLives .val{ color:#f2e6cf; transition:color .3s linear; }
-#chipLives.lo .val{ color:#e05a4a; animation:valePulse 1.2s ease-in-out infinite; }
-#chipLives.crit .val{ color:#b8352a; animation:none; }
-@keyframes valePulse{ 0%,100%{ opacity:1; } 50%{ opacity:.52; } }
+#chipLives.lo .val{ color:#e05a4a; }
+#chipLives.crit .val{ color:#b8352a; }
+#chipLives.hit .val{ animation:valePulse .62s ease-out 1; }
+@keyframes valePulse{ 0%{ opacity:1; transform:scale(1); } 22%{ opacity:.42; transform:scale(1.16); }
+                      100%{ opacity:1; transform:scale(1); } }
 .ic-gold{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><radialGradient id='g' cx='36%25' cy='30%25'><stop offset='0' stop-color='%23fff3c4'/><stop offset='.5' stop-color='%23f0bb4e'/><stop offset='1' stop-color='%23a06f16'/></radialGradient></defs><circle cx='16' cy='16' r='13' fill='url(%23g)' stroke='%236d4a10' stroke-width='1.6'/><circle cx='16' cy='16' r='9.4' fill='none' stroke='%23fff0c0' stroke-width='1.1' opacity='.6'/><path d='M16 8.6l2.3 4.7 5.1.7-3.7 3.6.9 5.1-4.6-2.5-4.6 2.5.9-5.1-3.7-3.6 5.1-.7z' fill='%236d4a10' opacity='.55'/></svg>"); }
 /* FIX2-UI §4c — the Vale used to be a glossy specular heart: an emoji-language mark sitting
    between a hand-drawn coin and hand-drawn crossed swords. It is the blue kite shield off
@@ -325,8 +336,14 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:#3a2708;
    background:linear-gradient(180deg,#ffe6a2,#e8b64c 52%,#ad7a1e);
    box-shadow:0 2px 7px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,250,224,.6); }
-/* the badge gutter: the coin pill drops out of the ribbon's band instead of sharing it */
-#omenRow .omC.on .omSide{ padding-top:19px; }
+/* FIX5-UI §5 — THE GUTTER IS NOW GEOMETRIC, NOT A GUESS. `padding-top:19px` on a flex item
+   under `align-items:center` buys only HALF its value in clearance (the taller item is
+   re-centred), so the ribbon's 18px band and the coin pill still overlapped by 4.0px at
+   1400px — measured card 206.9..284.4, ribbon 223.9..241.9, pill 237.9..258.9. Dropping the
+   side column to the card's FOOT makes the clearance a property of the layout rather than of
+   a number that has to be re-tuned every time the ribbon's type changes: the ribbon owns the
+   top-right corner, the pill owns the bottom-right, and no arithmetic connects them. */
+#omenRow .omC.on .omSide{ padding-top:30px; }
 #omenRow .omC:not(.on) .omTk{ display:none; }
 /* the ribbon lands where the hotkey cap sits, and once an omen is taken the hotkey is moot —
    hide it rather than stack two badges in one corner (visibility, so nothing reflows) */
@@ -422,30 +439,14 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .pHead .mus:disabled .c.cap{ color:#b8a880; border-color:rgba(232,182,76,.25); }
 
 /* ── targeting doctrine (SPEC3 §F) ─────────────────────────────────── */
-/* Full-width under the two spend buttons: it is a standing order, not a purchase, so it
-   reads as a rail of three states with the live one lit rather than as another gold plate. */
-.tBtn.tgt{ flex:0 0 100%; display:flex; align-items:center; gap:7px; min-height:38px; padding:5px 9px;
-   margin-top:1px; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:#c9b78e; }
-.tBtn.tgt::before{ background:linear-gradient(90deg,rgba(232,182,76,0),rgba(232,182,76,.6) 50%,rgba(232,182,76,0)); }
-/* The word "Orders" cost 67px of a 204px row and pushed the T cap off the panel — the
-   crosshair says the same thing in 16. */
-.tBtn.tgt .tgL{ flex:0 0 auto; width:16px; height:16px; background-repeat:no-repeat;
-   background-position:50% 50%; background-size:100% 100%; opacity:.85;
-   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='7.4' fill='none' stroke='%23e8b64c' stroke-width='1.8'/><circle cx='12' cy='12' r='2' fill='%23e8b64c'/><g stroke='%23e8b64c' stroke-width='1.8' stroke-linecap='round'><path d='M12 1.6v3.4M12 19v3.4M1.6 12h3.4M19 12h3.4'/></g></svg>"); }
-.tBtn.tgt .tgS{ flex:1; display:flex; gap:3px; justify-content:flex-end; }
-.tBtn.tgt .tgS i{ position:relative; padding:2px 5px 3px; border-radius:3px; font-style:normal; font-size:10px;
-   letter-spacing:.06em; color:#9b8c6c; background:rgba(8,6,4,.5); border:1px solid rgba(232,182,76,.16); }
-.tBtn.tgt .tgS i.on{ color:#ffe7ab; background:linear-gradient(180deg,rgba(96,70,24,.95),rgba(44,32,10,.95));
-   border-color:rgba(232,182,76,.6); box-shadow:0 0 10px rgba(232,182,76,.3), inset 0 1px 0 rgba(255,228,178,.22); }
-/* FIX2-UI §5 — the hotkey used to be a FOURTH chip in the identical box, border and type as
-   the three doctrines, so [FIRST][STRONG][CLOSE][T] read as four modes on desktop and as an
-   unpressable 16px stub on a phone. It is an unboxed dimmed superscript now, and it is gone
-   entirely for a coarse pointer: there is no T key on a phone. */
-.tBtn.tgt .tgS i .hk{ position:absolute; top:-1px; right:1px; font-size:6.5px; line-height:1;
-   text-decoration:none; letter-spacing:0; color:#8a7a58; opacity:.62; }
-.tBtn.tgt .tgS i.on .hk{ color:#c9ab6e; opacity:.75; }
-.coarse .tBtn.tgt .tgS i .hk, .coarse #omenRow .omK{ display:none; }
-@media (pointer:coarse){ .tBtn.tgt .tgS i .hk, #omenRow .omK{ display:none; } }
+/* FIX5-UI §1 — the standing-order rail no longer lives in the ACTION strip. It was a
+   full-width plate under Upgrade / Dismantle, which put a control that spends nothing in the
+   money row and left it the sheet's one unlabelled widget; it is the third row of the
+   labelled element block now (see `#towerMenu .ordR`). The `.tBtn.tgt` / `.tgL` crosshair
+   rules that dressed the old plate are gone with it — the row's own label carries the word
+   and the hotkey, so there is nothing left for a 16px icon to stand in for. */
+.coarse #omenRow .omK{ display:none; }
+@media (pointer:coarse){ #omenRow .omK{ display:none; } }
 
 /* ── war seed (SPEC3 §E) ───────────────────────────────────────────── */
 /* The run's fingerprint: same seed, same swap slots, same omen draws. It belongs wherever a
@@ -500,14 +501,20 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    columns for the label and for the cap mean a chip has no way to reach the last letter of
    its own label, which is how PLACE, CANCEL and POWERS were being eaten. And it stands on
    the same framed dark-iron plate the settings sheet does, so it has ground under it. */
+/* FIX5-UI §3 — THE DISC IS TUCKED INTO THE POWERS RAIL, not dropped on the grass beside it.
+   It shares the rail's left edge (14px) and now its FORGE: the same 2px struck gold ring and
+   the same inset bevel the two power discs wear, at 60% of their diameter. A 1px hairline on
+   a 28px disc was the last piece of unframed chrome standing on the battlefield — read as a
+   web affordance rather than as part of the same set of iron controls 12px below it. */
 #hint{ position:absolute; left:14px; bottom:86px; }
-#hintT{ display:block; width:28px; height:28px; padding:0; border-radius:50%; line-height:1;
+#hintT{ display:block; width:30px; height:30px; padding:0; border-radius:50%; line-height:1;
         font-family:var(--sans); font-weight:600; font-size:15px; color:#f0d9a4;
-        border:1px solid rgba(232,182,76,.5); text-shadow:0 1px 2px #000;
-        box-shadow:0 5px 14px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,228,178,.16),
-                   inset 0 -6px 12px rgba(0,0,0,.5);
+        border:2px solid rgba(232,182,76,.55); text-shadow:0 1px 2px #000;
+        box-shadow:0 6px 16px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,228,178,.12),
+                   inset 0 -8px 16px rgba(0,0,0,.55);
         transition:filter .14s, box-shadow .14s; }
-#hintT:hover{ filter:brightness(1.3); box-shadow:0 5px 14px rgba(0,0,0,.62), 0 0 16px rgba(232,182,76,.42),
+#hintT:hover, #hint.open #hintT{ filter:brightness(1.3); border-color:rgba(255,216,130,.78);
+        box-shadow:0 6px 16px rgba(0,0,0,.62), 0 0 16px rgba(232,182,76,.42),
                    inset 0 1px 0 rgba(255,228,178,.22); }
 #hintL{ display:none; position:absolute; left:-6px; bottom:calc(100% + 4px); width:max-content;
         grid-template-columns:max-content max-content; column-gap:16px; row-gap:7px;
@@ -623,18 +630,67 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    the school has to look identical wherever it is stated or it is not one language. */
 #towerMenu .tL .tv{ flex:0 0 auto; white-space:nowrap; }
 #towerMenu .tL .tag.inl{ flex:0 0 auto; margin-left:1px; }
-/* "RESISTED BY" — the foes on the road right now that turn this tower's school aside. Same
-   two-column srow grammar as the stat sheet above it, so it reads as one table. */
-#towerMenu .rby{ display:flex; align-items:baseline; gap:8px; margin-top:6px; padding-top:5px;
-   border-top:1px solid rgba(232,182,76,.18); font-size:10.5px; }
-#towerMenu .rby>span{ flex:0 0 auto; font-family:var(--sans); font-weight:600; font-size:10.5px;
+/* ── FIX5-UI §1 — THE ELEMENT BLOCK ────────────────────────────────────────────────
+   SCHOOL / RESISTED BY / ORDERS, one labelled two-column block below the stat sheet, in the
+   stat sheet's own grammar: label left in the `.srow>span` voice, value docked to the same
+   right rail. Before this the school chip floated beside "TIER 1" with no label and no
+   column, the resist row answered with a bare em-dash pinned to the panel edge, and the
+   standing orders were an unlabelled plate in the money strip. Three defects, one block. */
+#towerMenu .elB{ margin-top:6px; padding-top:5px; border-top:1px solid rgba(232,182,76,.18); }
+#towerMenu .eRow{ display:flex; align-items:center; gap:8px; min-height:20px; font-size:10.5px; }
+#towerMenu .eRow+.eRow{ margin-top:4px; }
+#towerMenu .eRow>span{ flex:0 0 auto; font-family:var(--sans); font-weight:600; font-size:10.5px;
    letter-spacing:.06em; text-transform:uppercase; color:#b8a880; text-rendering:geometricPrecision; }
-#towerMenu .rby em{ flex:1 1 auto; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px 7px;
-   font-style:normal; }
-#towerMenu .rby b{ font-weight:400; font-size:11px; letter-spacing:.05em; color:#ffb2a2; white-space:nowrap; }
-#towerMenu .rby b u{ text-decoration:none; margin-left:5px; font-size:10px; color:#e6714f;
+#towerMenu .eRow>em{ flex:1 1 auto; display:flex; flex-wrap:wrap; align-items:center;
+   justify-content:flex-end; gap:4px 7px; font-style:normal; min-width:0; }
+/* the school chip is the block's first VALUE — same component the build card wears, now with
+   a label to belong to */
+#towerMenu .schR .tag.inl{ flex:0 0 auto; }
+/* a resist is the wave dispatch's own bust+pip, not a bare species name: the box docks the
+   pip in its corner (`.wpI`/`.wpP`, shared with #wavePrev) so it can never float free */
+#towerMenu .rby b{ display:inline-flex; align-items:center; gap:8px; font-weight:400; font-size:11px;
+   letter-spacing:.05em; color:#ffb2a2; white-space:nowrap; }
+#towerMenu .rby .rbP .wpI{ position:relative; display:block; flex:0 0 auto; width:22px; height:22px; }
+#towerMenu .rby .rbP .wpI canvas{ width:22px; height:22px; display:block;
+   filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+#towerMenu .rby .wpP{ position:absolute; right:-1px; bottom:-1px; display:flex; align-items:flex-end; gap:3px; }
+#towerMenu .rby .wpP .pip{ position:relative; width:10px; height:10px; border-radius:3px;
+   background-repeat:no-repeat; background-position:50% 50%; background-size:7px 7px;
+   border:1px solid rgba(10,7,2,.75);
+   box-shadow:0 1px 3px rgba(0,0,0,.7), inset 0 2.5px 0 rgba(255,231,171,.95), 0 0 0 1px rgba(255,231,171,.5); }
+#towerMenu .rby b u{ text-decoration:none; font-size:10.5px; color:#ffc2ac;
    font-variant-numeric:tabular-nums; }
-#towerMenu .rby b.nil{ color:#8a7f66; }
+/* the empty state: the dispatch's neutral dashed slot, plus the sentence */
+/* INTEGRATE §3 — THE EMPTY STATE IS A SENTENCE AND MUST BE ALLOWED TO BREAK. `.rby b` is
+   `white-space:nowrap` because a resist chip is a bust and a percentage that must never come
+   apart; the empty state inherited it and is not a chip. The label is `flex:0 0 auto` and the
+   value column is `justify-content:flex-end`, so an over-long unbreakable run has nowhere to
+   go but LEFT, on top of the label: French shipped "RÉSISTÉ PA[R]AUCUN SUR CETTE ROUTE" with
+   ~28px of overlap at 1600px (shots\ui.png at &lang=fr, crop 680,825,930,900). Wrapping is
+   the fix rather than a shorter string, because the next language will be longer again.
+   English still fits on one line, so no EN frame moves. */
+#towerMenu .rby b.nil{ color:#8a7f66; font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+   white-space:normal; text-align:right; }
+#towerMenu .rby b.nil .pip{ width:10px; height:10px; border-radius:3px;
+   background-color:rgba(58,44,20,.22); border:1px dashed rgba(140,118,70,.8);
+   box-shadow:inset 0 0 0 1px rgba(255,248,224,.14); }
+/* ORDERS: the three doctrines as the row's VALUE. No plate of its own — the block is the
+   plate — so it stops competing with Upgrade / Dismantle for "this is a button". */
+#towerMenu .ordR .tgt{ padding:0; border:0; background:none; box-shadow:none; }
+#towerMenu .ordR .tgS{ display:flex; gap:3px; }
+#towerMenu .ordR .tgS i{ padding:2px 6px 3px; border-radius:3px; font-style:normal; font-size:9.5px;
+   letter-spacing:.11em; text-transform:uppercase; text-rendering:geometricPrecision;
+   color:#9b8c6c; background:rgba(8,6,4,.5); border:1px solid rgba(232,182,76,.16); }
+#towerMenu .ordR .tgS i.on{ color:#ffe7ab; background:linear-gradient(180deg,rgba(96,70,24,.95),rgba(44,32,10,.95));
+   border-color:rgba(232,182,76,.6); box-shadow:0 0 10px rgba(232,182,76,.3), inset 0 1px 0 rgba(255,228,178,.22); }
+#towerMenu .ordR .tgt:hover .tgS i{ border-color:rgba(232,182,76,.34); }
+/* the hotkey is stated ONCE, on the label, unboxed — it used to ride the top border of all
+   three chips at 6.5px and clipped through it in French ("TÊTE ᵀ", shots\_gear_fr.png) */
+#towerMenu .ordR>span .hk{ text-decoration:none; margin-left:5px; padding:1px 3px 2px; border-radius:2px;
+   font-family:var(--sans); font-size:8px; letter-spacing:0; color:#c9ab6e;
+   background:rgba(8,6,4,.55); border:1px solid rgba(232,182,76,.24); }
+.coarse #towerMenu .ordR>span .hk{ display:none; }
+@media (pointer:coarse){ #towerMenu .ordR>span .hk{ display:none; } }
 .pips{ display:flex; gap:5px; margin-top:5px; }
 .pips i{ width:9px; height:9px; border-radius:50%; background:rgba(0,0,0,.6);
          box-shadow:inset 0 0 0 1px rgba(232,182,76,.45); }
@@ -721,6 +777,16 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 /* touch: the writ sits between the two thumbs rather than beside them */
 #placeBar.touch{ left:9px; right:9px; transform:none; justify-content:space-between; gap:6px; }
 #placeBar.touch #placeMsg{ white-space:normal; text-align:center; font-size:13px; }
+/* FIX5-UI §2 — THE WRIT MUST FIT THE PHONE WHETHER OR NOT THE POINTER IS COARSE. The bar was
+   centred with `translateX(-50%)` and `white-space:nowrap`, and the only rule that ever
+   released either was `.touch` — which is written from the POINTER TYPE, not the width. A
+   390px viewport with a mouse (the harness's `_place_m`, and any narrow desktop window) put
+   a nowrap writ on a 50% anchor and clipped it off the right edge: measured at 390px, the
+   plate ran to x=421 and shipped "CLICK TO RAIS". Width, not pointer, decides the layout. */
+@media (max-width:760px){
+  #placeBar{ left:9px; right:9px; transform:none; justify-content:center; }
+  #placeMsg{ white-space:normal; text-align:center; max-width:100%; }
+}
 
 /* ── build-card damage glyphs + effect writ (SPEC2 §A/§B) ──────────── */
 /* Each card says three things at a glance: what it costs, what KIND of harm it does
@@ -853,14 +919,20 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
       text-shadow:0 1px 0 #000; margin-bottom:3px; }
 /* footer row: the placement confirm, on the green ground it has always used, inside the plate
    that already carries the name, the writ and the stats (FIX4-UI §4) */
+/* FIX5-UI §2 — THE FOOTER SPEAKS THE PLATE'S LANGUAGE. `font-variant-caps:small-caps` was
+   the tell: it renders lowercase as capitals at ~0.72em, so the footer was a mixed-height
+   pseudo-caps line under a plate whose every other row is real letterspaced uppercase — the
+   same defect that made the writ read as a foreign object when it floated 200px away, moved
+   inside the plate. Real capitals, the flyout's own letterspacing, and the state is carried
+   by the tinted ground (green / red) alone rather than by a second type voice. */
 .det .dGo{ display:none; margin:9px -10px -9px; padding:6px 10px 7px; border-radius:0 0 5px 5px;
-      font-size:12.5px; letter-spacing:.09em; line-height:1.35; color:#dff0d2; text-align:center;
-      font-variant-caps:small-caps;   /* the writ's own voice, unchanged — see #placeMsg */
+      font-size:10.5px; letter-spacing:.15em; line-height:1.4; color:#dff0d2; text-align:center;
+      text-transform:uppercase; text-rendering:geometricPrecision;
       background:linear-gradient(180deg,rgba(52,92,44,.94),rgba(24,48,22,.96));
       border-top:1px solid rgba(162,225,105,.42);
       box-shadow:inset 0 1px 0 rgba(190,240,150,.16); }
 .det .dGo:not(:empty){ display:block; }
-.det .dGo b{ font-weight:400; color:#ffe2a2; }
+.det .dGo b{ font-weight:400; color:#ffe7ab; letter-spacing:.17em; }
 .det .dGo .ic{ width:14px; height:14px; display:inline-block; vertical-align:-2px; margin:0 1px 0 5px; }
 .det .dGo .pSub{ display:block; margin-top:3px; font-size:11px; letter-spacing:.05em; color:#e6dcc0; }
 .det .dGo.bad{ color:#ffd6cb; background:linear-gradient(180deg,rgba(98,34,26,.94),rgba(50,17,13,.96));
@@ -1404,7 +1476,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      gold treatment below separates it from every outlined control on the bar. */
   .pHead .mus .lg{ display:none; }
   .pHead .mus .lgS{ display:inline; }
-  .tBtn.tgt{ min-height:44px; }
+  #towerMenu .ordR .tgS i{ padding:5px 8px 6px; font-size:10.5px; }
   .panel{ left:0; right:0; bottom:0; transform:none; width:100%; border-radius:12px 12px 0 0;
           padding:8px 8px calc(10px + env(safe-area-inset-bottom));
           border-width:13px 13px 0; }
@@ -1480,8 +1552,19 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   /* the garrison sheet is full-width here and has the room the 58px build card does not —
      the school keeps its WORD (FIX4-UI §6a) */
   #towerMenu .tL .tag.inl .tw{ display:inline; }
-  #towerMenu .rby{ margin-top:5px; }
-  #towerMenu .rby>span{ font-size:10px; }
+  #towerMenu .elB{ margin-top:5px; }
+  #towerMenu .eRow>span{ font-size:10px; }
+  /* the phone drops the word from every `.tag` (the glyph is the word — see below) and that
+     is right on a 46px build card, but WRONG here: this chip is the answer to a labelled
+     question with 300px of empty rail between the two, and a bare 12px glyph at the far end
+     of it is not an answer. The garrison sheet keeps the word. */
+  #towerMenu .schR .tag .tw{ display:inline; }
+  #towerMenu .schR .tag{ padding:1px 8px 2px 3px; font-size:9.5px; letter-spacing:.11em; border-radius:9px; }
+  #towerMenu .schR .tag i{ width:14px; height:14px; }
+  /* a 390px sheet cannot hold label + three busts + three percentages on one line: the
+     resist row wraps to its own line under its label, full width, still right-docked */
+  #towerMenu .rby{ flex-wrap:wrap; }
+  #towerMenu .rby>em{ flex:1 0 100%; justify-content:flex-start; }
   #settings{ top:auto; bottom:calc(10px + env(safe-area-inset-bottom)); right:7px; left:7px; width:auto; }
   #msg{ top:24%; padding:0 16px; }
   #msg .mT{ font-size:9.6vw; letter-spacing:.12em; }
