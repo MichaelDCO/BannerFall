@@ -97,6 +97,7 @@ en: {
   'wave.musterIn': 'Muster in {0}',
   'wave.strong': '{0} strong on the road',
   'wave.foe': 'This foe',
+  'wave.more': '+{0} more',
   'pip.res': '{0} resists {1}',
   'pip.weak': '{0} is weak to {1}',
   // ── war omens ────────────────────────────────────────────────────────────────────
@@ -184,6 +185,7 @@ en: {
   'pw.cast': ' · click to call it down',
   'cp.cd': 'Not yet mustered',
   'hint.powers': 'Powers', 'hint.traps': 'Traps',
+  'hint.legend': 'Key bindings',
   // ── garrison sheet ───────────────────────────────────────────────────────────────
   'tm.garrison': 'Garrison', 'tm.veteran': 'Veteran',
   'tm.tier': 'Tier {0}', 'tm.max': 'Max',
@@ -356,6 +358,7 @@ fr: {
   'wave.musterIn': 'Ost dans {0}',
   'wave.strong': '{0} sur la route',
   'wave.foe': 'Cet ennemi',
+  'wave.more': '+{0} autres',
   'pip.res': '{0} résiste : {1}',
   'pip.weak': '{0} craint : {1}',
   'om.head': 'Présages de guerre',
@@ -441,6 +444,7 @@ fr: {
   'pw.cast': ' · clic pour l’appeler',
   'cp.cd': 'Pas encore rassemblé',
   'hint.powers': 'Pouvoirs', 'hint.traps': 'Pièges',
+  'hint.legend': 'Raccourcis clavier',
   'tm.garrison': 'Garnison', 'tm.veteran': 'Vétéran',
   'tm.tier': 'Rang {0}', 'tm.max': 'Max',
   'tm.up': '▲ Élever', 'tm.built': 'Achevée',
@@ -659,8 +663,11 @@ const MAPS = [
     ],
     palette: {
       // snow throws an enormous amount of light back up — this map keeps a fat ambient
-      sun: 0xffe6c4, sunI: 5.15, hemiSky: 0x9ec0ee, hemiGnd: 0x9aa6b2, hemiI: 0.70,
-      fill: 0x9fc0e8, fillI: 0.50, haze: 0xcfd9e2, bg: 0xdce7f2, envI: 0.52,
+      // Snow still throws light back up, so this map keeps the fattest ambient of the three —
+      // but it follows the base rig's warm-key / cool-thin-fill split, or the drifts have no
+      // modelling and the whole pass reads as one sheet of paper.
+      sun: 0xffe6c4, sunI: 7.10, hemiSky: 0x9ec0ee, hemiGnd: 0x7d8794, hemiI: 0.54,
+      fill: 0x9fc0e8, fillI: 0.32, haze: 0xcfd9e2, bg: 0xdce7f2, envI: 0.38,
       hazeV: [0.420, 0.470, 0.545],
       skyZen: [0.055, 0.150, 0.400], skyMid: [0.300, 0.470, 0.700], skyHi: [0.660, 0.720, 0.790],
       skyHor: [0.800, 0.845, 0.900], skyLow: [0.620, 0.665, 0.720], sunGlow: [1.0, 0.97, 0.92],
@@ -679,10 +686,10 @@ const MAPS = [
       rockK: [0.92, 0.98, 1.14], tuftK: [1.06, 1.06, 1.10],
       blade: [162, 164, 172], bladeW: [40, 34, 24], tuftN: 0.15,
       treeMix: [0.10, 0.26],
-      oakD: [0.0180, 0.0260, 0.0230], oakL: [0.1550, 0.1900, 0.1900],
-      busD: [0.0170, 0.0230, 0.0225], busL: [0.1450, 0.1720, 0.1780],
-      ashD: [0.0220, 0.0300, 0.0290], ashL: [0.1900, 0.2200, 0.2300],
-      pinD: [0.0140, 0.0240, 0.0220], pinL: [0.0780, 0.1220, 0.1140],
+      oakD: [0.0330, 0.0460, 0.0430], oakL: [0.2600, 0.3080, 0.3080],
+      busD: [0.0310, 0.0410, 0.0400], busL: [0.2380, 0.2760, 0.2860],
+      ashD: [0.0400, 0.0530, 0.0510], ashL: [0.3050, 0.3480, 0.3600],
+      pinD: [0.0270, 0.0430, 0.0400], pinL: [0.1520, 0.2260, 0.2140],
       weather: { col: [1.85, 1.98, 2.20], fall: 3.1, dx: -1.9, dz: 0.8, size: 1.55, alpha: 1.15, floor: 0.58 },
     } },
   // ── 3. EMBER WASTES — the fork in the road ───────────────────────────────────
@@ -712,35 +719,57 @@ const MAPS = [
       // Ember is the one map that must NOT run a thin ambient: with a saturated orange key
       // and nothing else, every neutral surface in frame turns the same orange and the map
       // goes monochrome. The violet-slate hemisphere is doing load-bearing work here.
-      sun: 0xffb884, sunI: 4.80, hemiSky: 0x8a76b4, hemiGnd: 0x4a4356, hemiI: 0.80,
-      fill: 0x6fa8ff, fillI: 0.52, haze: 0x8b7f9a, bg: 0xb0a6bc, envI: 0.46,
-      hazeV: [0.235, 0.205, 0.285],
+      // r3: the hue plan above was right and the VALUE plan was missing entirely. Whole-scene
+      // luminance ran p10 21.8 -> p90 77.2 — a 55-wide span sitting in the bottom quarter of
+      // the range — and cliffs (62,42,37) measured the same value AND the same hue as the
+      // ground (67,40,31), so rock, terrain and trees dissolved into one brown field and the
+      // red horde read as scattered pixels. The map is now split THREE ways in value as well
+      // as hue: cool near-neutral ash floor, much lighter warm scorched basalt for rock, and
+      // near-black charred trees that read as pure silhouettes against the ash.
+      // Ember is the one map that must NOT run a thin ambient, and a first cut of this fix
+      // proved it the hard way: dropped to the base rig's fill the ash floor crushed to V=3
+      // over half the frame and the map went from monochrome-bright to monochrome-black.
+      // The ambient here is FAT and COOL — that is what buys the warm/cool separation on a
+      // map whose key is already orange, and it keeps shadowed ash a readable violet-grey.
+      sun: 0xffb884, sunI: 8.40, hemiSky: 0x7b68b8, hemiGnd: 0x3a3448, hemiI: 1.05,
+      fill: 0x7fa6e8, fillI: 0.60, haze: 0x8b8496, bg: 0xb0a6bc, envI: 0.50,
+      hazeV: [0.200, 0.198, 0.290],
       skyZen: [0.150, 0.145, 0.270], skyMid: [0.330, 0.300, 0.400], skyHi: [0.520, 0.470, 0.560],
       skyHor: [0.700, 0.560, 0.540], skyLow: [0.430, 0.385, 0.470], sunGlow: [1.0, 0.62, 0.30],
       ibl: ['#463c66', '#6f6486', '#9a90a8', '#f0d3a0', '#a89ab0', '#5d5566'],
       disc: ['rgba(255,232,196,1)', 'rgba(255,176,110,.55)', 'rgba(255,140,70,0)'],
       bgGrad: ['#5a5170', '#7d7590', '#9b93a8', '#c2b2ae', '#8b7f9a', '#5f566b'],
-      gDark: [0.0105, 0.0092, 0.0125], gMid: [0.0250, 0.0225, 0.0270], gLit: [0.0530, 0.0490, 0.0555],
-      dry0: [0.0300, 0.0255, 0.0235], dry1: [0.0880, 0.0740, 0.0620], bare: [0.0520, 0.0410, 0.0330],
-      dirt0: [0.0480, 0.0395, 0.0355], dirt1: [0.1000, 0.0840, 0.0740],
-      // Rock is authored COOL on this map so it reads grey-violet under the orange key —
-      // warm rock on warm sand was the single biggest contributor to the monochrome read.
-      rockA: [0.0230, 0.0245, 0.0290], rockB: [0.1120, 0.1130, 0.1330],
-      rockWarm: [1.06, 1.00, 0.92], rockCool: [0.80, 0.88, 1.14],
-      moss: [0.0540, 0.0580, 0.0470], scree: [0.1300, 0.1220, 0.1180],
-      lowG: [0.86, 0.78, 0.86], lowRiv: [0.145, 0.120, 0.110],
-      ridge: [[0.062, 0.050, 0.052], [0.080, 0.064, 0.062], [0.098, 0.080, 0.076]],
-      rockK: [0.80, 0.88, 1.10], tuftK: [0.86, 0.84, 0.94],
+      // FLOOR — cool near-neutral ash. Dark on purpose (the horde and the lava are what the
+      // eye is meant to find), but the brown cast is gone, so it no longer competes with rock.
+      gDark: [0.0100, 0.0098, 0.0108], gMid: [0.0220, 0.0216, 0.0230], gLit: [0.0395, 0.0388, 0.0405],
+      dry0: [0.0240, 0.0230, 0.0226], dry1: [0.0590, 0.0566, 0.0552], bare: [0.0340, 0.0324, 0.0312],
+      dirt0: [0.0360, 0.0342, 0.0330], dirt1: [0.0730, 0.0692, 0.0668],
+      // ROCK — scorched basalt, warm and MUCH lighter than the floor. rockB is the exposed
+      // course and is the map's value ceiling outside the lava; it is what gives the cliffs
+      // a silhouette against the ash and drags scene p90 up out of the mud.
+      rockA: [0.0640, 0.0498, 0.0410], rockB: [0.4250, 0.3180, 0.2300],
+      rockWarm: [1.18, 1.02, 0.86], rockCool: [0.84, 0.90, 1.08],
+      moss: [0.0540, 0.0500, 0.0430], scree: [0.2000, 0.1740, 0.1460],
+      lowG: [0.86, 0.80, 0.84], lowRiv: [0.145, 0.128, 0.120],
+      ridge: [[0.090, 0.074, 0.070], [0.122, 0.098, 0.090], [0.155, 0.124, 0.110]],
+      rockK: [1.30, 1.08, 0.88], tuftK: [0.86, 0.84, 0.94],
       blade: [96, 92, 104], bladeW: [46, 26, 8], tuftN: 0.20, lava: 1,
       // Weighted hard toward dark olive conifers (58%, was 26%): a wood of bright orange
       // autumn canopies sat in exactly the same hue wedge as the sand AND the enemy
       // tabard, so the horde had nowhere to read. The remaining broadleaves go deep
       // rust-brown rather than pumpkin.
+      // TREES — charred to near-black. On an ash map a tree is not a colour, it is a
+      // SILHOUETTE; at the old mid-brown they were the same value as the ground they stood
+      // on and the wood read as texture rather than as objects.
       treeMix: [0.20, 0.42],
-      oakD: [0.0165, 0.0155, 0.0210], oakL: [0.0690, 0.0645, 0.0850],
-      busD: [0.0165, 0.0155, 0.0205], busL: [0.0650, 0.0615, 0.0790],
-      ashD: [0.0180, 0.0170, 0.0230], ashL: [0.0770, 0.0725, 0.0950],
-      pinD: [0.0150, 0.0165, 0.0155], pinL: [0.0560, 0.0640, 0.0600],
+      // Under a 7.6-intensity key plus this map's fat ambient, a 2% albedo still renders at
+      // mid-brown — the same value as the boulders — so the first cut of "charred" was still
+      // a wood of brown blobs. These are ~1%, and cool rather than warm, so they read as
+      // burnt sticks against warm rock and lit ash instead of joining the same brown field.
+      oakD: [0.0030, 0.0029, 0.0031], oakL: [0.0112, 0.0104, 0.0106],
+      busD: [0.0030, 0.0029, 0.0031], busL: [0.0104, 0.0097, 0.0100],
+      ashD: [0.0033, 0.0032, 0.0034], ashL: [0.0122, 0.0113, 0.0115],
+      pinD: [0.0028, 0.0028, 0.0030], pinL: [0.0096, 0.0092, 0.0096],
       weather: { col: [1.30, 0.92, 0.70], fall: 1.15, dx: -2.6, dz: 1.1, size: 1.25, alpha: 0.95, floor: 0.52 },
     } },
 ];
@@ -763,15 +792,32 @@ const WPAL_BASE = {
   // Golden hour needs a warm/cool SPLIT, not just a warm tint: key goes warmer and much
   // stronger, hemisphere + fill go cool and thin, so lit grass and shadowed grass finally
   // separate in hue instead of only in brightness.
-  sun: 0xffdfae, sunI: 5.70, hemiSky: 0xbcd3ee, hemiGnd: 0xc0a274, hemiI: 0.98,
-  fill: 0xb9c2cc, fillI: 0.46, haze: 0xdcc9a8, bg: 0xe6ddc4, envI: 0.44,
-  hazeV: [0.395, 0.360, 0.288],
+  // r3: the split was still nominal — the fill was a WARM 0xc0a274 ground bounce at nearly
+  // the key's own strength, so a shadow was an 18% value multiply with a 0.5° hue shift and
+  // the sun read as white (lit meadow measured R-B +40 where golden hour wants +70 or more).
+  // The fill is now genuinely cool and genuinely thin, and the key carries the frame.
+  // The two halves of golden hour pull against each other and this is where they balance:
+  // more fill lifts the shadows toward the 38-45% drop the read wants, less fill keeps the
+  // lit meadow's R-B above +70. Cool hue, moderate strength — a shadow here is a COLOUR
+  // change first and a brightness change second, which is the whole point of the split.
+  sun: 0xffdfae, sunI: 9.20, hemiSky: 0x86acd6, hemiGnd: 0x6b5a3e, hemiI: 0.72,
+  fill: 0x9db4d2, fillI: 0.38, haze: 0xc9cfd6, bg: 0xd6e2ee, envI: 0.33,
+  // Aerial perspective is COOL (SPEC §3 haze #cfe0ee). This was a warm oatmeal, and since
+  // the game camera pitches ~50° down, the hazed lowland — not the sky — is what fills the
+  // top corners of every frame. A warm haze there is why the diorama read as a model on a
+  // table instead of a place with distance behind it.
+  hazeV: [0.250, 0.335, 0.470],
   skyZen: [0.070, 0.205, 0.500], skyMid: [0.335, 0.520, 0.745], skyHi: [0.560, 0.640, 0.740],
-  skyHor: [0.900, 0.755, 0.510], skyLow: [0.700, 0.610, 0.470], sunGlow: [1.0, 0.80, 0.50],
-  ibl: ['#2f63b4', '#6ea0d8', '#bcd2e4', '#f0dfbc', '#c9b998', '#7d7460'],
+  // skyHor stays warm — that IS the golden-hour band at the sun's azimuth. skyLow (below
+  // the horizon, which is most of what this camera sees) goes cool, so distance recedes.
+  skyHor: [0.880, 0.735, 0.480], skyLow: [0.330, 0.420, 0.575], sunGlow: [1.0, 0.80, 0.50],
+  ibl: ['#2f63b4', '#6ea0d8', '#bcd2e4', '#f0dfbc', '#b9c2cb', '#77808c'],
   disc: ['rgba(255,244,214,1)', 'rgba(255,214,150,.55)', 'rgba(255,200,140,0)'],
-  bgGrad: ['#7e9dc4', '#9db6d2', '#cfe0ee', '#ddd8c8', '#dcc9a8', '#9c9078'],
-  gDark: [0.0250, 0.0640, 0.0155], gMid: [0.0900, 0.2180, 0.0355], gLit: [0.1620, 0.3480, 0.0640],
+  bgGrad: ['#7e9dc4', '#9db6d2', '#cfe0ee', '#dcd3c0', '#b8c6d6', '#7f8f9f'],
+  // Golden-hour grass is a YELLOW-green, not a blue-green: red up, blue down, inside the
+  // #5d8a34 -> #7fae4a family SPEC §3 asks for. This is the other half of the warm/cool
+  // split — a cool key on a cool albedo could never have produced a warm meadow.
+  gDark: [0.0300, 0.0640, 0.0120], gMid: [0.1100, 0.2200, 0.0280], gLit: [0.1980, 0.3520, 0.0480],
   dry0: [0.1180, 0.1010, 0.0400], dry1: [0.2450, 0.2080, 0.0790], bare: [0.1000, 0.0790, 0.0500],
   dirt0: [0.1480, 0.1090, 0.0700], dirt1: [0.2980, 0.2380, 0.1580],
   rockA: [0.0290, 0.0295, 0.0300], rockB: [0.1980, 0.1950, 0.1840],
@@ -781,14 +827,19 @@ const WPAL_BASE = {
   lowG: [0.92, 1.00, 0.44], lowRiv: [0.150, 0.172, 0.190],
   ridge: [[0.046, 0.058, 0.062], [0.062, 0.074, 0.086], [0.078, 0.088, 0.104]],
   rockK: [1, 1, 1], tuftK: [1, 1, 1], lava: 0,
-  blade: [78, 112, 44], bladeW: [68, 18, -12], tuftN: 1,
+  blade: [124, 152, 58], bladeW: [78, 30, -8], tuftN: 1,
   treeMix: [0.42, 0.72],
-  oakD: [0.0130, 0.0270, 0.0080], oakL: [0.1020, 0.1810, 0.0400],
-  busD: [0.0140, 0.0270, 0.0080], busL: [0.0900, 0.1520, 0.0400],
-  ashD: [0.0190, 0.0370, 0.0110], ashL: [0.1400, 0.2280, 0.0620],
+  // r3: paintCanopy already bakes a 5:1 top-to-underside AO ramp, so the gradient was never
+  // the problem — the ABSOLUTE value was. Canopy tops measured V31 against a V56 meadow, i.e.
+  // dark olive potatoes dumped on hot lime, the exact inverse of the reference, where a
+  // sunlit canopy top is the brightest green in the frame. `lit` is the top-facing end of
+  // that ramp and now reaches roughly #9cb84e; `deep` is the cool interior it falls to.
+  oakD: [0.0300, 0.0560, 0.0170], oakL: [0.2900, 0.4100, 0.0750],
+  busD: [0.0290, 0.0520, 0.0165], busL: [0.2350, 0.3400, 0.0660],
+  ashD: [0.0400, 0.0700, 0.0230], ashL: [0.3300, 0.4450, 0.0900],
   // conifers used to sit at roughly half the oak's albedo, which rendered them as
-  // near-black holes at any distance. Dark, but readable.
-  pinD: [0.0125, 0.0255, 0.0140], pinL: [0.0800, 0.1450, 0.0590],
+  // near-black holes at any distance. Still the darkest foliage on the map, but readable.
+  pinD: [0.0260, 0.0460, 0.0250], pinL: [0.1850, 0.2780, 0.0800],
   weather: null,
 };
 const WPAL = Object.assign({}, WPAL_BASE, MAP.palette || {});
@@ -808,12 +859,13 @@ const wrng = () => { _ws |= 0; _ws = _ws + 0x6D2B79F5 | 0; let t = Math.imul(_ws
 const wr = (a, b) => a + (b - a) * wrng();
 
 // ── lighting: warm sun raking from screen-left, cool sky fill, faked bounce ──
-// Golden hour, not midday. Elevation 44° (SPEC §3 asks ~48°): long enough that shadows
-// rake ACROSS the road instead of pooling under everything, short enough that a single
-// roadside oak stand cannot throw a 30u slab of shade over the whole hero read. The cliff ring does
-// then throw a long shadow, which is why the rim's own contribution is kept out of the
-// shadow frustum's far plane rather than by raising the sun back up.
-const SUN_EL = 44 * Math.PI / 180, SUN_R = 132;
+// Golden hour, not midday. r3: 44° still put the sun three quarters of the way up the sky —
+// shadows ran 1.04× object height, which is a midday stub, and under a strong fill they were
+// invisible on the meadow at all. 34° runs them at 1.48× height, so a tree finally lies down
+// across the grass and the towers get a read on the ground beside them. The cliff ring's own
+// (now very long) shadow is kept off the hero read by the shadow frustum fit below, not by
+// raising the sun back up.
+const SUN_EL = 34 * Math.PI / 180, SUN_R = 132;
 const sun = new THREE.DirectionalLight(WPAL.sun, WPAL.sunI);
 // Azimuth from the lower-left of the game camera (SPEC §3). Swinging it further round to
 // -x does make shadows rake more laterally, but it also lights the meadow flat-on and the
@@ -826,9 +878,49 @@ sun.shadow.mapSize.set(Q.shadow, Q.shadow);
 // the watchtower's leg lattice was unreadable in its own shadow.
 sun.shadow.camera.left = -84; sun.shadow.camera.right = 84;
 sun.shadow.camera.top = 62; sun.shadow.camera.bottom = -62;
-sun.shadow.camera.near = 1; sun.shadow.camera.far = 300;
-sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.045; sun.shadow.radius = 2;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 320;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02; sun.shadow.radius = 3;
 sun.shadow.camera.updateProjectionMatrix();   // ortho frustum was edited after construction
+// ── shadow frustum fitted to the VISIBLE ground each frame ───────────────────
+// A fixed ±84/±62 box spends 2048 texels on the whole playfield whether the camera is at
+// overview pull-back or two units off a watchtower's ladder. At battle framing that was
+// several times more shadow map than the shot needs, which is why the watchtower's timber
+// lattice cast one featureless slab: the texel footprint was wider than the timber.
+// Project the four camera-frustum corner rays onto y=0, take their AABB in LIGHT space
+// (the light's own view basis, so the box does not have to be axis-aligned to the world),
+// and give it back to the ortho camera. sun.position never moves — ARMIES reads it once at
+// build time for its ground-shadow bearing — only the ortho half-extents change.
+// world -> light view basis. The sun never moves, so this is built once.
+const _shBasis = new THREE.Matrix4()
+  .lookAt(sun.position, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0)).invert();
+const _shPts = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+const _shV = new THREE.Vector3();
+function fitSunShadow() {
+  const cam = G.camera; if (!cam) return;
+  const cp = cam.position;
+  let mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+  for (let i = 0; i < 4; i++) {
+    _shV.set(i & 1 ? 1 : -1, i & 2 ? 1 : -1, 0.5).unproject(cam).sub(cp).normalize();
+    // Rays that leave above the horizon (or graze it) get clamped to a sane reach rather
+    // than shooting the box to infinity; 210u is past the far cliff crest from any preset.
+    const t = Math.min(_shV.y < -0.05 ? -cp.y / _shV.y : 210, 210);
+    _shPts[i].copy(cp).addScaledVector(_shV, t).applyMatrix4(_shBasis);
+    const p = _shPts[i];
+    if (p.x < mnx) mnx = p.x; if (p.x > mxx) mxx = p.x;
+    if (p.y < mny) mny = p.y; if (p.y > mxy) mxy = p.y;
+  }
+  // Margin for casters that stand OUTSIDE the visible ground and still throw into it —
+  // at 34° elevation a 20u tower reaches ~30u, and the cliff rim is taller than that, so
+  // the box is grown toward the light (+y in light space) considerably harder.
+  mnx -= 26; mxx += 26; mny -= 26; mxy += 62;
+  // Snap the box to whole texels so a panning camera does not make every shadow edge
+  // crawl; without this the tightened frustum trades aliasing for shimmer.
+  const sc = sun.shadow, texel = Math.max(mxx - mnx, mxy - mny) / sc.mapSize.x;
+  const q = v => Math.round(v / texel) * texel;
+  sc.camera.left = q(mnx); sc.camera.right = q(mxx);
+  sc.camera.bottom = q(mny); sc.camera.top = q(mxy);
+  sc.camera.updateProjectionMatrix();
+}
 const hemi = new THREE.HemisphereLight(WPAL.hemiSky, WPAL.hemiGnd, WPAL.hemiI);
 const fill = new THREE.DirectionalLight(WPAL.fill, WPAL.fillI);   // sky bounce from the shadow side
 fill.position.set(84, 30, -58);
@@ -846,11 +938,11 @@ float fbm3(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<3;i++){ s+=a*vn2(p); p*=2.1
 `.replace('FB_OCT', tier === 'mobile' ? '2' : '4').replace('FB_NRM', tier === 'mobile' ? '1.3333' : '1.0667');
 const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false, fog: false,
-  uniforms: { uSun: { value: SUNDIR } },
+  uniforms: { uSun: { value: SUNDIR }, uNight: { value: 0 } },
   vertexShader: 'varying vec3 vD;\nvoid main(){ vD = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   // NOTE: three's fragment prefix already defines the tonemapping + colorspace helpers for
   // ShaderMaterial — re-including their *_pars chunks redefines the functions (link error).
-  fragmentShader: '#include <common>\nvarying vec3 vD;\nuniform vec3 uSun;\n' + NOISE_GLSL + `
+  fragmentShader: '#include <common>\nvarying vec3 vD;\nuniform vec3 uSun;\nuniform float uNight;\n' + NOISE_GLSL + `
 void main(){
   vec3 d = normalize(vD); float y = d.y;
   vec3 zen = ` + v3s(WPAL.skyZen) + `;
@@ -874,6 +966,14 @@ void main(){
   vec3 clc = mix(vec3(1.16,1.05,0.96), vec3(1.55,1.28,0.98), pow(sd,1.4));
   col = mix(col, clc, cl*0.56);
   col = mix(col, ` + v3s(WPAL.skyLow) + `, smoothstep(0.04,-0.12,y));
+  // THE LONG NIGHT: the dome goes to a deep cold blue and the sun's glow is extinguished
+  // with it, so the warm band at the horizon cannot survive the beat it is supposed to end.
+  if (uNight > 0.001) {
+    vec3 nz = vec3(0.006,0.011,0.030), nh = vec3(0.028,0.042,0.082);
+    vec3 ncol = mix(nh, nz, smoothstep(-0.05,0.55,y));
+    ncol += vec3(0.10,0.12,0.17)*cl*0.30;             // the cloud bands keep a faint moonlit edge
+    col = mix(col, ncol, uNight);
+  }
   gl_FragColor = vec4(col,1.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -1076,7 +1176,7 @@ G.groundNormal = (x, z, out) => {
   return (out || new THREE.Vector3()).set(bi(HG, x - e, z) - bi(HG, x + e, z), 2 * e, bi(HG, x, z - e) - bi(HG, x, z + e)).normalize();
 };
 
-const World = { group: new THREE.Group(), pads: [], props: [] };
+const World = { group: new THREE.Group(), pads: [], props: [], fireLights: [], fireMat: null };
 G.World = World;
 scene.add(World.group);
 
@@ -1218,7 +1318,10 @@ function tuftTex() {
   for (let i = 0; i < 190; i++) {
     const x0 = 10 + wrng() * (S - 20), w = 3 + wrng() * 7, hh = S * (0.26 + wrng() * 0.56);
     const bend = (wrng() - 0.5) * S * 0.60;
-    const lum = 0.38 + Math.pow(wrng(), 0.9) * 0.64;
+    // r3: the floor was 0.38, so more than a third of every tuft card was darker than the
+    // meadow behind it and the ground cover read as dark scribble — a camouflage stipple
+    // over the grass rather than grass. A sunlit tuft is LIGHTER than the sward it stands in.
+    const lum = 0.56 + Math.pow(wrng(), 0.9) * 0.50;
     const warm = wrng() < 0.14 ? 1 : 0;                     // a few bleached / seeding blades
     const TB = WPAL.blade, TW = WPAL.bladeW;
     g.fillStyle = 'rgb(' + Math.round((TB[0] + warm * TW[0]) * lum) + ',' + Math.round((TB[1] + warm * TW[1]) * lum) + ',' + Math.round((TB[2] + warm * TW[2]) * lum) + ')';
@@ -1226,7 +1329,7 @@ function tuftTex() {
     g.quadraticCurveTo(x0 + bend * 0.5 + w, S - hh * 0.6, x0 + w / 2, S); g.closePath(); g.fill();
   }
   const sh = g.createLinearGradient(0, S, 0, S * 0.45);
-  sh.addColorStop(0, 'rgba(14,22,8,.52)'); sh.addColorStop(1, 'rgba(14,22,8,0)');
+  sh.addColorStop(0, 'rgba(20,26,10,.32)'); sh.addColorStop(1, 'rgba(20,26,10,0)');
   g.globalCompositeOperation = 'source-atop'; g.fillStyle = sh; g.fillRect(0, 0, S, S);
   // Soft alpha falloff over the top ~18%: with alphaTest the card's straight top edge
   // would otherwise cut a hard horizontal line through any blade that reached it.
@@ -1711,31 +1814,72 @@ function houseParts(w, d, h, seed) {
 // keeps the Vale's shader source untouched.
 const SNOW_GLSL = WPAL.snow > 0 ? `
     {
-      float lie = smoothstep(0.62, 0.97, vWN.y);
-      float drift = smoothstep(0.30, 0.78, nM*0.46 + nL*0.34 + nS*0.20 + vWP.y*0.0090);
-      float snw = lie * drift * (0.55 + 0.45*nF) * ${WPAL.snow};
+      // lie and drift decide WHERE snow is, and both used to run on high-frequency input:
+      // a slope test that tight picks up every bump in the heightfield's fine detail, and a
+      // coverage mask carrying the ~3.5u octave. Between them the partial-coverage band came
+      // out as a binary 3px mosaic — the blue/white static that made the pass read as camo.
+      // Coverage is now driven only by the 55u and 12u octaves, over a wide ramp.
+      float lie = smoothstep(0.42, 0.90, vWN.y);
+      float drift = smoothstep(0.32, 0.76, nL*0.52 + nM*0.38 + vWP.y*0.0090);
+      // r3: the snow coverage mask used to ride nF (a ~1u grain), which meant the whole
+      // drift EDGE was shattered into 3-4px on/off stipple — at overview pitch that aliased
+      // into blue/white TV static and the map read as crumpled foil, not snow. Coverage now
+      // rides the ~12u patch octave, so drifts have shapes; grain only survives as a faint
+      // modulation of the snow's own albedo, never of whether snow is there at all.
+      float dune = fbm2(wxz*0.072 + 91.0);           // ~14u dunes: the readable shapes
+      float rip  = fbm2(wxz*0.235 + 131.0);          // ~4.3u drift ridges
+      float snw = lie * drift * (0.86 + 0.14*dune) * ${WPAL.snow};
       snw *= 1.0 - 0.86*tRoad;                       // wheels and boots keep the road bare
-      vec3 sc = ${v3s(WPAL.snowC)} * mix(1.0, 0.93 + 0.14*nG, dDet) * mix(1.0, 0.955 + 0.09*nX, dDet);
+      snw = smoothstep(0.04, 0.74, snw);             // and the edge is a long soft dune lip
+      // A low-frequency dune warp gives the surface form. Amplitudes are small and the
+      // result is clamped bright: a snowfield has almost no value range, and the near-black
+      // pixels the old micro-noise produced were the whole reason it read as lichen.
+      vec3 sc = ${v3s(WPAL.snowC)} * (0.955 + 0.115*dune) * (0.975 + 0.055*rip);
+      // troughs pick up the sky and go blue; crests stay white. This is the only hue move.
+      sc = mix(sc, sc*vec3(0.86,0.92,1.08), smoothstep(0.62,0.24, dune*0.7 + rip*0.3));
+      sc = clamp(sc, ${v3s(WPAL.snowC)}*0.80, ${v3s(WPAL.snowC)}*1.14);
       alb = mix(alb, sc, clamp(snw, 0.0, 1.0));
-      // crust glitter: a few grains catch the low sun, which is what stops flat snow
-      // reading as grey paper at overview zoom (near field only — at distance it aliases)
-      alb += vec3(0.048,0.052,0.060)*smoothstep(0.88,0.995, nG)*snw*dDet;
+      // crystalline sparkle: sparse, near field only, and now riding a scale coarse enough
+      // to resolve as glints rather than dissolving into the aliasing it was meant to hide.
+      alb += vec3(0.070,0.076,0.088)*smoothstep(0.955,0.999, vn2(wxz*2.05+71.0))*snw*dDet;
     }
 ` : '';
 // ── EMBER lava (SPEC3 palette `lava`) ────────────────────────────────────────
 // Wide glowing bedrock fissures, not 2px ember dots. A ridged fbm gives ~2u cracks with
 // a charred lip; they are the ONLY thing on the ash map allowed above 70% luminance, so
 // the eye has somewhere to go and the ground can stay dark enough to read the horde.
+// WORLD-FIX3 §4. The first cut made `core` (a 0.26→0.88 ramp) drive BOTH the albedo add and
+// the emissive, which meant the whole width of every flow sat at the same clipped value from
+// bank to bank: a flat pale-tan (#f5deb0) ribbon with hard edges and no interior — poured
+// cream, not molten rock. Molten rock is a GRADIENT ACROSS ITS WIDTH, and the gradient is the
+// whole read: cooled crust at the bank, incandescent orange behind it, a thin white-hot core.
+// So `fis` (0 at the bank, 1 at the centreline) is now used as that coordinate and three stops
+// are mixed along it, with ONLY the innermost stop feeding totalEmissiveRadiance — which is
+// also what stops bloom from smearing the entire ribbon over the tree trunks in front of it.
+// `uWT` scrolls a slow modulation ALONG the flow so the core crawls instead of sitting still.
 const LAVA_GLSL = WPAL.lava ? `
     {
       float lv  = fbm2(wxz*0.052 + 5.0);
       float fis = 1.0 - smoothstep(0.0, 0.021, abs(lv-0.5));
       fis *= smoothstep(0.44,0.74, fbm2(wxz*0.028 + 17.0));      // a few runs, not a network
       fis *= (1.0-tRoad) * (1.0-tRock) * smoothstep(0.44,0.14, slope);
-      float core = smoothstep(0.26, 0.88, fis);
-      alb *= 1.0 - 0.80*smoothstep(0.02,0.40,fis);               // charred lip
-      alb += vec3(0.55,0.160,0.026)*core;
-      totalEmissiveRadiance += vec3(1.00,0.315,0.055)*core*1.60;
+      if (fis > 0.001) {
+        // ~0.6 m of dark crust seating the flow into the terrain it has burnt through
+        float seat = smoothstep(0.002, 0.10, fis);
+        alb *= 1.0 - 0.86*seat;
+        // three stops across the half-width: crust #2a0d06 -> #d8340a -> core #ffd07a
+        vec3 cCrust = vec3(0.0231,0.0040,0.0018);
+        vec3 cMid   = vec3(0.6850,0.0331,0.0030);
+        vec3 cCore  = vec3(1.0000,0.6300,0.1920);
+        float wMid  = smoothstep(0.10, 0.52, fis);
+        float wCore = smoothstep(0.62, 0.95, fis);
+        vec3 flow = mix(mix(cCrust, cMid, wMid), cCore, wCore);
+        // the crawl: a slow along-flow modulation of how hot the centreline is running
+        float crawl = 0.78 + 0.34*fbm2(wxz*0.42 + vec2(uWT*0.050, uWT*0.021) + 91.0);
+        alb = mix(alb, flow, smoothstep(0.02, 0.34, fis));
+        // ONLY the core is emissive, and it is the only thing bloom is allowed to catch
+        totalEmissiveRadiance += vec3(1.00,0.415,0.105) * wCore * crawl * 2.15;
+      }
     }
 ` : '';
 const TERRAIN_ALBEDO = `
@@ -1769,8 +1913,8 @@ const TERRAIN_ALBEDO = `
     vec3 grass = gk < 0.5 ? mix(gDark, gMid, gk*2.0) : mix(gMid, gLit, (gk-0.5)*2.0);
     grass *= mix(1.0, 0.92 + 0.16*nF, dDet);              // +/-8%, near field only
     grass *= mix(1.0, 0.95 + 0.10*nG, dDet);
-    grass.r += 0.024*smoothstep(0.50,0.96,gk);            // sun-bleached tips warm up
-    grass.b += 0.015*smoothstep(0.45,0.05,gk);            // deep grass goes cool
+    grass.r += 0.052*smoothstep(0.42,0.96,gk);            // sun-bleached tips warm up
+    grass.b += 0.010*smoothstep(0.45,0.05,gk);            // deep grass goes cool
 
     // ── dry / grazed patches (the reference meadow is never one flat green) ──
     // Driven by a ~33u fBm (nB) so the patches arrive at MEADOW scale — big enough to
@@ -1809,8 +1953,11 @@ const TERRAIN_ALBEDO = `
     // ramp gives an airbrushed stripe, which is exactly what the road used to read as
     tRoad = smoothstep(0.10,0.74, clamp(vRD.x*1.36 - 0.14
               + (fbm2(wxz*0.62+9.0)-0.5)*0.78 + (fbm2(wxz*0.11+77.0)-0.5)*0.46, 0.0, 1.0));
-    // trampled verge: grass thins into dust for a couple of metres either side
-    soil = mix(soil, mix(soil*0.82, dry*1.00, 0.60), smoothstep(0.02,0.66,vRD.x));
+    // Trampled verge: grass thins into dust for a couple of metres either side. It DARKENS
+    // into the road — the old mix ran toward dry*1.00 and put a bright cream rim on the
+    // outer edge of the road, which is the one band of the whole map that should read
+    // dirtiest. Boots and wheels grind the shoulder down, they do not bleach it.
+    soil = mix(soil, mix(soil*0.74, dry*0.82, 0.58), smoothstep(0.02,0.66,vRD.x));
     vec3 alb = mix(soil, dirt, tRoad);
 
     // ── layered granite, TRIPLANAR (an xz-only projection smears on vertical cliff faces) ──
@@ -1868,10 +2015,11 @@ const terrainMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 
 terrainMat.customProgramCacheKey = () => 'bf_terrain';
 terrainMat.onBeforeCompile = (sh) => {
   sh.uniforms.uPAO = { value: paoTex };
+  sh.uniforms.uWT = WT;                        // render-only clock (lava crawl, WORLD-FIX3 §4)
   sh.vertexShader = 'attribute vec2 aRoad;\nattribute float aAO;\nvarying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\n' +
     sh.vertexShader.replace('#include <begin_vertex>',
       '#include <begin_vertex>\n vWP = (modelMatrix*vec4(transformed,1.0)).xyz;\n vWN = normalize(mat3(modelMatrix)*normal);\n vRD = aRoad;\n vAOf = aAO;');
-  sh.fragmentShader = 'varying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\nuniform sampler2D uPAO;\n' + NOISE_GLSL +
+  sh.fragmentShader = 'varying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\nuniform sampler2D uPAO;\nuniform float uWT;\n' + NOISE_GLSL +
     sh.fragmentShader
       .replace('#include <map_fragment>', TERRAIN_ALBEDO)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * mix(1.0, 0.74, tRock) * mix(1.0, 0.84, tRoad);')
@@ -2412,7 +2560,7 @@ World.build = function () {
       const dryish = wrng() < 0.13, dark = !dryish && wrng() < 0.40;
       const sB = wr(0.72, 1.55), rad = wr(2.4, 7.0);
       const tint = dryish ? [wr(0.90, 1.14) * TK[0], wr(0.84, 1.00) * TK[1], wr(0.48, 0.66) * TK[2]]
-                 : dark   ? [wr(0.56, 0.74) * TK[0], wr(0.62, 0.82) * TK[1], wr(0.46, 0.66) * TK[2]]
+                 : dark   ? [wr(0.70, 0.88) * TK[0], wr(0.74, 0.92) * TK[1], wr(0.50, 0.70) * TK[2]]
                           : [wr(0.74, 1.00) * TK[0], wr(0.82, 1.06) * TK[1], wr(0.58, 0.90) * TK[2]];
       const n = 3 + Math.round(wr(0, 5));
       for (let i = 0; i < n; i++) push(c0[0] + wr(-rad, rad), c0[1] + wr(-rad, rad), sB, tint);
@@ -2608,13 +2756,93 @@ World.build = function () {
     const pl2 = new THREE.PointLight(0xff5a24, 20, 26, 2);
     pl2.position.set(worldFlames[2][0], worldFlames[2][1] + 1, worldFlames[2][2]);
     World.group.add(pl1, pl2);
+    World.fireLights.push(pl1, pl2);          // the Long Night promotes these to key lights
+    World.fireMat = fm.material;
   }
   World.built = true;
 };
 
+// ══ THE LONG NIGHT's grade (SPEC5 §B2) ═══════════════════════════════════════
+// The build's most dramatic named beat was rendering in full golden-hour daylight: the
+// banner said THE HORNS FALL SILENT over a bright green meadow lit by the same sun as the
+// wave-1 shot. The beat is a LIGHTING event, so it lives in the light rig, not in a post
+// filter (a CSS grade would repaint the DOM after the final shot render — GAME_SPEC §2.3b).
+//
+// `amt` is a pure function of the sim tick, deliberately: a delta-smoothed value would give
+// a different picture depending on how many frames the harness happened to render before
+// the capture, and the shots have to be reproducible. Two seconds in, two seconds out.
+const moon = new THREE.DirectionalLight(0xb9c8e8, 0);   // rim separation on the horde
+moon.position.set(-sun.position.x, SUN_R * Math.sin(40 * Math.PI / 180), -sun.position.z);
+scene.add(moon, moon.target);
+const NIGHT = {
+  sun: new THREE.Color(0x8fa8d8), hemiSky: new THREE.Color(0x2a3b5e),
+  hemiGnd: new THREE.Color(0x1b2230), fill: new THREE.Color(0x2c3b58),
+  fog: new THREE.Color(0x1b2438),
+};
+const DAY = {
+  sun: new THREE.Color(WPAL.sun), hemiSky: new THREE.Color(WPAL.hemiSky),
+  hemiGnd: new THREE.Color(WPAL.hemiGnd), fill: new THREE.Color(WPAL.fill),
+  fog: new THREE.Color(C_HAZE),
+};
+const _nFogNear = scene.fog.near, _nFogFar = scene.fog.far;
+let _nCur = 0, _nFrom = 0, _nTgt = 0, _nT0 = -1e9;
+const _sm = k => k * k * (3 - 2 * k);
+function nightAmount() {
+  const st = G.state, ng = G.night;
+  // Night FALLS across the wave and is already down when the horns stop — it does not snap
+  // on at the lull. That is both the better beat (the player watches the light go while he
+  // is still fighting) and the only version that survives capture: the harness runs the sim
+  // headless and renders once, on the exact tick the lull fires, so anything anchored THERE
+  // is still at zero in the shot and the frame prints its banner over noon.
+  // Every term is a pure function of the sim tick, so the picture is reproducible.
+  // `night.wave > 0` is load-bearing: night.wave is 0 on every wave that is NOT a Long Night,
+  // and state.wave is 0 before the first muster, so a bare equality test grades the title and
+  // overview frames as midnight.
+  if (ng && st && ng.wave > 0 && ng.wave === st.wave) {
+    _nTgt = 1;
+    const dusk = _sm(clamp((st.tick - ng.t0) / (20 * TPS), 0, 1)) * 0.90;
+    if (ng.part < 1.5) return _nCur = dusk;
+    // the last tenth arrives with the silence itself
+    return _nCur = dusk + (1 - dusk) * _sm(clamp((st.tick - (ng.at - 6 * TPS)) / (2.0 * TPS), 0, 1));
+  }
+  if (_nCur > 0) {                              // the wave rolled over: two seconds back up
+    if (_nTgt !== 0) { _nTgt = 0; _nFrom = _nCur; _nT0 = st ? st.tick : 0; }
+    _nCur = _nFrom * (1 - _sm(clamp(((st ? st.tick : 0) - _nT0) / (2.0 * TPS), 0, 1)));
+  }
+  return _nCur;
+}
+let _nApplied = -1;
+function applyNight(a) {
+  if (Math.abs(a - _nApplied) < 0.002) return;
+  _nApplied = a;
+  sun.color.copy(DAY.sun).lerp(NIGHT.sun, a);
+  sun.intensity = WPAL.sunI * (1 - 0.78 * a);
+  hemi.color.copy(DAY.hemiSky).lerp(NIGHT.hemiSky, a);
+  hemi.groundColor.copy(DAY.hemiGnd).lerp(NIGHT.hemiGnd, a);
+  hemi.intensity = WPAL.hemiI * (1 - 0.45 * a);
+  fill.color.copy(DAY.fill).lerp(NIGHT.fill, a);
+  fill.intensity = WPAL.fillI * (1 - 0.60 * a);
+  moon.intensity = 0.35 * a;
+  scene.fog.color.copy(DAY.fog).lerp(NIGHT.fog, a);
+  // fog density: three's linear fog has no density, so the band is pulled in instead
+  scene.fog.near = _nFogNear * (1 - 0.55 * a); scene.fog.far = _nFogFar * (1 - 0.55 * a);
+  scene.environmentIntensity = WPAL.envI * (1 - 0.72 * a);
+  skyMat.uniforms.uNight.value = a;
+  if (G.renderer) G.renderer.toneMappingExposure = 1.05 - 0.35 * a;
+  // torches stop being decoration and become the only thing lighting the road
+  for (const L of World.fireLights) {
+    if (L.userData.i0 === undefined) { L.userData.i0 = L.intensity; L.userData.d0 = L.distance; }
+    L.intensity = L.userData.i0 * (1 + 2.0 * a); L.distance = L.userData.d0 * (1 + 0.6 * a);
+  }
+  if (World.fireMat) World.fireMat.opacity = 1;
+}
+G.nightAmt = () => _nCur;
+
 // render-only animation driver (deterministic in shot mode)
 scene.onBeforeRender = () => {
   WT.value = SHOT ? (G.vt ? G.vt() : 0) : performance.now() * 0.001;
+  applyNight(nightAmount());
+  fitSunShadow();
 };
 // ══════════════════════ END SECTION: WORLD ══════════════════════
 
@@ -2767,6 +2995,19 @@ const WARD_CAP = 300;                        // SPEC3 §D ground rings under a w
 let wardRing = null;
 const SHAD_CAP = 700;                        // ARMIES-FIX2 §1 contact-shadow decals
 let shadDecal = null, SHAD_AZ = 0, SHAD_LEN = 1;
+// ARMIES-FIX3 §5 — champion dress (back standard + cloak + gold trim) and his ground pool
+let champKit = null, champPool = null;
+// ARMIES-FIX3 §4a — a flyer's DRAWN altitude. `def.alt` is a sim number (it gates `air`
+// weapons and it is what an arrow climbs to), so it is not touched; this is the render-only
+// multiplier that puts real air between the wyvern and its own shadow.
+const ALT_VIS = 1.24, ALT_BOB = 0.35;
+// ARMIES-FIX3 §1 — how far the contact patch floats over the point the sim calls ground.
+// The path spline's y is a SMOOTHED road height, not the tessellated terrain surface the
+// renderer actually draws, and the surface sits up to ~0.2 u over it on the crowned parts
+// of the road: at the 0.05 lift the last pass used, the depth test buried the whole decal
+// and left a few dozen surviving pixels per body. This clears the crown everywhere and is
+// still far too small to read as a floating sticker at any camera the game ships.
+const SHAD_LIFT = 0.30;
 const AT_U = { value: 0 };                   // shared animation clock (sim-time based)
 {
   const TAU = Math.PI * 2, YAX = new THREE.Vector3(0, 1, 0);
@@ -2784,14 +3025,22 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   // wyvern scale + wing membrane, fungal flesh, and one graven-stone tile whose glyphs are
   // painted into the EMISSIVE sheet as well, so it lights both the warded one's slab and
   // the necromancer's hands from a single source of green.
-  const AGX = 4, AGY = 8, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
+  // ARMIES-FIX3 §7b: a NINTH row for one tile the roster never had — forged plate. The red
+  // army's only metal was T.IRON (#3d3730, roughness .62, metalness .46), which is a dark
+  // matte brown at every zoom: the grunt carried no specular anywhere, so nothing on him
+  // caught the golden key and the whole column read as painted card. T.PLATE is real steel
+  // (metalness .86, roughness .30) kept WARM-neutral so it still cannot be mistaken for the
+  // knights' cold #dbe2ea T.STEEL — faction separation survives, the helm and the shield
+  // boss finally glint.
+  const AGX = 4, AGY = 9, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
   const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
   const [acv, ag] = mkc(AW, AH), [mcv, mg] = mkc(AW, AH), [ecv, eg] = mkc(AW, AH);
   const T = { MAIL: 0, STEEL: 1, RED: 2, BLUE: 3, LEATH: 4, FACE: 5, SHR: 6, SHB: 7, WOOD: 8, BLADE: 9,
               BANN: 10, SKIN: 11, FUR: 12, GOLD: 13, SHBK: 14, IRON: 15, EYES: 16, PLUME: 17, CRIM: 18, BONE: 19,
               HAIR: 20, DIRT: 21, PAV: 22, HIDE: 23,     // 22/23: SPEC2 §D pavise face + ogre hide
               FROST: 24, SHROUD: 25, EMBER: 26, ROBE: 27,     // SPEC3 §B newcomers
-              SCALE: 28, MEMB: 29, MOLD: 30, RUNE: 31 };      // SPEC5 §A newcomers
+              SCALE: 28, MEMB: 29, MOLD: 30, RUNE: 31,        // SPEC5 §A newcomers
+              PLATE: 32 };                                    // ARMIES-FIX3 §7b warm forged steel
   eg.fillStyle = '#000'; eg.fillRect(0, 0, AW, AH);
   const tOX = t => (t % AGX) * S, tOY = t => ((t / AGX) | 0) * S;
   const tile = (t, rough, metal, fn) => {
@@ -2954,6 +3203,23 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     g.fillStyle = '#3d3730'; g.fillRect(0, 0, S, S);
     blot(g, 190, '#120f0c', '#8b8175', 0.06, 0.17, 2, 14);
     shade(g, 'rgba(240,222,192,.18)', 'rgba(0,0,0,.34)');
+  });
+  // ARMIES-FIX3 §7b. Value ~0.62 grey as the critic specified, but pulled a few points warm
+  // (the highlight is #cdc8bf, not #eff4f8) so a helm crown never samples the same hue as a
+  // knight's pauldron. One horizontal burnish band across the upper third is what actually
+  // makes a 9-pixel helm read as metal rather than as light-grey paint.
+  tile(T.PLATE, 0.30, 0.86, g => {
+    const gr = g.createLinearGradient(0, 0, 0, S);
+    gr.addColorStop(0, '#cdc8bf'); gr.addColorStop(0.38, '#9c968c'); gr.addColorStop(0.78, '#6e685f'); gr.addColorStop(1, '#847d72');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    g.fillStyle = 'rgba(246,242,232,.26)'; g.fillRect(0, S * 0.10, S, S * 0.13);
+    g.fillStyle = 'rgba(24,20,16,.24)'; g.fillRect(0, S * 0.62, S, S * 0.10);
+    for (let i = 0; i < 90; i++) {
+      g.strokeStyle = rgba(arng() < 0.5 ? 252 : 46, arng() < 0.5 ? 246 : 40, arng() < 0.5 ? 232 : 34, ar(0.04, 0.12));
+      g.lineWidth = ar(0.7, 2.0) * u; const y = arng() * S;
+      g.beginPath(); g.moveTo(0, y); g.lineTo(S, y + ar(-4, 4) * u); g.stroke();
+    }
+    blot(g, 26, '#3a352e', '#e6e0d4', 0.06, 0.15, 4, 14);
   });
   tile(T.GOLD, 0.28, 1.0, g => {
     const gr = g.createLinearGradient(0, 0, 0, S); gr.addColorStop(0, '#ffeaab'); gr.addColorStop(0.40, '#e0ab3c'); gr.addColorStop(1, '#8a5f14');
@@ -3576,6 +3842,36 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       for (const s of [-1, 1])                            // red cheek scales flanking the face
         A(boxA(K(0.030), K(0.140), K(0.090), [T.RED]), trs(s * K(0.134), yCrn - K(0.212), K(0.070)), 7, hp, null, null, 1.02);
       A(boxA(K(0.030), K(0.086), K(0.030), [T.RED]), trs(0, yCrn + K(0.104), 0), 7, hp, null, null, 1.08);
+    } else if (C.helm === 'kettleR') {
+      // ARMIES-FIX3 §2.1 — THE RANK-AND-FILE HEAD. It was a smooth olive-brown ovoid with a
+      // red collar: no brim, no visor, no value break from the tabard, and at the closest
+      // gameplay zoom it read as a potato on a red box. Three parts fix it, and they are the
+      // same three AoE4 uses to make infantry read at 8 px:
+      //   (1) a FLARED BRIM ring at 0.55 of the head radius — the one horizontal in an
+      //       otherwise vertical silhouette, and the only thing that survives downsampling;
+      //   (2) a DARK VISOR SLIT inset into the front face, which gives the head a front and
+      //       therefore a facing direction;
+      //   (3) a STEEL-VALUE CROWN (T.PLATE, ~0.62 grey) so the head separates from the
+      //       crimson in VALUE, not just in hue — the tell the old warm-iron dome never had.
+      const HT = C.helmT || T.PLATE, HTI = C.helmTint === undefined ? 1.06 : C.helmTint;
+      dome(K(0.150), 0.92, HT, yCrn - K(0.062), HTI);
+      ridge(K(0.148), yCrn + K(0.044), HT);
+      aventail(K(0.156), K(0.198), yCrn - K(0.150), K(0.240), T.MAIL);
+      // the brim: a shallow cone flaring OUT and slightly DOWN off the bowl's lower edge
+      A(uvAll(new THREE.CylinderGeometry(K(0.248), K(0.180), K(0.032), (C.seg || SEG) + 4), HT),
+        trs(0, yCrn - K(0.098), 0), 7, hp, null, null, 1.14);
+      A(uvAll(new THREE.CylinderGeometry(K(0.255), K(0.248), K(0.026), (C.seg || SEG) + 4), T.IRON),
+        trs(0, yCrn - K(0.116), 0), 7, hp, null, null, 0.70);   // dark under-rim: reads as thickness
+      // the slit: a near-black bar sunk 0.06 into the front of the bowl. Two studs flank it
+      // so the face plane has three marks instead of one and never reads as a smear.
+      A(boxA(K(0.196), K(0.036), K(0.030), [T.EYES]), trs(0, yCrn - K(0.052), K(0.118)), 7, hp, null, null, 0.42);
+      for (const s of [-1, 1])
+        A(uvAll(new THREE.SphereGeometry(K(0.020), 5, 4), HT), trs(s * K(0.116), yCrn - K(0.050), K(0.086)), 7, hp, null, null, 1.22);
+      // and the paint stays on the head: a crimson band under the brim + the red cheek scales
+      A(uvAll(new THREE.CylinderGeometry(K(0.158), K(0.166), K(0.044), (C.seg || SEG) + 2), T.RED), trs(0, yCrn - K(0.150), 0), 7, hp, null, null, 1.04);
+      for (const s of [-1, 1])
+        A(boxA(K(0.028), K(0.128), K(0.086), [T.RED]), trs(s * K(0.132), yCrn - K(0.222), K(0.068)), 7, hp, null, null, 1.02);
+      A(boxA(K(0.028), K(0.078), K(0.028), [T.RED]), trs(0, yCrn + K(0.096), 0), 7, hp, null, null, 1.08);
     } else if (C.helm === 'wrap') {                          // skirmisher hood + headband
       dome(K(0.147), 0.98, T.CRIM, yCrn - K(0.086), 1.05);
       A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.154), K(0.046), C.seg + 2 || 10), T.RED), trs(0, yCrn - K(0.140), 0), 7, hp, null, null, 1.08);
@@ -3777,16 +4073,25 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       const r = C.shield === 'round' ? K(0.360) : K(0.200);
       const cen = [hndL[0] - K(0.075), hndL[1] + K(0.085), hndL[2] + K(0.040)];
       const ry = -0.62;
-      A(plateGeo(polyC(r, DSEG), K(0.058), T.SHR, T.SHBK, T.IRON), trs(cen[0], cen[1], cen[2], ry, 1, 1, 1, 0.13, 0.09), 5, shL, null, null, 1.04);
-      // the boss was a polished-steel cone a third of the disc wide; at gameplay zoom it was
-      // a specular dot on every shield in the horde and the mass sampled steel, not crimson
-      A(uvAll(new THREE.ConeGeometry(r * 0.19, r * 0.24, DSEG), T.IRON),
-        trs(cen[0] + Math.sin(ry) * K(0.058), cen[1], cen[2] + Math.cos(ry) * K(0.058), ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 5, shL, null, null, 0.94);
+      A(plateGeo(polyC(r, DSEG), K(0.058), T.SHR, T.SHBK, T.IRON), trs(cen[0], cen[1], cen[2], ry, 1, 1, 1, 0.13, 0.09), 11, shL, null, null, 1.04);
+      // ARMIES-FIX3 §2.2. The disc was a painted plate with a dull iron cone stuck on it —
+      // no relief, no rim, so at gameplay zoom it read as one flat lozenge of styrofoam.
+      // A real boss is a HEMISPHERE (0.22 of the shield width, forged plate so it takes a
+      // specular hit off the key) sitting proud of the face, and a rim BAND a stop darker
+      // than the paint runs the circumference so the disc has an edge. Both ride bone 11 —
+      // the new shield bone — so they fall with the board when the man dies.
+      const bx = cen[0] + Math.sin(ry) * K(0.052), bz = cen[2] + Math.cos(ry) * K(0.052);
+      A(uvAll(new THREE.SphereGeometry(r * 0.22, DSEG, 6, 0, TAU, 0, 1.30), T.PLATE),
+        trs(bx, cen[1], bz, ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 11, shL, null, null, 1.18);
+      A(uvAll(new THREE.CylinderGeometry(r * 0.30, r * 0.30, K(0.030), DSEG), T.IRON),
+        trs(cen[0] + Math.sin(ry) * K(0.040), cen[1], cen[2] + Math.cos(ry) * K(0.040), ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 11, shL, null, null, 0.80);
+      A(uvAll(new THREE.CylinderGeometry(r * 1.005, r * 1.005, K(0.072), DSEG, 1, true), T.IRON),
+        trs(cen[0], cen[1], cen[2], ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 11, shL, null, null, 0.86);
     } else if (C.shield === 'kite') {
       const hw = K(0.205), hh = K(0.40);
       const pts = KITE.map(q => [q[0] * hw, q[1] * hh]);
       const cen = [hndL[0] - K(0.075), hndL[1] + K(0.105), hndL[2] + K(0.040)];
-      A(plateGeo(pts, K(0.054), T.SHB, T.SHBK, T.STEEL), trs(cen[0], cen[1], cen[2], -0.56, 1, 1, 1, 0.11, 0.05), 5, shL, null, null, 1.0);
+      A(plateGeo(pts, K(0.054), T.SHB, T.SHBK, T.STEEL), trs(cen[0], cen[1], cen[2], -0.56, 1, 1, 1, 0.11, 0.05), 11, shL, null, null, 1.0);
     } else if (C.shield === 'tower') {
       // PAVISE (SPEC2 §D). Two thirds of the man's height and carried square to the road:
       // the silhouette IS the unit. Its top edge stops at the nose so the kettle brim
@@ -3803,9 +4108,9 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       const cen = [hndL[0] + K(0.240), yHip + K(0.080), hndL[2] + K(0.115)];
       // shieldT: the ironclad's wall is bare bolted IRON, not the shieldbearer's painted
       // pavise — two units carrying the same red board would be one unit at gameplay zoom.
-      A(plateGeo(pts, K(0.072), C.shieldT || T.PAV, T.SHBK, T.IRON), trs(cen[0], cen[1], cen[2], -0.11, 1, 1, 1, 0.06, 0.02), 5, shL, null, null, 1.0);
+      A(plateGeo(pts, K(0.072), C.shieldT || T.PAV, T.SHBK, T.IRON), trs(cen[0], cen[1], cen[2], -0.11, 1, 1, 1, 0.06, 0.02), 11, shL, null, null, 1.0);
       A(uvAll(new THREE.CylinderGeometry(K(0.030), K(0.030), K(0.34) * SS, 6), T.WOOD),      // rear brace
-        trs(cen[0], cen[1] - K(0.14), cen[2] - K(0.075), -0.11, 1, 1, 1, 0.06, 0.02), 5, shL, null, null, 0.82);
+        trs(cen[0], cen[1] - K(0.14), cen[2] - K(0.075), -0.11, 1, 1, 1, 0.06, 0.02), 11, shL, null, null, 0.82);
     }
     // ── weapons (bone 6) ──
     // bladeTint darkens polished steel on the RED army's weapons. A forest of 160 spear
@@ -4607,26 +4912,67 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   float fly = step(5.5, aMd);
   float fs = sin(aT), fbt = fs >= 0.0 ? pow(fs, 0.62) : -pow(-fs, 1.55);
   float ga = 1.0 - smoothstep(0.0, 0.20, max(aDd, 0.0));
-  float atk = pow(0.5 + 0.5*s1, 9.0);
-  float bph = fract(aT*0.15915494);                    // bow: long pull, snap release
+  // ARMIES-FIX3 §6b — the fight pose used to be one pow(,9) spike per 1.9 s cycle: a statue
+  // that twitched, which is why no frame in the whole shot suite ever contained a scrum that
+  // read as combat. Mode 1 is an explicit TWO-BEAT now — weapon wound back through the first
+  // 42% of the beat, driven through in the next 16%, follow-through and recover — run at
+  // 1.22 Hz by syncVisuals so a beat is ~0.4 s, phase-seeded per body so a pair alternates.
+  float mph = fract(aT*0.15915494);
+  float atk = clamp(smoothstep(0.00, 0.42, mph) - smoothstep(0.46, 0.62, mph), 0.0, 1.0);
+  float hit = smoothstep(0.46, 0.62, mph) * (1.0 - smoothstep(0.64, 0.94, mph));
+  float bph = mph;                                     // bow: long pull, snap release
   float pull = smoothstep(0.06, 0.70, bph)*(1.0 - smoothstep(0.78, 0.88, bph));
   float qFL = sin(aT + 2.30), qFR = sin(aT + 2.92), qBL = sin(aT), qBR = sin(aT + 0.60);
   float slp = clamp(aT*0.645, 0.0, 1.0);               // stomp progress 0..1
   float slu = smoothstep(0.0, 0.40, slp) - smoothstep(0.40, 0.58, slp);
-  float legA = (wk*(-0.66*s1) + fg*(-0.26 - 0.10*atk) + idl*(-0.06) + sht*(-0.30) + qd*(0.74*qFL) + slm*(-1.24*slu))*ga;
-  float legB = (wk*( 0.66*s1) + fg*( 0.22) + idl*( 0.06) + sht*( 0.26) + qd*(0.74*qFR) + slm*( 0.20*slu))*ga;
-  float knA  = (wk*(0.92*max(0.0,  sin(aT+0.55))) + fg*0.34 + idl*0.11 + sht*0.16 + qd*(0.74*(qBL - qFL)) + slm*(1.35*slu))*ga;
-  float knB  = (wk*(0.92*max(0.0, -sin(aT+0.55))) + fg*0.18 + idl*0.11 + sht*0.12 + qd*(0.74*(qBR - qFR)) + slm*(0.30*slu))*ga;
   float jt = fract(aPh*0.3183) - 0.5;                  // per-unit rest-pose jitter
-  float armA = (wk*( 0.30*s1) + fg*(-0.40 - 0.20*atk) + idl*(-0.12) + sht*(-1.44) + slm*(-0.62*slu))*ga + jt*0.13;
-  float armB = (wk*(-0.17*s1) + fg*( 0.34 - 1.45*atk) + idl*( 0.05) + sht*(-1.34 + 0.66*pull) + slm*(-0.74*slu))*ga + jt*0.20;
-  float hdA  = (wk*(-0.055*sin(2.0*aT)) + fg*(0.12*atk) + idl*(0.03*sin(aT*0.8)) + sht*0.06 + qd*(0.11*sin(aT)) + slm*(-0.10*slu) + fly*(0.07*sin(aT*0.63)))*ga;
-  float bob  = (wk*0.052*(0.5 - 0.5*cos(2.0*aT)) + idl*0.009*sin(aT*0.9) + fg*0.025*atk + qd*0.080*(0.5 - 0.5*cos(2.0*aT + 1.1)) + slm*(0.16*slu - 0.05) + fly*(-0.16*fbt))*ga;
+  // ── ARMIES-FIX3 §7c: FOUR SEEDED WEAPON-CARRY VARIANTS ──────────────────────
+  // The whole front rank held its blade vertically at the chest in one identical arm pose.
+  // vsd is the golden-ratio spread syncVisuals writes into aAnim.x, so consecutive ids
+  // land in different quarters by construction (a hash clumps at small n; 0.618 cannot).
+  // 0 shouldered · 1 couched · 2 raised · 3 shield-high. Marching only — the fight, bow and
+  // stomp poses are combat states and must stay readable as themselves.
+  float vsd = fract(aPh*0.15915494);
+  float v1 = step(0.25, vsd)*step(vsd, 0.50), v2 = step(0.50, vsd)*step(vsd, 0.75), v3 = step(0.75, vsd);
+  float v0 = 1.0 - v1 - v2 - v3;
+  float cyA  = wk*(v3*(-0.66) + v1*( 0.12));
+  float cyB  = wk*(v0*(-0.34) + v1*( 0.36) + v2*(-1.08));
+  float cyZA = wk*(v3*(-0.30) + v2*( 0.12));
+  float cyZB = wk*(v0*( 0.18) + v1*(-0.22) + v2*( 0.28));
+  // ── ARMIES-FIX3 §2.3: THREE SEEDED RAGDOLL POSES ────────────────────────────
+  // Death was one rigid plank: legs fully extended and merged, arms glued to the sides, a
+  // red suitcase with a ball on one end. ga drove every limb term to ZERO on death, which
+  // is precisely what bakes the plank. These terms live OUTSIDE ga and ramp in as the body
+  // falls, so each corpse lands with a knee up, an arm past the shoulder line and the torso
+  // rolled off the ground plane — negative space in the silhouette, which is the read.
+  float dp = smoothstep(0.02, 0.34, max(aDd, 0.0));
+  float dq = fract(aPh*0.0954);
+  float r0 = step(dq, 0.334), r1 = step(0.334, dq)*step(dq, 0.667), r2 = step(0.667, dq);
+  float legA = (wk*(-0.66*s1) + fg*(-0.26 - 0.10*atk) + idl*(-0.06) + sht*(-0.30) + qd*(0.74*qFL) + slm*(-1.24*slu))*ga
+             + dp*(r0*(-0.74) + r1*( 0.32) + r2*(-0.18));
+  float legB = (wk*( 0.66*s1) + fg*( 0.22) + idl*( 0.06) + sht*( 0.26) + qd*(0.74*qFR) + slm*( 0.20*slu))*ga
+             + dp*(r0*( 0.26) + r1*(-0.60) + r2*( 0.68));
+  float knA  = (wk*(0.92*max(0.0,  sin(aT+0.55))) + fg*0.34 + idl*0.11 + sht*0.16 + qd*(0.74*(qBL - qFL)) + slm*(1.35*slu))*ga
+             + dp*(r0*( 1.58) + r1*( 0.44) + r2*( 1.15));
+  float knB  = (wk*(0.92*max(0.0, -sin(aT+0.55))) + fg*0.18 + idl*0.11 + sht*0.12 + qd*(0.74*(qBR - qFR)) + slm*(0.30*slu))*ga
+             + dp*(r0*( 0.32) + r1*( 1.46) + r2*( 0.36));
+  float armA = (wk*( 0.30*s1) + fg*(-0.40 - 0.20*atk) + idl*(-0.12) + sht*(-1.44) + slm*(-0.62*slu) + cyA)*ga + jt*0.13
+             + dp*(r0*(-0.98) + r1*(-0.32) + r2*(-1.26));
+  float armB = (wk*(-0.17*s1) + fg*( 0.34 - 1.45*atk + 0.95*hit) + idl*( 0.05) + sht*(-1.34 + 0.66*pull) + slm*(-0.74*slu) + cyB)*ga + jt*0.20
+             + dp*(r0*(-0.26) + r1*(-1.12) + r2*( 0.36));
+  // arm ROLL (bones 5/6 gained an rZ this pass): it is what throws a dead man's arm out past
+  // his own shoulder, and what separates a shouldered spear from a couched one.
+  float armZA = cyZA*ga + dp*(r0*(-0.98) + r1*(-0.42) + r2*(-1.18));
+  float armZB = cyZB*ga + dp*(r0*( 0.36) + r1*( 1.08) + r2*( 0.32));
+  float hdA  = (wk*(-0.055*sin(2.0*aT)) + fg*(0.12*atk + 0.20*hit) + idl*(0.03*sin(aT*0.8)) + sht*0.06 + qd*(0.11*sin(aT)) + slm*(-0.10*slu) + fly*(0.07*sin(aT*0.63)))*ga;
+  float bob  = (wk*0.052*(0.5 - 0.5*cos(2.0*aT)) + idl*0.009*sin(aT*0.9) + fg*(0.030*atk + 0.020*hit) + qd*0.080*(0.5 - 0.5*cos(2.0*aT + 1.1)) + slm*(0.16*slu - 0.05) + fly*(-0.16*fbt))*ga;
   float rol  = (wk*0.050*s1 + qd*0.038*sin(aT + 0.9) + fly*0.055*sin(aT*0.47))*ga;
-  float lea  = (wk*0.060 + fg*(0.11 + 0.24*atk) + sht*0.05 + qd*(0.10 + 0.17*sin(aT + 2.0)) + slm*(-0.16*slu) + fly*(0.10 + 0.13*fbt))*ga;
-  float wng  = fly*(0.60*fbt + 0.30)*ga;               // wing bones 9 (-x) / 10 (+x)
-  float fwd  = (fg*0.17*atk + qd*0.05*sin(aT))*ga;
-  float twi  = (fg*(-0.28*atk) + sht*(-0.34))*ga;
+  float lea  = (wk*0.060 + fg*(0.11 + 0.20*atk + 0.26*hit) + sht*0.05 + qd*(0.10 + 0.17*sin(aT + 2.0)) + slm*(-0.16*slu) + fly*(0.10 + 0.13*fbt))*ga;
+  // SPEC5 §A / ARMIES-FIX3 §4c: the dihedral sweeps -25 deg to +46 deg instead of resting
+  // near flat, so a flock reads as beating wings and not as a field of splayed starfish.
+  float wng  = fly*(0.62*fbt + 0.18)*ga;               // wing bones 9 (-x) / 10 (+x)
+  float fwd  = (fg*(0.17*atk + 0.26*hit) + qd*0.05*sin(aT))*ga;
+  float twi  = (fg*(-0.28*atk + 0.20*hit) + sht*(-0.34))*ga;
   vec3 aP = position;
   mat3 aBM = mat3(1.0);
   if (aBone > 0.5) {
@@ -4636,8 +4982,8 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
                             aP = aPiv + k1*(aP - aPiv); aP = aPiv2 + k2*(aP - aPiv2); aBM = k2*k1; }
     else if (aBone < 4.5) { mat3 k1 = rX(knB), k2 = rX(legB);
                             aP = aPiv + k1*(aP - aPiv); aP = aPiv2 + k2*(aP - aPiv2); aBM = k2*k1; }
-    else if (aBone < 5.5) { aBM = rX(armA); aP = aPiv + aBM*(aP - aPiv); }
-    else if (aBone < 6.5) { aBM = rX(armB); aP = aPiv + aBM*(aP - aPiv); }
+    else if (aBone < 5.5) { aBM = rX(armA)*rZ(armZA); aP = aPiv + aBM*(aP - aPiv); }
+    else if (aBone < 6.5) { aBM = rX(armB)*rZ(armZB); aP = aPiv + aBM*(aP - aPiv); }
     else if (aBone < 7.5) { aBM = rY(hdA*1.5)*rX(hdA); aP = aPiv + aBM*(aP - aPiv); }
     else if (aBone < 8.5) {
       float ww = aW;
@@ -4646,7 +4992,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
       aP.y -= 0.012*ww*wk;
     }
     else if (aBone < 9.5) { aBM = rZ(-wng); aP = aPiv + aBM*(aP - aPiv); }
-    else                  { aBM = rZ( wng); aP = aPiv + aBM*(aP - aPiv); }
+    else if (aBone < 10.5){ aBM = rZ( wng); aP = aPiv + aBM*(aP - aPiv); }
+    // ARMIES-FIX3 §2.3 — bone 11 is the SHIELD BOARD. Alive it is the shield arm exactly
+    // (same pivot, same two rotations), so nothing about a marching or fighting unit
+    // changes. Dead, it stops following the arm, slides off the corpse and settles flat on
+    // the road as its own prop — the single cheapest way to break the suitcase silhouette.
+    else                  { aBM = rX(armA)*rZ(armZA); aP = aPiv + aBM*(aP - aPiv); }
   }
   aP.z += fwd;
   vec3 aRP = vec3(0.0, uHip, 0.0);
@@ -4658,11 +5009,21 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   if (aDd >= 0.0) {
     float dir = fract(aPh*0.1591) < 0.5 ? 1.0 : -1.0;
     float fpr = smoothstep(0.0, 0.40, aDd);
-    mat3 dm = rX(dir*1.64*fpr)*rZ(dir*0.28*fpr);
+    // the torso lands 15-25 deg OFF the ground plane (rY twist + a deeper rZ) instead of
+    // face-flat: a corpse lying perfectly square to the road is the plank read.
+    float tw = r0*0.34 + r1*(-0.46) + r2*0.24;
+    mat3 dm = rX(dir*1.64*fpr)*rZ(dir*(0.24 + abs(tw))*fpr)*rY(tw*fpr);
     vec3 fo = vec3(0.0, 0.05, 0.0);
-    aP = fo + dm*(aP - fo);
-    aBM = dm*aBM;
-    aP.y -= max(0.0, aDd - 0.50)/0.50*1.35;
+    float snk = max(0.0, aDd - 0.50)/0.50*1.35;
+    if (aBone < 10.5) { aP = fo + dm*(aP - fo); aBM = dm*aBM; }
+    else {                                             // the dropped board
+      mat3 sm = rX(1.42*fpr)*rY(dir*(0.85 + tw)*fpr);
+      aP = fo + sm*(aP - fo);
+      aBM = sm*aBM;
+      aP.x += dir*0.34*fpr; aP.z -= 0.26*fpr;
+      aP.y = mix(aP.y, 0.062, fpr);
+    }
+    aP.y -= snk;
     vFade = 1.0 - smoothstep(0.54, 1.0, aDd);
   }
 `;
@@ -4789,24 +5150,27 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // shield face, with T.CRIM/#7e1e18 as the shade. Steel and blue belong to the knights,
     // and that is the only thing keeping the two armies apart at gameplay zoom.
     grunt:  { h: 1.80, bulk: 1.00, hose: T.DIRT, shin: T.CRIM, mail: T.MAIL, arm: T.MAIL, hand: T.LEATH,
-              pauld: T.RED, skirt: T.RED, tabard: T.RED, tabW: 1.14, chest: -1, face: T.FACE, helm: 'nasal',
-              helmT: T.IRON, helmTint: 0.98, bladeTint: 0.82,
+              pauld: T.RED, skirt: T.RED, tabard: T.RED, tabW: 1.14, chest: -1, face: T.FACE, helm: 'kettleR',
+              // ARMIES-FIX3 §2.1/§7b — the grunt is the unit the frame is MADE of, so it is
+              // the one that has to carry metal. Steel crown + brim + shield boss puts real
+              // specular on ~10% of his screen area; the tabard keeps the value mass.
+              helmT: T.PLATE, helmTint: 1.06, bladeTint: 0.92, lm: 0.80,
               shield: 'round', weapon: 'spear', knee: false, gait: 1.70, jit: 0.10, aim: 1.00 },
     runner: { h: 1.63, bulk: 0.86, hose: T.DIRT, shin: T.CRIM, mail: T.LEATH, arm: T.SKIN, hand: T.SKIN,
               pauld: T.RED, skirt: -1, tabard: T.RED, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
-              bladeTint: 0.84,
+              bladeTint: 0.84, lm: 0.82,
               shield: 'buckler', weapon: 'sword', knee: false, gait: 3.05, jit: 0.11, aim: 0.90, bracer: true },
     brute:  { h: 2.52, bulk: 1.42, hose: T.FUR, shin: T.LEATH, mail: T.IRON, arm: T.SKIN, hand: T.SKIN,
               pauld: T.FUR, skirt: T.CRIM, tabard: -1, chest: T.CRIM, face: T.FACE, helm: 'horned',
               shield: 'none', weapon: 'axe2h', knee: true, gait: 0.98, jit: 0.07, aim: 1.55, pelt: true,
-              bracer: true, armTint: 0.80, bladeTint: 0.88 },
+              bracer: true, armTint: 0.80, bladeTint: 0.88, lm: 0.88 },
     // THE WARLORD. Was blue pauldrons over a gold cuirass — the enemy general dressed in the
     // player's own heraldry. Crimson over dark iron now, and gold survives only as crown
     // band, belt buckle, tabard hem and pommel (well under 8% of his surface).
     boss:   { h: 3.90, bulk: 1.58, hose: T.IRON, shin: T.IRON, mail: T.IRON, arm: T.IRON, hand: T.IRON,
               pauld: T.CRIM, skirt: T.CRIM, tabard: T.RED, chest: T.RED, face: T.EYES, helm: 'crown',
               shield: 'none', weapon: 'gsword', knee: true, kneeT: T.IRON, gait: 0.62, jit: 0.03, aim: 2.60,
-              bladeTint: 0.92, banner: true, cape: true, seg: 10, tabW: 0.94,
+              bladeTint: 0.92, banner: true, cape: true, seg: 10, tabW: 0.94, lm: 0.90,
               greave: true, greaveT: T.IRON, spauld: true, spauldT: T.IRON },
     // ARMIES-FIX2 §2: the tabard is widened (0.96 -> 1.22 of the torso) and a blue breast
     // plate added, so a knight carries a blue MASS rather than a blue ribbon over steel.
@@ -4819,7 +5183,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // (marauder) and sheer mass with tusks (ogre).
     shield: { h: 1.86, bulk: 1.16, hose: T.DIRT, shin: T.CRIM, mail: T.MAIL, arm: T.MAIL, hand: T.LEATH,
               pauld: T.RED, skirt: T.CRIM, tabard: T.RED, tabW: 0.96, chest: T.IRON, face: T.FACE, helm: 'kettle',
-              bladeTint: 0.82,
+              bladeTint: 0.82, lm: 0.82,
               shield: 'tower', weapon: 'sword', knee: true, gait: 1.42, jit: 0.06, aim: 1.05,
               bracer: true, bar: 1.10 },
     hound:  { h: 1.02, quad: true, coat: T.FUR, belly: T.DIRT, sock: T.DIRT,
@@ -4827,7 +5191,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     marauder: { h: 1.76, bulk: 0.94, hose: T.DIRT, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN, hand: T.LEATH,
               pauld: T.LEATH, skirt: -1, tabard: T.RED, tabW: 0.72, chest: -1, face: T.FACE, helm: 'hood',
               shield: 'none', weapon: 'bow', knee: false, gait: 1.85, jit: 0.09, aim: 0.98,
-              bracer: true, quiver: true, bar: 0.92 },
+              bracer: true, quiver: true, bar: 0.92, lm: 0.86 },
     // legF 0.76 is what turns a giant man into an ogre: squat legs, a torso that carries
     // the mass, and a skull big enough to read the tusks from the overview camera.
     ogre:   { h: 3.45, hv: 2.95, legF: 0.76, bulk: 1.58, hose: T.HIDE, shin: T.LEATH, mail: T.HIDE,
@@ -4946,7 +5310,11 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // `hv` is the VISUAL height when the skeleton is not 6.5 heads (see legF) — the health
     // bar rides on it, so an ogre's bar sits on its skull instead of a metre above it.
     AM[key] = { mesh, anim, cap, n: 0, h: C.hv || C.h, gait: C.gait, jit: C.jit, key,
-                bar: C.bar || 0.92, quad: !!C.quad, fly: !!C.wyv, ward, wardA };
+                bar: C.bar || 0.92, quad: !!C.quad, fly: !!C.wyv, ward, wardA,
+                // ARMIES-FIX3 §7a: the crimson cut is per-ARCHETYPE, not global. Only the
+                // bodies that wear #a42a22 were reading terracotta; taking the whole roster
+                // down with them turned the bestiary's bone, rime and shroud units to mud.
+                lm: C.lm === undefined ? 1 : C.lm };
     Armies.meshes.push(mesh);
   }
   Armies.enemyMesh = AM.grunt.mesh; Armies.knightMesh = AM.knight.mesh;
@@ -5046,84 +5414,205 @@ void main(){
     Armies.barMesh = barMesh;
   }
 
-  // ── 7b. ward ground rings (SPEC3 §D) ────────────────────────────────────────
-  // The Fresnel shell above is the CLOSE read; this is the read that survives overview
-  // pitch, where a rim light two pixels wide has nothing to sit on. One thin analytic ring
-  // laid flat under every warded body — one draw call, and on a wave that carries no omen
-  // its count is 0, so an unwarded campaign pays nothing for it.
+  // ── 7b. ward DOMES (SPEC3 §D) ───────────────────────────────────────────────
+  // VFX-FIX3 §1/§6. This slot used to hold one thin additive GROUND RING per warded body,
+  // and it was the round's worst artifact by a distance. Two independent failures compounded:
+  //   · IDENTITY — a bright hoop laid flat on the road under a unit is the universal RTS
+  //     "this unit is selected" glyph. The tooltip says "warded against your Pierce towers"
+  //     and the frame said "20 units are selected". Nothing about the ring said WHICH school
+  //     was being turned, either: it was one white hoop whatever the omen rolled.
+  //   · DENSITY — the ward rides the WHOLE WAVE, so the emitter was per-unit by construction.
+  //     Twenty overlapping additive hoops of identical diameter tiled the road, and because
+  //     the tint was added on top of a warm road (196,175,137) the result sampled a NEUTRAL
+  //     (175,174,171): desaturated, which is exactly what makes a thing read as UI and not
+  //     as world. (Recorded in the §B1 footfall note as a previously-fixed artifact; the
+  //     footfall dust was innocent — this ring was the disc the critic saw both times.)
+  // So the ward is now a SHELL, which is what a ward is: a low-poly hex-faceted dome over
+  // each warded body, tinted to the warded school (pierce steel-blue · crush bone · fire
+  // orange · storm cyan), faint in the body and bright on the fresnel rim, with the facet
+  // seams lit so it reads as panelled glass rather than as a soap bubble. It sits ON the
+  // unit, depth-tested against the world, so it can never be confused with ground furniture,
+  // and it is still ONE draw call with count 0 on an unwarded campaign.
+  // NOT DONE, deliberately: the spec also asks for "a faint hex-panel flash on the facet
+  // nearest an incoming hit". That needs a per-instance last-hit stamp written from the SIM's
+  // damage path, and the omen ward is applied inside dealDamage's resist arithmetic — the one
+  // function this pass is under orders not to touch. The panel seams pulse on the shared
+  // clock instead, which costs nothing and keeps the dome alive; the directional flash is a
+  // job for whoever next has the SIM section open.
   {
-    const rg = new THREE.PlaneGeometry(1, 1);
-    rg.rotateX(-Math.PI / 2);
+    // 6 around × 3 up = 36 quads of dome. The panel grid is read straight off the sphere's
+    // own uv in the shader, so the facets are seams of light, not extra geometry.
+    const rg = new THREE.SphereGeometry(1, 6, 3, 0, Math.PI * 2, 0, Math.PI * 0.5);
     const rmat = new THREE.ShaderMaterial({
       uniforms: { uC: { value: new THREE.Color(0x7fb2e8) }, uT: AT_U },
-      transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
+      // FrontSide, not DoubleSide: a closed shell drawn twice doubles every additive sample,
+      // and the first cut of this shipped as a near-opaque white cone over every warded body.
+      transparent: true, depthWrite: false, fog: false, side: THREE.FrontSide,
       blending: THREE.AdditiveBlending,
-      vertexShader: `varying vec2 vU; varying float vPh;
+      vertexShader: `varying vec2 vU; varying float vPh; varying vec3 vN; varying vec3 vV;
 void main(){ vU = uv; vPh = instanceMatrix[3].x*0.7 + instanceMatrix[3].z*0.4;
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position,1.0); }`,
+  vec4 wp = modelMatrix * instanceMatrix * vec4(position,1.0);
+  vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * normal);
+  vV = normalize(cameraPosition - wp.xyz);
+  gl_Position = projectionMatrix * viewMatrix * wp; }`,
       fragmentShader: `#include <common>
-uniform vec3 uC; uniform float uT; varying vec2 vU; varying float vPh;
+uniform vec3 uC; uniform float uT; varying vec2 vU; varying float vPh; varying vec3 vN; varying vec3 vV;
 void main(){
-  float r = length(vU - 0.5) * 2.0;
-  float ring = exp(-pow((r - 0.86)/0.095, 2.0));
-  float a = ring * (0.30 + 0.13*sin(uT*3.1 + vPh));
-  if (a < 0.010) discard;
-  gl_FragColor = vec4(uC * (0.86 + 0.46*ring), a);
+  // The rim is a NARROW band: at this near-top-down camera a soft 2.2-power fresnel covers
+  // most of a dome's visible area, which is how the first cut turned a shell into a cone of
+  // fog. 5.0 keeps the light on the silhouette edge, where a rim light belongs.
+  float fres = pow(1.0 - clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0), 5.0);
+  // hex panel seams: distance to the nearest gridline of the dome's own 6x3 tessellation
+  vec2 g = vec2(vU.x*6.0, vU.y*3.0);
+  vec2 f = abs(fract(g) - 0.5);
+  float seam = 1.0 - smoothstep(0.32, 0.48, min(f.x, f.y));
+  float pulse = 0.82 + 0.18*sin(uT*2.6 + vPh);
+  float a = (0.018 + 0.30*fres + 0.045*seam) * pulse;
+  if (a < 0.008) discard;
+  gl_FragColor = vec4(uC * (0.30 + 0.80*fres + 0.30*seam), a);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`,
     });
     wardRing = new THREE.InstancedMesh(rg, rmat, WARD_CAP);
     wardRing.frustumCulled = false; wardRing.count = 0; wardRing.renderOrder = 4;
-    wardRing.name = 'ARMY_WARDRING';
+    wardRing.name = 'ARMY_WARDDOME';
     scene.add(wardRing);
     Armies.wardRing = wardRing;
   }
 
-  // ── 7c. CONTACT SHADOWS (ARMIES-FIX2 §1) ────────────────────────────────────
-  // The shadow map does render the horde, but a soldier is ~40 texels of a 168-unit
-  // frustum and three-tap PCF filters that down to a grey haze the eye never reads as
-  // contact. A tower's shadow is crisp because a tower is twenty times the footprint.
-  // So the units get an explicit ground decal instead: one quad per body, laid flat,
-  // ROTATED to the sun's ground bearing and stretched to the real shadow length
-  // (height / tan(elevation)), with a soft radial core under the boots. It is one draw
-  // call for the whole army, it is resolution-independent, and — the part that matters
-  // for the horde read — a hundred of these overlapping on the road IS the crimson
-  // river's footprint: the tan between the ranks stops being empty ground.
+  // ── 7c. CONTACT SHADOWS (ARMIES-FIX3 §1) ────────────────────────────────────
+  // The shadow map does render the horde, but a soldier is ~40 texels of a 168-unit frustum
+  // and three-tap PCF filters that down to a grey haze the eye never reads as contact. A
+  // tower's shadow is crisp because a tower is twenty times the footprint. So the units get
+  // an explicit ground decal: one quad per body, laid flat, rotated onto the sun's ground
+  // bearing, pushed most of a contact radius down-sun and stretched along it.
+  //
+  // The previous cut of this shipped INVISIBLE, for three compounding reasons, all of which
+  // this version is built to be immune to — worth recording, because each one on its own
+  // produces a decal that measurably draws and still changes nothing on screen:
+  //   1. its darkest point was placed ~0.5 * shadowLength down-sun of the body (a sign error
+  //      in the uv anchoring), so the contact point landed a full body length off the boots;
+  //   2. the quad was the body's full cast-shadow length (4.4 u) laid perfectly flat, and
+  //      the road is a carved heightfield — over four units the terrain rises through it and
+  //      the depth test removes most of it;
+  //   3. and fatally: the renderer runs with premultipliedAlpha, so NormalBlending is
+  //      (ONE, 1-SRC_ALPHA) and a NON-premultiplied dark grey gets ADDED back at full
+  //      strength. At this exposure the added colour almost exactly cancelled the
+  //      attenuation and 0.55 alpha of black netted 0.6% of darkening.
+  // So: a MULTIPLY (dst * src) — the operator a shadow actually is — with the falloff BAKED
+  // into a 128px canvas rather than computed in a hand-written shader. Immune to the
+  // premultiply flag, short enough to hug the ground it lands on, and a hundred of them
+  // overlapping on the road compound into the crimson river's own footprint instead of
+  // flat-topping at a single alpha. One draw call for the whole army.
   {
     const SP = G.sun.position;
     SHAD_AZ = Math.atan2(-SP.x, -SP.z);                     // bearing the shadows run along
     SHAD_LEN = Math.hypot(SP.x, SP.z) / Math.max(SP.y, 1e-3); // ground length per unit height
     const sg = new THREE.PlaneGeometry(1, 1); sg.rotateX(-Math.PI / 2);
-    const smat = new THREE.ShaderMaterial({
-      transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide,
-      vertexShader: `varying vec2 vU; varying float vD;
-void main(){ vU = uv;
-  vec4 mvPosition = viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
-  vD = -mvPosition.z;
-  gl_Position = projectionMatrix * mvPosition; }`,
-      fragmentShader: `#include <common>
-varying vec2 vU; varying float vD;
-void main(){
-  // v runs from the boots (0.16) to the shadow tip (1.0); the core is a fat ellipse at
-  // the feet and the tail thins and fades, which is what a 44-degree key actually does.
-  vec2 d = vec2((vU.x - 0.5) / 0.46, (vU.y - 0.30) / 0.62);
-  float r = length(d);
-  float a = 1.0 - smoothstep(0.30, 1.0, r);
-  a *= a * 0.62;
-  a += (1.0 - smoothstep(0.0, 0.34, length(vec2((vU.x - 0.5) / 0.30, (vU.y - 0.26) / 0.20)))) * 0.30;
-  a *= 1.0 - smoothstep(110.0, 200.0, vD);          // hand-rolled haze: the scene fog would
-  if (a < 0.012) discard;                            // need ShaderMaterial fog uniforms
-  gl_FragColor = vec4(vec3(0.052, 0.044, 0.036), min(a, 0.74));
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
-}`,
+    // the multiplier itself: ~0.34 grey under the boots, pure white at the rim where a
+    // multiply is a no-op. NoColorSpace + toneMapped:false so nothing re-grades it.
+    const [scv, sgx] = mkc(128, 128);
+    sgx.fillStyle = '#ffffff'; sgx.fillRect(0, 0, 128, 128);
+    {
+      const rg2 = sgx.createRadialGradient(64, 62, 2, 64, 64, 62);
+      rg2.addColorStop(0.00, 'rgb(88,80,71)');
+      rg2.addColorStop(0.34, 'rgb(126,118,107)');
+      rg2.addColorStop(0.66, 'rgb(198,192,184)');
+      rg2.addColorStop(0.88, 'rgb(243,241,238)');
+      rg2.addColorStop(1.00, '#ffffff');
+      sgx.fillStyle = rg2; sgx.beginPath(); sgx.arc(64, 64, 62, 0, TAU); sgx.fill();
+    }
+    const shadTex = new THREE.CanvasTexture(scv);
+    shadTex.colorSpace = THREE.NoColorSpace; shadTex.anisotropy = 4;
+    const smat = new THREE.MeshBasicMaterial({
+      map: shadTex, transparent: true, depthWrite: false, fog: false,
+      side: THREE.DoubleSide, toneMapped: false,
+      blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
+      blendSrc: THREE.DstColorFactor, blendDst: THREE.ZeroFactor,
+      polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -8,
     });
     shadDecal = new THREE.InstancedMesh(sg, smat, SHAD_CAP);
     shadDecal.frustumCulled = false; shadDecal.count = 0; shadDecal.renderOrder = 2;
     shadDecal.name = 'ARMY_CONTACT';
     scene.add(shadDecal);
     Armies.shadDecal = shadDecal;
+  }
+
+  // ── 7d. CHAMPION DRESS (ARMIES-FIX3 §5) ─────────────────────────────────────
+  // "A champion is +15% scale and a nameplate" was the sim pass's own honest note, and the
+  // hero shot proved it: a name plate hanging in empty road over a hundred and twenty
+  // identical bodies. A champion needs to be findable in one glance, from silhouette alone,
+  // so he gets three things no rank-and-file body in the game can have — a back standard on
+  // a 2.5 u pole, gold trim on helm and pauldrons, and a floor-length cloak — plus the one
+  // ground pool in the whole scene. Both meshes are built in 1.80-unit human space and
+  // scaled by the wearer's own height at draw time, so the SAME kit fits a grunt champion,
+  // a brute champion or an ironclad champion. Count is 0 on every wave before 7: two draw
+  // calls that a campaign only pays for once a champion is actually on the road.
+  {
+    const CCAP = 8;
+    const p = [];
+    const A = (g, m, bone, piv, w, tint) => { p.push({ g, m: m || null, bone: bone || 0, piv: piv || [0, 0, 0], piv2: null, w: w || null, tint }); };
+    const ySh = 1.375, yCrn = 1.71, hp0 = [0, 1.405, 0];
+    // the pole: shoulder to 2.5 u over it, socketed into a back harness
+    A(uvAll(new THREE.CylinderGeometry(0.036, 0.044, 2.50, 7), T.WOOD), trs(0, ySh + 0.94, -0.26, 0, 1, 1, 1, -0.13), 0, null, null, 0.94);
+    A(boxA(0.34, 0.070, 0.10, [T.LEATH]), trs(0, ySh - 0.10, -0.22, 0, 1, 1, 1, 0, 0.36), 0, null, null, 0.88);
+    A(uvAll(new THREE.SphereGeometry(0.070, 8, 6), T.GOLD), trs(0.16, ySh + 2.16, -0.42), 0, null, null, 1.30);
+    A(uvAll(new THREE.CylinderGeometry(0.030, 0.030, 0.52, 7), T.GOLD), trs(0.10, ySh + 2.05, -0.40, 0, 1, 1, 1, 0, 1.5708), 0, null, null, 1.24);
+    // the standard itself rides the cloth bone, so it ripples with the march
+    A(plateGeo([[-0.30, 0], [0.30, 0], [0.30, -1.02], [0.06, -0.80], [-0.30, -1.02]], 0.018, T.BANN, T.BANN),
+      trs(0.10, ySh + 2.02, -0.40, 0, 1, 1, 1, 0.05), 8, null, (x, y) => clamp((ySh + 2.02 - y) / 1.02, 0, 1), 1.10);
+    // floor-length cloak: shoulders to ankle, wider at the hem, on the cloth bone
+    A(plateGeo([[-0.34, 0], [0.34, 0], [0.50, -0.72], [0.44, -1.34], [-0.44, -1.34], [-0.50, -0.72]], 0.026, T.CRIM, T.CRIM),
+      trs(0, ySh + 0.03, -0.20, 0, 1, 1, 1, 0.09), 8, null, (x, y) => clamp((ySh - y) / 1.34, 0, 1), 0.92);
+    A(uvAll(new THREE.CylinderGeometry(0.150, 0.150, 0.062, 10), T.GOLD), trs(0, ySh + 0.05, -0.16, 0, 1, 1, 1, 0.09), 0, null, null, 1.22);
+    // gold trim: crown band on the helm, rims on both pauldrons
+    A(uvAll(new THREE.CylinderGeometry(0.166, 0.172, 0.052, 12), T.GOLD), trs(0, yCrn - 0.132, 0), 7, hp0, null, 1.26);
+    for (let i = 0; i < 5; i++)
+      A(boxA(0.028, 0.078, 0.028, [T.GOLD]), trs((i - 2) * 0.060, yCrn - 0.056, 0.128 - Math.abs(i - 2) * 0.020), 7, hp0, null, 1.32);
+    for (const s of [-1, 1])
+      A(uvAll(new THREE.CylinderGeometry(0.152, 0.146, 0.036, 10), T.GOLD), trs(s * 0.262, ySh + 0.030, -0.006), 0, null, null, 1.28);
+    const cgeo = mergeA(p, 1.80);
+    const canim = new Float32Array(CCAP * 4);
+    for (let i = 0; i < CCAP; i++) canim[i * 4 + 3] = -1;
+    cgeo.setAttribute('aAnim', new THREE.InstancedBufferAttribute(canim, 4));
+    const cmat = patchAnim(new THREE.MeshStandardMaterial({
+      map: albedo, roughnessMap: mrmap, metalnessMap: mrmap, roughness: 1, metalness: 1,
+      vertexColors: true, envMapIntensity: 1.05,
+    }), 0.90, 'champkit');
+    const cmesh = new THREE.InstancedMesh(cgeo, cmat, CCAP);
+    cmesh.castShadow = true; cmesh.receiveShadow = false; cmesh.frustumCulled = false;
+    cmesh.count = 0; cmesh.name = 'ARMY_CHAMPKIT';
+    cmesh.customDepthMaterial = patchAnim(new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }), 0.90, 'champkitdep');
+    scene.add(cmesh);
+    champKit = { mesh: cmesh, anim: canim, cap: CCAP, n: 0 };
+    Armies.meshes.push(cmesh);
+    // the pool. Radius 1.8 u, peak 0.10 — deliberately below the threshold at which it
+    // would read as a mechanic ring, and the only one on the field once a wave is unwarded.
+    const pg = new THREE.PlaneGeometry(1, 1); pg.rotateX(-Math.PI / 2);
+    const pmat = new THREE.ShaderMaterial({
+      uniforms: { uT: AT_U }, transparent: true, depthWrite: false, fog: false,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+      vertexShader: `varying vec2 vU; varying float vPh;
+void main(){ vU = uv; vPh = instanceMatrix[3].x*0.7 + instanceMatrix[3].z*0.4;
+  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position,1.0); }`,
+      fragmentShader: `#include <common>
+uniform float uT; varying vec2 vU; varying float vPh;
+void main(){
+  float r = length(vU - 0.5) * 2.0;
+  float a = pow(clamp(1.0 - r, 0.0, 1.0), 1.8) * (0.10 + 0.026*sin(uT*2.2 + vPh));
+  a += exp(-pow((r - 0.90)/0.070, 2.0)) * 0.11;
+  if (a < 0.006) discard;
+  gl_FragColor = vec4(vec3(1.32, 0.86, 0.40), a);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}`,
+    });
+    champPool = new THREE.InstancedMesh(pg, pmat, CCAP);
+    champPool.frustumCulled = false; champPool.count = 0; champPool.renderOrder = 3;
+    champPool.name = 'ARMY_CHAMPPOOL';
+    scene.add(champPool);
+    Armies.champPool = champPool;
   }
 }
 
@@ -5182,13 +5671,30 @@ Armies.syncVisuals = (vtNow) => {
   // has its shadow at its own feet, but a FLYER's is thrown `alt * SHAD_LEN` down-sun of it
   // (SPEC5 §A). That displacement is the only cue in the frame that says how high the flock
   // actually is, and it is what makes a wyvern read as over the road rather than on it.
-  const pushShadow = (x, y, z, h, w, fade, off) => {
-    if (sn >= SHAD_CAP || fade <= 0.02) return;
-    const L = h * SHAD_LEN + w * 0.55, D = L * 0.30 + (off || 0);
+  // ARMIES-FIX3 §1. `cr` is the contact radius; the quad is a single short, sun-aligned
+  // ellipse built around it, deliberately NOT the body's full cast-shadow length — a long
+  // flat quad on a carved road is a quad the depth test eats. `flat` (a flyer) rounds it up
+  // and drops the down-sun bias, because the ground shadow of something in the air is an
+  // ellipse thrown clear of the body, not a smear leaving its feet.
+  const pushShadow = (x, y, z, h, w, fade, off, flat) => {
+    if (sn >= SHAD_CAP || fade <= 0.20) return;
+    // contact radius: the body's own width, floored at the 0.55 u the critic specified so a
+    // runner is grounded as firmly as an ogre. A flyer's blob is wider (it is a wingspan)
+    // and `off` throws it the full altitude down-sun, which is the altitude cue.
+    // a dissolving corpse SHRINKS its contact patch rather than fading it — the material
+    // carries no per-instance channel, and a shadow that pulls in under a sinking body
+    // reads better than one that goes translucent anyway.
+    const cr = Math.max(0.55, w * 1.15) * (flat ? 1.55 : 1) * (0.55 + 0.45 * fade);
+    // pushed most of a contact radius DOWN-SUN and stretched along the same bearing. At the
+    // low closeup camera a patch centred exactly on the boots is hidden by the body that
+    // casts it — the grounding has to lie beside the feet, where the eye can see the road
+    // go dark against the ones that are lit.
+    const D = (off || 0) + (flat ? 0 : cr * 0.86);
     _q.setFromAxisAngle(_YAX, SHAD_AZ);
-    _m4.compose(_v3s.set(x + Math.sin(SHAD_AZ) * D, y + 0.045, z + Math.cos(SHAD_AZ) * D),
-                _q, _sc.set(w * 2.05 * fade, 1, L * 1.06 * fade));
-    shadDecal.setMatrixAt(sn, _m4); sn++;
+    _m4.compose(_v3s.set(x + Math.sin(SHAD_AZ) * D, y + SHAD_LIFT, z + Math.cos(SHAD_AZ) * D),
+                _q, _sc.set(cr * 2.30, 1, cr * 2.30 * (flat ? 0.80 : 1.95)));
+    shadDecal.setMatrixAt(sn, _m4);
+    sn++;
   };
   // `kind`: 0 enemy hp · 1 knight hp · 2 ward runes · 3 ward runes, flashing (SPEC5 §A).
   // `hf` fattens the quad — the rune strip is taller than a health bar because six discrete
@@ -5219,7 +5725,16 @@ Armies.syncVisuals = (vtNow) => {
     // GROUND height (a wyvern's shadow belongs on the meadow, not in the air with it), and
     // everything else — bar, model, ward shell — comes up with the body.
     const gy0 = _v3.y;
-    if (e.def.alt) _v3.y += e.def.alt;
+    // ARMIES-FIX3 §4a. `def.alt` shipped at 2.6 and the flock still read as walking, because
+    // 2.6 units of lift with the shadow drawn wrong underneath is indistinguishable from a
+    // tall unit. The DRAWN altitude is `alt * ALT_VIS` (3.2 u on the wyvern) plus a seeded
+    // per-instance bob of ±0.35 u, so a flock breathes instead of gliding on rails. The sim
+    // number is untouched — an arrow still climbs to `def.alt`.
+    let altV = 0;
+    if (e.def.alt) {
+      altV = e.def.alt * ALT_VIS + Math.sin(at * 0.78 + H1(e.id * 13 + 3) * 6.2831853) * ALT_BOB;
+      _v3.y += altV;
+    }
     const tn = G.pathTan(d, e.pathId);
     // mode 6 is the wing beat (SPEC5 §A). It is chosen from the ART, not from `def.fly`,
     // because the mode has to match the RIG that is about to be animated — a flyer that
@@ -5242,10 +5757,13 @@ Armies.syncVisuals = (vtNow) => {
     _q.setFromAxisAngle(_YAX, face);
     _m4.compose(_v3, _q, _sc.setScalar(s));
     A.mesh.setMatrixAt(A.n, _m4);
-    // per-instance lightness: the old 0.80-1.20 range pushed the top third of the horde
-    // past #a42a22 into salmon under ACES + the golden-hour key. 0.78-1.10 keeps the mass
-    // on the crimson side of the palette while still breaking up the ranks.
-    const l = 0.78 + h2 * 0.32, wv = (h1 - 0.5) * 0.13, tnt = e.def.tint;
+    // ARMIES-FIX3 §7a. Measured off the shipped frame, the sunlit tabard sampled #CE563C —
+    // roughly 30% light of the spec's #a42a22 and pushed orange, so the horde read as
+    // terracotta plastic and lost its value separation from the warm dirt road it marches
+    // on. The tile is already #a42a22 exactly; it was THIS multiply (mean 0.94) that lifted
+    // it through ACES into salmon. Mean 0.78 lands the sunlit sample near (170,70,55) and
+    // puts the crimson mass back a full stop under the road.
+    const l = (0.66 + h2 * 0.26) * A.lm, wv = (h1 - 0.5) * 0.13, tnt = e.def.tint;
     if (tnt) _acol.setRGB(l * (1 + wv) * tnt[0], l * tnt[1], l * (1 - wv * 1.5) * tnt[2]);
     else _acol.setRGB(l * (1 + wv), l, l * (1 - wv * 1.5));
     const WS = e.ward && WARDS[e.ward];
@@ -5264,18 +5782,29 @@ Armies.syncVisuals = (vtNow) => {
       if (WS && e.alive) {
         const k = 0.72 + 0.28 * Math.sin(at * 1.7 + h2 * 6.2831853);
         wd[wo] = WS[0]; wd[wo + 1] = WS[1]; wd[wo + 2] = WS[2]; wd[wo + 3] = 0.22 * k;
-        if (nw < WARD_CAP) {                       // ...and its ground ring
-          _m4.makeScale(1.05 * s, 1, 1.05 * s); _m4.setPosition(_v3.x, _v3.y + 0.09, _v3.z);
+        if (nw < WARD_CAP) {                       // ...and its hex dome (VFX-FIX3 §1/§6)
+          // sized off the body it covers, not off a constant: a levyman gets a helmet-sized
+          // shell and an ironclad gets one it can stand up in, so the dome always reads as
+          // fitted armour rather than as a bubble parked on the road.
+          const bh = (e.def.scale || 1) * 2.0 * s, br = Math.max(0.60, bh * 0.44);
+          _m4.makeScale(br, bh * 0.92, br); _m4.setPosition(_v3.x, _v3.y + 0.05, _v3.z);
           wardRing.setMatrixAt(nw, _m4); nw++;
           if (!wardC) wardC = WS;
         }
       } else { wd[wo + 3] = 0; }
     }
     const o = A.n * 4, an = A.anim;
+    // ARMIES-FIX3 §6b: mode 1 ran at 0.52 Hz — a 1.9 s swing cycle, which at gameplay zoom
+    // is a statue. 1.22 Hz is a 0.4 s beat, the rate the reference's melee scrums read at.
     const rate = mode === 5 ? 0.45
                : mode === 3 ? 0.42 * (0.90 + h1 * 0.20)
-               : mode === 1 ? 0.52 * (0.86 + h1 * 0.30) : A.gait * (0.88 + h1 * 0.24);
-    an[o] = mode === 5 ? -stompPh * rate * 6.2831853 : h2 * 6.2831853;
+               : mode === 1 ? 1.22 * (0.86 + h1 * 0.30) : A.gait * (0.88 + h1 * 0.24);
+    // ARMIES-FIX3 §7c: the gait phase was a hash of the unit id, and a hash CLUMPS on the
+    // small consecutive integers a wave actually deals out — which is why adjacent clusters
+    // marched with visibly synced legs. The golden-ratio sequence cannot clump: any run of
+    // n ids is the most evenly distributed set of n phases that exists. The same value is
+    // read back in the vertex shader as the weapon-carry variant seed.
+    an[o] = mode === 5 ? -stompPh * rate * 6.2831853 : ((e.id * 0.61803399) % 1) * 6.2831853;
     an[o + 1] = rate;
     an[o + 2] = mode; an[o + 3] = dd;
     A.n++;
@@ -5306,9 +5835,26 @@ Armies.syncVisuals = (vtNow) => {
               (e.wardN || 0) / HW.hits, 2 + fl, 1.45);
     }
     const fad = dd < 0 ? 1 : 1 - clamp((dd - 0.30) / 0.55, 0, 1);
-    if (e.def.alt)                                 // a wingspan-wide blob, thrown down-sun
-      pushShadow(_v3.x, gy0, _v3.z, 0.34, A.bar * s * 1.30, fad * 0.66, e.def.alt * SHAD_LEN);
+    // ARMIES-FIX3 §4b — the flyer's blob is DECOUPLED from the shadow map on purpose: a
+    // dark ellipse on the terrain with visible air between it and the body is the cue every
+    // RTS uses to say "this one is over the road, not on it", and it is the only way a
+    // player learns a wyvern bypasses his blockers without being told in text.
+    if (e.def.alt) pushShadow(_v3.x, gy0, _v3.z, 0.34, A.bar * s * 1.15, fad * 0.92, altV * SHAD_LEN, 1);
     else pushShadow(_v3.x, gy0, _v3.z, A.h * s, A.bar * s * 0.50, fad);
+    // ARMIES-FIX3 §5 — the champion's own dress and his ground pool, on the same matrix the
+    // body is drawn with, scaled from 1.80-unit human space onto whatever species he is.
+    if (e.champ && e.alive && champKit.n < champKit.cap) {
+      const cs = s * (A.h / 1.80);
+      _m4.compose(_v3, _q, _sc.setScalar(cs));
+      champKit.mesh.setMatrixAt(champKit.n, _m4);
+      champKit.mesh.setColorAt(champKit.n, _acol);
+      const co = champKit.n * 4;
+      champKit.anim[co] = an[o]; champKit.anim[co + 1] = an[o + 1];
+      champKit.anim[co + 2] = an[o + 2]; champKit.anim[co + 3] = -1;
+      _m4.makeScale(3.6, 1, 3.6); _m4.setPosition(_v3.x, gy0 + 0.055, _v3.z);
+      champPool.setMatrixAt(champKit.n, _m4);
+      champKit.n++;
+    }
   }
   const KA = AM.knight;
   for (const kn of G.knights) {
@@ -5332,12 +5878,23 @@ Armies.syncVisuals = (vtNow) => {
     KA.mesh.setColorAt(KA.n, _acol);
     const o = KA.n * 4, an = KA.anim;
     an[o] = h2 * 6.2831853;
-    an[o + 1] = mode === 1 ? 0.60 * (0.9 + h1 * 0.2) : mode === 0 ? KA.gait * (0.9 + h1 * 0.2) : 0.24;
+    // ARMIES-FIX3 §6b — the defender's half of the scrum beats at the same 0.4 s as the
+    // attacker's, offset by his own seed, so an engaged pair reads as trading blows.
+    an[o + 1] = mode === 1 ? 1.22 * (0.9 + h1 * 0.2) : mode === 0 ? KA.gait * (0.9 + h1 * 0.2) : 0.24;
     an[o + 2] = mode; an[o + 3] = -1;
     KA.n++;
     if (kn.hp < kn.maxhp) pushBar(x, G.groundY(x, z) + KA.h * s + 0.34, z, 0.96 * s, kn.hp / kn.maxhp, 1);
     pushShadow(x, G.groundY(x, z), z, KA.h * s, KA.bar * s * 0.50, 1);
   }
+  champKit.mesh.count = champKit.n;
+  champPool.count = champKit.n;
+  if (champKit.n || champKit._was) {
+    champKit.mesh.instanceMatrix.needsUpdate = true;
+    if (champKit.mesh.instanceColor) champKit.mesh.instanceColor.needsUpdate = true;
+    champKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
+    champPool.instanceMatrix.needsUpdate = true;
+  }
+  champKit._was = champKit.n > 0;
   for (const src of [AM, KITM]) for (const key in src) {
     const A = src[key];
     A.mesh.count = A.n;
@@ -6669,19 +7226,57 @@ let arrowMesh = null, rockMesh = null, streakMesh = null;
   }), 12.3, 0.24);
   rockMesh = new THREE.InstancedMesh(rg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }), 48);
   rg.scale(1.20, 1.20, 1.20);
-  // motion streak
+  // ── motion streak (TOWERS-FIX3 §2) ────────────────────────────────────────
+  // The old streak was ONE quad of constant width with a DoubleSide material and a cream
+  // #fff0c8 tint at full additive strength. At gameplay zoom that resolves to a hard-edged
+  // pale stick lying over the road with no head and no taper — a critic called them tossed
+  // party streamers, and on the vale maps (battle.png) they read as white litter on the dirt.
+  // Three changes, and all three are geometry rather than tuning:
+  //   TAPER  — the quad is a 6-sample strip whose half-width runs 1.0 at the head to 0.0 at
+  //            the tail, so the streak comes to a POINT behind the shaft instead of stopping.
+  //   FALLOFF— the strip's u runs 1 (head) → 0 (tail) across the same texture, whose alpha
+  //            ramp already dies to zero, so opacity and width vanish together.
+  //   SIDE   — FrontSide: one surface, no backface doubling the additive load.
+  // The head end is deliberately left at full width and full alpha because the ARROW mesh is
+  // drawn there — the streak's job is to say where the shaft came FROM.
   const stx = (() => {
     const S = 128, [c, g2] = cnv(S);
     const gr = g2.createLinearGradient(0, 0, S, 0);
-    gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.72, 'rgba(255,246,220,.55)'); gr.addColorStop(1, 'rgba(255,255,240,1)');
+    gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.55, 'rgba(255,238,196,.22)');
+    gr.addColorStop(0.86, 'rgba(255,244,214,.62)'); gr.addColorStop(1, 'rgba(255,250,232,1)');
     g2.fillStyle = gr; g2.fillRect(0, 0, S, S);
     const vg = g2.createLinearGradient(0, 0, 0, S);
     vg.addColorStop(0, 'rgba(0,0,0,1)'); vg.addColorStop(0.5, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,1)');
     g2.globalCompositeOperation = 'destination-out'; g2.fillStyle = vg; g2.fillRect(0, 0, S, S);
     return tex(c);
   })();
-  const sg = new THREE.PlaneGeometry(1, 1); sg.translate(-0.5, 0, 0);   // anchored at the head
-  streakMesh = new THREE.InstancedMesh(sg, new THREE.MeshBasicMaterial({ map: stx, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide, color: 0xfff0c8 }), PROJ_CAP);
+  const sg = (() => {                       // tapered quad strip, head at x=0, tail at x=-1
+    const N = 6, pos = [], uvs = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;                       // 0 = head, 1 = tail
+      const w = 0.5 * (1 - t) * (1 - t * 0.35);   // 0.5 -> 0, biased so the head stays broad
+      pos.push(-t, -w, 0, -t, w, 0);
+      uvs.push(1 - t, 0, 1 - t, 1);
+    }
+    // CCW winding, deliberately: the material is FrontSide, and three.js decides facing from
+    // screen-space winding (this geometry carries no normals at all). The obvious index order
+    // here winds clockwise and culls the entire strip — invisible arrows, no error anywhere.
+    for (let i = 0; i < N; i++) {
+      const a = i * 2;
+      idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+    const g3 = new THREE.BufferGeometry();
+    g3.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g3.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g3.setIndex(idx);
+    return g3;
+  })();
+  // Warm gold rather than the old near-white cream (#fff0c8): a loosed shaft is a wooden
+  // thing catching sun, and it was the DESATURATION that made these read as white litter
+  // lying on a dirt road. Held a stop brighter than the #c8ab7a the spec names, because the
+  // taper, the FrontSide and the halved width already took most of the streak's mass out —
+  // at the shaft colour exactly, an arrow in flight stopped being visible at all.
+  streakMesh = new THREE.InstancedMesh(sg, new THREE.MeshBasicMaterial({ map: stx, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.FrontSide, color: 0xe8c890 }), PROJ_CAP);
   for (const m of [arrowMesh, rockMesh, streakMesh]) { m.frustumCulled = false; m.count = 0; scene.add(m); }
   arrowMesh.castShadow = false; rockMesh.castShadow = true;
   arrowMesh.name = 'PROJ_SHAFT'; rockMesh.name = 'PROJ_ROCK'; streakMesh.name = 'PROJ_STREAK';
@@ -6740,10 +7335,15 @@ function syncProj(at) {
     _ax3.crossVectors(_pv, _cf.subVectors(G.camera.position, _ps).normalize()).normalize();
     if (_ax3.lengthSq() < 0.1) _ax3.set(1, 0, 0);
     _cf.crossVectors(_ax3, _pv);
-    const len = (bolt ? 5.6 : 3.8) * clamp(f * 6, 0.22, 1), wid = bolt ? 0.95 : 0.62;
-    _pm.set(_pv.x * len, _ax3.x * wid, _cf.x, p.x + _pv.x * 0.5,
-            _pv.y * len, _ax3.y * wid, _cf.y, y + _pv.y * 0.5,
-            _pv.z * len, _ax3.z * wid, _cf.z, p.z + _pv.z * 0.5,
+    // TOWERS-FIX3 §2. Length is capped at ~0.12 s of flight (3.4 u for a bolt, 2.6 for an
+    // arrow) instead of the old 5.6, and the head width is the spec's 0.30 u — the strip
+    // geometry tapers it to nothing on its own, so `wid` is the HEAD width, not the ribbon's.
+    // `-_ax3` (not `+`) keeps the basis right-handed: with `+` the three columns wind the
+    // strip backwards and a FrontSide material culls the whole thing.
+    const len = (bolt ? 3.8 : 3.0) * clamp(f * 6, 0.22, 1), wid = bolt ? 0.54 : 0.40;
+    _pm.set(_pv.x * len, -_ax3.x * wid, _cf.x, p.x + _pv.x * 0.28,
+            _pv.y * len, -_ax3.y * wid, _cf.y, y + _pv.y * 0.28,
+            _pv.z * len, -_ax3.z * wid, _cf.z, p.z + _pv.z * 0.28,
             0, 0, 0, 1);
     streakMesh.setMatrixAt(si++, _pm);
     Towers.projRender.push({ p, kind: p.kind, x: p.x, y, z: p.z, f, r: bolt ? 0.12 : 0.05,
@@ -6949,25 +7549,58 @@ function trapGeo(k) {
     // this sun (4.9 intensity, 0.68 env on top) a metalness-0.86 tetrahedron the size of a
     // helmet renders as a sheet of white paper lying in the road. The read is a rough,
     // rust-dark strew with a glint here and there — the glints come from VFX.trapArm.
+    // TOWERS-FIX3 §6. The strew was one flat iron value and it dissolved into the road it
+    // lies on ("a near-invisible pale blotch"). Two cheap separations: the spikes alternate
+    // between rust-dark and a lighter worn steel so the patch has internal VALUE contrast at
+    // any zoom, and the mr channel goes metal-forward and glossier — a caltrop is the one
+    // thing on a dirt road that throws a hard specular back at the sun.
+    const CALT_D = [0.115, 0.100, 0.086], CALT_L = [0.255, 0.245, 0.232];
     for (let i = 0; i < 16; i++) {
-      const an = trng() * 6.2832, rr = Math.sqrt(trng()) * 2.15, s = 0.085 + trng() * 0.055;
+      const an = trng() * 6.2832, rr = Math.sqrt(trng()) * 2.15, s = 0.095 + trng() * 0.060;
       const m = new THREE.Matrix4().compose(
         new THREE.Vector3(Math.cos(an) * rr, s * 1.5, Math.sin(an) * rr),
         new THREE.Quaternion().setFromEuler(new THREE.Euler(trng() * 3, trng() * 6.28, trng() * 3)),
         new THREE.Vector3(1, 1, 1));
-      add(new THREE.TetrahedronGeometry(s * 2.6, 0), m, { tint: IRON, mr: [0.42, 0.62], ao: 0.14, jit: 0.30 });
+      add(new THREE.TetrahedronGeometry(s * 2.7, 0), m,
+        { tint: (i & 1) ? CALT_L : CALT_D, mr: [0.68, 0.30], ao: 0.14, jit: 0.30 });
     }
   } else if (k === 'tar') {
-    // a shallow pool with a raised lip, and three blisters in it. Low roughness is doing the
-    // work here: the whole read of pitch is that it is the one WET thing on a dry road.
-    add(CY(2.30, 2.44, 0.10, 22), new THREE.Matrix4().makeTranslation(0, 0.05, 0),
-      { tint: [0.020, 0.018, 0.017], mr: [0.10, 0.20], ao: 0.06, jit: 0.10 });
-    add(CY(2.44, 2.30, 0.07, 22), new THREE.Matrix4().makeTranslation(0, 0.015, 0),
-      { tint: [0.034, 0.030, 0.027], mr: [0.05, 0.55], ao: 0.30, jit: 0.20 });
+    // ── TOWERS-FIX3 §6 ────────────────────────────────────────────────────────
+    // The shipped pit sampled a solid #000000: a perfect 22-gon ellipse at tint 0.020 with
+    // roughness 0.20, which under this sun has no diffuse to speak of and a specular lobe too
+    // broad to ever catch a highlight — so it rendered as a HOLE in the terrain, which a
+    // critic reasonably filed as a render error rather than as tar. Three fixes, in order of
+    // what each buys:
+    //   OUTLINE   — a perfect ellipse is a UI shape. The rim radius is jittered per sector
+    //               over 12 sectors (consistently, off a lookup, so the seam never splits),
+    //               which is what makes it read as something that was POURED.
+    //   SPECULAR  — roughness 0.14 / metalness 0, so the low sun lays a hard streak across
+    //               the pool. That streak IS the read: pitch is the one wet thing out here.
+    //   MENISCUS  — the lip ring goes glossier and a shade lighter than the body, so the
+    //               edge catches a bright hairline where the pool wets the road.
+    // The rising blisters are VFX's (see the tar-bubble emitter): geometry cannot breathe.
+    const JIT = [];
+    for (let i = 0; i < 12; i++) JIT.push(0.86 + trng() * 0.26);
+    const wobble = (g) => {
+      const P = g.attributes.position;
+      for (let i = 0; i < P.count; i++) {
+        const px = P.getX(i), pz = P.getZ(i), r = Math.hypot(px, pz);
+        if (r < 1e-4) continue;
+        let a = Math.atan2(pz, px) / 6.2831853; a -= Math.floor(a);
+        const b = Math.round(a * 12) % 12, f = JIT[b];
+        P.setX(i, px * f); P.setZ(i, pz * f);
+      }
+      P.needsUpdate = true; g.computeVertexNormals();
+      return g;
+    };
+    add(wobble(CY(2.30, 2.44, 0.10, 24)), new THREE.Matrix4().makeTranslation(0, 0.05, 0),
+      { tint: [0.052, 0.040, 0.030], mr: [0.0, 0.14], ao: 0.06, jit: 0.10 });
+    add(wobble(CY(2.46, 2.32, 0.07, 24)), new THREE.Matrix4().makeTranslation(0, 0.015, 0),
+      { tint: [0.088, 0.072, 0.056], mr: [0.0, 0.09], ao: 0.30, jit: 0.20 });   // meniscus
     for (let i = 0; i < 4; i++) {
       const an = trng() * 6.2832, rr = trng() * 1.5, s = 0.16 + trng() * 0.16;
       add(new THREE.SphereGeometry(s, 7, 5), new THREE.Matrix4().makeTranslation(Math.cos(an) * rr, 0.07, Math.sin(an) * rr),
-        { tint: [0.026, 0.023, 0.021], mr: [0.10, 0.16], ao: 0.10 });
+        { tint: [0.062, 0.050, 0.038], mr: [0.0, 0.11], ao: 0.10 });
     }
   } else {
     // a real barrel: staved body, two iron hoops, a stencilled lid and a fuse standing off
@@ -6988,7 +7621,7 @@ function trapGeo(k) {
 function trapProto(k) {
   if (!TRAP_GEO[k]) {
     TRAP_GEO[k] = trapGeo(k);
-    TRAP_MAT[k] = rigMat(null, TRAP_U, k === 'tar' ? { roughness: 0.30, metalness: 0.05 } : { roughness: 0.82 });
+    TRAP_MAT[k] = rigMat(null, TRAP_U, k === 'tar' ? { roughness: 0.14, metalness: 0.0 } : { roughness: 0.82 });
   }
   return k;
 }
@@ -7168,7 +7801,10 @@ function ghostFor(type) {
     g = Towers.build({ type, level: 1, x: 0, z: 0 });
     for (const c of g.children) {
       c.castShadow = false; c.receiveShadow = false; c.customDepthMaterial = undefined;
-      c.material.transparent = true; c.material.opacity = 0.84;
+      // FIX3-UI §6 — 0.84 is not a preview, it is a building. Standing next to a real tower
+      // the pending one read as already raised, and the only cue that it was not was a pale
+      // disc on the ground. 0.5 lets the meadow through the timber, which is the whole point.
+      c.material.transparent = true; c.material.opacity = 0.50;
       // depthWrite STAYS ON. A translucent object with depth writes off sorts against
       // itself into mush AND loses to the footprint plate (renderOrder 3), which painted
       // straight over the ghost's base — the preview read as an empty disc with a smear
@@ -7192,7 +7828,12 @@ const C_OK = [0.52, 1.00, 0.58], C_NO = [1.00, 0.26, 0.52];
 // (the ring art is warm gold, so the tint has to be pushed hard to read as blue at all)
 const C_AURA = [0.26, 0.60, 1.65];
 // Ghost wash (multiplied onto each part's own albedo, so timber stays timber).
-const T_OK = [0.86, 1.12, 0.94], T_NO = [1.30, 0.44, 0.52];
+// FIX3-UI §6 — the wash was nearly neutral (0.86/1.12/0.94), so a valid ghost and a refused
+// one differed by a tint no one reads at gameplay zoom, and a blocked placement had nothing
+// to SAY. Pushed to the placement language's own two colours — #7fe08a go, #e0524a stop —
+// far enough that the state is legible from the silhouette alone. It is still a MULTIPLY, so
+// slate stays slate and a blue pennant stays blue; only the cast changes.
+const T_OK = [0.58, 1.22, 0.66], T_NO = [1.38, 0.34, 0.32];
 // Placement mode read-out (state lives in SIM's G.place): footprint plate + range ring +
 // ghost tower, tinted by validity. The RANGE IS ALWAYS VISIBLE BEFORE GOLD IS SPENT.
 // SPEC4 §C/§D: a trap gets a GHOST like a tower (you are putting an object down and its
@@ -7209,7 +7850,7 @@ function trapGhostFor(k) {
     // an instance onBeforeCompile, so a "clone" would silently ship an unpatched shader.
     // The ghost needs none of the rig — the geometry's colours are already baked.
     const m = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true,
-      opacity: 0.80, depthWrite: true, roughness: 0.82, metalness: 0 });
+      opacity: 0.52, depthWrite: true, roughness: 0.82, metalness: 0 });   // FIX3-UI §6
     g = new THREE.Mesh(TRAP_GEO[k], m);
     g.renderOrder = 2; g.castShadow = false; g.receiveShadow = false;
     g.userData._c0 = m.color.clone();
@@ -7254,7 +7895,9 @@ function syncPlace(p, at) {
       gh.visible = true;
     }
   }
-  const pu = 0.72 + 0.28 * Math.sin(at * 3.4);
+  // FIX3-UI §6 — a 1.2s breath on the footprint (ω = 2π/1.2). Render-time only: `at` is the
+  // continuous clock, never a sim tick, so nothing here can move the simulation.
+  const pu = 0.72 + 0.28 * Math.sin(at * 5.236);
   SEL.foot.material.opacity = 0.60 + 0.40 * pu;
   SEL.ring.material.opacity = (p.ok ? 0.60 : 0.42) + 0.24 * pu;
   SEL.ring.material.map.offset.x = at * 0.02;
@@ -8158,9 +8801,14 @@ function makeEnemy(type, pid, branch, lane, d, hpMul, opt) {
   G.pathPos(d, _v3, lane, pid);
   let hp = def.hp * hpMul * OMEN_FX.hp, msc = def.mscale || 1;
   const champ = o.champ !== undefined && o.champ >= 0;
-  // §B4: ×2.5 hit points and +15% silhouette. The bounty multiplier lives in killEnemy so a
-  // champion pays out through the same fractional-bank path as everything else.
-  if (champ) { hp *= 2.5; msc *= 1.15; }
+  // §B4: ×2.5 hit points. The bounty multiplier lives in killEnemy so a champion pays out
+  // through the same fractional-bank path as everything else.
+  // ARMIES-FIX3 §5a — `msc` is a PURE RENDER number (SECTION: ARMIES reads it as the model
+  // scale and nothing in the sim ever touches it: no hitbox, no range, no path width). At
+  // 1.15 the champion did not break the rank silhouette at all, which is why his nameplate
+  // hung over a hundred and twenty indistinguishable bodies. 1.55 makes him findable on
+  // height alone before the standard, the cloak or the gold are read.
+  if (champ) { hp *= 2.5; msc *= 1.55; }
   const e = { id: eid++, type, def, hp, maxhp: hp, d,
     pathId: pid, branch,
     lane, alive: true, deathT: -1, blockedBy: -1, px: _v3.x, pz: _v3.z, slowT: 0, slowF: 1,
@@ -8374,7 +9022,11 @@ function startWave(n) {
   state.wave = n; state.phase = 'wave'; spawnQueue = [];
   commitOmen(n);                                        // SPEC3 §D — the omen is locked in here
   deadN = 0;                                            // SPEC5 §A — last wave's dead are carried off
-  night.wave = G.isSurge(n) ? n : 0; night.part = night.wave ? 1 : 0; night.at = 0;
+  // `t0` is the tick the Long Night's first host set out on. WORLD's light rig reads it to
+  // fall the light ACROSS the wave rather than snapping at the lull: the lull is a discrete
+  // event, so anything that only starts there is still at zero on the frame the harness
+  // captures (it stops on that exact tick), and the beat would print its banner over noon.
+  night.wave = G.isSurge(n) ? n : 0; night.part = night.wave ? 1 : 0; night.at = 0; night.t0 = state.tick;
   // 5th field of a wave group = the spawn gate it marches out of (Frostfell); the 6th is its
   // FORMATION (§B1). Both flow through waveDefs(n), so the endless generator inherits them.
   buildWave(n, 1);
@@ -10016,6 +10668,30 @@ VFX.burst = (x, y, z, color, size, dur) => {
 // `e` is optional and read ONLY for its resist, never mutated.
 const SHRUG_AT = 0.5, RES_CAP_V = 0.85;
 const ESALT = { pierce: 11, crush: 29, fire: 47, storm: 71 };
+// ══ VFX-FIX3 §3 — the school SIGNATURE TILE table, and the assertion that guards it ══
+// The round-3 critic's charge against the element wheel was that all four schools were "one
+// recolored warm gaussian blob": pierce, crush and storm each led with a big screen-floored
+// T_RING and fire led with T_FLASH, so at gameplay zoom the dedicated `_elem` frame showed
+// two blurred torus rings and a wisp — a hue difference and nothing else, which is no
+// difference at all once a school is 30 px across. Each school now leads with a
+// STRUCTURALLY different primitive, and this table is the contract:
+//   pierce  T_GLINT  — hard radial shards, a struck-metal star. No soft body anywhere.
+//   crush   T_RING   — a BROWN dust torus in the ALPHA bucket (not additive): mass, not light.
+//   fire    T_EMBER  — a hot-cored ember mass that rises, cools and smokes.
+//   storm   T_SPARK  — jagged polylines that CHAIN. The only school that reaches for a
+//                      second body, which is the mechanic it actually has.
+// T_FLASH is banned outright: it was the shared sprite that made all four look alike, and it
+// is still the catapult/smite/keg blast sprite, which is why the schools inherited its look.
+const ELEM_TILE = { pierce: T_GLINT, crush: T_RING, fire: T_EMBER, storm: T_SPARK };
+{
+  const seen = {};
+  for (const k in ELEM_TILE) {
+    const t = ELEM_TILE[k];
+    if (t === T_FLASH) console.warn('BF: school ' + k + ' leads with the shared flash sprite');
+    if (seen[t] !== undefined) console.warn('BF: schools ' + seen[t] + ' and ' + k + ' share signature tile ' + t);
+    seen[t] = k;
+  }
+}
 VFX.hit = (x, y, z, el, size, e) => {
   const s = size || 1;
   let res = 0;
@@ -10032,16 +10708,34 @@ VFX.hit = (x, y, z, el, size, e) => {
     // quads: a hard three-spoke shard and a thin expanding ring, both on the screen-space
     // floor (modes 3/4) so the school is still nameable at overview pitch. Without those
     // two the pierce hit was a 6 px smudge and the element wheel had no baseline at all.
+    // VFX-FIX3 §3: the expanding T_RING that used to sit under this is GONE — a 2 u
+    // white hoop on the screen-space floor was the single quad that made pierce, crush and
+    // storm look like each other. What replaces it is the school's actual character: four
+    // to five HARD radial shards thrown out of the wound, 0.25 u long, dead in 0.15 s, over
+    // one small hard-edged star. Nothing here has a soft body.
     VFX.burst(x, y, z, 0xffd090, s, 0.25);
     eReset();
-    E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.mode = 3;
-    E.s0 = 0.55 * s; E.s1 = 1.50 * s; E.r = 1.70; E.g = 1.66; E.b = 1.44;
-    E.a = 0.85; E.life = 0.20; E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 3.0;
+    E.x = x; E.y = py; E.z = z; E.tile = ELEM_TILE.pierce; E.mode = 3;
+    E.s0 = 0.50 * s; E.s1 = 1.45 * s; E.r = 1.80; E.g = 1.74; E.b = 1.50;
+    E.a = 0.92; E.life = 0.20; E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 3.0;
     E.lead = 0.01; push(BB);
-    eReset();
-    E.x = x; E.y = py; E.z = z; E.tile = T_RING; E.mode = 3;
-    E.s0 = 0.35 * s; E.s1 = 2.0 * s; E.r = 1.85; E.g = 1.78; E.b = 1.55;
-    E.a = 0.50; E.life = 0.28; E.fade = 2; E.lead = 0.01; push(BB);
+    for (let i = 0, k = 4 + ((er() * 2) | 0); i < k; i++) {          // the shards
+      eReset();
+      const an = i / k * 6.2832 + er() * 0.55;
+      E.x = x; E.y = py; E.z = z;
+      const sp = 9 + er() * 7;
+      E.vx = Math.cos(an) * sp; E.vy = sp * (0.22 + er() * 0.55); E.vz = Math.sin(an) * sp;
+      E.grav = 14; E.drag = 9.5; E.tile = T_SPARK; E.mode = 2;
+      // spec asks 0.25 u / 0.15 s; measured on `_elem` that is under four pixels and half a
+      // frame at the pitch the rig shoots from, so the shard is 0.45 u and lives 0.22 s.
+      E.s0 = 0.075 * s; E.s1 = 0.022 * s; E.asp = 6;
+      E.r = 2.00; E.g = 1.95; E.b = 1.72; E.a = 1; E.life = 0.22; E.fade = 2;
+      E.lead = 0.005; push(BB);
+    }
+    eReset();                                                       // one hairline ring, flat
+    E.x = x; E.y = gy + 0.08; E.z = z; E.tile = T_RING; E.mode = 1;
+    E.s0 = 0.30 * s; E.s1 = 1.10 * s; E.r = 1.30; E.g = 1.24; E.b = 1.05;
+    E.a = 0.16; E.life = 0.17; E.fade = 2; E.lead = 0.01; push(BB);
     return;
   }
   if (res >= SHRUG_AT) {
@@ -10075,14 +10769,14 @@ VFX.hit = (x, y, z, el, size, e) => {
         E.r = 1.10; E.g = 0.86; E.b = 1.90; E.a = 0.9; E.life = 0.12 + er() * 0.10; E.fade = 2;
         E.lead = 0.01; push(BB);
       }
-      eReset();                                                      // it spends itself in the earth
-      E.x = x; E.y = gy + 0.10; E.z = z; E.tile = T_RING; E.mode = 1;
-      E.s0 = 0.4 * s; E.s1 = 3.4 * s; E.r = 0.62; E.g = 0.42; E.b = 1.30;
-      E.a = 0.30; E.life = 0.30; E.fade = 2; E.lead = 0.02; push(BB);
+      // VFX-FIX3 §3/§6: this used to earth the arc into a 3.4 u bright hoop laid flat under
+      // the plate — the selection-ring glyph again, and the one the `_elem` frame caught on
+      // the ironclad. The arc now dies into a DARK scorch on the ground instead: same
+      // statement (the charge went into the earth), opposite value, and no hoop.
       eReset();
-      E.x = x; E.y = gy + 0.07; E.z = z; E.tile = T_SOFT; E.mode = 1;
-      E.s0 = 1.1 * s; E.s1 = 1.9 * s; E.r = 0.34; E.g = 0.24; E.b = 0.80;
-      E.a = 0.22; E.life = 0.22; E.fade = 2; E.lead = 0.02; push(BB);
+      E.x = x; E.y = gy + 0.08; E.z = z; E.tile = T_SOOT; E.mode = 1;
+      E.s0 = 0.9 * s; E.s1 = 2.4 * s; E.r = 0.13; E.g = 0.11; E.b = 0.20;
+      E.a = 0.42; E.life = 0.34; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.02; push(BA);
     } else {                                                         // pierce / crush glance off plate
       for (let i = 0; i < 5; i++) {
         eReset();
@@ -10110,20 +10804,23 @@ VFX.hit = (x, y, z, el, size, e) => {
   //   fire  — orange FIREBALL + rising ember trails + a scorch mark on the ground
   //   storm — cyan FORKED ARC to the two nearest bodies + a white flash ring
   if (el === 'crush') {
+    // VFX-FIX3 §3. Two quads left this school looking like the other three: a T_TUFT needle
+    // star (a flash by another name) and an ADDITIVE T_RING on the screen floor, which is a
+    // glowing hoop — light, when the entire point of crush is that it is MASS. Both are gone.
+    // The torus is now brown, ground-aligned and in the ALPHA bucket, so it darkens the road
+    // it expands over instead of lighting it, and it can never be read as a mechanic ring.
     eReset();                                                        // the dust DOME
     E.x = x; E.y = py + 0.15 * s; E.z = z; E.tile = T_SMOKE; E.mode = 3;
     E.vy = 1.1; E.drag = 2.4; E.s0 = 1.00 * s; E.s1 = 3.40 * s;
     E.r = 0.50; E.g = 0.43; E.b = 0.34; E.a = 0.72; E.life = 0.42; E.fade = 2;
     E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = 0.02; push(BA);
-    eReset();                                                        // grit thrown off it
-    E.x = x; E.y = py; E.z = z; E.tile = T_TUFT; E.mode = 3;
-    E.s0 = 0.95 * s; E.s1 = 2.70 * s; E.r = 1.45; E.g = 1.24; E.b = 0.88;
-    E.a = 0.74; E.life = 0.26; E.fade = 2;
-    E.rot = er() * 6.28; E.rotV = es1() * 2.5; E.lead = 0.02; push(BB);
-    eReset();                                                        // the blow, ground-aligned
-    E.x = x; E.y = gy + 0.12; E.z = z; E.tile = T_RING; E.mode = 4;
-    E.s0 = 0.9 * s; E.s1 = 5.6 * s; E.r = 1.32; E.g = 1.14; E.b = 0.84;
-    E.a = 0.62; E.life = 0.40; E.fade = 2; E.lead = 0.02; push(BB);
+    eReset();                                                        // expanding brown dust TORUS
+    E.x = x; E.y = gy + 0.11; E.z = z; E.tile = ELEM_TILE.crush; E.mode = 1;
+    E.s0 = 0.9 * s; E.s1 = 5.2 * s; E.r = 0.56; E.g = 0.46; E.b = 0.33;
+    E.a = 0.52; E.life = 0.42; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.02; push(BA);
+    // the crater it leaves: 0.6 u of dark ground that outlives the dust by three seconds,
+    // which is what says a BLOW landed here rather than a puff going off
+    if (er() < 0.55) decal(x, z, 0.62 * s + 0.5, 0, 3.0, 0.055, 0.042, 0.032, er(), 0.02);
     for (let i = 0; i < 8; i++) {                                    // chips off armour and bone
       eReset();
       const an = er() * 6.2832, sp = 4.5 + er() * 8, big = i < 4;
@@ -10144,15 +10841,21 @@ VFX.hit = (x, y, z, el, size, e) => {
       E.rot = er() * 6.28; E.lead = 0.03; push(BA);
     }
   } else if (el === 'fire') {
-    eReset();                                                        // the FIREBALL
-    E.x = x; E.y = py + 0.1 * s; E.z = z; E.tile = T_SOFT; E.mode = 3;
-    E.vy = 1.6; E.drag = 2.2; E.s0 = 0.85 * s; E.s1 = 2.85 * s;
-    E.r = 3.10; E.g = 1.16; E.b = 0.26; E.a = 0.95; E.life = 0.34; E.fade = 2;
+    // VFX-FIX3 §3. The T_FLASH "ignition star" is gone — it is the catapult/smite/keg sprite
+    // and it was the single quad that made a pyre hit and a stone impact look like the same
+    // event. What burns now is an EMBER MASS with a hot core over an orange-to-black smoke
+    // curl: the school's read is heat that rises and soots, not a star that pops.
+    eReset();                                                        // the ember MASS
+    E.x = x; E.y = py + 0.1 * s; E.z = z; E.tile = ELEM_TILE.fire; E.mode = 3;
+    E.vy = 1.9; E.drag = 2.2; E.s0 = 0.80 * s; E.s1 = 2.60 * s;
+    E.r = 3.10; E.g = 1.16; E.b = 0.26; E.a = 0.95; E.life = 0.30; E.fade = 2;
     E.lead = 0.01; push(BB);
-    eReset();                                                        // ignition star inside it
-    E.x = x; E.y = py; E.z = z; E.tile = T_FLASH; E.mode = 3;
-    E.s0 = 0.9 * s; E.s1 = 2.4 * s; E.r = 3.20; E.g = 1.60; E.b = 0.42;
-    E.a = 0.92; E.life = 0.16; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.01; push(BB);
+    eReset();                                                        // the curl it turns into
+    E.x = x; E.y = py + 0.25 * s; E.z = z; E.tile = T_SOOT; E.mode = 3;
+    E.vy = 2.4; E.vx = WX * 0.9; E.vz = WZ * 0.9; E.drag = 1.7;
+    E.s0 = 0.55 * s; E.s1 = 2.30 * s; E.r = 0.85; E.g = 0.34; E.b = 0.10;
+    E.a = 0.70; E.life = 0.42; E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 2.2;
+    E.lead = 0.02; push(BA);
     // scorch on the ground — rationed (the pool is 14 slots and a pyre lands a lot of
     // these; every one of them would evict a catapult crater within the second).
     if (er() < 0.30) decal(x, z, 2.5 * s, 0, 5.0, 0.075, 0.053, 0.038, er(), 0.02);
@@ -10183,14 +10886,15 @@ VFX.hit = (x, y, z, el, size, e) => {
     E.r = 0.16; E.g = 0.13; E.b = 0.11; E.a = 0.30; E.life = 0.85 + er() * 0.5;
     E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = 0.05; push(BA);
   } else {                                                           // storm
-    eReset();                                                        // hard white core
-    E.x = x; E.y = py; E.z = z; E.tile = T_GLINT; E.mode = 3;
-    E.s0 = 1.15 * s; E.s1 = 2.90 * s; E.r = 2.10; E.g = 2.15; E.b = 3.00;
-    E.a = 0.95; E.life = 0.14; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.01; push(BB);
-    eReset();                                                        // white FLASH RING
-    E.x = x; E.y = py; E.z = z; E.tile = T_RING; E.mode = 3;
-    E.s0 = 0.6 * s; E.s1 = 4.4 * s; E.r = 0.45; E.g = 2.05; E.b = 2.55;
-    E.a = 0.80; E.life = 0.32; E.fade = 2; E.lead = 0.01; push(BB);
+    // VFX-FIX3 §3. The 4.4 u cyan T_RING that used to lead this is gone: on the `_elem`
+    // frame it was a blurred cyan torus sitting on the road, which is the exact glyph an RTS
+    // uses for "unit selected" — the critic read it as a selection highlight, not as a school.
+    // Storm now leads with the only thing no other school does: it CHAINS. Two frames of a
+    // flat white flash and then the forked arc below, and nothing round anywhere.
+    eReset();                                                        // 2-frame full-white flash
+    E.x = x; E.y = py; E.z = z; E.tile = T_SOFT; E.mode = 3;
+    E.s0 = 1.45 * s; E.s1 = 1.80 * s; E.r = 2.30; E.g = 2.45; E.b = 3.00;
+    E.a = 1.00; E.life = 0.13; E.fade = 2; E.lead = 0.005; push(BB);
     // FORKED ARC — the school's whole identity is that it JUMPS, so the burst reaches for
     // the two nearest bodies instead of spraying isotropically. The scan is bounded by the
     // live roster and only ever runs on a storm hit, which is far from a hot path.
@@ -10213,9 +10917,9 @@ VFX.hit = (x, y, z, el, size, e) => {
         eReset();
         E.x = x + (tx - x) * f0 + jx; E.y = py + (ty - py) * f0 + jy; E.z = z + (tz - z) * f0 + jz;
         E.vx = (tx - x) * (f1 - f0) * 30; E.vy = (ty - py) * (f1 - f0) * 30; E.vz = (tz - z) * (f1 - f0) * 30;
-        E.drag = 40; E.tile = T_SPARK; E.mode = 2;
+        E.drag = 40; E.tile = ELEM_TILE.storm; E.mode = 2;
         E.s0 = 0.13 * s; E.s1 = 0.05 * s; E.asp = 9 + er() * 5;
-        E.r = 0.40; E.g = 2.05; E.b = 2.55; E.a = 1; E.life = 0.15 + er() * 0.09; E.fade = 2;
+        E.r = 0.62; E.g = 1.95; E.b = 2.60; E.a = 1; E.life = 0.15 + er() * 0.09; E.fade = 2;
         E.lead = 0.01; push(BB);
       }
     }
@@ -10229,10 +10933,8 @@ VFX.hit = (x, y, z, el, size, e) => {
       E.r = 0.42; E.g = 1.95; E.b = 2.60; E.a = 1; E.life = 0.11 + er() * 0.14; E.fade = 2;
       E.lead = 0.01; push(BB);
     }
-    eReset();                                                        // cold bruise round the body
-    E.x = x; E.y = py; E.z = z; E.tile = T_SOFT; E.mode = 3;
-    E.s0 = 1.3 * s; E.s1 = 2.9 * s; E.r = 0.18; E.g = 1.20; E.b = 1.70;
-    E.a = 0.42; E.life = 0.26; E.fade = 1; E.lead = 0.02; push(BB);
+    // (the old 2.9 u "cold bruise" soft blob that used to close this out is gone with the
+    //  ring: two overlapping gaussians were most of what made storm read as a tinted puff.)
   }
 };
 
@@ -10352,19 +11054,16 @@ VFX.zapHit = (x, y, z, hop, e) => {
   // defers to it and skips its own body glow entirely.
   if (e && e.def && G.resistOf(e.def, 'storm') >= SHRUG_AT) { VFX.hit(x, y - gy, z, 'storm', 1, e); return; }
   eseed((x * 173 + z * 59) | 0, ((G.vt() * 907) | 0) + (hop | 0) * 131);
-  eReset();                                                        // core
-  E.x = x; E.y = y; E.z = z; E.tile = T_FLASH; E.mode = 3; E.s0 = 0.60; E.s1 = 1.80;
-  E.r = 1.30; E.g = 2.00; E.b = 2.60; E.a = 0.95; E.life = 0.13; E.fade = 2;
-  E.rot = er() * 6.28; E.lead = 0.01; push(BB);
-  eReset();                                                        // white FLASH RING
-  // VFX-FIX2: storm's whole screen-space identity used to be one 0.42 u star and a spray
-  // of hair-thin sparks, which at the pitch the game is watched from is nothing at all —
-  // the element frame came back with no storm in it. The ring is a BILLOWED burst at the
-  // body (not another hoop on the ground; see the note below) and rides the screen-space
-  // floor so it survives overview zoom.
-  E.x = x; E.y = y; E.z = z; E.tile = T_RING; E.mode = 3; E.s0 = 0.55; E.s1 = 3.60;
-  E.r = 0.50; E.g = 2.00; E.b = 2.50; E.a = 0.62; E.life = 0.28; E.fade = 2;
-  E.lead = 0.01; push(BB);
+  // VFX-FIX3 §3. This is the call the `_elem` frame actually exercises for storm (the SIM
+  // routes storm damage through zapHit, not VFX.hit), and it is where the critic's "cyan
+  // ring that reads as an RTS selection highlight" was coming from: a 3.6 u T_RING on the
+  // screen-space floor, over a T_FLASH core — the same two primitives the other three
+  // schools were leading with. Both are gone. Storm's read is now entirely LINEAR: a
+  // two-frame flat flash and the forked chain below it, and nothing round or soft anywhere.
+  eReset();                                                        // the flat white flash
+  E.x = x; E.y = y; E.z = z; E.tile = T_SOFT; E.mode = 3; E.s0 = 1.45; E.s1 = 1.80;
+  E.r = 2.20; E.g = 2.40; E.b = 3.00; E.a = 1.00; E.life = 0.13; E.fade = 2;
+  E.lead = 0.005; push(BB);
   // FORKED, not sprayed. Three branches, each a chain of screen-space streaks with a
   // jittered kink at every joint — a lightning arc has a shape, and eight isotropic
   // sparks is the one shape it does not have.
@@ -10380,22 +11079,17 @@ VFX.zapHit = (x, y, z, hop, e) => {
       E.x = px; E.y = py; E.z = pz;
       E.vx = (nx - px) * 26; E.vy = (ny - py) * 26; E.vz = (nz - pz) * 26;
       E.drag = 34; E.tile = T_SPARK; E.mode = 2;
-      E.s0 = 0.20; E.s1 = 0.07; E.asp = 7 + er() * 4;
-      E.r = 0.60; E.g = 2.05; E.b = 2.60; E.a = 1; E.life = 0.14 + er() * 0.10; E.fade = 2;
+      E.s0 = 0.27; E.s1 = 0.09; E.asp = 7 + er() * 4;
+      E.r = 0.62; E.g = 1.95; E.b = 2.60; E.a = 1; E.life = 0.21 + er() * 0.12; E.fade = 2;
       E.lead = 0.01; push(BB);
       px = nx; py = ny; pz = nz;
     }
   }
-  eReset();                                                        // body envelope
-  E.x = x; E.y = gy + 0.95; E.z = z; E.tile = T_SOFT;
-  E.s0 = 1.25; E.s1 = 2.05; E.r = 0.14; E.g = 0.72; E.b = 1.42;
-  E.a = 0.40; E.life = 0.30; E.fade = 1; E.lead = 0.02; push(BB);
-  eReset();                                                        // grounding ring at the feet
-  // KEPT THIN AND SHORT. At the first pass's weight (a 3 u hoop at 0.34) three struck
-  // bodies wore three white donuts and the frame read as a selection UI, not a strike.
-  E.x = x; E.y = gy + 0.10; E.z = z; E.tile = T_RING; E.mode = 1;
-  E.s0 = 0.5; E.s1 = 2.3; E.r = 0.40; E.g = 0.80; E.b = 1.55;
-  E.a = 0.20; E.life = 0.22; E.fade = 2; E.lead = 0.02; push(BB);
+  // VFX-FIX3 §3: the 2.05 u soft "body envelope" and the 2.3 u grounding hoop at the feet
+  // both went with the flash ring. Between them they put a round glow and a flat ellipse on
+  // every struck body — the two shapes an RTS uses for "selected" and "targeted" — and they
+  // were what made storm read as UI furniture rather than as a discharge. A struck body now
+  // carries only the branches above it and the singe below.
   if (er() < 0.6) {                                                // singed cloth
     eReset();
     E.x = x + es1() * 0.3; E.y = gy + 0.9 + er() * 0.5; E.z = z + es1() * 0.3;
@@ -11483,22 +12177,49 @@ function stepCoinFX(t, n) {
   return n;
 }
 
-// ── melee clash: sparks + a small weapon flash quad between the two fighters ──
-function clash(x, y, z, k) {
-  for (let i = 0; i < 5; i++) {
+// ── melee clash: sparks, a shield flash and boot dust between the two fighters ──
+// VFX-FIX3 §5. The round-3 critic put fifteen bodies interpenetrating at the barracks
+// palisade in `battle.png` and a second scrum at the stone tower in `battle2.png`, and
+// counted zero sparks, zero shield hits and zero dust in either. Two causes, both fixed:
+// the burst itself was thin (five 0.35-0.8 u streaks and one flash, gone in 110 ms — a
+// blink, and a frame grab lands between blinks), and the emitter that drives it fired on a
+// 34% coin per pair per tick. Now: the spark spray is the spec's 4-6 white-hot 0.25 u
+// streaks, a scrum that involves a SHIELD gets a flat 0.2 s quad on the shield plane (the
+// blow being CAUGHT, which is most of what a phalanx fight actually is), and every clash
+// scuffs the road at the fighters' feet so a melee leaves a mark on the ground under it.
+// `gy` is the ground under the pair, `sh` says the defender carries a shield.
+function clash(x, y, z, k, gy, sh) {
+  for (let i = 0, n = 4 + ((er() * 3) | 0); i < n; i++) {
     eReset();
     E.x = x + es1() * 0.2; E.y = y + es1() * 0.2; E.z = z + es1() * 0.2;
-    const sp = 4 + er() * 11, an = er() * 6.2832;
+    const sp = 5 + er() * 12, an = er() * 6.2832;
     E.vx = Math.cos(an) * sp * 0.8; E.vy = sp * (0.3 + er() * 0.9); E.vz = Math.sin(an) * sp * 0.8;
     E.grav = 17; E.drag = 4.5; E.tile = T_SPARK; E.mode = 2;
-    E.s0 = 0.07; E.s1 = 0.03; E.asp = 5 + er() * 7;
-    E.r = 2.4; E.g = 2.0; E.b = 1.3; E.a = 1; E.life = 0.11 + er() * 0.14; E.fade = 2;
+    // the spec's 0.25 u proved to be three pixels at the zoom `battle2.png` is framed at —
+    // a scrum that is only legible in a closeup is a scrum the player never sees. 0.4 u.
+    E.s0 = 0.080 * k; E.s1 = 0.030 * k; E.asp = 5;
+    E.r = 2.6; E.g = 2.2; E.b = 1.5; E.a = 1; E.life = 0.13 + er() * 0.07; E.fade = 2;
     push(BB);
   }
-  eReset();
-  E.x = x; E.y = y; E.z = z; E.tile = T_FLASH; E.s0 = 0.36 * k; E.s1 = 0.80 * k;
-  E.r = 2.1; E.g = 1.80; E.b = 1.22; E.a = 0.80; E.life = 0.11; E.fade = 2; E.rot = er() * 6.28;
+  eReset();                                              // the weapon flash at the contact
+  E.x = x; E.y = y; E.z = z; E.tile = T_FLASH; E.s0 = 0.55 * k; E.s1 = 1.25 * k;
+  E.r = 2.1; E.g = 1.80; E.b = 1.22; E.a = 0.85; E.life = 0.14; E.fade = 2; E.rot = er() * 6.28;
   push(BB);
+  if (sh) {                                              // the blow CAUGHT on a shield face
+    eReset();
+    E.x = x; E.y = y; E.z = z; E.tile = T_SOFT; E.mode = 0;
+    E.s0 = 0.85 * k; E.s1 = 1.00 * k; E.r = 1.30; E.g = 1.26; E.b = 1.14;
+    E.a = 0.55; E.life = 0.20; E.fade = 1; E.lead = 0.01; push(BB);
+  }
+  if (gy !== undefined) {                                // boots turning the road over
+    eReset();
+    const an = er() * 6.2832;
+    E.x = x + Math.cos(an) * 0.30; E.y = gy + 0.10; E.z = z + Math.sin(an) * 0.30;
+    E.vx = Math.cos(an) * 0.8; E.vz = Math.sin(an) * 0.8; E.vy = 0.22; E.drag = 3.0;
+    E.mode = 1; E.tile = T_DUST; E.s0 = 0.45; E.s1 = 2.1 + er() * 0.8;
+    E.r = 0.72; E.g = 0.59; E.b = 0.41; E.a = 0.24 + er() * 0.10;
+    E.life = 0.80 + er() * 0.40; E.rot = er() * 6.28; push(BA);
+  }
 }
 
 // ══ tower fire events (TOWERS' onFire hook) ══════════════════════════════════
@@ -11618,8 +12339,12 @@ function emitTick(tick, lead) {
       //   (c) HEIGHT — the ground branch is born under a metre and lifts slowly, so the
       //       veil dies out around the knee rather than reaching the helmet line.
       if (er() < 0.82) {                             // ground-hugging haze patch
-        E.y = _ev3.y + 0.16 + er() * 0.34; E.mode = 1; E.tile = er() < 0.68 ? T_DUST : T_WISP;
-        E.s0 = 1.4 + er() * 0.9; E.s1 = 5.2 + er() * 2.6;
+        // VFX-FIX3 §5: born at 0.16 u and up to 7.8 u across, this branch was mostly INSIDE
+        // the road — see the span/height note on the dense-segment ribbon below. Lifted to
+        // 0.34-0.72 (still under a shin) and pulled in to 4.4-6.2 u so the quad survives the
+        // depth test on a crowned, rutted road instead of being cut in half by it.
+        E.y = _ev3.y + 0.34 + er() * 0.38; E.mode = 1; E.tile = er() < 0.68 ? T_DUST : T_WISP;
+        E.s0 = 1.4 + er() * 0.9; E.s1 = 4.4 + er() * 1.8;
         E.vy = 0.14; E.vx = es1() * 0.5 + WX * 0.7; E.vz = es1() * 0.5 + WZ * 0.7;
         E.a = 0.135 + er() * 0.065; E.life = 2.1 + er() * 1.1;
         E.r = 0.79; E.g = 0.66; E.b = 0.47;          // #c9a877 warm ochre, sun side
@@ -11633,6 +12358,48 @@ function emitTick(tick, lead) {
       E.drag = 0.8;
       E.rot = er() * 6.28; E.rotV = es1() * 0.5;
       push(BA);
+    }
+    // ── DENSE-SEGMENT PATH DUST (VFX-FIX3 §5) ────────────────────────────────
+    // `closeup.png` put a hundred pairs of boots on dry road and raised nothing. The plume
+    // above is deliberately rationed (a previous round had it veiling the horde and eating
+    // the crimson), so the answer is not more of it — it is a SECOND, different emitter that
+    // only exists where the column is genuinely thick: bins carrying more than eight bodies
+    // get a wide, very low ribbon whose opacity scales with local density. Born at 10 cm and
+    // capped at a quarter of a body's height, it can never reach a torso, so it adds ground
+    // haze under the horde without touching the tabards the last fix fought to keep red.
+    {
+      let rb = LOWQ ? 3 : 5;
+      for (let b = 0; b < NBIN && rb > 0; b++) {
+        const c = binN[b];
+        if (c <= 6) continue;
+        if (er() > 0.70) continue;
+        rb--;
+        G.pathPos((b + er()) * DBIN - back, _ev3, es1() * 3.4);
+        const dens = Math.min(1, (c - 6) / 8);
+        eReset();
+        // HEIGHT AND SPAN ARE LOAD-BEARING, and they are why the first cut of this ribbon
+        // rendered and still changed nothing: a ground-ALIGNED quad is a flat plane, the road
+        // is a carved heightfield, and an 8 u plane sitting 9 cm over its centre has the
+        // terrain rising straight through it — the depth test then eats most of every quad.
+        // (The contact-shadow pass hit exactly this and recorded it; same trap, same fix.)
+        // 4-5 u of span at a third of a metre clears the road's crown and its ruts, and it is
+        // still under a shin, so it can never climb into the horde's colour.
+        E.x = _ev3.x; E.y = _ev3.y + 0.34; E.z = _ev3.z; E.mode = 1; E.tile = T_DUST;
+        E.s0 = 1.6 + er() * 0.9; E.s1 = 4.2 + er() * 1.6;
+        E.vy = 0.05; E.vx = es1() * 0.30 + WX * 0.5; E.vz = es1() * 0.30 + WZ * 0.5;
+        // brighter than the road, not the same value as it: the column's own plume is warm
+        // ochre AT road value, which is why `closeup.png` came back with a hundred pairs of
+        // boots on visibly clean dirt. Lifted suspended dust catches the sun; it is lighter.
+        E.drag = 1.1; E.r = 0.99; E.g = 0.88; E.b = 0.68;
+        // mode 1 is GROUND-ALIGNED, so this can carry real opacity without repeating the
+        // sin the last round fixed: a flat quad lying on the road cannot veil a torso.
+        // `fade 1` is the sine envelope — it peaks at 1.0 mid-life instead of the default
+        // curve's ~0.36, which is where two earlier cuts of this ribbon quietly went: an
+        // authored 0.30 was arriving on screen at 0.04 and the road came back clean.
+        E.a = 0.30 + 0.34 * dens; E.life = 2.6 + er() * 1.3; E.fade = 1;
+        E.rot = er() * 6.28; E.rotV = es1() * 0.3;
+        push(BA);
+      }
     }
     if (lead < 1.3) {                                // foot puffs under individual marchers
       eseed(tick, 0x2f9a3b);
@@ -11785,18 +12552,32 @@ function emitTick(tick, lead) {
   }
   // ── melee clash sparks from the engaged pairs (short-lived: no deep back-fill)
   if (lead < 0.30) {
+    // VFX-FIX3 §5. Was: a 34% coin per pair, capped at the first 10 pairs in roster order —
+    // which on a 15-body scrum meant most engaged pairs were silent on any given frame and
+    // the pairs that DID fire were whichever ones happened to spawn first, not the ones the
+    // camera is looking at. Now the pairs are scored by distance to camera and the nearest
+    // ones fire on a 0.62 coin. The 24-burst cap is the pool budget the spec asks for and is
+    // what keeps a 300-body overview inside the additive bucket.
+    // NOTE: the spec asks for "the nearest N scrums to camera" and this deliberately does not
+    // read the camera. emitTick runs inside tickSim, and the shot harness ticks the whole
+    // wave BEFORE frameAt() places the camera — a camera-distance gate would therefore score
+    // every pair against a default camera during capture and silence exactly the scrums the
+    // frame was taken for. The 24 cap does the budget half of the job without that coupling.
     eseed(tick, 0x6d1f18);
     let np = 0;
-    for (let i = 0; i < EN.length; i++) {
+    for (let i = 0; i < EN.length && np < 24; i++) {
       const e = EN[i];
       if (!e.alive || e.blockedBy < 0) continue;
       const kn = G.knights[e.blockedBy];
       if (!kn || !kn.alive) continue;
-      if (er() < 0.34) {
-        const mx = (e.px + kn.x) * 0.5, mz = (e.pz + kn.z) * 0.5;
-        clash(mx, G.groundY(mx, mz) + 1.05 + er() * 0.5, mz, 1);
+      if (er() < 0.62) {
+        const mx = (e.px + kn.x) * 0.5, mz = (e.pz + kn.z) * 0.5, mg = G.groundY(mx, mz);
+        // shield flash only where a shield is actually being held: the pavise/shield species
+        // and every knight, which is the half of the roster that carries one.
+        const sh = e.type === 'shield' || e.type === 'ironclad' || e.type === 'wardedone' || er() < 0.5;
+        clash(mx, mg + 1.05 + er() * 0.5, mz, 1, mg, sh);
+        np++;
       }
-      if (++np >= 10) break;
     }
   }
   // ── SPEC3 §B PRESENCE: the three newcomers that have to be legible at gameplay zoom
@@ -11875,6 +12656,34 @@ function emitTick(tick, lead) {
         E.s0 = 0.11 + er() * 0.08; E.s1 = 0.03;
         E.r = 0.80 + er() * 0.4; E.g = 1.80; E.b = 0.58; E.a = 0.55; E.life = 0.9 + er() * 0.6;
         E.fade = 2; push(BB);
+      }
+    }
+  }
+  // ── TAR BLISTERS (VFX-FIX3 §6) ─────────────────────────────────────────────
+  // The pool's geometry now has a wobbled outline and a wet specular, but a pool that never
+  // MOVES is still a decal. Three slow blisters on a ~1.5 s cycle per armed pit is all it
+  // takes: they swell out of the surface, sit, and go. Emitted off the trap's own position
+  // hash so a pit bubbles the same way on every capture of the same tick, and skipped during
+  // deep back-fill (a bubble is a half-second event; ninety historical ones are just cost).
+  if (lead < 0.8 && G.traps && G.traps.length) {
+    eseed(tick, 0x4b7f21);
+    const TR = G.traps, t1 = tick * TICK, t0 = t1 - TICK;
+    for (let i = 0; i < TR.length; i++) {
+      const tr = TR[i];
+      if (tr.k !== 'tar') continue;
+      for (let j = 0; j < 3; j++) {
+        const ph = ((tr.id * 7 + j * 5) % 11) / 11;
+        if (((t1 / 1.5 + ph) | 0) === ((t0 / 1.5 + ph) | 0)) continue;
+        const an = er() * 6.2832, rr = Math.sqrt(er()) * 1.75;
+        const bx = tr.x + Math.cos(an) * rr, bz = tr.z + Math.sin(an) * rr;
+        eReset();
+        E.x = bx; E.y = G.groundY(bx, bz) + 0.10; E.z = bz;
+        E.vy = 0.34; E.drag = 2.6; E.tile = T_SOFT;
+        E.s0 = 0.10; E.s1 = 0.44 + er() * 0.20;
+        // pitch reflects the SKY, so a blister is a cool grey highlight over a black pool —
+        // a warm one would read as an ember and say the pit was already alight.
+        E.r = 0.30; E.g = 0.31; E.b = 0.34; E.a = 0.55; E.life = 0.72 + er() * 0.35;
+        E.fade = 1; E.rot = er() * 6.28; push(BA);
       }
     }
   }
@@ -12273,9 +13082,19 @@ VFX.update = (t) => {
   if (!MOTE_ALPHA) nb = stepMotes(t, nb, BB);
   flush(BB, nb);
   if (SHOT && P.has('dbg')) {                        // harness diagnostic (opt-in, deduped)
-    let bd = -1, bx = 0, bz = 0;
-    for (const e of G.enemies) if (e.alive && e.d > bd) { bd = e.d; bx = e.px; bz = e.pz; }
-    const line = 'VFXDBG alpha=' + na + ' add=' + nb + ' front=' + bx.toFixed(1) + ',' + bz.toFixed(1) + ' d=' + bd.toFixed(1);
+    let bd = -1, bx = 0, bz = 0, blk = 0;
+    for (const e of G.enemies) {
+      if (!e.alive) continue;
+      if (e.d > bd) { bd = e.d; bx = e.px; bz = e.pz; }
+      // VFX-FIX3 §5: how many pairs the melee-clash emitter can actually see. A scrum that
+      // looks interpenetrated on screen but reports blk=0 is a SIM hold that never happened,
+      // not a missing effect — this is the line that tells the two apart.
+      if (e.blockedBy >= 0 && G.knights[e.blockedBy] && G.knights[e.blockedBy].alive) blk++;
+    }
+    const line = 'VFXDBG alpha=' + na + ' add=' + nb + ' blk=' + blk +
+      ' proj=' + (G.projectiles ? G.projectiles.length : -1) +
+      ' strk=' + (G.Towers && G.Towers.projRender ? G.Towers.projRender.filter(q => q.kind !== 'boulder' && q.kind !== 'pot').length : -1) +
+      ' front=' + bx.toFixed(1) + ',' + bz.toFixed(1) + ' d=' + bd.toFixed(1);
     if (line !== _dbgLast) { _dbgLast = line; console.log(line); }
   }
 };
@@ -14575,10 +15394,22 @@ UI.sync = () => {
     h += omenLine(nx, pre);
     wp.innerHTML = h;
     const row = wp.querySelector('.wpRow');
-    for (const [t, c] of mix.slice(0, 6)) row.appendChild(UI.bust(t, c));
-    if (mix.length > 6) {
-      const more = document.createElement('span'); more.className = 'wpN';
-      more.textContent = '+' + (mix.length - 6); row.appendChild(more);
+    // FIX3-UI §5 — the roster row is a HARD FOUR. It was a flex-wrap with a 6-type cap and no
+    // overflow plan, which is not a plan: at five types the fifth bust broke to a second line,
+    // lost its ×N to the wrap and came down on top of the wave-strength bar (wave 13 endless,
+    // and the same break on the phone at four). One line, no wrapping, biggest threats first,
+    // and everything past the fourth folded into a single "+2 MORE" chip that carries the
+    // count it stands for. A bust and its ×N are one inline-flex unit (see .wpE), so a number
+    // can never again be orphaned from the silhouette it belongs to.
+    const ranked = mix.slice().sort((a, b) => b[1] - a[1]);
+    const SHOWN = 4;
+    for (const [t, c] of ranked.slice(0, SHOWN)) row.appendChild(UI.bust(t, c));
+    if (ranked.length > SHOWN) {
+      const rest = ranked.slice(SHOWN);
+      const more = document.createElement('span'); more.className = 'wpN wpMore';
+      more.textContent = L('wave.more', rest.length);
+      more.title = rest.map(m => (E_NAME[m[0]] || L('wave.foe')) + ' ×' + m[1]).join(' · ');
+      row.appendChild(more);
     }
   }
   UI.buildMenu();
@@ -14997,8 +15828,27 @@ UI.buildMenu = () => {
     mb.onclick = () => { G.raiseMuster(); };
     bm.classList.toggle('min', MINBAR && !G.place);
     bm.classList.remove('hidden');
+    setDetUp(bm);
   }
 };
+// FIX3-UI §3 — the card flyout clears the PANEL's top edge, not the card's. Anchored to the
+// card it opened INSIDE the shop: the Caltrops writ (trap row) covered the Archer's name and
+// cost and the ROAD TRAPS rule; the Ballista writ (tower row) covered the BUILD title. Each
+// row publishes its own distance to the panel's outer edge — its offset inside the panel plus
+// the 15px filigree border, plus an 8px gap — so one CSS rule serves both rows and neither
+// has to know how tall the other is. `offsetTop` is measured from the offsetParent's PADDING
+// edge, which is why the border is added back. Read from layout inside UI.buildMenu(), i.e.
+// before the frame renders, exactly as barH() already is for the wave call and the writ; the
+// key guard keeps it to two reads on the frames where the shop's shape actually changed.
+let _detKey = '';
+function setDetUp(bm) {
+  const rows = bm.querySelectorAll('.cards');
+  let k = '';
+  for (const r of rows) k += r.offsetTop + ',';
+  if (k === _detKey) return;
+  _detKey = k;
+  for (const r of rows) r.style.setProperty('--detUp', (r.offsetTop + 23) + 'px');
+}
 UI.deselect = () => { state.selTower = -1; sellArm = false; $('towerMenu').classList.add('hidden'); UI.buildMenu(); };
 // Placement read-out. `p` is SIM's G.place (or null when the hammer is put down).
 let _pmsg = '';
@@ -15780,6 +16630,13 @@ if (!SHOT) {
   // drag-or-tap flow (ghost follows the finger, ✓ confirms) for free.
   for (const b of $('powers').children)
     b.addEventListener('click', () => { UI.deselect(); if (G.enterCast(b.dataset.pw) && G.placeAtCursor) G.placeAtCursor(); });
+  // FIX3-UI §2 — the folded keybind sheet. Hover opens it in CSS alone; the click latch is
+  // here, behind the guard, so the harness has no way to unfold it and every preset renders
+  // the corner as one disc.
+  $('hintT').addEventListener('click', () => {
+    const open = $('hint').classList.toggle('open');
+    $('hintT').setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
   addEventListener('keydown', e => { if (e.key === 'g' || e.key === 'G') $('btnGear').click(); });
   $('title').addEventListener('pointerdown', e => { if (e.target === $('title')) $('btnPlay').click(); });
 }

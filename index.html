@@ -101,7 +101,12 @@
   <div id="msg"></div>
   <div id="floaters"></div>
   <button id="btnWave" class="frm" data-l="call.start">⚔ Start Wave</button>
-  <div id="hint"><b><span data-l="hint.build">Build</span><kbd>1–7</kbd></b><b><span data-l="hint.place">Place</span><kbd data-l="key.click">Click</kbd></b><b><span data-l="hint.keep">Keep</span><kbd data-l="key.shift">Shift</kbd></b><b><span data-l="hint.cancel">Cancel</span><kbd data-l="key.esc">Esc</kbd></b><b><span data-l="hint.orders">Orders</span><kbd>T</kbd></b><b><span data-l="hint.omen">Omen</span><kbd>8–0</kbd></b><b><span data-l="hint.powers">Powers</span><kbd>Q W</kbd></b><b><span data-l="hint.traps">Traps</span><kbd>Z X C</kbd></b></div>
+  <!-- FIX3-UI §2 — the keybind sheet is FOLDED. It used to be a permanent four-row dump of
+       grey caps sitting unframed on green grass in the corner of every gameplay frame. It is
+       a single struck-iron disc now; the sheet itself is a framed plate that opens above it
+       on hover or click, and it is collapsed by default in every shot preset because nothing
+       opens it there. -->
+  <div id="hint"><button id="hintT" class="iron" data-lt="hint.legend" aria-expanded="false">?</button><div id="hintL" class="iron frm"><b><span data-l="hint.build">Build</span><kbd>1–7</kbd></b><b><span data-l="hint.place">Place</span><kbd data-l="key.click">Click</kbd></b><b><span data-l="hint.keep">Keep</span><kbd data-l="key.shift">Shift</kbd></b><b><span data-l="hint.cancel">Cancel</span><kbd data-l="key.esc">Esc</kbd></b><b><span data-l="hint.orders">Orders</span><kbd>T</kbd></b><b><span data-l="hint.omen">Omen</span><kbd>8–0</kbd></b><b><span data-l="hint.powers">Powers</span><kbd>Q W</kbd></b><b><span data-l="hint.traps">Traps</span><kbd>Z X C</kbd></b></div></div>
   <div id="placeBar" class="hidden"><div id="placeMsg" class="iron frmB ok"></div>
     <div id="placeBtns"><button id="placeOk" class="iron frm" data-lt="place.raise" title="Raise">✓</button><button id="placeNo" class="iron frm" data-lt="place.cancel" title="Cancel">✗</button></div></div>
   <div id="tutHint" class="parch frm hidden"></div>
