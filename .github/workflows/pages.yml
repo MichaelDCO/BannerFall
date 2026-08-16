@@ -22,6 +22,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp build id into asset URLs and SW cache name (cache busting)
+        run: |
+          SHA7=${GITHUB_SHA::7}
+          sed -i "s/__BUILD__/${SHA7}/g" index.html sw.js
       - uses: actions/configure-pages@v5
         with:
           enablement: true

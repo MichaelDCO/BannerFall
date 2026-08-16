@@ -12,7 +12,7 @@
      ║ Sections are owned by builder agents; edit only your section and  ║
      ║ marked HOOK points. The shot harness (SECTION: MAIN) is sacred.   ║
      ╚══════════════════════════════════════════════════════════════════╝ -->
-<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/main.css?v=__BUILD__">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0c0f14">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -180,12 +180,12 @@
   <div id="stats" class="hidden"></div>
 </div>
 <!-- ══ END SECTION: UI-HTML ══ -->
-<script type="module" src="js/game.js"></script>
+<script type="module" src="js/game.js?v=__BUILD__"></script>
 <script>
 // PWA service worker — NEVER in shot mode (a stale cache would poison the deterministic harness).
 if ('serviceWorker' in navigator && !new URLSearchParams(location.search).has('shot')
     && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=__BUILD__'));
 }
 </script>
 </body>
