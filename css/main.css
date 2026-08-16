@@ -145,6 +145,29 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .sc-fire{   background-color:#a34d1c; }
 .sc-storm{  background-color:#3d6ba8; }
 #wavePrev .wpE canvas{ width:31px; height:31px; display:block; filter:drop-shadow(0 1px 2px rgba(60,40,10,.5)); }
+/* SPEC5 §B3 — the per-gate share of the coming host. The row is only written on roads with
+   more than one mouth, so it costs a single-gate map nothing at all. The FILL is the message
+   and the digits are the confirmation: each cell's bar is drawn to that gate's own share, so
+   the two cells read as one comparison at a glance and the number is there for the player
+   who wants to plan against it. `.hi` marks the mouth taking the larger half in the same
+   ember the wave-progress bar uses, which is the card's established "this is the pressure"
+   colour — nothing new is being taught here. */
+#wavePrev .wpG{ display:flex; align-items:center; gap:7px; margin-top:6px; padding-top:5px;
+   border-top:1px solid rgba(112,80,34,.32); font-size:10px; letter-spacing:.15em;
+   text-transform:uppercase; color:#6b5527; }
+#wavePrev .wpG em{ font-style:normal; flex:0 0 auto; opacity:.8; }
+#wavePrev .wpG .wgC{ position:relative; flex:1 1 0; min-width:0; display:grid;
+   grid-template-columns:1fr auto; grid-template-rows:auto auto; align-items:center;
+   gap:0 5px; font-style:normal; }
+#wavePrev .wpG .wgC b{ grid-area:1 / 1; font-weight:400; letter-spacing:.09em; color:#5c4a22;
+   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#wavePrev .wpG .wgC s{ grid-area:1 / 2; text-decoration:none; font-variant-numeric:tabular-nums;
+   color:#43310f; }
+#wavePrev .wpG .wgC u{ grid-area:2 / 1 / 3 / -1; height:3px; border-radius:2px; text-decoration:none;
+   background:linear-gradient(90deg,#6e5a34,#95805a); box-shadow:inset 0 1px 1px rgba(60,40,10,.35);
+   margin-top:2px; }
+#wavePrev .wpG .wgC.hi b, #wavePrev .wpG .wgC.hi s{ color:#8f2d20; }
+#wavePrev .wpG .wgC.hi u{ background:linear-gradient(90deg,#8a2b1c,#c24a2c); }
 /* the omen the NEXT muster will offer (SPEC3 §D read-out on the dispatch) */
 #wavePrev .wpOm{ display:flex; align-items:center; gap:6px; margin-top:6px; padding-top:5px;
    border-top:1px solid rgba(112,80,34,.32); font-size:10px; letter-spacing:.15em;
@@ -569,6 +592,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    box-shadow:0 5px 14px rgba(0,0,0,.5), 0 0 16px rgba(200,70,50,.28), inset 0 1px 0 rgba(255,228,178,.11); }
 .card.warded .tag:first-child{ color:#ffc2ad; background:rgba(64,18,11,.9); border-color:rgba(226,120,90,.65); }
 .card.warded .tag:first-child::after{ content:'warded'; font-size:7.5px; letter-spacing:.14em; color:#e8907a; }
+/* SPEC4 §B — this badge was the last hard-coded English word left in the CSS: it printed
+   "PERCE WARDED" on the French build cards (caught in the FR pass of shots\_champion.png).
+   Generated content cannot read the string layer, so it follows the same `html[data-lang]`
+   route #btnReset::after already uses. `garde` is the noun, so it stays correct against
+   both genders of school (Perce/Foudre feminine, Choc/Feu masculine). */
+:root[data-lang="fr"] .card.warded .tag:first-child::after{ content:'garde'; }
 .dg-bolt{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13.8 2L5 13.4h5.2L9.4 22l9-12.2h-5.4z' fill='%23bfe8ff' stroke='%235fa8dd' stroke-width='1.1' stroke-linejoin='round'/></svg>"); }
 .dg-flame{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 1.6c4.4 4.6 7.4 7.6 7.4 12.2A7.4 7.4 0 0 1 4.6 13.8c0-2.6 1.4-4.6 3-6.4.2 2 1 3.2 2.2 3.6.6-3.4.6-6.4 2.2-9.4z' fill='%23ff9a2e' stroke='%23c0521a' stroke-width='1'/><path d='M12 21.4a3.6 3.6 0 0 1-3.4-3.6c0-2 1.8-3.2 2.6-5.4 1.2 1.8 4.2 3.2 4.2 5.4a3.4 3.4 0 0 1-3.4 3.6z' fill='%23ffe9a8'/></svg>"); }
 .dg-rng{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><ellipse cx='12' cy='14' rx='10' ry='5.4' fill='none' stroke='%23e8b64c' stroke-width='1.6'/><ellipse cx='12' cy='14' rx='4.6' ry='2.4' fill='none' stroke='%23c9922f' stroke-width='1.3' opacity='.7'/><circle cx='12' cy='14' r='1.5' fill='%23ffe7ab'/></svg>"); }
@@ -796,6 +825,63 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
      color:#fff4e2; text-shadow:0 2px 0 rgba(0,0,0,.85), 0 0 9px rgba(0,0,0,.8); will-change:transform,opacity; }
 .fl.crit{ font-size:27px; color:#ffdc8e; text-shadow:0 2px 0 #4a2c04, 0 0 14px rgba(255,196,80,.85), 0 3px 12px rgba(0,0,0,.85); }
 .fl.gold{ color:#ffe7ab; font-size:16px; }
+
+/* ── champion nameplates (SPEC5 §B4) ──────────────────────────────────
+   The chip is IRON, not parchment: everything the player owns in this game is aged paper and
+   gold filigree, and a champion belongs to the horde. Dark hammered plate, a bevelled rim, a
+   thin enamel bar in the champion's own hue along the top, and a notch at the foot that
+   points down at the body it names — the same trick the range-ring callouts use, so the
+   plate can never be read as belonging to the unit standing behind it.
+   The hue comes from `--h`, one per name in the seeded list (set in UI), so a given champion
+   is a consistent colour for as long as it lives. Everything is a flat gradient and a shadow:
+   no blur and no filter — this element is projected and re-transformed every frame over a
+   live GL surface, and a champion can be one of three on screen at once.
+
+   TWO ELEMENTS, not one (SPEC5 §B4 promotion flourish). `.cnp` is the ANCHOR: UI rewrites its
+   transform every frame from the projected body position, so nothing else may touch that
+   property. `.cnp u` is the PLATE, and it owns all the chrome plus the arrival slide — an
+   animation on `.cnp` itself would win against the inline projection write and peg the chip
+   to the middle of the screen. Base state of the plate IS the shipped look (no offset, full
+   opacity), so the harness's `animation:none` freeze is a no-op here exactly as it is
+   everywhere else in this file, and the final shot frame renders the settled plate. */
+.cnp{ position:absolute; left:0; top:0; opacity:0; pointer-events:none; will-change:transform,opacity;
+   transform:translate3d(0,0,0) translate(-50%,-100%); margin-top:-6px;
+   transition:opacity .18s linear; }
+.cnp u{ display:block; position:relative; font-style:normal; text-decoration:none;
+   padding:3px 9px 4px; border-radius:3px; text-align:center; white-space:nowrap;
+   background:linear-gradient(180deg,#3a3a40,#212126 42%,#17171b);
+   border:1px solid rgba(0,0,0,.72);
+   box-shadow:0 0 0 1px hsla(var(--h,40),42%,52%,.42), 0 3px 10px rgba(0,0,0,.7),
+              inset 0 1px 0 rgba(214,220,232,.20), inset 0 -1px 0 rgba(0,0,0,.55);
+   transform:none; opacity:1;
+   animation:cnpIn .34s cubic-bezier(.16,.9,.3,1) both; }
+/* the plate rises INTO place under the gold flare VFX puts over the same body — a chip that
+   simply blinks on never gets the eye across from the flare to the name */
+@keyframes cnpIn{
+  from{ transform:translateY(9px) scale(.94); opacity:0; }
+  60% { opacity:1; }
+  to  { transform:none; opacity:1; } }
+/* the enamel bar: the champion's hue, laid into the top of the plate rather than washed over
+   the whole chip — a fully tinted plate at eight different hues stops reading as iron */
+.cnp u::before{ content:''; position:absolute; left:5px; right:5px; top:1px; height:2px; border-radius:1px;
+   background:linear-gradient(90deg, hsla(var(--h,40),15%,40%,0), hsl(var(--h,40),62%,58%) 22%,
+              hsl(var(--h,40),72%,66%) 50%, hsl(var(--h,40),62%,58%) 78%, hsla(var(--h,40),15%,40%,0)); }
+/* the pointer down onto the body */
+.cnp u::after{ content:''; position:absolute; left:50%; bottom:-5px; width:0; height:0; margin-left:-4px;
+   border-left:4px solid transparent; border-right:4px solid transparent;
+   border-top:5px solid #1b1b1f; filter:drop-shadow(0 1px 0 rgba(0,0,0,.6)); }
+.cnp i{ display:block; font-style:normal; font-size:8px; line-height:1; letter-spacing:.26em;
+   text-transform:uppercase; color:hsl(var(--h,40),46%,66%); text-shadow:0 1px 0 rgba(0,0,0,.8); }
+.cnp b{ display:block; font-weight:400; font-size:13px; line-height:1.25; letter-spacing:.045em;
+   color:#f0e6d2; text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 8px rgba(0,0,0,.55); }
+/* the phone has a third of the horizontal room and the chip is competing with the dispatch
+   card for it — the tag line is the first thing to go */
+@media (max-width:760px){
+  .cnp{ margin-top:-4px; }
+  .cnp u{ padding:2px 7px 3px; }
+  .cnp i{ display:none; }
+  .cnp b{ font-size:11px; }
+}
 
 /* ── overlays: title / end ─────────────────────────────────────────── */
 .overlay{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;

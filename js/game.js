@@ -15,7 +15,10 @@ const SHOT = P.get('shot');                       // deterministic screenshot pr
 // A preset may belong to a map other than the Vale. MAP has to be resolved here in CORE,
 // long before SHOT_PRESETS exists, so the binding lives in this one small table. `&map=`
 // still wins, so any preset can be shot on any map.
-const SHOT_MAPS = { overview2: 2, battle2: 2, overview3: 3, battle3: 3, _snow: 2, _ash: 3 };
+// SPEC5 §B3: `_herald` is pinned to map 2 because it is the only road in the game with two
+// spawn gates — the Ember Wastes' fork is a BRANCH off one mouth, and a herald has nothing
+// to herald there.
+const SHOT_MAPS = { overview2: 2, battle2: 2, overview3: 3, battle3: 3, _snow: 2, _ash: 3, _herald: 2 };
 
 // ══ i18n — the string layer (SPEC4 §B) ═══════════════════════════════════════════════════
 // EVERY player-facing sentence in the game is a KEY, and the two dictionaries below are the
@@ -259,10 +262,38 @@ en: {
   'e.ogre': 'The Ogre', 'e.matriarch': 'The Frost Matriarch', 'e.emberlord': 'The Ember Lord',
   'e.cinderqueen': 'The Cinder Queen', 'e.ironclad': 'The Ironclads', 'e.ashwraith': 'Ash Wraiths',
   'e.frostrevenant': 'Frost Revenants', 'e.warshaman': 'War Shamans', 'e.ram': 'The Siege Ram',
+  // SPEC5 §A — the five newcomers plus the two units they PUT on the road (a split mold and
+  // a raised skeleton are things the player sees and the card counts, so they get names too).
+  'e.wyvern': 'Wyverns', 'e.gravemold': 'Gravemolds', 'e.moldling': 'Moldlings',
+  'e.necromancer': 'Necromancers', 'e.skeleton': 'Risen Bones', 'e.wardedone': 'The Warded',
+  'e.cutpurse': 'Cutpurses',
+  // SPEC5 §B2 — the Long Night. The lull is a FALSE ending, so its copy has to read like one
+  // and then be answered by the surge banner.
+  'wave.lull': 'The horns fall silent…',
+  'wave.lullS': 'It is not over. Hold the line.',
+  'wave.surge': 'THE LONG NIGHT',
+  'wave.surgeS': 'A second host comes out of the dark.',
+  // SPEC5 §A — a cutpurse leak cuts the purse as well as the vale.
+  'wave.steal': 'A cutpurse is through — {0} gold gone.',
+  // SPEC5 §B4 — champions. One promoted unit per wave from wave 7, named off the run seed.
+  'champ.tag': 'Champion',
+  'ch.0': 'Gorewulf the Red', 'ch.1': 'Skarn the Unbroken', 'ch.2': 'Vael of the Black Tide',
+  'ch.3': 'Hrothgar Bonecrown', 'ch.4': 'Ysra the Quick', 'ch.5': 'Morgath Ironjaw',
+  'ch.6': 'Dregh the Twice-Slain', 'ch.7': 'Ulka Ashmother',
+  // SPEC5 §B3 — gate heralds. The drums say WHERE loudly; this row says how much, exactly,
+  // for the player who would rather read it than hear it. Only ever shown on a road with
+  // more than one mouth.
+  'hd.gates': 'Approach',
+  'hd.gate': 'Gate {0}',
+  'hd.gateT': 'Gate {0} — {1}% of the coming host marches out of it',
+  // SPEC5 §B5 — the endless trickle. Quiet copy: a scout party is not a wave and must never
+  // be mistaken for one on the banner that also announces waves.
+  'wave.scouts': 'Scouts on the road',
+  'wave.scoutsS': '{0} of them, probing the line.',
   // ── wave titles, per map (flattened to w.<map>.<index> below) ────────────────────
   _w: {
     1: ['Red Rabble', 'The Levy Swells', 'Skirmishers', 'Two Columns',
-        'Brutes at the Van', 'Running Tide', 'Drums and Bone Charms', 'The Ironclad Wall',
+        'Brutes at the Van', 'Wings over the Vale', 'Drums and Bone Charms', 'The Long Night',
         'Ram at the Gate', 'The Warlord'],
     2: ['First Snowfall', 'Two Gates Open', 'The Pack', 'Wall of Pavises', 'The Dead Walk',
         'Chanting in the Drifts', 'Timber and Iron', 'Bruteshield', 'The Ironclad Column',
@@ -488,9 +519,26 @@ fr: {
   'e.ironclad': 'Les bardés', 'e.ashwraith': 'Spectres de cendre',
   'e.frostrevenant': 'Revenants de givre', 'e.warshaman': 'Chamans de guerre',
   'e.ram': 'Le bélier',
+  'e.wyvern': 'Vouivres', 'e.gravemold': 'Moisissures de tombe', 'e.moldling': 'Spores',
+  'e.necromancer': 'Nécromanciens', 'e.skeleton': 'Ossements levés', 'e.wardedone': 'Les Runés',
+  'e.cutpurse': 'Coupe-bourses',
+  'wave.lull': 'Les cors se taisent…',
+  'wave.lullS': 'Ce n’est pas fini. Tenez la ligne.',
+  'wave.surge': 'LA LONGUE NUIT',
+  'wave.surgeS': 'Une seconde ost sort des ténèbres.',
+  'wave.steal': 'Un coupe-bourse est passé — {0} pièces envolées.',
+  'champ.tag': 'Champion',
+  'ch.0': 'Gorewulf le Rouge', 'ch.1': 'Skarn l’Inbrisable', 'ch.2': 'Vael de la Marée noire',
+  'ch.3': 'Hrothgar Couronne-d’os', 'ch.4': 'Ysra la Prompte', 'ch.5': 'Morgath Mâchefer',
+  'ch.6': 'Dregh le Deux-fois-mort', 'ch.7': 'Ulka Mère-cendre',
+  'hd.gates': 'Approche',
+  'hd.gate': 'Porte {0}',
+  'hd.gateT': 'Porte {0} — {1}% de l’ost à venir en sort',
+  'wave.scouts': 'Éclaireurs sur la route',
+  'wave.scoutsS': '{0} d’entre eux, tâtant la ligne.',
   _w: {
     1: ['Racaille rouge', 'La levée grossit', 'Tirailleurs', 'Deux colonnes',
-        'Brutes en tête', 'Marée courante', 'Tambours et osselets', 'Le mur bardé',
+        'Brutes en tête', 'Des ailes sur le val', 'Tambours et osselets', 'La longue nuit',
         'Le bélier à la porte', 'Le Seigneur de guerre'],
     2: ['Première neige', 'Deux portes ouvertes', 'La meute', 'Mur de pavois', 'Les morts marchent',
         'Chants dans les congères', 'Bois et fer', 'Brutes et écus', 'La colonne bardée',
@@ -2681,9 +2729,16 @@ const KNIGHT_CAP = 64;
 // SPEC3 §B raises the roster to 13. A mesh whose count is 0 is skipped entirely by three,
 // so the five newcomers cost nothing on the waves that never field them, and the caps are
 // sized to the biggest group any wave table (or elite swap) can actually spawn.
+// SPEC5 §A adds six. `gravemold` is sized for the SPLIT, not for the wave: six molds on the
+// road become six molds plus twelve children in the same frame, and the moldling def points
+// its `art` at this mesh — so the cap has to hold parent and offspring at once.
+// `skeleton` is sized for the raise (a necromancer holds 12 alive, and a wave can field
+// several), not for any wave table, because nothing ever spawns one directly.
 const ACAP = { grunt: 560, runner: 380, brute: 140, boss: 8,
                shield: 200, hound: 260, marauder: 190, ogre: 14,
-               ironclad: 48, ashwraith: 260, frostrevenant: 140, warshaman: 64, ram: 8 };
+               ironclad: 48, ashwraith: 260, frostrevenant: 140, warshaman: 64, ram: 8,
+               wyvern: 160, gravemold: 240, necromancer: 40, wardedone: 56,
+               cutpurse: 220, skeleton: 200 };
 let ENEMY_CAP = 0; for (const k in ACAP) ENEMY_CAP += ACAP[k];
 const BAR_CAP = 640;
 // ── FORMATION LATTICE ─────────────────────────────────────────────────────────
@@ -2724,13 +2779,19 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   // SPEC3 §B: a seventh tile row carries the newcomers' materials (rimed plate, grave
   // shroud, banked embers, shaman wool). Every UV is computed from AW/AH, so widening the
   // sheet re-maps the existing tiles identically — no unit changes appearance.
-  const AGX = 4, AGY = 7, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
+  // SPEC5 §A: the seventh row filled exactly (28 tiles, 0-27), so the roster of six adds an
+  // EIGHTH — four tiles, chosen so the six newcomers need no more than that between them:
+  // wyvern scale + wing membrane, fungal flesh, and one graven-stone tile whose glyphs are
+  // painted into the EMISSIVE sheet as well, so it lights both the warded one's slab and
+  // the necromancer's hands from a single source of green.
+  const AGX = 4, AGY = 8, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
   const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
   const [acv, ag] = mkc(AW, AH), [mcv, mg] = mkc(AW, AH), [ecv, eg] = mkc(AW, AH);
   const T = { MAIL: 0, STEEL: 1, RED: 2, BLUE: 3, LEATH: 4, FACE: 5, SHR: 6, SHB: 7, WOOD: 8, BLADE: 9,
               BANN: 10, SKIN: 11, FUR: 12, GOLD: 13, SHBK: 14, IRON: 15, EYES: 16, PLUME: 17, CRIM: 18, BONE: 19,
               HAIR: 20, DIRT: 21, PAV: 22, HIDE: 23,     // 22/23: SPEC2 §D pavise face + ogre hide
-              FROST: 24, SHROUD: 25, EMBER: 26, ROBE: 27 };   // SPEC3 §B newcomers
+              FROST: 24, SHROUD: 25, EMBER: 26, ROBE: 27,     // SPEC3 §B newcomers
+              SCALE: 28, MEMB: 29, MOLD: 30, RUNE: 31 };      // SPEC5 §A newcomers
   eg.fillStyle = '#000'; eg.fillRect(0, 0, AW, AH);
   const tOX = t => (t % AGX) * S, tOY = t => ((t / AGX) | 0) * S;
   const tile = (t, rough, metal, fn) => {
@@ -3113,6 +3174,135 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   // ROBE: the war shaman's boiled wool — ochre and bone, no metal anywhere, so the healer
   // never gets mistaken for a line trooper at the range you have to pick him out at.
   clothTile(T.ROBE, '#6b5a2e', '#33290f', '#a89152', 0.93);
+  // ══ SPEC5 §A materials ═══════════════════════════════════════════════════════
+  // SCALE: the wyvern's hide. The only COOL-GREEN mass in the horde — the flock has to be
+  // separable from the crimson river underneath it in one glance, and it is separable by
+  // hue rather than by value, because a flyer is read against sky and meadow, not against
+  // the road. Overlapping keeled scales, dark seams, a warm belly ramp at the bottom.
+  tile(T.SCALE, 0.56, 0.14, g => {
+    const gr = g.createLinearGradient(0, 0, 0, S);
+    gr.addColorStop(0, '#3d5348'); gr.addColorStop(0.58, '#2c3f38'); gr.addColorStop(1, '#5b5a3c');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    const r = 7.2 * u;
+    for (let ry = -1; ry * r * 0.86 < S + r; ry++) for (let rx = -1; rx * r * 1.62 < S + r * 2; rx++) {
+      const cx = rx * r * 1.62 + (ry & 1) * r * 0.81, cy = ry * r * 0.86;
+      g.fillStyle = rgba(46 + arng() * 40, 68 + arng() * 42, 58 + arng() * 34, 0.55);
+      g.beginPath(); g.ellipse(cx, cy, r * 0.82, r * 0.60, 0, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(10,16,13,.60)'; g.lineWidth = 1.5 * u;
+      g.beginPath(); g.ellipse(cx, cy, r * 0.82, r * 0.60, 0, 0, 7); g.stroke();
+      g.strokeStyle = 'rgba(180,208,180,.26)'; g.lineWidth = 1.1 * u;
+      g.beginPath(); g.arc(cx, cy + r * 0.10, r * 0.54, 3.55, 5.95); g.stroke();
+    }
+    blot(g, 60, '#101a15', '#8fa48c', 0.05, 0.16, 5, 24);
+    shade(g, 'rgba(214,240,220,.14)', 'rgba(0,0,0,.38)');
+  });
+  // MEMB: wing membrane. Warm, thin and RAGGED — the one place a red note is allowed on the
+  // wyvern, because a wing lit from behind at golden hour is the whole reason a flyer reads
+  // in the air at all. Radiating veins so the span has direction instead of being a kite.
+  tile(T.MEMB, 0.88, 0.0, g => {
+    const gr = g.createLinearGradient(0, 0, 0, S);
+    gr.addColorStop(0, '#6e3627'); gr.addColorStop(0.52, '#50261d'); gr.addColorStop(1, '#2c1410');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    blot(g, 110, '#1e0c08', '#a06a50', 0.07, 0.20, 6, 46);
+    g.lineCap = 'round';
+    // veins fan from ONE CORNER, not from a mid-edge point: a fan centred on the tile edge
+    // came out as near-parallel stripes under the wing's planar UV and read as wood grain.
+    for (let i = 0; i < 18; i++) {
+      const a = i / 17 * 1.52 + 0.02, L = S * ar(0.85, 1.45);
+      g.strokeStyle = 'rgba(20,9,6,' + ar(0.34, 0.66) + ')'; g.lineWidth = ar(1.8, 4.6) * u;
+      g.beginPath(); g.moveTo(0, 0);
+      g.quadraticCurveTo(Math.cos(a) * L * 0.50 + ar(-14, 14) * u, Math.sin(a) * L * 0.50,
+                         Math.cos(a) * L, Math.sin(a) * L);
+      g.stroke();
+      for (let j = 0; j < 2; j++) {                      // cross-webbing between the veins
+        const t2 = ar(0.35, 0.9), a2 = a + 0.09;
+        g.strokeStyle = 'rgba(26,12,8,.20)'; g.lineWidth = ar(0.8, 1.8) * u;
+        g.beginPath(); g.moveTo(Math.cos(a) * L * t2, Math.sin(a) * L * t2);
+        g.lineTo(Math.cos(a2) * L * (t2 + 0.10), Math.sin(a2) * L * (t2 + 0.10)); g.stroke();
+      }
+    }
+    for (let i = 0; i < 14; i++) {                       // punctures and old tears
+      const x = arng() * S, y = arng() * S;
+      g.fillStyle = 'rgba(16,7,5,' + ar(0.30, 0.68) + ')';
+      g.beginPath(); g.ellipse(x, y, ar(1.6, 6) * u, ar(3, 14) * u, arng() * 3, 0, 7); g.fill();
+    }
+    shade(g, 'rgba(255,206,166,.20)', 'rgba(0,0,0,.42)');
+  });
+  // MOLD: fungal flesh. Corpse-pale rather than green — the ogre already owns grey-green
+  // hide, and two masses sharing a hue is two units sharing a read. Pored, gilled, rotting.
+  tile(T.MOLD, 0.94, 0.0, g => {
+    g.fillStyle = '#8e8c72'; g.fillRect(0, 0, S, S);
+    blot(g, 220, '#3a3d27', '#d2caa8', 0.07, 0.20, 4, 26);
+    for (let i = 0; i < 130; i++) {                      // pores
+      const x = arng() * S, y = arng() * S, r = ar(1.6, 5.0) * u;
+      g.fillStyle = 'rgba(46,50,32,.44)'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+      g.fillStyle = 'rgba(240,234,206,.30)'; g.beginPath(); g.arc(x - r * 0.3, y - r * 0.35, r * 0.5, 0, 7); g.fill();
+    }
+    for (let i = 0; i < 9; i++) {                        // black rot, creeping in from the edges
+      const x = arng() * S, y = arng() * S;
+      g.fillStyle = 'rgba(24,26,16,' + ar(0.22, 0.46) + ')';
+      g.beginPath(); g.ellipse(x, y, ar(10, 34) * u, ar(8, 26) * u, arng() * 3, 0, 7); g.fill();
+    }
+    for (let i = 0; i < 40; i++) {                       // gill striations
+      const y = arng() * S;
+      g.strokeStyle = 'rgba(70,66,44,' + ar(0.10, 0.26) + ')'; g.lineWidth = ar(1, 2.6) * u;
+      g.beginPath(); g.moveTo(0, y); g.lineTo(S, y + ar(-6, 6) * u); g.stroke();
+    }
+    shade(g, 'rgba(244,238,208,.16)', 'rgba(0,0,0,.40)');
+  });
+  // RUNE: graven stone. Dark granite with glyph channels cut into it; the SAME strokes are
+  // laid into the emissive sheet below, so anything wearing this tile is lit from inside its
+  // own carving. Green because the horde's dead magic is green everywhere it appears (the
+  // necromancer's hands, the warded one's slab, the ward pips over its health bar) and one
+  // colour used consistently is a mechanic the player learns without being told.
+  const RUNEP = [];                                      // stroke list, replayed into emissive
+  tile(T.RUNE, 0.72, 0.08, g => {
+    g.fillStyle = '#33373c'; g.fillRect(0, 0, S, S);
+    blot(g, 170, '#15181b', '#7c8189', 0.06, 0.18, 3, 18);
+    for (let i = 0; i < 26; i++) {                       // chisel chips
+      const x = arng() * S, y = arng() * S, a = arng() * 3.14, l = ar(8, 30) * u;
+      g.strokeStyle = 'rgba(150,158,166,.20)'; g.lineWidth = ar(1.0, 2.4) * u;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+    }
+    for (let i = 0; i < 5; i++) {                        // the glyphs: angular, 3-4 strokes each
+      // FIVE long glyphs, not a dozen short ones: a dense mesh of short green segments
+      // tiled over a whole body stops reading as carving and starts reading as circuitry.
+      let x = ar(0.10, 0.90) * S, y = ar(0.10, 0.90) * S;
+      const seg = [];
+      for (let k = 0; k < 4; k++) {
+        const d = (arng() * 4 | 0), L = ar(22, 52) * u;
+        const nx = x + (d === 0 ? L : d === 1 ? -L : 0), ny = y + (d === 2 ? L : d === 3 ? -L : 0);
+        seg.push([x, y, nx, ny]); x = nx; y = ny;
+      }
+      RUNEP.push(seg);
+      g.lineCap = 'square';
+      for (const [x0, y0, x1, y1] of seg) {              // the cut: a dark channel...
+        g.strokeStyle = 'rgba(8,10,9,.80)'; g.lineWidth = 7.0 * u;
+        g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+        g.strokeStyle = '#8bf0b0'; g.lineWidth = 3.4 * u;   // ...with light in the bottom of it
+        g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+      }
+    }
+    shade(g, 'rgba(226,238,232,.14)', 'rgba(0,0,0,.46)');
+  });
+  { // the glyph strokes again, into the emissive sheet, so the carving actually glows
+    const x0 = tOX(T.RUNE), y0 = tOY(T.RUNE);
+    eg.save(); eg.beginPath(); eg.rect(x0, y0, S, S); eg.clip(); eg.translate(x0, y0);
+    // A DIM GREEN FLOOR under the strokes. Without it the emission lives only on the glyph
+    // lines, and any part small enough to sample between two of them (the necromancer's
+    // palm fire, his staff stone) came out unlit — the mechanic's own colour, missing from
+    // the two places it is supposed to be loudest. With it the whole tile hums and the
+    // glyphs still burn four times brighter than the stone they are cut into.
+    eg.fillStyle = '#16341f'; eg.fillRect(0, 0, S, S);
+    eg.lineCap = 'square';
+    for (const seg of RUNEP) for (const [ax, ay, bx, by] of seg) {
+      eg.strokeStyle = 'rgba(58,104,74,.38)'; eg.lineWidth = 7.0 * u;   // the halo in the channel
+      eg.beginPath(); eg.moveTo(ax, ay); eg.lineTo(bx, by); eg.stroke();
+      eg.strokeStyle = '#cdf6dd'; eg.lineWidth = 3.0 * u;
+      eg.beginPath(); eg.moveTo(ax, ay); eg.lineTo(bx, by); eg.stroke();
+    }
+    eg.restore();
+  }
 
   const albedo = new THREE.CanvasTexture(acv); albedo.colorSpace = THREE.SRGBColorSpace; albedo.anisotropy = 8;
   const mrmap = new THREE.CanvasTexture(mcv); mrmap.colorSpace = THREE.NoColorSpace; mrmap.anisotropy = 4;
@@ -3432,12 +3622,15 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     } else if (C.helm === 'hood') {
       // MARAUDER: a deep hood with a flopped peak — no metal anywhere on the head, so the
       // skirmisher never gets confused with the mailed line troops behind him.
-      dome(K(0.154), 1.02, T.DIRT, yCrn - K(0.078), 1.02);
-      aventail(K(0.160), K(0.228), yCrn - K(0.140), K(0.300), T.DIRT);
+      // SPEC5 §A: `hoodT` re-dyes the whole assembly, which is what keeps the cutpurse
+      // (near-black shroud, gold sack, no tabard) from being the marauder in the dark.
+      const HDT = C.hoodT || T.DIRT;
+      dome(K(0.154), 1.02, HDT, yCrn - K(0.078), 1.02);
+      aventail(K(0.160), K(0.228), yCrn - K(0.140), K(0.300), HDT);
       { const [m, L] = spanM([0, yCrn + K(0.03), -K(0.05)], [-K(0.03), yCrn + K(0.10), -K(0.46)]);
-        A(uvAll(new THREE.ConeGeometry(K(0.088), L, 7), T.DIRT), m, 7, hp, null, null, 0.92); }
+        A(uvAll(new THREE.ConeGeometry(K(0.088), L, 7), HDT), m, 7, hp, null, null, 0.92); }
       A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.156), K(0.042), (C.seg || SEG) + 2), T.LEATH), trs(0, yCrn - K(0.126), 0), 7, hp, null, null, 1.06);
-      A(uvAll(new THREE.CylinderGeometry(K(0.235) * B, K(0.335) * B, K(0.30), (C.seg || SEG) + 3, 1, true), T.DIRT),
+      A(uvAll(new THREE.CylinderGeometry(K(0.235) * B, K(0.335) * B, K(0.30), (C.seg || SEG) + 3, 1, true), HDT),
         trs(0, ySh - K(0.09), -K(0.01)), 0, null, null, null, 0.86);     // shoulder mantle
     } else if (C.helm === 'tusk') {
       // OGRE. The old head was a featureless sage sphere under a full-width flat iron disc —
@@ -3528,6 +3721,56 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         trs(0, ySh - K(0.14), -K(0.02)), 0, null, null, null, 0.80);                       // hunched mantle
       for (const s of [-1, 1])
         A(boxA(K(0.044), K(0.030), K(0.026), [T.SHROUD]), trs(s * K(0.052), yCrn - K(0.166), K(0.130)), 7, hp, null, null, 0.16);
+    } else if (C.helm === 'cowl') {
+      // NECROMANCER (SPEC5 §A). The war shaman already owns "hooded and hunched", so the
+      // separation has to be posture and LIGHT: this one stands bolt upright in a tall
+      // black cowl with a peak that falls BACKWARD, and the only thing in the hole where a
+      // face should be is a pair of green sparks — the same green his hands and his staff
+      // head carry, so "the thing making the bones stand up" is one colour all over.
+      dome(K(0.148), 1.06, T.SHROUD, yCrn - K(0.070), 0.62);
+      aventail(K(0.156), K(0.246), yCrn - K(0.132), K(0.360), T.SHROUD);
+      { const [m, L] = spanM([0, yCrn + K(0.10), -K(0.02)], [K(0.03), yCrn + K(0.30), -K(0.30)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.086), L, (C.seg || SEG) + 1), T.SHROUD), m, 7, hp, null, null, 0.58); }
+      A(uvAll(new THREE.CylinderGeometry(K(0.170), K(0.212), K(0.30), (C.seg || SEG) + 3, 1, true), T.SHROUD),
+        trs(0, yCrn - K(0.220), K(0.010), 0, 1, 1, 1, 0.12), 7, hp, null, null, 0.50);      // deep cowl
+      A(uvAll(new THREE.SphereGeometry(K(0.128), (C.seg || SEG), 5), T.SHROUD),
+        trs(0, yCrn - K(0.190), K(0.070), 0, 1, 1, 0.68), 7, hp, null, null, 0.04);         // the void
+      for (const s of [-1, 1]) {
+        A(uvAll(new THREE.SphereGeometry(K(0.042), 6, 5), T.RUNE), trs(s * K(0.058), yCrn - K(0.184), K(0.146)), 7, hp, null, null, 0.34);
+        A(uvAll(new THREE.SphereGeometry(K(0.021), 5, 4), T.RUNE), trs(s * K(0.058), yCrn - K(0.244), K(0.136)), 7, hp, null, null, 0.34);
+      }
+      // a rune-graven gorget: the one hard horizontal on an otherwise soft column of cloth
+      A(uvAll(new THREE.CylinderGeometry(K(0.220) * B, K(0.268) * B, K(0.090), (C.seg || SEG) + 3), T.RUNE),
+        trs(0, ySh + K(0.030), -K(0.010)), 0, null, null, null, 1.10);
+    } else if (C.helm === 'slab') {
+      // THE WARDED ONE (SPEC5 §A). The ironclad already owns "flat-topped great helm behind
+      // a wall", so this one is not a helm at all: the head IS a block of the same graven
+      // stone as the body, wider than it is tall, with the glyph channels running straight
+      // across where the eyes would be. Nothing else in the roster has a HORIZONTAL head.
+      const HR = K(0.230) * HS;
+      A(tbox(HR * 1.90, K(0.330), HR * 1.40, [T.RUNE], 1.0, 0.86), trs(0, yCrn - K(0.130), 0), 7, hp, null, null, 1.06);
+      A(boxA(HR * 2.05, K(0.070), HR * 1.55, [T.RUNE]), trs(0, yCrn + K(0.062), 0), 7, hp, null, null, 1.20);   // capstone
+      A(boxA(HR * 1.96, K(0.062), K(0.050), [T.SHROUD]), trs(0, yCrn - K(0.116), HR * 0.72), 7, hp, null, null, 0.10);  // eye channel
+      for (let i = 0; i < 3; i++)                                                  // glyph pillars on the crown
+        A(boxA(K(0.048), K(0.110 - Math.abs(i - 1) * 0.030), K(0.048), [T.RUNE]),
+          trs((i - 1) * K(0.130), yCrn + K(0.140), 0), 7, hp, null, null, 1.34);
+      A(uvAll(new THREE.CylinderGeometry(HR * 1.02, HR * 1.16, K(0.090), (C.seg || SEG) + 3), T.RUNE),
+        trs(0, yCrn - K(0.320), 0), 7, hp, null, null, 0.92);                      // socket collar
+    } else if (C.helm === 'skull') {
+      // RISEN BONES (SPEC5 §A). A raised skeleton is CHEAP on purpose — it is levy the
+      // necromancer keeps handing back — so it gets the plainest head in the game: a bare
+      // skull with two black sockets and a jaw, and a rag of shroud hanging off the crown
+      // so the outline is not a perfect ball.
+      A(uvAll(new THREE.SphereGeometry(K(0.150) * HS, (C.seg || SEG), 6), T.BONE),
+        trs(0, yCrn - K(0.130), -K(0.010), 0, 1, 1.06, 1.08), 7, hp, null, null, 1.10);
+      A(tbox(K(0.185) * HS, K(0.110), K(0.180), [T.BONE], 1.0, 0.80), trs(0, yCrn - K(0.262), K(0.040)), 7, hp, null, null, 0.94);  // jaw
+      for (const s of [-1, 1]) {
+        A(boxA(K(0.058), K(0.062), K(0.036), [T.SHROUD]), trs(s * K(0.062), yCrn - K(0.150), K(0.116)), 7, hp, null, null, 0.10);
+        A(uvAll(new THREE.SphereGeometry(K(0.020), 5, 4), T.SHROUD), trs(s * K(0.062), yCrn - K(0.150), K(0.126)), 7, hp, null, null, 0.06);
+      }
+      A(boxA(K(0.048), K(0.036), K(0.040), [T.BONE]), trs(0, yCrn - K(0.208), K(0.128)), 7, hp, null, null, 1.02);   // nasal
+      A(plateGeo([[-K(0.130), K(0.10)], [K(0.130), K(0.10)], [K(0.090), -K(0.34)], [-K(0.115), -K(0.28)]], K(0.012), T.SHROUD, T.SHROUD),
+        trs(-K(0.03), yCrn + K(0.020), -K(0.130), 0.24), 8, null, null, () => 1.4, 0.56);   // shroud rag
     }
     // ── shields (bone 5) ──
     if (C.shield === 'round' || C.shield === 'buckler') {
@@ -3720,6 +3963,54 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         const c2 = pt(K(0.52) + i * K(0.20));
         A(boxA(K(0.026), K(0.100), K(0.020), [T.BONE]), trs(c2[0] + K(0.062), c2[1] - K(0.070), c2[2], 0, 1, 1, 1, 0, 0.30 + i * 0.12), 6, shR, null, null, 1.14);
       }
+    } else if (C.weapon === 'nstaff') {
+      // NECROMANCER (SPEC5 §A). A staff, not a totem: a straight black rod with NOTHING on
+      // it until the very top, where three bone prongs cage a green glyph-stone. The war
+      // shaman's staff ends in a horned skull over an ORANGE coal, and the two of them are
+      // the only vertical lines in the roster that end in light — so the colour and the
+      // finial have to be different or the player learns the wrong priority kill.
+      const grip = [hndR[0] + K(0.03), hndR[1], hndR[2] + K(0.04)];
+      const dir = [0.02, Math.cos(0.05), -Math.sin(0.05)];
+      const pt = t => [grip[0] + dir[0] * t, grip[1] + dir[1] * t, grip[2] + dir[2] * t];
+      rod(pt(-K(0.62)), pt(K(1.20)), K(0.028), K(0.024), T.SHROUD, 6, shR, null, 0.72);
+      A(uvAll(new THREE.CylinderGeometry(K(0.038), K(0.044), K(0.060), 7), T.LEATH), spanM(pt(K(0.72)), pt(K(0.78)))[0], 6, shR, null, null, 0.90);
+      { const c0 = pt(K(1.42));
+        for (let i = 0; i < 3; i++) {                                      // the cage: three prongs
+          const a = i / 3 * TAU + 0.5;
+          const [m, L] = spanM([c0[0] + Math.cos(a) * K(0.030), c0[1] - K(0.180), c0[2] + Math.sin(a) * K(0.030)],
+                               [c0[0] + Math.cos(a) * K(0.105), c0[1] + K(0.120), c0[2] + Math.sin(a) * K(0.105)]);
+          A(uvAll(new THREE.CylinderGeometry(K(0.010), K(0.026), L, 5), T.BONE), m, 6, shR, null, null, 1.24);
+        }
+        A(uvAll(new THREE.SphereGeometry(K(0.078), 7, 5), T.RUNE), trs(c0[0], c0[1] - K(0.030), c0[2]), 6, shR, null, null, 0.32);
+        A(uvAll(new THREE.CylinderGeometry(K(0.050), K(0.058), K(0.045), 7), T.RUNE), trs(c0[0], c0[1] - K(0.190), c0[2]), 6, shR, null, null, 1.20); }
+      for (let i = 0; i < 3; i++) {                                        // graven bands down the shaft
+        const c2 = pt(K(0.20) + i * K(0.34));
+        A(uvAll(new THREE.CylinderGeometry(K(0.036), K(0.036), K(0.048), 7), T.RUNE), spanM(c2, pt(K(0.24) + i * K(0.34)))[0], 6, shR, null, null, 1.14);
+      }
+    } else if (C.weapon === 'maul') {
+      // THE WARDED ONE (SPEC5 §A). A quarried block on a haft — the head is a RECTANGLE of
+      // the same graven stone as the body, and it is deliberately oversized: a unit whose
+      // mechanic is "your first six blows do nothing" has to look like it hits back.
+      const grip = [hndR[0] + K(0.02), hndR[1], hndR[2] + K(0.05)];
+      const dir = [0.09, Math.cos(0.28), -Math.sin(0.28)];
+      const nl = Math.hypot(dir[0], dir[1], dir[2]); dir[0] /= nl; dir[1] /= nl; dir[2] /= nl;
+      const pt = t => [grip[0] + dir[0] * t, grip[1] + dir[1] * t, grip[2] + dir[2] * t];
+      rod(pt(-K(0.40)), pt(K(0.92)), K(0.048), K(0.042), T.WOOD, 6, shR, null, 0.96);
+      const hc = pt(K(1.06));
+      A(tbox(K(0.230), K(0.520), K(0.250), [T.RUNE], 0.90, 1.0), trs(hc[0], hc[1], hc[2], 0, 1, 1, 1, 0, 0.09), 6, shR, null, null, 1.06);
+      for (const s of [-1, 1])                                             // iron cheeks
+        A(boxA(K(0.060), K(0.300), K(0.230), [T.IRON]), trs(hc[0] + s * K(0.140), hc[1], hc[2], 0, 1, 1, 1, 0, 0.09), 6, shR, null, null, 1.02);
+      A(uvAll(new THREE.CylinderGeometry(K(0.072), K(0.072), K(0.090), 7), T.IRON), spanM(pt(K(0.86)), pt(K(0.95)))[0], 6, shR, null, null, 1.10);
+      A(uvAll(new THREE.CylinderGeometry(K(0.056), K(0.056), K(0.110), 7), T.LEATH), spanM(pt(-K(0.38)), pt(-K(0.26)))[0], 6, shR, null, null, 0.90);
+    } else if (C.weapon === 'dagger') {
+      // CUTPURSE (SPEC5 §A). Barely a weapon: a short leaf blade held low and reversed, so
+      // the arm silhouette stays clean and the eye goes to the SACK, which is the unit.
+      const grip = [hndR[0] + K(0.02), hndR[1] - K(0.02), hndR[2] + K(0.05)];
+      const bl = K(0.28), bw = K(0.042);
+      const pts = [[-bw, 0], [bw, 0], [bw * 0.92, bl * 0.52], [bw * 0.44, bl * 0.88], [0, bl], [-bw * 0.52, bl * 0.86], [-bw * 0.88, bl * 0.50]];
+      A(plateGeo(pts, K(0.020), T.BLADE), trs(grip[0], grip[1] - K(0.04), grip[2], 0, 1, 1, 1, 2.66, 0.26), 6, shR, null, null, 1.06 * BT);
+      A(boxA(K(0.088), K(0.030), K(0.038), [T.IRON]), trs(grip[0], grip[1] + K(0.030), grip[2], 0, 1, 1, 1, 0, 0.26), 6, shR, null, null, 1.00);
+      A(uvAll(new THREE.CylinderGeometry(K(0.022), K(0.022), K(0.100), 6), T.LEATH), trs(grip[0], grip[1] + K(0.080), grip[2], 0, 1, 1, 1, 0, 0.26), 6, shR, null, null, 0.88);
     }
     // ── cape / back banner ──
     if (C.cape) {
@@ -3752,8 +4043,14 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     }
     // Glowing hands (SPEC3 §B war shaman): the heal is invisible at range unless the caster
     // is lit. Two ember cores riding the wrists put the light ON the unit, not on the effect.
-    if (C.glow) for (const [h, bo, pv] of [[hndL, 5, shL], [hndR, 6, shR]])
-      A(uvAll(new THREE.SphereGeometry(K(0.086) * B, 7, 5), T.EMBER), trs(h[0], h[1] - K(0.030), h[2] + K(0.030)), bo, pv, null, null, 1.35);
+    // SPEC5 §A: `glowT` picks WHICH light — the shaman's banked orange coals or the
+    // necromancer's green glyph-fire. Same three lines of geometry, opposite meaning.
+    if (C.glow) for (const [h, bo, pv] of [[hndL, 5, shL], [hndR, 6, shR]]) {
+      A(uvAll(new THREE.SphereGeometry(K(C.glowT ? 0.096 : 0.086) * B, 7, 5), C.glowT || T.EMBER), trs(h[0], h[1] - K(0.030), h[2] + K(0.030)), bo, pv, null, null, C.glowT ? 0.32 : 1.35);
+      if (C.glowT) for (let i = 0; i < 3; i++)      // motes rising off the palm, frozen in the mesh
+        A(uvAll(new THREE.SphereGeometry(K(0.024 - i * 0.005), 5, 4), C.glowT),
+          trs(h[0] + ((i & 1) ? K(0.05) : -K(0.04)), h[1] + K(0.070 + i * 0.075), h[2] + K(0.040)), bo, pv, null, null, 0.30);
+    }
     if (C.banner) {
       const by0 = yCst - K(0.05), by1 = K(2.34);
       rod([K(0.05), by0, -K(0.19) * W], [-K(0.10), by1, -K(0.44) * W], K(0.028), K(0.022), T.WOOD, 0, null, null, 1.0);
@@ -3803,6 +4100,26 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         A(boxA(K(0.010), K(0.095), K(0.070), [T.PLUME]), trs(ox + K(0.085), qy + K(0.40), qz - K(0.085), 0, 1, 1, 1, 0.30, -0.28), 0, null, null, null, 1.14);
       }
       A(boxA(K(0.048), K(0.42), K(0.022), [T.LEATH]), trs(-K(0.01), yCst - K(0.10), K(0.010), 0, 1, 1, 1, 0, -0.52), 0, null, null, null, 0.86);
+    }
+    // SPEC5 §A CUTPURSE. The sack is the unit. Everything else about him is a small dark
+    // man in a hood — but a fat swinging bag on the off hip with gold spilling out of the
+    // neck of it is the only GOLD on the whole red army, and gold is the exact colour the
+    // player's own purse counter uses, which is the tell that his leak costs money.
+    if (C.sack) {
+      const sx = -K(0.30) * B, sy = yHip - K(0.10), sz = -K(0.10) * W;
+      A(uvAll(new THREE.SphereGeometry(K(0.190) * B, (C.seg || SEG) + 1, 6), T.LEATH),
+        trs(sx, sy, sz, 0, 1.02, 1.20, 0.94), 8, null, null, () => 0.9, 0.94);
+      A(uvAll(new THREE.CylinderGeometry(K(0.086), K(0.130), K(0.110), (C.seg || SEG) + 1, 1, true), T.LEATH),
+        trs(sx, sy + K(0.200), sz, 0, 1, 1, 1, 0, 0.14), 8, null, null, () => 0.9, 0.80);
+      A(uvAll(new THREE.CylinderGeometry(K(0.098), K(0.092), K(0.038), (C.seg || SEG) + 1), T.GOLD),
+        trs(sx, sy + K(0.246), sz, 0, 1, 1, 1, 0, 0.14), 8, null, null, () => 0.9, 1.22);   // the spill
+      for (let i = 0; i < 4; i++)                                             // loose coins on the cord
+        A(uvAll(new THREE.CylinderGeometry(K(0.036), K(0.036), K(0.014), 7), T.GOLD),
+          trs(sx + ((i & 1) ? K(0.11) : -K(0.09)), sy + K(0.290 + i * 0.052), sz + K(0.030), 0, 1, 1, 1, 1.2 + i * 0.4, 0.5),
+          8, null, null, () => 1.4, 1.30);
+      A(boxA(K(0.052), K(0.44), K(0.024), [T.LEATH]), trs(-K(0.02), yCst - K(0.12), K(0.020), 0, 1, 1, 1, 0, 0.58), 0, null, null, null, 0.84);
+      for (let i = 0; i < 3; i++)                                             // stolen trinkets on the strap
+        A(boxA(K(0.040), K(0.052), K(0.020), [T.GOLD]), trs(-K(0.13 + i * 0.06), yCst - K(0.10 + i * 0.14), K(0.036)), 0, null, null, null, 1.26);
     }
     return { geo: mergeA(p, C.h), h: C.h };
   }
@@ -4064,6 +4381,200 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return { geo: mergeA(p, C.h), h: C.h };
   }
 
+  // ── WYVERN (SPEC5 §A) ───────────────────────────────────────────────────────
+  // The roster's first flyer, and the only thing in the game whose silhouette is read
+  // against the SKY. That changes what has to carry it: mass and value do nothing up
+  // there, so the read is all OUTLINE — a ragged membrane span two and a half units wide,
+  // a neck thrown forward and a serpentine tail thrown back, i.e. a shape with three
+  // directions in it where every ground unit is a vertical blob. The wings ride two new
+  // bones (9/10) whose rotation is about Z rather than X, because a wing beats up and down
+  // across the body and no amount of the existing hip/shoulder chain does that.
+  // The shadow is left on the GROUND by syncVisuals (the body takes `def.alt`, the decal
+  // does not), which is the second half of the read: a flock you can track by the blobs
+  // running along the road under it.
+  function buildWyvern(C) {
+    const p = [];
+    const A = (g, m, bone, piv, piv2, w, tint) => { p.push({ g, m: m || null, bone: bone || 0, piv: piv || [0, 0, 0], piv2: piv2 || null, w: w || null, tint }); };
+    const k = C.h, K = v => v * k, SG = C.seg || SEG;
+    const rod = (a, b, r1, r2, t, bone, piv, w, tint) => {
+      const [m, L] = spanM(a, b);
+      A(uvAll(new THREE.CylinderGeometry(r2, r1, L, SG, 1, false), t), m, bone, piv, null, w, tint);
+    };
+    const ell = (r, sx, sy, sz, x, y, z, t, bone, piv, tint) =>
+      A(uvAll(new THREE.SphereGeometry(r, SG + 1, 6), t), trs(x, y, z, 0, sx, sy, sz), bone, piv, null, null, tint);
+    // a two-sided membrane sheet through arbitrary world points. plateGeo only builds in
+    // XY and a wing lives in XZ, so this fans the polygon about its own centroid — which
+    // also gives the sheet a natural camber instead of a flat kite.
+    const memb = (pts, bone, piv, tint, w) => {
+      const N = pts.length, TH = K(0.010);
+      let nx = 0, ny = 0, nz = 0;
+      for (let i = 0; i < N; i++) {
+        const a = pts[i], b = pts[(i + 1) % N];
+        nx += (a[1] - b[1]) * (a[2] + b[2]); ny += (a[2] - b[2]) * (a[0] + b[0]); nz += (a[0] - b[0]) * (a[1] + b[1]);
+      }
+      const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+      let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      for (const q of pts) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); z0 = Math.min(z0, q[2]); z1 = Math.max(z1, q[2]); }
+      const [u0, v0, su, sv] = rectUV(T.MEMB);
+      const uvf = q => [u0 + su * ((q[0] - x0) / ((x1 - x0) || 1)), v0 + sv * ((q[2] - z0) / ((z1 - z0) || 1))];
+      const pos = [], nor = [], uvs = [], idx = [];
+      let cx = 0, cy = 0, cz = 0; for (const q of pts) { cx += q[0]; cy += q[1]; cz += q[2]; }
+      cx /= N; cy /= N; cz /= N;
+      for (const sd of [1, -1]) {
+        const base = pos.length / 3, o = TH * 0.5 * sd;
+        pos.push(cx + nx * o, cy + ny * o, cz + nz * o); nor.push(nx * sd, ny * sd, nz * sd); uvs.push(...uvf([cx, cy, cz]));
+        for (const q of pts) { pos.push(q[0] + nx * o, q[1] + ny * o, q[2] + nz * o); nor.push(nx * sd, ny * sd, nz * sd); uvs.push(...uvf(q)); }
+        for (let i = 0; i < N; i++) {
+          const a = base + 1 + i, b = base + 1 + (i + 1) % N;
+          if (sd > 0) idx.push(base, a, b); else idx.push(base, b, a);
+        }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      g.setIndex(idx);
+      A(g, null, bone, piv, null, w, tint);
+    };
+    // ── body: a deep chest and a tucked loin, the same two-ellipsoid trick the hound uses
+    ell(K(0.200), 1.00, 0.95, 1.50, 0, K(0.620), K(0.100), T.SCALE, 0, null, 1.02);
+    ell(K(0.170), 1.00, 0.96, 1.30, 0, K(0.575), -K(0.280), T.SCALE, 0, null, 0.94);
+    A(boxA(K(0.250), K(0.110), K(0.520), [T.SCALE, T.SCALE, T.SCALE, T.MOLD, T.SCALE, T.SCALE]),
+      trs(0, K(0.500), -K(0.060)), 0, null, null, null, 0.82);                  // pale belly
+    for (let i = 0; i < 5; i++)                                                  // dorsal ridge
+      A(uvAll(new THREE.ConeGeometry(K(0.028), K(0.090 - i * 0.010), 4), T.BONE),
+        trs(0, K(0.760 - i * 0.014), K(0.180) - i * K(0.170), 0, 1, 1, 1, -0.30), 0, null, null, null, 1.18);
+    // ── neck + head (bone 7): thrown FORWARD, which is half of what says "flying" from
+    // above — every ground unit's head sits directly over its feet.
+    const HD = [0, K(0.720), K(0.240)];
+    rod([0, K(0.700), K(0.210)], [0, K(0.880), K(0.430)], K(0.086), K(0.062), T.SCALE, 7, HD, null, 1.0);
+    rod([0, K(0.870), K(0.415)], [0, K(0.900), K(0.560)], K(0.060), K(0.054), T.SCALE, 7, HD, null, 1.04);
+    A(tbox(K(0.124), K(0.108), K(0.235), [T.SCALE], 1.0, 0.60), trs(0, K(0.908), K(0.655), 0, 1, 1, 1, 0.16), 7, HD, null, null, 1.06);
+    A(boxA(K(0.098), K(0.040), K(0.196), [T.BONE]), trs(0, K(0.860), K(0.672), 0, 1, 1, 1, 0.20), 7, HD, null, null, 0.94);  // jaw
+    for (let i = 0; i < 3; i++) for (const s of [-1, 1])                         // fangs
+      A(uvAll(new THREE.ConeGeometry(K(0.012), K(0.044), 4), T.BONE),
+        trs(s * K(0.040), K(0.878), K(0.605 + i * 0.062), 0, 1, 1, 1, Math.PI), 7, HD, null, null, 1.26);
+    for (const s of [-1, 1]) {
+      A(uvAll(new THREE.SphereGeometry(K(0.028), 6, 5), T.EYES), trs(s * K(0.054), K(0.940), K(0.632)), 7, HD, null, null, 1.10);
+      const [m, L] = spanM([s * K(0.050), K(0.966), K(0.548)], [s * K(0.148), K(1.098), K(0.330)]);
+      A(uvAll(new THREE.ConeGeometry(K(0.032), L, 5), T.BONE), m, 7, HD, null, null, 1.22);   // backswept horn
+      A(boxA(K(0.018), K(0.054), K(0.098), [T.MEMB]), trs(s * K(0.078), K(0.958), K(0.520), 0, 1, 1, 1, 0, -s * 0.5), 7, HD, null, null, 1.04);
+    }
+    // ── serpentine tail (bone 8: the cloth channel's lateral sway IS the serpentine) ──
+    { const TP = [[0, 0.560, -0.400], [0, 0.532, -0.610], [0, 0.500, -0.800], [0, 0.462, -0.960], [0, 0.428, -1.080]];
+      for (let i = 0; i < TP.length - 1; i++) {
+        const a = TP[i].map(K), b = TP[i + 1].map(K);
+        rod(a, b, K(0.072 - i * 0.013), K(0.060 - i * 0.012), T.SCALE, 8, null,
+            () => 0.28 + i * 0.42, 0.98 - i * 0.04);
+      }
+      const tip = TP[TP.length - 1].map(K);
+      memb([[0, tip[1] + K(0.03), tip[2] + K(0.02)], [K(0.130), tip[1] - K(0.02), tip[2] - K(0.16)],
+            [0, tip[1] - K(0.05), tip[2] - K(0.30)], [-K(0.130), tip[1] - K(0.02), tip[2] - K(0.16)]],
+           8, null, 1.10, () => 2.1);                                            // spade fin
+    }
+    // ── legs: tucked under, on the root bone — a flyer does not walk ──
+    for (const s of [-1, 1]) {
+      rod([s * K(0.120), K(0.500), -K(0.080)], [s * K(0.190), K(0.330), -K(0.240)], K(0.062), K(0.044), T.SCALE, 0, null, null, 0.90);
+      rod([s * K(0.190), K(0.335), -K(0.240)], [s * K(0.205), K(0.300), -K(0.020)], K(0.042), K(0.032), T.SCALE, 0, null, null, 0.86);
+      for (let i = 0; i < 3; i++) {
+        const a = (i - 1) * 0.46;
+        const [m, L] = spanM([s * K(0.205), K(0.300), -K(0.020)],
+                             [s * K(0.205) + Math.sin(a) * K(0.070), K(0.250), K(0.060) + Math.cos(a) * K(0.080)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.018), L, 4), T.BONE), m, 0, null, null, null, 1.16);
+      }
+    }
+    // ── wings (bones 9 / 10) ─────────────────────────────────────────────────
+    for (const s of [-1, 1]) {
+      const bo = s < 0 ? 9 : 10;
+      const SH = [s * K(0.130), K(0.790), K(0.080)], EL = [s * K(0.470), K(0.930), K(0.010)],
+            WR = [s * K(0.860), K(0.960), K(0.180)],
+            F1 = [s * K(1.180), K(0.900), -K(0.110)], F2 = [s * K(1.010), K(0.790), -K(0.500)],
+            F3 = [s * K(0.700), K(0.690), -K(0.760)], HA = [s * K(0.080), K(0.560), -K(0.420)];
+      // the midpoint of two finger tips, bitten back toward the wrist
+      const pull = (a, b, t) => [0, 1, 2].map(j => lerp((a[j] + b[j]) * 0.5, WR[j], t));
+      // the trailing edge is SCALLOPED, not straight: three shallow bites pulled toward the
+      // wrist between the finger tips. That is the whole bat-wing read at overview zoom.
+      memb([SH, EL, WR, F1, pull(F1, F2, 0.30), F2, pull(F2, F3, 0.32), F3, pull(F3, HA, 0.24), HA], bo, SH, 1.06);
+      rod(SH, EL, K(0.052), K(0.040), T.SCALE, bo, SH, null, 1.04);              // humerus
+      rod(EL, WR, K(0.040), K(0.030), T.SCALE, bo, SH, null, 1.08);              // forearm
+      A(uvAll(new THREE.SphereGeometry(K(0.046), 6, 5), T.SCALE), trs(EL[0], EL[1], EL[2]), bo, SH, null, null, 1.12);
+      A(uvAll(new THREE.SphereGeometry(K(0.042), 6, 5), T.SCALE), trs(WR[0], WR[1], WR[2]), bo, SH, null, null, 1.12);
+      // the finger struts are SCALE, not bone: a pale rod running out past a dark membrane
+      // reads as a spear at gameplay zoom, and a flock of thirty spears is a pike block.
+      for (const F of [F1, F2, F3]) rod(WR, F, K(0.020), K(0.007), T.SCALE, bo, SH, null, 0.86);
+      { const [m, L] = spanM(WR, [WR[0] + s * K(0.062), WR[1] + K(0.046), WR[2] + K(0.058)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.016), L, 4), T.BONE), m, bo, SH, null, null, 1.16); }   // wrist claw
+    }
+    return { geo: mergeA(p, C.h), h: C.h };
+  }
+
+  // ── GRAVEMOLD (SPEC5 §A) ────────────────────────────────────────────────────
+  // A hunched fungal mass on two stub legs, crowned with a cluster of caps that ride the
+  // cloth bone so the whole crown nods as it shambles. Nothing else on the road is WIDER
+  // than it is tall, which is the entire silhouette contract — and when it dies it leaves
+  // two of itself at 0.60 scale (`art: 'gravemold'` on the moldling def), so the split is
+  // legible as "that thing, but smaller" rather than as two unrelated bodies.
+  function buildMold(C) {
+    const p = [];
+    const A = (g, m, bone, piv, piv2, w, tint) => { p.push({ g, m: m || null, bone: bone || 0, piv: piv || [0, 0, 0], piv2: piv2 || null, w: w || null, tint }); };
+    const k = C.h, K = v => v * k, SG = C.seg || SEG;
+    const rod = (a, b, r1, r2, t, bone, piv, w, tint) => {
+      const [m, L] = spanM(a, b);
+      A(uvAll(new THREE.CylinderGeometry(r2, r1, L, SG, 1, false), t), m, bone, piv, null, w, tint);
+    };
+    const ell = (r, sx, sy, sz, x, y, z, t, bone, piv, tint) =>
+      A(uvAll(new THREE.SphereGeometry(r, SG + 1, 6), t), trs(x, y, z, 0, sx, sy, sz), bone, piv, null, null, tint);
+    // ── the mass: one broad hunched body plus five bulges, none of them concentric, so the
+    // outline is lumpy at every bearing instead of being a ball
+    ell(K(0.340), 1.22, 0.92, 1.02, 0, K(0.520), -K(0.020), T.MOLD, 0, null, 1.0);
+    ell(K(0.230), 1.06, 0.86, 1.00, 0, K(0.700), -K(0.150), T.MOLD, 0, null, 0.90);
+    for (const [bx, by, bz, br, bt] of [[-0.30, 0.44, 0.14, 0.150, 1.06], [0.34, 0.50, 0.02, 0.130, 0.96],
+                                        [0.14, 0.32, 0.22, 0.135, 1.10], [-0.20, 0.66, -0.16, 0.115, 0.88],
+                                        [0.02, 0.34, -0.30, 0.145, 0.92]])
+      ell(K(br), 1.10, 0.90, 1.06, K(bx), K(by), K(bz), T.MOLD, 0, null, bt);
+    // rot: black patches sunk into the flesh, which is what stops the mass reading as dough
+    for (const [bx, by, bz, br] of [[-0.24, 0.58, 0.24, 0.090], [0.26, 0.62, 0.16, 0.075],
+                                    [0.10, 0.24, -0.10, 0.085], [-0.34, 0.36, -0.10, 0.070]])
+      ell(K(br), 1.10, 0.70, 1.10, K(bx), K(by), K(bz), T.SHROUD, 0, null, 0.52);
+    // ── the crown of caps (bone 8): stalk, gilled underside, cap. Weight rises with height
+    // so the tallest cap has the widest nod.
+    const CAPS = [[0.00, 0.86, -0.04, 0.30, 0.215], [-0.26, 0.74, 0.06, 0.24, 0.160],
+                  [0.24, 0.72, -0.14, 0.22, 0.145], [-0.10, 0.66, -0.26, 0.18, 0.120],
+                  [0.14, 0.62, 0.20, 0.15, 0.105]];
+    for (const [cx, cy, cz, hgt, cr] of CAPS) {
+      const b0 = [K(cx), K(cy), K(cz)], b1 = [K(cx) + K(hgt) * 0.14, K(cy + hgt), K(cz) - K(hgt) * 0.10];
+      rod(b0, b1, K(cr * 0.32), K(cr * 0.24), T.MOLD, 8, null, (x, y) => clamp((y / k - cy) / hgt, 0, 1) * 0.6, 1.14);
+      A(uvAll(new THREE.CylinderGeometry(K(cr) * 0.96, K(cr) * 0.34, K(cr) * 0.42, SG + 3, 1, true), T.SHROUD),
+        trs(b1[0], b1[1] - K(cr) * 0.16, b1[2]), 8, null, null, () => 0.85, 0.42);      // gills
+      A(uvAll(new THREE.SphereGeometry(K(cr), SG + 2, 6, 0, TAU, 0, 1.62), T.MOLD),
+        trs(b1[0], b1[1] - K(cr) * 0.10, b1[2], 0, 1.06, 0.56, 1.06), 8, null, null, () => 1.0, 1.30);
+      A(uvAll(new THREE.CylinderGeometry(K(cr) * 1.02, K(cr) * 0.98, K(cr) * 0.10, SG + 3), T.MOLD),
+        trs(b1[0], b1[1] - K(cr) * 0.16, b1[2]), 8, null, null, () => 0.95, 1.18);      // cap rim
+    }
+    // ── the face: a hunched brow on bone 7 with a gill-maw and three sunken pits ──
+    const HD = [0, K(0.560), K(0.180)];
+    ell(K(0.180), 1.10, 0.80, 0.94, 0, K(0.600), K(0.230), T.MOLD, 7, HD, 1.16);
+    A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.120), K(0.075), SG + 3, 1, true), T.SHROUD),
+      trs(0, K(0.505), K(0.270), 0, 1.15, 1, 0.70), 7, HD, null, null, 0.30);           // gill maw
+    for (const [ex, ey, er] of [[-0.085, 0.640, 0.036], [0.080, 0.652, 0.032], [0.010, 0.596, 0.026]])
+      A(uvAll(new THREE.SphereGeometry(K(er), 6, 5), T.SHROUD), trs(K(ex), K(ey), K(0.330)), 7, HD, null, null, 0.14);
+    // ── two stub legs (bones 1/2) and two drooping root arms (5/6) ──
+    for (const s of [-1, 1]) {
+      const hip = [s * K(0.150), K(0.320), 0];
+      rod(hip, [s * K(0.170), K(0.075), K(0.020)], K(0.098), K(0.078), T.MOLD, s < 0 ? 1 : 2, hip, null, 0.86);
+      A(uvAll(new THREE.SphereGeometry(K(0.105), SG, 5), T.MOLD), trs(s * K(0.172), K(0.055), K(0.055), 0, 1.10, 0.62, 1.30), s < 0 ? 1 : 2, hip, null, null, 0.78);
+      const sho = [s * K(0.290), K(0.600), K(0.020)];
+      rod(sho, [s * K(0.380), K(0.360), K(0.130)], K(0.070), K(0.052), T.MOLD, s < 0 ? 5 : 6, sho, null, 0.92);
+      for (let i = 0; i < 3; i++) {
+        const a = (i - 1) * 0.44;
+        const [m, L] = spanM([s * K(0.380), K(0.360), K(0.130)],
+                             [s * K(0.380) + Math.sin(a) * K(0.090), K(0.180), K(0.150) + Math.cos(a) * K(0.110)]);
+        A(uvAll(new THREE.ConeGeometry(K(0.022), L, 4), T.BONE), m, s < 0 ? 5 : 6, sho, null, null, 1.10);
+      }
+    }
+    return { geo: mergeA(p, C.h), h: C.h };
+  }
+
   // ── 5. GPU skinning: gait / fight lunge / death fall+sink+dither-dissolve ──
   // aAnim (per instance) = (gait phase, cycle rate, mode 0=march 1=fight 2=guard, death 0..1 / -1 alive)
   const ANIM_HEAD = `
@@ -4087,7 +4598,14 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   // so aT starts at 0 on the frame the stomp lands.
   float sht = step(2.5, aMd)*step(aMd, 3.5);
   float qd  = step(3.5, aMd)*step(aMd, 4.5);
-  float slm = step(4.5, aMd);
+  float slm = step(4.5, aMd)*step(aMd, 5.5);
+  // SPEC5 §A mode 6 = WING BEAT. A flyer has no gait at all: every limb term below is
+  // gated on wk/fg/idl/sht/qd/slm and so collapses to zero here, and the whole animation is
+  // the pair of wing bones (9/10), a body heave against the downbeat and a lazy head yaw.
+  // The downbeat is deliberately not a sine: a wing snaps down and recovers slowly, which
+  // is the difference between a bat and a flag.
+  float fly = step(5.5, aMd);
+  float fs = sin(aT), fbt = fs >= 0.0 ? pow(fs, 0.62) : -pow(-fs, 1.55);
   float ga = 1.0 - smoothstep(0.0, 0.20, max(aDd, 0.0));
   float atk = pow(0.5 + 0.5*s1, 9.0);
   float bph = fract(aT*0.15915494);                    // bow: long pull, snap release
@@ -4102,10 +4620,11 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   float jt = fract(aPh*0.3183) - 0.5;                  // per-unit rest-pose jitter
   float armA = (wk*( 0.30*s1) + fg*(-0.40 - 0.20*atk) + idl*(-0.12) + sht*(-1.44) + slm*(-0.62*slu))*ga + jt*0.13;
   float armB = (wk*(-0.17*s1) + fg*( 0.34 - 1.45*atk) + idl*( 0.05) + sht*(-1.34 + 0.66*pull) + slm*(-0.74*slu))*ga + jt*0.20;
-  float hdA  = (wk*(-0.055*sin(2.0*aT)) + fg*(0.12*atk) + idl*(0.03*sin(aT*0.8)) + sht*0.06 + qd*(0.11*sin(aT)) + slm*(-0.10*slu))*ga;
-  float bob  = (wk*0.052*(0.5 - 0.5*cos(2.0*aT)) + idl*0.009*sin(aT*0.9) + fg*0.025*atk + qd*0.080*(0.5 - 0.5*cos(2.0*aT + 1.1)) + slm*(0.16*slu - 0.05))*ga;
-  float rol  = (wk*0.050*s1 + qd*0.038*sin(aT + 0.9))*ga;
-  float lea  = (wk*0.060 + fg*(0.11 + 0.24*atk) + sht*0.05 + qd*(0.10 + 0.17*sin(aT + 2.0)) + slm*(-0.16*slu))*ga;
+  float hdA  = (wk*(-0.055*sin(2.0*aT)) + fg*(0.12*atk) + idl*(0.03*sin(aT*0.8)) + sht*0.06 + qd*(0.11*sin(aT)) + slm*(-0.10*slu) + fly*(0.07*sin(aT*0.63)))*ga;
+  float bob  = (wk*0.052*(0.5 - 0.5*cos(2.0*aT)) + idl*0.009*sin(aT*0.9) + fg*0.025*atk + qd*0.080*(0.5 - 0.5*cos(2.0*aT + 1.1)) + slm*(0.16*slu - 0.05) + fly*(-0.16*fbt))*ga;
+  float rol  = (wk*0.050*s1 + qd*0.038*sin(aT + 0.9) + fly*0.055*sin(aT*0.47))*ga;
+  float lea  = (wk*0.060 + fg*(0.11 + 0.24*atk) + sht*0.05 + qd*(0.10 + 0.17*sin(aT + 2.0)) + slm*(-0.16*slu) + fly*(0.10 + 0.13*fbt))*ga;
+  float wng  = fly*(0.60*fbt + 0.30)*ga;               // wing bones 9 (-x) / 10 (+x)
   float fwd  = (fg*0.17*atk + qd*0.05*sin(aT))*ga;
   float twi  = (fg*(-0.28*atk) + sht*(-0.34))*ga;
   vec3 aP = position;
@@ -4120,12 +4639,14 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     else if (aBone < 5.5) { aBM = rX(armA); aP = aPiv + aBM*(aP - aPiv); }
     else if (aBone < 6.5) { aBM = rX(armB); aP = aPiv + aBM*(aP - aPiv); }
     else if (aBone < 7.5) { aBM = rY(hdA*1.5)*rX(hdA); aP = aPiv + aBM*(aP - aPiv); }
-    else {
+    else if (aBone < 8.5) {
       float ww = aW;
       aP.x += sin(uT*2.7 + aPh + aP.y*3.4)*0.036*ww;
       aP.z += cos(uT*2.2 + aPh*1.7 + aP.y*2.8)*0.028*ww - (wk*0.070 + fg*0.02)*ww;
       aP.y -= 0.012*ww*wk;
     }
+    else if (aBone < 9.5) { aBM = rZ(-wng); aP = aPiv + aBM*(aP - aPiv); }
+    else                  { aBM = rZ( wng); aP = aPiv + aBM*(aP - aPiv); }
   }
   aP.z += fwd;
   vec3 aRP = vec3(0.0, uHip, 0.0);
@@ -4343,13 +4864,54 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               knee: false, gait: 1.62, jit: 0.09, aim: 1.05, glow: true, bar: 0.94 },
     ram:     { h: 2.60, hv: 2.34, siege: true, seg: tier === 'mobile' ? 7 : 9,
               gait: 0.52, jit: 0.03, aim: 1.60, bar: 2.30 },
+    // ══ SPEC5 §A: six more silhouettes, +6 draw calls ═══════════════════════════
+    // The roster is nineteen bodies now, so "different" is no longer enough — each of these
+    // has to be different from the SIXTEEN already on the road, not just from a grunt. Each
+    // owns a property nothing else in the game has: the only thing in the air (wyvern), the
+    // only thing wider than it is tall (gravemold), the only GREEN light (necromancer), the
+    // only horizontal head (wardedone), the only gold (cutpurse) and the only bare bone
+    // skeleton (skeleton). `gait` on the wyvern is its WING BEAT, not a walk cycle.
+    wyvern:  { h: 1.24, hv: 1.02, wyv: true, seg: tier === 'mobile' ? 6 : 8,
+              gait: 1.15, jit: 0.10, aim: 1.20, bar: 1.00 },
+    gravemold:{ h: 1.18, hv: 1.16, mold: true, seg: tier === 'mobile' ? 6 : 8,
+              gait: 1.15, jit: 0.15, aim: 1.00, bar: 1.10 },
+    necromancer: { h: 1.86, bulk: 0.92, hose: T.SHROUD, shin: T.SHROUD, mail: T.SHROUD, arm: T.SHROUD,
+              hand: T.BONE, pauld: T.SHROUD, skirt: T.SHROUD, tabard: -1, chest: -1,
+              face: T.BONE, skin: T.BONE, hair: T.SHROUD, helm: 'cowl', shield: 'none', weapon: 'nstaff',
+              knee: false, gait: 1.44, jit: 0.07, aim: 1.10, glow: true, glowT: T.RUNE, bar: 0.96,
+              armTint: 0.80, cape: true, capeT: T.SHROUD, seg: tier === 'mobile' ? 6 : 9 },
+    // legF/headDrop/shF are the same three dials that turn a tall man into an ogre; here
+    // they turn him into a WALL of quarried stone with no neck and a horizontal skull.
+    wardedone:{ h: 2.36, bulk: 1.52, legF: 0.88, hose: T.RUNE, shin: T.RUNE, mail: T.RUNE, arm: T.RUNE,
+              hand: T.IRON, pauld: T.RUNE, skirt: T.SHROUD, tabard: -1, chest: T.RUNE,
+              face: T.SHROUD, skin: T.RUNE, hair: T.RUNE, headS: 1.20, helm: 'slab',
+              shield: 'none', weapon: 'maul', knee: true, kneeT: T.RUNE,
+              gait: 0.86, jit: 0.04, aim: 1.45, greave: true, greaveT: T.RUNE,
+              spauld: true, spauldT: T.RUNE, shF: 1.24, headDrop: 0.14, bar: 1.54,
+              seg: tier === 'mobile' ? 7 : 10 },
+    cutpurse:{ h: 1.56, bulk: 0.80, hose: T.SHROUD, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN,
+              hand: T.SKIN, pauld: T.LEATH, skirt: -1, tabard: -1, chest: -1, face: T.FACE,
+              helm: 'hood', hoodT: T.SHROUD, shield: 'none', weapon: 'dagger', knee: false,
+              gait: 3.60, jit: 0.12, aim: 0.85, bracer: true, sack: true, cape: true,
+              capeT: T.SHROUD, bladeTint: 0.86, bar: 0.80 },
+    // The cheapest rig in the game, and it should look it: bone, a rag and a rusted blade.
+    skeleton:{ h: 1.66, bulk: 0.70, hose: T.BONE, shin: T.BONE, mail: T.BONE, arm: T.BONE,
+              hand: T.BONE, pauld: T.SHROUD, skirt: -1, tabard: -1, chest: -1, face: T.BONE,
+              skin: T.BONE, hair: T.BONE, helm: 'skull', shield: 'none', weapon: 'sword',
+              knee: false, gait: 1.96, jit: 0.13, aim: 0.90, bladeTint: 0.66, bar: 0.82,
+              seg: tier === 'mobile' ? 5 : 7 },
   };
   // Which builder each archetype is cut from. Everything human comes out of buildSoldier;
   // the hound, the wraith and the ram are the three that cannot.
-  const BUILDER = C => C.quad ? buildHound(C) : C.wraith ? buildWraith(C) : C.siege ? buildRam(C) : buildSoldier(C);
+  const BUILDER = C => C.quad ? buildHound(C) : C.wraith ? buildWraith(C) : C.siege ? buildRam(C)
+                     : C.wyv ? buildWyvern(C) : C.mold ? buildMold(C) : buildSoldier(C);
   // Archetypes whose material carries the emissive sheet (ember eyes, banked coals). Any
   // other unit pays nothing: the map is only bound where it is actually used.
-  const EMIT = { boss: 2.6, ashwraith: 2.9, warshaman: 2.2 };
+  const EMIT = { boss: 2.6, ashwraith: 2.9, warshaman: 2.2, necromancer: 3.4, wardedone: 0.32 };
+  // SPEC5 §A: the emissive COLOUR is per-archetype too. One glyph pattern is painted into
+  // the sheet (T.RUNE) and tinted green here, so the necromancer's hands, his staff stone
+  // and the warded one's whole carved body all burn the same colour without a second tile.
+  const EMITC = { necromancer: 0x62ff9e, wardedone: 0x62ff9e };
   const CAPS = Object.assign({ knight: KNIGHT_CAP }, ACAP);
   for (const key in CFG) {
     const C = CFG[key], built = BUILDER(C), geo = built.geo, cap = CAPS[key];
@@ -4363,7 +4925,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     const mat = patchAnim(new THREE.MeshStandardMaterial({
       map: albedo, roughnessMap: mrmap, metalnessMap: mrmap, roughness: 1, metalness: 1,
       vertexColors: true, envMapIntensity: 0.9,
-      emissive: EMIT[key] ? 0xffffff : 0x000000,
+      emissive: EMIT[key] ? (EMITC[key] || 0xffffff) : 0x000000,
       emissiveMap: EMIT[key] ? emmap : null,
       emissiveIntensity: EMIT[key] || 0,
     }), C.h * 0.50 * (C.legF || 1), 'sold_' + key, true);
@@ -4384,7 +4946,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // `hv` is the VISUAL height when the skeleton is not 6.5 heads (see legF) — the health
     // bar rides on it, so an ogre's bar sits on its skull instead of a metre above it.
     AM[key] = { mesh, anim, cap, n: 0, h: C.hv || C.h, gait: C.gait, jit: C.jit, key,
-                bar: C.bar || 0.92, quad: !!C.quad, ward, wardA };
+                bar: C.bar || 0.92, quad: !!C.quad, fly: !!C.wyv, ward, wardA };
     Armies.meshes.push(mesh);
   }
   Armies.enemyMesh = AM.grunt.mesh; Armies.knightMesh = AM.knight.mesh;
@@ -4438,18 +5000,40 @@ void main(){
   vWH *= dsc;
   mv.xy += position.xy * vWH;
   mv.y += vWH.y * 0.5;
+  // SPEC5 §A: the ward strip stacks on TOP of the health bar, and it has to do so in the
+  // same SCREEN units the bar was just sized in — a world-space offset large enough to
+  // clear the bar at overview zoom leaves a finger's gap at closeup, and one small enough
+  // at closeup overlaps it at range. Both quads share one depth scale, so a multiple of this
+  // quad's own height clears the other exactly, at every distance.
+  if (vK > 1.5) mv.y += vWH.y * 0.86;
   gl_Position = projectionMatrix * mv;
 }`,
       fragmentShader: `#include <common>
 varying vec2 vU; varying float vF; varying float vK; varying vec2 vWH;
 void main(){
   float e = min(min(vU.x, 1.0-vU.x)*vWH.x, min(vU.y, 1.0-vU.y)*vWH.y);
-  vec3 fillc = vK < 0.5 ? vec3(0.520,0.055,0.040) : vec3(0.075,0.220,0.520);
-  vec3 hi    = vK < 0.5 ? vec3(1.020,0.320,0.170) : vec3(0.360,0.660,1.060);
   vec3 c; float a;
-  if (e < 0.016) { c = vec3(0.020,0.017,0.014); a = 0.90; }
-  else if (vU.x < vF) { c = mix(fillc, hi, smoothstep(0.20,0.92,vU.y)); a = 1.0; }
-  else { c = vec3(0.045,0.037,0.030); a = 0.72; }
+  // SPEC5 §A ward runes: six discrete cells, not a continuous fill. A spent rune goes dark
+  // and STAYS in place, so the strip reads as "two of six left" rather than as a short bar.
+  if (vK > 1.5) {
+    float N = 6.0, xi = vU.x*N, id = floor(xi), cf = fract(xi);
+    // both edges as RISING smoothsteps: smoothstep() with edge0 > edge1 is undefined in
+    // GLSL and on this driver it returned zero everywhere, i.e. the whole strip discarded.
+    float gap = min(smoothstep(0.0,0.13,cf), 1.0 - smoothstep(0.87,1.0,cf));
+    if (gap < 0.30) discard;                       // the gutters between runes
+    float lit = step(id + 0.5, vF*N + 0.02);
+    float fl  = step(2.5, vK);
+    vec3 on = mix(vec3(0.10,1.55,0.52), vec3(0.95,1.60,1.05), fl*0.80);
+    if (lit > 0.5) { c = on * (0.80 + 0.60*smoothstep(0.10,0.90,vU.y)) * (1.0 + fl*0.75); a = 1.0; }
+    else           { c = vec3(0.085,0.115,0.092) * (0.70 + 0.40*smoothstep(0.1,0.9,vU.y)); a = 0.88; }
+    if (min(vU.y, 1.0-vU.y)*vWH.y < 0.013) { c = vec3(0.010,0.022,0.014); a = 0.94; }
+  } else {
+    vec3 fillc = vK < 0.5 ? vec3(0.520,0.055,0.040) : vec3(0.075,0.220,0.520);
+    vec3 hi    = vK < 0.5 ? vec3(1.020,0.320,0.170) : vec3(0.360,0.660,1.060);
+    if (e < 0.016) { c = vec3(0.020,0.017,0.014); a = 0.90; }
+    else if (vU.x < vF) { c = mix(fillc, hi, smoothstep(0.20,0.92,vU.y)); a = 1.0; }
+    else { c = vec3(0.045,0.037,0.030); a = 0.72; }
+  }
   gl_FragColor = vec4(c, a);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -4594,17 +5178,24 @@ Armies.syncVisuals = (vtNow) => {
   // ARMIES-FIX2 §1/§2. One flat quad per body, rotated onto the sun's ground bearing and
   // scaled to the true shadow length. `fade` carries the death dissolve so a falling body
   // does not leave its shadow standing on the road.
-  const pushShadow = (x, y, z, h, w, fade) => {
+  // `off` displaces the decal further along the sun bearing: a body standing on the ground
+  // has its shadow at its own feet, but a FLYER's is thrown `alt * SHAD_LEN` down-sun of it
+  // (SPEC5 §A). That displacement is the only cue in the frame that says how high the flock
+  // actually is, and it is what makes a wyvern read as over the road rather than on it.
+  const pushShadow = (x, y, z, h, w, fade, off) => {
     if (sn >= SHAD_CAP || fade <= 0.02) return;
-    const L = h * SHAD_LEN + w * 0.55;
+    const L = h * SHAD_LEN + w * 0.55, D = L * 0.30 + (off || 0);
     _q.setFromAxisAngle(_YAX, SHAD_AZ);
-    _m4.compose(_v3s.set(x + Math.sin(SHAD_AZ) * L * 0.30, y + 0.045, z + Math.cos(SHAD_AZ) * L * 0.30),
+    _m4.compose(_v3s.set(x + Math.sin(SHAD_AZ) * D, y + 0.045, z + Math.cos(SHAD_AZ) * D),
                 _q, _sc.set(w * 2.05 * fade, 1, L * 1.06 * fade));
     shadDecal.setMatrixAt(sn, _m4); sn++;
   };
-  const pushBar = (x, y, z, w, frac, kind) => {
+  // `kind`: 0 enemy hp · 1 knight hp · 2 ward runes · 3 ward runes, flashing (SPEC5 §A).
+  // `hf` fattens the quad — the rune strip is taller than a health bar because six discrete
+  // pips have to survive being counted at gameplay zoom, not just read as a length.
+  const pushBar = (x, y, z, w, frac, kind, hf) => {
     if (bn >= BAR_CAP) return;
-    _m4.makeScale(w, w * 0.132, 1); _m4.setPosition(x, y, z);
+    _m4.makeScale(w, w * 0.132 * (hf || 1), 1); _m4.setPosition(x, y, z);
     barMesh.setMatrixAt(bn, _m4);
     barArr[bn * 2] = clamp(frac, 0, 1); barArr[bn * 2 + 1] = kind; bn++;
   };
@@ -4624,8 +5215,16 @@ Armies.syncVisuals = (vtNow) => {
     }
     const d = lerp(e._pd, e._cd, sub);
     G.pathPos(d, _v3, vLane(e.lane, e.id, e.blockedBy >= 0 || e.shooting), e.pathId);
+    // SPEC5 §A — a flyer rides `alt` above the road it is following. The shadow keeps the
+    // GROUND height (a wyvern's shadow belongs on the meadow, not in the air with it), and
+    // everything else — bar, model, ward shell — comes up with the body.
+    const gy0 = _v3.y;
+    if (e.def.alt) _v3.y += e.def.alt;
     const tn = G.pathTan(d, e.pathId);
-    let face = Math.atan2(tn.x, tn.z), mode = A.quad ? 4 : 0;
+    // mode 6 is the wing beat (SPEC5 §A). It is chosen from the ART, not from `def.fly`,
+    // because the mode has to match the RIG that is about to be animated — a flyer that
+    // ever borrowed a walking mesh would beat wings it does not have.
+    let face = Math.atan2(tn.x, tn.z), mode = A.quad ? 4 : A.fly ? 6 : 0;
     if (e.alive && e.blockedBy >= 0) {
       const kn = G.knights[e.blockedBy];
       if (kn && kn.alive) { mode = 1; face = Math.atan2(kn.x - _v3.x, kn.z - _v3.z); }
@@ -4637,7 +5236,9 @@ Armies.syncVisuals = (vtNow) => {
     let stompPh = -1;
     if (e.alive && e.stompFX >= 0 && at - e.stompFX < 0.62) { mode = 5; stompPh = e.stompFX; }
     const h1 = H1(e.id * 3 + 1), h2 = H1(e.id * 7 + 23);
-    const s = (1 + (h1 - 0.5) * A.jit) * (e.def.mscale || 1);
+    // `e.msc` is the PER-UNIT model scale a champion (SPEC5 §B4) carries on top of its
+    // species' own — the def's mscale is a silhouette constant, a champion is one body.
+    const s = (1 + (h1 - 0.5) * A.jit) * (e.msc || e.def.mscale || 1);
     _q.setFromAxisAngle(_YAX, face);
     _m4.compose(_v3, _q, _sc.setScalar(s));
     A.mesh.setMatrixAt(A.n, _m4);
@@ -4694,8 +5295,20 @@ Armies.syncVisuals = (vtNow) => {
     // thing walks on, so the player can see what he is about to have to kill.
     if (e.alive && (e.hp < e.maxhp || e.def.elite))
       pushBar(_v3.x, _v3.y + A.h * s + 0.34, _v3.z, A.bar * s, e.hp / e.maxhp, 0);
-    pushShadow(_v3.x, _v3.y, _v3.z, A.h * s, A.bar * s * 0.50,
-               dd < 0 ? 1 : 1 - clamp((dd - 0.30) / 0.55, 0, 1));
+    // SPEC5 §A HIT-WARD. The ward is a COUNT, not a pool, so it cannot be a second bar —
+    // it is six discrete runes over the health bar, and the player has to be able to watch
+    // them go out one blow at a time. `e.wardFX` is the sim tick a rune was spent OR the
+    // ward re-lit; both are worth a flash, and which one it was is obvious from whether the
+    // strip just got shorter or just filled up.
+    if (e.alive && e.def.hitward) {
+      const HW = e.def.hitward, fl = (tk - e.wardFX) >= 0 && (tk - e.wardFX) < 9 ? 1 : 0;
+      pushBar(_v3.x, _v3.y + A.h * s + 0.34, _v3.z, A.bar * s,
+              (e.wardN || 0) / HW.hits, 2 + fl, 1.45);
+    }
+    const fad = dd < 0 ? 1 : 1 - clamp((dd - 0.30) / 0.55, 0, 1);
+    if (e.def.alt)                                 // a wingspan-wide blob, thrown down-sun
+      pushShadow(_v3.x, gy0, _v3.z, 0.34, A.bar * s * 1.30, fad * 0.66, e.def.alt * SHAD_LEN);
+    else pushShadow(_v3.x, gy0, _v3.z, A.h * s, A.bar * s * 0.50, fad);
   }
   const KA = AM.knight;
   for (const kn of G.knights) {
@@ -4777,16 +5390,21 @@ const TOWER_DEFS = {
   // Balance pass r2: archer one-shots early grunts (16 vs 12hp*hpMul through W4) so single-
   // target play tracks the horde-scale waves; ballista/storm hunt the TOUGHEST target in
   // range (mode 'strong') so bosses can no longer starve behind their own chaff.
-  archer:   { name: 'Archer',   cost: 45,  range: 10, cd: 0.7,  dmg: 16,  color: 0x7a5a34, element: 'pierce', mode: 'first' },
-  ballista: { name: 'Ballista', cost: 85,  range: 14, cd: 2.3,  dmg: 38,  color: 0x777f88, pierce: 4, element: 'pierce', mode: 'strong' },
-  catapult: { name: 'Catapult', cost: 110, range: 12, cd: 3.4,  dmg: 26,  color: 0x5f5648, splash: 4.5, minRange: 4.5, element: 'crush', mode: 'first' },
-  barracks: { name: 'Barracks', cost: 70,  range: 8,  cd: 0,    dmg: 0,   color: 0x3a5fa0, knights: 3, element: 'crush' },
+  // SPEC5 §A — `air` is the one new column: can this weapon reach something at 2.6 units of
+  // altitude at all. It is a HARD gate in fireTower's target filter (and in every ground
+  // blast a tower puts down), not a damage modifier — a boulder cannot be lobbed at a wyvern
+  // and burning ground does not reach it, which is exactly the hole a flock is there to find.
+  archer:   { name: 'Archer',   cost: 45,  range: 10, cd: 0.7,  dmg: 16,  color: 0x7a5a34, element: 'pierce', mode: 'first', air: true },
+  ballista: { name: 'Ballista', cost: 85,  range: 14, cd: 2.3,  dmg: 38,  color: 0x777f88, pierce: 4, element: 'pierce', mode: 'strong', air: true },
+  catapult: { name: 'Catapult', cost: 110, range: 12, cd: 3.4,  dmg: 26,  color: 0x5f5648, splash: 4.5, minRange: 4.5, element: 'crush', mode: 'first', air: false },
+  barracks: { name: 'Barracks', cost: 70,  range: 8,  cd: 0,    dmg: 0,   color: 0x3a5fa0, knights: 3, element: 'crush', air: false },
   // r9: user playtest — storm+banner carried a zero-loss campaign. Crowd dps −31%, and the
   // tank spine (brute/ogre/bosses) now grounds out chains so storm stays the swarm answer,
   // not the everything answer.
-  storm:    { name: 'Storm',    cost: 100, range: 11, cd: 1.75, dmg: 23,  color: 0x6f86b6, element: 'storm', mode: 'strong', chain: 3, hop: 6.5, fall: 0.40 },
-  pyre:     { name: 'Pyre',     cost: 95,  range: 8,  cd: 2.8,  dmg: 0,   color: 0x6a4a34, element: 'fire', mode: 'close',
+  storm:    { name: 'Storm',    cost: 100, range: 11, cd: 1.75, dmg: 23,  color: 0x6f86b6, element: 'storm', mode: 'strong', chain: 3, hop: 6.5, fall: 0.40, air: true },
+  pyre:     { name: 'Pyre',     cost: 95,  range: 8,  cd: 2.8,  dmg: 0,   color: 0x6a4a34, element: 'fire', mode: 'close', air: false,
               patch: { dps: 14, dur: 4, rad: 3, max: 2 } },
+  // the banner damages nothing, so `air` is not a question it is ever asked (n/a, omitted).
   banner:   { name: 'Warbanner', cost: 80, range: 9,  cd: 0,    dmg: 0,   color: 0x2e5fa3, element: 'support',
               aura: [0.10, 0.16, 0.22] }, // r9: rate aura compounds hardest on high-per-shot AoE — trimmed
 };
@@ -6751,6 +7369,47 @@ const ENEMY_DEFS = {
                 art: 'boss', art_kit: 'emberlord', tint: [1.50, 0.66, 0.34], mscale: 1.08 },
   cinderqueen:{ hp: 1500, speed: 0.95, bounty: 190, dps: 26, leak: 14, scale: 2.3, resist: { pierce: 0.18, storm: 0.3 }, unblockable: true,
                 art: 'boss', art_kit: 'cinderqueen', tint: [1.22, 0.52, 0.86], mscale: 1.06 },
+  // ══ SPEC5 §A — five newcomers, each one the answer to a strategy the roster of 16 had
+  // already solved. Every mechanic below rides an EXISTING path (dealDamage · killEnemy ·
+  // the leak branch · the knight claim), so nothing here is a second simulation.
+  //
+  // ART. Six of the seven bodies below now own a real mesh in SECTION: ARMIES and carry no
+  // `art` at all (`AM[e.def.art || e.type]` falls through to the type). The ONE exception is
+  // the moldling, which deliberately borrows its parent's mesh at 0.60 scale: a split has to
+  // read as "that thing, but smaller", and two unrelated silhouettes would hide the mechanic
+  // instead of teaching it. Every placeholder tint is gone — a tint is a recolour, and a
+  // recolour is what the boss variants had to stop being.
+  //
+  // FLIGHT. `fly` is a hard exemption, not a modifier: a flyer is never claimed by a knight
+  // or a militiaman, never triggers or is bitten by a trap, never burns on a fire patch, and
+  // is only shot at by a tower whose def carries `air`. `alt` is the height it flies at —
+  // read by the aim solver (projectiles lead the same y the model is drawn at) and by ARMIES.
+  wyvern:  { hp: 45,  speed: 2.6,  bounty: 6,   dps: 4,  leak: 1,  scale: 1.20, fly: true, alt: 2.6,
+             resist: { fire: 0.3 } },
+  // SPLIT. Killing it is only half the job — `split` names what it leaves behind and how
+  // many, `once` is implicit (a moldling has no split of its own, and killEnemy tags every
+  // child `isSplit`). The children's bounty is authored on their own def at half the
+  // parent's, so the table's "5 + 2×2" is exactly what the purse sees.
+  gravemold:{ hp: 90,  speed: 1.5,  bounty: 5,   dps: 4,  leak: 1,  scale: 1.15,
+             split: { n: 2, to: 'moldling' } },
+  moldling:{ hp: 25,  speed: 2.2,  bounty: 2,   dps: 2,  leak: 1,  scale: 0.80,
+             art: 'gravemold', mscale: 0.60 },
+  // RAISE. Every 6 s it animates up to `n` corpses out of the wave's recent-death ring and
+  // never holds more than `cap` at once, so a necromancer is a THROUGHPUT problem: ignore it
+  // and the road refills behind the front faster than the battery empties it.
+  necromancer:{hp: 55, speed: 1.6,  bounty: 12,  dps: 3,  leak: 1,  scale: 1.05,
+             raise: { cd: 6, n: 3, cap: 12, to: 'skeleton' } },
+  skeleton:{ hp: 15,  speed: 1.9,  bounty: 1,   dps: 3,  leak: 1,  scale: 0.88 },
+  // HIT-WARD. `hits` blows are absorbed whole — a 16-damage arrow and a 38-damage bolt cost
+  // the ward exactly the same thing, which is what makes archer spam the wrong answer — and
+  // the ward comes back `recover` seconds after the last real blow lands. `min` is the
+  // threshold that separates a BLOW from the weather (see dealDamage): burning ground and
+  // caltrops tick at a third of a point and must not be able to strip six runes in a frame.
+  wardedone:{ hp: 240, speed: 1.2,  bounty: 16,  dps: 8,  leak: 2,  scale: 1.30, elite: true,
+             hitward: { hits: 6, recover: 4, min: 2 }, resist: {} },
+  // STEAL. The only unit in the game whose leak costs GOLD as well as lives (floored at 0),
+  // which is what makes a fast pack worth answering rather than absorbing.
+  cutpurse:{ hp: 22,  speed: 3.8,  bounty: 8,   dps: 3,  leak: 1,  scale: 0.86, steal: 35 },
 };
 // The four schools, in the order every read-out lists them.
 const SCHOOLS = ['pierce', 'crush', 'fire', 'storm'];
@@ -6763,21 +7422,44 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
   // defense exists to fight them.
   [['grunt', 30, 0.75, 0]],
   [['grunt', 50, 0.55, 0]],
-  [['grunt', 85, 0.40, 0], ['runner', 40, 0.30, 12]],
-  [['grunt', 105, 0.32, 0], ['runner', 55, 0.24, 8]],
+  // SPEC5 §B1 retrofit. The 5th field is this map's FORMATION (the Vale has one gate, so it
+  // never needs a gate index). Head counts, intervals and delays are UNTOUCHED everywhere a
+  // formation is added — a formation changes how a group arrives, never how much of it there
+  // is, so every wave's effective hit points are conserved exactly rather than to ±8%.
+  // Runner floods swarm, hound packs stampede, pavise walls advance as a phalanx.
+  [['grunt', 85, 0.40, 0], ['runner', 40, 0.30, 12, 'swarm']],
+  [['grunt', 105, 0.32, 0], ['runner', 55, 0.24, 8, 'swarm']],
   // r4: the Vale's back half now fields the full bestiary — shieldbearer walls bleed a
   // pure-physical battery, hounds race slow lines, marauders harry the knights, and two
   // ogres headline wave 9. Without them any phys deathball swept the map untouched.
-  [['brute', 8, 1.40, 0], ['grunt', 85, 0.32, 2], ['hound', 14, 0.25, 10]],
-  [['runner', 100, 0.18, 0], ['shield', 8, 1.30, 4], ['grunt', 70, 0.30, 8]],
+  [['brute', 8, 1.40, 0], ['grunt', 85, 0.32, 2], ['hound', 14, 0.25, 10, 'stampede']],
+  // SPEC5 §A/§C — the Vale's FIXED wyvern slot, and the reason the `airless1` matrix row can
+  // exist at all. It is a like-for-like swap out of the runner flood beside it and not an
+  // addition: 45 runners at 9 hit points is 405, nine wyverns at 45 is 405 — the wave weighs
+  // exactly what it weighed in r9, and the runners left keep the same 18-second span
+  // (55 × 0.33). What changed is that 405 of this wave's hit points are now UNREACHABLE to a
+  // catapult-and-pyre battery, which is precisely the question a flock is for.
+  [['runner', 55, 0.33, 0, 'swarm'], ['wyvern', 9, 1.10, 4], ['shield', 8, 1.30, 4, 'phalanx'],
+   ['grunt', 70, 0.30, 8]],
   // SPEC3 §B fixed mini-boss slots. Every one of these is a SWAP-IN, not an addition: the
   // head count it costs is taken straight back out of the chaff group beside it, so the
   // Vale's wave sizes stay within a few units of the r6 balance pass. W7 teaches the
   // priority kill (shamans healing the brute line), W8 the ironclad wall, W9 the ram.
-  [['brute', 16, 0.85, 0], ['marauder', 10, 0.90, 5], ['warshaman', 4, 2.60, 8], ['grunt', 96, 0.27, 3]],
-  [['runner', 100, 0.18, 0], ['shield', 16, 0.85, 6], ['brute', 8, 1.00, 10], ['ironclad', 4, 2.40, 12], ['grunt', 85, 0.27, 2]],
-  [['grunt', 132, 0.21, 0], ['ogre', 3, 4.50, 6], ['ram', 1, 0, 14], ['brute', 16, 0.85, 12], ['runner', 60, 0.20, 16]],
-  [['boss', 1, 0, 10], ['grunt', 150, 0.22, 0], ['shield', 20, 0.80, 5], ['brute', 16, 0.85, 3]],
+  // SPEC5 §C — the Vale's SECOND fixed newcomer (the W6 flock is the first). A cutpurse raid
+  // paid for out of the levy beside it: 8 × 22 = 176 against the 14 grunts × 12 = 168 it
+  // costs, +8 hit points on a 3992-point wave (+0.2%). The grunt interval opens 0.27 → 0.31
+  // so the group still occupies the 26 seconds it occupied in r9 — a fixed appearance may
+  // change WHAT arrives, never how long the road is busy.
+  // W7 and not W5 (the spec's floor) on purpose: a thief's leak costs GOLD, and after r10 the
+  // Vale's two thinnest bot rows (magic1 14/32, support1 11/32) cannot absorb a purse raid
+  // before a real battery stands. `stampede` makes it one tight burst — a raid, not a file.
+  [['brute', 16, 0.85, 0], ['marauder', 10, 0.90, 5], ['warshaman', 4, 2.60, 8], ['grunt', 82, 0.31, 3],
+   ['cutpurse', 8, 0.55, 11, 'stampede']],
+  // W8 is the Vale's LONG NIGHT (§B2): its head count is unchanged, but when the field
+  // clears the road goes quiet for six seconds and a second host at 60% follows it out.
+  [['runner', 100, 0.18, 0, 'swarm'], ['shield', 16, 0.85, 6, 'phalanx'], ['brute', 8, 1.00, 10], ['ironclad', 4, 2.40, 12], ['grunt', 85, 0.27, 2]],
+  [['grunt', 132, 0.21, 0], ['ogre', 3, 4.50, 6], ['ram', 1, 0, 14], ['brute', 16, 0.85, 12], ['runner', 60, 0.20, 16, 'swarm']],
+  [['boss', 1, 0, 10], ['grunt', 150, 0.22, 0], ['shield', 20, 0.80, 5, 'phalanx'], ['brute', 16, 0.85, 3]],
 ] ,
   // ══ 2. FROSTFELL PASS — 12 waves. The map's own idea is TIMING: two gates means two
   // arrival clocks, and a group tagged with a gate index (the 5th field) comes out of that
@@ -6790,24 +7472,47 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     // battery), so Frostfell runs ~15% lighter than the Vale at the same wave number.
     [['grunt', 28, 0.80, 0, 0]],
     [['grunt', 46, 0.55, 0, 0], ['hound', 8, 0.40, 12, 1]],
-    [['hound', 20, 0.26, 0, 1], ['grunt', 56, 0.44, 3, 0]],
-    [['shield', 8, 1.20, 0, 0], ['grunt', 64, 0.40, 2]],
+    // SPEC5 §B1 — on a two-gate map the formation is the SIXTH field, behind the gate index.
+    [['hound', 20, 0.26, 0, 1, 'stampede'], ['grunt', 56, 0.44, 3, 0]],
+    [['shield', 8, 1.20, 0, 0, 'phalanx'], ['grunt', 64, 0.40, 2]],
     // SPEC3 §B: the frost revenants are Frostfell's own dead and walk their home map from
     // W5 — an arrow battery that swept the first four waves meets a wall of pierce .6 here.
     // W6 the shamans, W7 the ram, W9 the ironclad column: two mini-boss species mid-run,
     // every one of them paid for out of the group it marches beside.
-    [['runner', 59, 0.25, 0], ['frostrevenant', 5, 2.20, 5], ['hound', 20, 0.22, 12, 1]],
+    [['runner', 59, 0.25, 0, 'swarm'], ['frostrevenant', 5, 2.20, 5], ['hound', 20, 0.22, 12, 1, 'stampede']],
     // NO fixed shaman here. Three chanters behind a fourteen-strong pavise wall put nine
     // lives on the floor at wave 6 in the bot matrix — a healer is a MULTIPLIER, and it
     // multiplies hardest against exactly the unit Frostfell already leans on. The shaman
     // still reaches this map through the wave-10 swap slot, where the purse can answer him.
-    [['shield', 14, 0.95, 0, 0], ['grunt', 70, 0.36, 2], ['marauder', 8, 1.05, 9, 1]],
-    [['hound', 26, 0.17, 0, 0], ['hound', 18, 0.17, 5, 1], ['ram', 1, 0, 9, 0], ['runner', 54, 0.21, 8]],
-    [['brute', 11, 1.05, 0], ['shield', 20, 0.78, 4, 1], ['grunt', 90, 0.29, 2]],
-    [['marauder', 18, 0.60, 0], ['ironclad', 3, 3.20, 6, 0], ['hound', 46, 0.15, 8, 0], ['grunt', 76, 0.31, 3]],
-    [['ogre', 3, 3.00, 0, 0], ['shield', 30, 0.60, 3, 1], ['runner', 96, 0.17, 6]],
-    [['brute', 18, 0.80, 0], ['hound', 74, 0.11, 5, 1], ['grunt', 112, 0.25, 2], ['marauder', 19, 0.62, 13]],
-    [['matriarch', 1, 0, 13, 0], ['shield', 32, 0.52, 0, 1], ['hound', 54, 0.13, 6, 0],
+    [['shield', 14, 0.95, 0, 0, 'phalanx'], ['grunt', 70, 0.36, 2], ['marauder', 8, 1.05, 9, 1]],
+    // SPEC5 §C — Frostfell's FIXED FLOCK (fixed appearance 1 of 3). Six wyverns out of the
+    // NORTH gate alone, bought out of the runner flood beside them at exact parity: 30 runners
+    // × 9 = 270, six wyverns × 45 = 270. The remaining runners' interval opens 0.21 → 0.47 so
+    // that group still spans its r9 eleven seconds. Every map now fields a flock somewhere at
+    // W6+, which is what makes the air gate a campaign rule rather than the Vale's local joke.
+    // Tagging the flock to ONE gate is also what gives the §B3 herald something to say here.
+    [['hound', 26, 0.17, 0, 0, 'stampede'], ['hound', 18, 0.17, 5, 1, 'stampede'], ['ram', 1, 0, 9, 0],
+     ['runner', 24, 0.47, 8, 'swarm'], ['wyvern', 6, 1.30, 6, 1]],
+    // Fixed appearance 2 of 3 — the rune-graven slab beside a pavise wall, which is the one
+    // place on this road where "sustained focus" and "a wall of shields" are the same problem.
+    // Two warded ones = 480 raw, paid with 6 pavises (330) and 12 levy (144) = 474: +6 hit
+    // points on a 3830-point wave. Both surviving groups keep their r9 span (14 × 1.11 = 15.5 s,
+    // 78 × 0.335 = 26.1 s). Raw-hp accounting, deliberately: it is the same arithmetic the
+    // endless templates already use for this species, and the ward is priced as ARRIVAL cost.
+    [['brute', 11, 1.05, 0], ['shield', 14, 1.11, 4, 1, 'phalanx'], ['grunt', 78, 0.335, 2],
+     ['wardedone', 2, 5.00, 7, 0]],
+    [['marauder', 18, 0.60, 0], ['ironclad', 3, 3.20, 6, 0], ['hound', 46, 0.15, 8, 0, 'stampede'], ['grunt', 76, 0.31, 3]],
+    // W10 is Frostfell's LONG NIGHT (§B2) — twin gates, and then twin gates again.
+    [['ogre', 3, 3.00, 0, 0], ['shield', 30, 0.60, 3, 1, 'phalanx'], ['runner', 96, 0.17, 6, 'swarm']],
+    // Fixed appearance 3 of 3 — two chanters walking behind the biggest levy column on the
+    // road (112 grunts is the deepest corpse supply in the campaign, and a necromancer is only
+    // as dangerous as what has already died in front of him). Priced the way the endless
+    // templates price this species: it is UNDER-paid in raw hit points on purpose — two brutes
+    // (300) come out for 110 of chanter, and the missing 190 is what he raises. Net −3.8% raw
+    // on a 5056-point wave; the brute interval opens 0.80 → 0.90 to hold the group's 14.4 s.
+    [['brute', 16, 0.90, 0], ['hound', 74, 0.11, 5, 1, 'stampede'], ['grunt', 112, 0.25, 2],
+     ['marauder', 19, 0.62, 13], ['necromancer', 2, 3.40, 8, 0]],
+    [['matriarch', 1, 0, 13, 0], ['shield', 32, 0.52, 0, 1, 'phalanx'], ['hound', 54, 0.13, 6, 0, 'stampede'],
      ['grunt', 102, 0.25, 2], ['ogre', 2, 4.00, 20, 1]],
   ],
   // ══ 3. EMBER WASTES — 14 waves. Marauders and ogres are the featured pressure: the
@@ -6819,23 +7524,43 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     [['grunt', 30, 0.75, 0]],
     [['grunt', 52, 0.55, 0]],
     [['marauder', 6, 1.20, 0], ['grunt', 62, 0.44, 3]],
-    [['runner', 62, 0.26, 0], ['grunt', 54, 0.40, 5]],
-    [['marauder', 14, 0.75, 0], ['shield', 8, 1.30, 7], ['grunt', 64, 0.38, 2]],
+    [['runner', 62, 0.26, 0, 'swarm'], ['grunt', 54, 0.40, 5]],
+    [['marauder', 14, 0.75, 0], ['shield', 8, 1.30, 7, 'phalanx'], ['grunt', 64, 0.38, 2]],
     // SPEC3 §B: ash wraiths are the wastes' own — a pyre wall, the obvious answer to this
     // map, does almost nothing to them (fire .85), which is the lesson W6 exists to teach.
     // W8 fields the ironclads, W10 the ram. Head counts unchanged to within 3%.
-    [['ogre', 2, 4.00, 0], ['grunt', 80, 0.35, 2], ['ashwraith', 12, 0.55, 8], ['runner', 36, 0.24, 11]],
-    [['marauder', 22, 0.55, 0], ['hound', 32, 0.19, 9], ['grunt', 72, 0.33, 3]],
-    [['brute', 8, 1.00, 0], ['ironclad', 4, 2.40, 3], ['shield', 15, 0.90, 4], ['grunt', 82, 0.30, 2]],
-    [['ogre', 4, 3.20, 0], ['marauder', 22, 0.58, 5], ['runner', 76, 0.20, 9]],
-    [['hound', 58, 0.13, 0], ['marauder', 25, 0.52, 7], ['ram', 1, 0, 12], ['grunt', 86, 0.28, 3]],
-    [['brute', 15, 0.88, 0], ['shield', 20, 0.76, 5], ['marauder', 18, 0.58, 11], ['grunt', 80, 0.30, 2]],
-    [['ogre', 4, 3.20, 0], ['runner', 86, 0.19, 6], ['hound', 46, 0.15, 11], ['grunt', 80, 0.30, 2]],
-    [['marauder', 30, 0.48, 0], ['brute', 16, 0.85, 6], ['shield', 23, 0.70, 11], ['grunt', 94, 0.28, 2]],
+    // SPEC5 §C — the Ember Wastes' FIXED FLOCK (fixed appearance 1 of 3), and the third map
+    // to field one at W6+. It takes the runner flood's whole slot rather than a slice of it:
+    // 36 runners × 9 = 324 against 8 wyverns × 45 = 360, +36 on a 3724-point wave (+1.0%).
+    // The wastes lose a swarm here and keep three (W4, W9, W12), so the formation texture of
+    // the map is unchanged — what changes is that its pyre-forward doctrine now has to answer
+    // something a pyre cannot reach, one wave after the ash wraiths taught it that fire is not
+    // an answer either.
+    [['ogre', 2, 4.00, 0], ['grunt', 80, 0.35, 2], ['ashwraith', 12, 0.55, 8], ['wyvern', 8, 1.10, 11]],
+    [['marauder', 22, 0.55, 0], ['hound', 32, 0.19, 9, 'stampede'], ['grunt', 72, 0.33, 3]],
+    [['brute', 8, 1.00, 0], ['ironclad', 4, 2.40, 3], ['shield', 15, 0.90, 4, 'phalanx'], ['grunt', 82, 0.30, 2]],
+    // Fixed appearance 2 of 3 — molds in the ash. Priced on EFFECTIVE hit points, which for a
+    // splitter is the parent plus everything it leaves behind: 3 × (90 + 2 × 25) = 420 against
+    // the 46 runners × 9 = 414 they cost, +6 on a 4696-point wave. (This is the same 140-a-mold
+    // arithmetic the endless templates use — a splitter priced on its 90 raw would be a free
+    // doubling of the wave.) The remaining runners open 0.20 → 0.51 to hold their 15 s span.
+    [['ogre', 4, 3.20, 0], ['marauder', 22, 0.58, 5], ['runner', 30, 0.51, 9, 'swarm'],
+     ['gravemold', 3, 1.70, 7]],
+    [['hound', 58, 0.13, 0, 'stampede'], ['marauder', 25, 0.52, 7], ['ram', 1, 0, 12], ['grunt', 86, 0.28, 3]],
+    // Fixed appearance 3 of 3 — a cutpurse raid, which on the marauder map is the unit the
+    // road was always going to grow: 10 × 22 = 220 against 18 levy × 12 = 216 (+4 on a
+    // 4778-point wave), the levy interval opening 0.30 → 0.39 to hold its 24 s. The wastes are
+    // the map with the longest purse (14 waves, muster fees to 680), so a leak that takes GOLD
+    // as well as a life is worth the most here and lands where a player has something to lose.
+    [['brute', 15, 0.88, 0], ['shield', 20, 0.76, 5, 'phalanx'], ['marauder', 18, 0.58, 11],
+     ['grunt', 62, 0.39, 2], ['cutpurse', 10, 0.50, 9, 'stampede']],
+    // W12 is the Ember Wastes' LONG NIGHT (§B2), two waves before the twins.
+    [['ogre', 4, 3.20, 0], ['runner', 86, 0.19, 6, 'swarm'], ['hound', 46, 0.15, 11, 'stampede'], ['grunt', 80, 0.30, 2]],
+    [['marauder', 30, 0.48, 0], ['brute', 16, 0.85, 6], ['shield', 23, 0.70, 11, 'phalanx'], ['grunt', 94, 0.28, 2]],
     // The twins duel you IN SEQUENCE (10s / 34s): simultaneous arrival made both leak —
     // tough-preferring towers split fire and neither died. Staggered, each is a real duel.
     [['emberlord', 1, 0, 10], ['cinderqueen', 1, 0, 34], ['ogre', 3, 4.20, 4],
-     ['marauder', 22, 0.54, 0], ['shield', 16, 0.90, 9], ['grunt', 92, 0.28, 2]],
+     ['marauder', 22, 0.54, 0], ['shield', 16, 0.90, 9, 'phalanx'], ['grunt', 92, 0.28, 2]],
   ],
 };
 // The wave list belongs to the ACTIVE map (CORE's MAPS table owns everything else about
@@ -6862,13 +7587,22 @@ G.FINALE_W = FINALE_W;
 // victory into an anticlimax. Every template lands within a few units of the Vale's own
 // W8/W9 head count — the difficulty past that comes from the hp ramp, not from head counts
 // that would eventually walk over the instance budget.
+// SPEC5: the generator inherits BOTH new systems for free, because it is read through
+// waveDefs() like everything else — formations because the templates carry the 5th-field
+// form, champions because promoteChampion() runs on the built queue and every endless wave
+// is past 7. The five newcomers enter here as like-for-like hit-point swaps out of the
+// group beside them (endless sits past the balance matrix's reach, so this is the one place
+// the whole roster can be fielded without moving a single r9 row):
+//   ·1 6 wyverns for 28 runners (270 ≈ 252)   ·2 2 warded for 8 pavises (480 ≈ 440)
+//   ·3 6 gravemolds for 6 brutes (840 ≈ 900)  ·4 9 cutpurses for 8 marauders (198 ≈ 208)
+//   ·5 2 necromancers for 3 revenants (110 raw, and the rest paid in what they raise)
 const ENDLESS_TPL = [
-  [['grunt', 150, 0.22, 0], ['runner', 70, 0.19, 8]],
-  [['runner', 118, 0.17, 0], ['hound', 54, 0.14, 6], ['grunt', 90, 0.26, 3]],
-  [['shield', 26, 0.70, 0], ['grunt', 116, 0.25, 2], ['marauder', 18, 0.62, 9]],
-  [['brute', 20, 0.80, 0], ['grunt', 110, 0.26, 3], ['hound', 34, 0.17, 10], ['shield', 10, 1.10, 14]],
-  [['marauder', 28, 0.48, 0], ['runner', 96, 0.18, 5], ['shield', 16, 0.90, 10], ['grunt', 60, 0.32, 14]],
-  [['ashwraith', 20, 0.50, 0], ['frostrevenant', 10, 1.50, 6], ['grunt', 100, 0.26, 2], ['runner', 40, 0.22, 12]],
+  [['grunt', 150, 0.22, 0], ['runner', 70, 0.19, 8, 'swarm']],
+  [['runner', 90, 0.22, 0, 'swarm'], ['wyvern', 6, 1.40, 5], ['hound', 54, 0.14, 6, 'stampede'], ['grunt', 90, 0.26, 3]],
+  [['shield', 18, 1.00, 0, 'phalanx'], ['wardedone', 2, 4.00, 6], ['grunt', 116, 0.25, 2], ['marauder', 18, 0.62, 9]],
+  [['brute', 14, 1.15, 0], ['gravemold', 6, 1.60, 4], ['grunt', 110, 0.26, 3], ['hound', 34, 0.17, 10, 'stampede'], ['shield', 10, 1.10, 14, 'phalanx']],
+  [['marauder', 20, 0.67, 0], ['cutpurse', 9, 0.80, 6], ['runner', 96, 0.18, 5, 'swarm'], ['shield', 16, 0.90, 10, 'phalanx'], ['grunt', 60, 0.32, 14]],
+  [['ashwraith', 20, 0.50, 0], ['frostrevenant', 7, 2.15, 6], ['necromancer', 2, 3.00, 9], ['grunt', 100, 0.26, 2], ['runner', 40, 0.22, 12, 'swarm']],
 ];
 // The mini-boss rota. Every 4th endless wave fields one, in order, so a player can LEARN
 // the cycle (the ram on 4, an ironclad column on 8, the ogres on 12 …) rather than being
@@ -6926,6 +7660,32 @@ const endlessTitle = (n) => {
   return L(e % 10 === 0 ? 'ew.echo' : e % 4 === 0 ? 'ew.mini' : 'ew.' + ((e % 3) + 1));
 };
 G.endlessTitle = endlessTitle;
+// ══ ENDLESS TRICKLE (SPEC5 §B5) ══════════════════════════════════════
+// They Are Billions' ambient pressure: past the finale the road is never really quiet. In
+// the gap BEFORE each generated wave a two- or three-unit scout party walks out and probes
+// the line — enough to make a player look up, never enough to be a wave.
+//
+// It is a waveDefs-ADJACENT accessor on purpose: it returns wave-table GROUP TUPLES in
+// exactly the shape waveDefs() returns, so the party flows through the same pushGroup()
+// transform as everything else and inherits formations for free (a scout party arrives as
+// a `vanguard` — the quick one out front, the rest trailing, which is what a probe looks
+// like). It is NOT part of waveDefs() itself, because a scout is not part of the wave: it
+// must never appear on the dispatch card's mix, in waveHead(), or in the gate-share sums.
+//
+// Every draw is srng keyed on the endless index, never rng() — the same rule the elite
+// swaps, the omen offers and the formations keep, so a trickle can never shift the spawn
+// stream a later wave rides on.
+// CAMPAIGN PACING IS UNTOUCHED (§B5 says so in as many words): the caller is gated on
+// state.endless AND on the interwave being past the finale's own gap.
+const SCOUT_POOL = ['runner', 'hound', 'wyvern', 'cutpurse', 'ashwraith', 'marauder'];
+G.scoutParty = (n) => {
+  const e = n - FINALE_W;                               // 1 = the first wave past the finale
+  if (e < 2) return null;                               // the finale's own gap stays clean
+  const k = 2 + ((srng(0x5C0, e * 7 + MAP.id) * 2) | 0);          // 2 or 3 bodies
+  const ty = SCOUT_POOL[Math.min(SCOUT_POOL.length - 1,
+    (srng(0x5C1, e * 7 + MAP.id) * SCOUT_POOL.length) | 0)];
+  return [[ty, k, 0.9, 0, undefined, 'vanguard']];
+};
 // ECONOMY CAP. Bounty tapers 2% per wave past the finale down to a 30% floor, so an
 // endless run cannot compound a purse into an unkillable carpet — the ramp climbs and the
 // income does not. Campaign waves multiply by the literal 1, so the balance matrix reads
@@ -7116,6 +7876,28 @@ const dmgBySchool = { pierce: 0, crush: 0, fire: 0, storm: 0 };
 G.dmgBySchool = dmgBySchool;
 function dealDamage(e, amount, element) {
   if (!e || !e.alive || !(amount > 0)) return 0;
+  // ── SPEC5 §A HIT-WARD ─────────────────────────────────────────────────────────
+  // Absorbed BEFORE resist, omen and hit points, because a ward eats the BLOW and not a
+  // number of points: an arrow and a siege bolt cost it exactly one rune each, which is the
+  // whole reason a wall of archers is the wrong answer to one. `min` separates a blow from
+  // the weather — burning ground, caltrops and a knight's swing all land in fractions of a
+  // point thirty times a second, and a ward that counted those would be stripped in a frame
+  // and would never recharge. Sub-threshold damage passes straight through to hit points,
+  // so a warded one still burns; it simply cannot be CHIPPED out of its runes.
+  const HW = e.def.hitward;
+  if (HW && amount >= HW.min) {
+    e.wardT = state.tick;                                // only a real blow resets the clock
+    if (e.wardN > 0) {
+      e.wardN--; e.wardFX = state.tick;
+      // HOOK: VFX/AUDIO (SPEC5 §A) — a blow eaten by a rune. This is the one damage event in
+      // the file that produces NO damage, so it is dressed here rather than in hitFX(): the
+      // caller has already decided which school's impact to draw, and drawing that on top of
+      // an absorb is exactly the confusion the ward exists to avoid. Cold flash, glass tink.
+      VFX.wardHit(e.px, G.groundY(e.px, e.pz), e.pz, (e.def.scale || 1) * 2.0, e.wardN);
+      Audio.play('tink', e.px, e.pz, 0.8);
+      return 0;
+    }
+  }
   let r = resistOf(e.def, element);
   if (e.ward === element) r += OMEN_FX.ward;             // Elemental Ward rides the unit
   if (r > RES_CAP) r = RES_CAP;
@@ -7288,6 +8070,15 @@ const SWAP_SLOTS = {
     // 8 pavises = 440 hp. The shaman option is the teaching one: it costs the wave almost
     // nothing in hit points and doubles how long everything ELSE on the road takes to kill.
     { wave: 6, from: 'shield', to: [['shield', 1, 1], ['warshaman', 0.75, 1.45], ['marauder', 1.1, 0.95]] },
+    // ── SPEC5 §C: the newcomers' slots. APPENDED, never interleaved — `SWAPS` resolves each
+    // slot with srng(0x53 + MAP.id*17, i) over its OWN option list, so a slot added at the end
+    // leaves indices 0-2 resolving bit-identically while adding an option INSIDE an existing
+    // slot changes `to.length` and re-rolls it. (wave, from) stays unique per map: buildWave
+    // takes the first match, so a duplicate pair would silently shadow the second.
+    // 100 runners = 900 hp. wyvern 21 = 945 · cutpurse 41 = 902.
+    { wave: 8,  from: 'runner', to: [['runner', 1, 1], ['wyvern', 0.21, 4.3], ['cutpurse', 0.41, 2.2]] },
+    // 20 pavises = 1100 hp. wardedone 5 = 1200 · gravemold 8 = 1120 effective (splits counted).
+    { wave: 10, from: 'shield', to: [['shield', 1, 1], ['wardedone', 0.23, 4.0], ['gravemold', 0.39, 1.3]] },
   ],
   2: [
     // Frostfell's advertised answer is pierce, so both elite options here are priced
@@ -7297,6 +8088,15 @@ const SWAP_SLOTS = {
     { wave: 10, from: 'shield', to: [['shield', 1, 1], ['ironclad', 0.10, 7.0], ['warshaman', 0.22, 3.8]] },
     // 74 hounds = 518 hp. 10 wraiths = 620 — and a wraith pack is as fast as a hound pack.
     { wave: 11, from: 'hound',  to: [['hound', 1, 1], ['ashwraith', 0.14, 6.0], ['runner', 0.9, 1.05]] },
+    // ── SPEC5 §C, appended (see the note on map 1's slots).
+    // 46 hounds = 322 hp. wyvern 6 = 270 · cutpurse 11 = 242 — both under parity on purpose:
+    // this group comes out of ONE gate on a two-gate map, so anything in it is worth more than
+    // its hit points to a battery that only covers the other mouth.
+    { wave: 9,  from: 'hound',  to: [['hound', 1, 1], ['wyvern', 0.14, 6.5], ['cutpurse', 0.25, 3.6]] },
+    // 102 levy = 1224 hp. necromancer 3 = 165 raw + what a wave that size leaves him to raise ·
+    // gravemold 9 = 1260 effective. The chanter option is the cheap one in hit points and the
+    // expensive one in TIME, which is the whole point of him on a finale.
+    { wave: 12, from: 'grunt',  to: [['grunt', 1, 1], ['necromancer', 0.03, 12], ['gravemold', 0.09, 9]] },
   ],
   3: [
     // 22 marauders = 572 hp. ashwraith 11 = 660 (and fire, the wastes' own school, is the
@@ -7306,6 +8106,15 @@ const SWAP_SLOTS = {
     { wave: 11, from: 'brute',    to: [['brute', 1, 1], ['ram', 0.16, 5.0], ['ironclad', 0.27, 3.4]] },
     // 23 pavises = 1265 hp. ironclad 2 · ashwraith 21 = 1260.
     { wave: 13, from: 'shield',   to: [['shield', 1, 1], ['ironclad', 0.11, 6.2], ['ashwraith', 0.9, 0.78]] },
+    // ── SPEC5 §C, appended (see the note on map 1's slots). The factors are RATIOS, so they
+    // survive the fixed-appearance retrofit above shrinking W9's runner group 76 → 30: the
+    // slot still trades that group for its own weight, whatever the group now weighs.
+    { wave: 9,  from: 'runner',   to: [['runner', 1, 1], ['cutpurse', 0.42, 2.3], ['wyvern', 0.20, 4.8]] },
+    // 46 hounds = 322 hp. wyvern 6 = 270. One elite option only: the wastes' W12 is already
+    // the Long Night, and a second host at 60% of a doubled spike is a wall, not a variation.
+    { wave: 12, from: 'hound',    to: [['hound', 1, 1], ['wyvern', 0.14, 6.6]] },
+    // 15 pavises = 825 hp. wardedone 4 = 960 · necromancer 3 = 165 raw plus the raising.
+    { wave: 8,  from: 'shield',   to: [['shield', 1, 1], ['wardedone', 0.29, 3.2], ['necromancer', 0.20, 4.5]] },
   ],
 };
 // Resolved ONCE per run, off the run seed — not per wave, so a slot cannot re-roll itself
@@ -7337,9 +8146,40 @@ if (SHOT) {
 // `pid` = which spawn gate this one walks out of (Frostfell has two); `branch` is the coin
 // flip the Ember Wastes fork reads at the split. Both draws are guarded so a single-route
 // map consumes the rng stream exactly as it did before maps 2-3 existed.
-function spawnEnemy(type, pid) {
-  const def = ENEMY_DEFS[type];
-  const hpMul = 1 + (MAP.hpRamp || 0.14) * (state.wave - 1); // r3: per-map ramp — long maps scale slower per wave
+// ══ SPEC5 — ONE constructor for every body that ever walks onto the road ══════════════
+// The wave spawner, a gravemold's children, a necromancer's risen bones and the shot
+// harness's staging rig all come through here, so a unit is a unit however it arrived: the
+// same omen stamp, the same ward charge, the same champion promotion. `opt` carries the
+// arrival-side extras — `laneAdd` (formation spread), `spd` (a formation's pace factor),
+// `champ` (a seeded name index, §B4), `isSplit` (a child that may not split again).
+const hpRampMul = () => 1 + (MAP.hpRamp || 0.14) * (Math.max(1, state.wave) - 1);
+function makeEnemy(type, pid, branch, lane, d, hpMul, opt) {
+  const def = ENEMY_DEFS[type], o = opt || {};
+  G.pathPos(d, _v3, lane, pid);
+  let hp = def.hp * hpMul * OMEN_FX.hp, msc = def.mscale || 1;
+  const champ = o.champ !== undefined && o.champ >= 0;
+  // §B4: ×2.5 hit points and +15% silhouette. The bounty multiplier lives in killEnemy so a
+  // champion pays out through the same fractional-bank path as everything else.
+  if (champ) { hp *= 2.5; msc *= 1.15; }
+  const e = { id: eid++, type, def, hp, maxhp: hp, d,
+    pathId: pid, branch,
+    lane, alive: true, deathT: -1, blockedBy: -1, px: _v3.x, pz: _v3.z, slowT: 0, slowF: 1,
+    spdM: OMEN_FX.spd * (o.spd || 1), ward: OMEN_FX.ward ? OMEN_FX.wardEl : '', noSlow: OMEN_FX.noSlow,
+    shooting: false, aimX: 0, aimZ: 0, stompT: def.stomp ? 2 : 0, stompFX: -1,
+    // §A ward charge (undefined on everything that has no runes, so nothing else pays for it)
+    wardN: def.hitward ? def.hitward.hits : 0, wardT: -999, wardFX: -999,
+    raiseT: def.raise ? def.raise.cd : 0,               // §A the necromancer's 6 s chant
+    isSplit: !!o.isSplit, champ, cname: champ ? o.champ : -1, msc, rank: o.rank };
+  G.enemies.push(e);
+  return e;
+}
+// The harness/preset path: put a body at a distance down the road with NO rng draw, so a
+// staged frame cannot shift the sim stream a balance run is measuring.
+G.spawnAt = (type, d, lane, pid, opt) =>
+  ENEMY_DEFS[type] ? makeEnemy(type, pid === undefined ? G.spawnRoutes[0] : pid, 0, lane || 0, d,
+    hpRampMul(), opt) : null;
+function spawnEnemy(type, pid, opt) {
+  const hpMul = hpRampMul();                            // r3: per-map ramp — long maps scale slower per wave
   // r7 REGRESSION REVERT — spawn placement is SIM, not dressing. ARMIES swapped this for a
   // six-file lattice (G.laneOf) + a `d0 = r1 * 0.30` head start. Draw COUNT was preserved, so
   // the rng stream stayed aligned, but the lane DISTRIBUTION did not: the old jitter is
@@ -7354,16 +8194,21 @@ function spawnEnemy(type, pid) {
   const SR = G.spawnRoutes;
   if (pid === undefined) pid = SR.length > 1 ? SR[Math.min(SR.length - 1, (rng() * SR.length) | 0)] : SR[0];
   const branch = HAS_FORK ? (rng() < 0.5 ? 1 : 0) : 0;
-  G.pathPos(0, _v3, lane, pid);                         // real position from tick one: the
-  // marauder's "is a knight within 7u" test runs before the movement pass writes px/pz
-  // The omen rides the UNIT, not the clock: hit points, pace, the ward school and the
-  // sapper's immunity are stamped on at muster, so nothing an omen did can outlive its wave.
-  const hp = def.hp * hpMul * OMEN_FX.hp;
-  G.enemies.push({ id: eid++, type, def, hp, maxhp: hp, d: 0,
-    pathId: pid, branch,
-    lane, alive: true, deathT: -1, blockedBy: -1, px: _v3.x, pz: _v3.z, slowT: 0, slowF: 1,
-    spdM: OMEN_FX.spd, ward: OMEN_FX.ward ? OMEN_FX.wardEl : '', noSlow: OMEN_FX.noSlow,
-    shooting: false, aimX: 0, aimZ: 0, stompT: def.stomp ? 2 : 0, stompFX: -1 });
+  // real position from tick one: the marauder's "is a knight within 7u" test runs before the
+  // movement pass writes px/pz. The omen rides the UNIT, not the clock: hit points, pace, the
+  // ward school and the sapper's immunity are stamped on at muster, so nothing an omen did
+  // can outlive its wave. SPEC5 §B1: a formation either NUDGES the tuned triangular jitter
+  // (`laneAdd`, phalanx/stampede/vanguard) or REPLACES it (`laneSet`, swarm). Either way the
+  // rng draws above already happened, so a formation never shifts the spawn stream — and a
+  // `column` group takes neither branch and stays bit-identical to r9.
+  const ln = opt && opt.laneSet !== undefined ? opt.laneSet : lane + ((opt && opt.laneAdd) || 0);
+  const e = makeEnemy(type, pid, branch, ln, 0, hpMul, opt);
+  // HOOK: VFX (SPEC5 §B4) — the promotion flourish, on the frame the champion walks out of
+  // the gate. +15% scale and a nameplate are not enough to make the eye FIND one body in a
+  // hundred-and-twenty-strong column; a one-shot gold flare at a known place is, and it
+  // hands off to the plate that slides in over the same body.
+  if (e.champ) VFX.champion(e.px, G.groundY(e.px, e.pz), e.pz, (e.def.scale || 1) * 1.9);
+  return e;
 }
 // The one place a knight loses hit points — melee, marauder arrows and the ogre's stomp
 // all land here, so a knight's death always frees whoever was holding him and always
@@ -7405,28 +8250,234 @@ function ogreStomp(e) {
 }
 let spawnQueue = [];
 let _bountyFrac = 0;                                    // sub-gold change from omen bounty multipliers
-function startWave(n) {
-  state.wave = n; state.phase = 'wave'; spawnQueue = [];
-  commitOmen(n);                                        // SPEC3 §D — the omen is locked in here
-  // 5th field of a wave group = the spawn gate it marches out of (Frostfell). Omitted, the
-  // group is split across the map's gates one enemy at a time by spawnEnemy().
-  for (const [type0, count0, interval0, delay, pid] of waveDefs(n)) {
+// ══ FORMATIONS (SPEC5 §B1) ═══════════════════════════════════════════
+// A wave group's 6th field. A formation changes how a group ARRIVES and nothing else: the
+// head count, the species and the hit points are untouched, and every transform below is
+// authored to occupy the SAME number of seconds end to end as the column it replaces
+// (count × interval), so retrofitting one onto a shipped wave conserves that wave's
+// effective hit points exactly rather than to within a tolerance.
+//
+//   column    the file as shipped — one unit every `interval`, tuned lane jitter only
+//   swarm     a flood: cadence jittered ±45%, the file spread to ±3.2 across the road
+//   phalanx   three abreast, rank by rank, one rank per three intervals (shield walls)
+//   stampede  pulses of eight then a silence, the silence paid for out of the burst
+//   vanguard  the fast half out first and 12% quicker, the slow half behind the gap
+//
+// Every draw is srng (run-seeded, keyed on wave/group/unit), NEVER rng(): the spawn stream
+// is what every lane jitter downstream rides on, and a formation must not shift it.
+const FORMS = ['column', 'swarm', 'phalanx', 'stampede', 'vanguard'];
+G.FORMS = FORMS;
+const fjit = (salt, n, gi, i) => srng(0xF0 + salt, n * 977 + gi * 131 + i);
+function pushGroup(out, n, gi, type, count, interval, delay, pid, form) {
+  const at = (s) => state.tick + Math.round(Math.max(0, s) * TPS);
+  switch (form) {
+    case 'swarm':
+      // `laneSet` REPLACES the column's tuned triangular jitter with a flat ±3.2 across the
+      // road rather than adding to it. That is the difference between a file that wanders
+      // and a flood that fills the road, and it is deliberately the same lever BALANCE.md's
+      // r7 entry calls load-bearing — here it is opt-in per group and measured, not global.
+      for (let i = 0; i < count; i++)
+        out.push({ tick: at(delay + (i + (fjit(1, n, gi, i) - 0.5) * 0.9) * interval), type, pid,
+                   laneSet: (fjit(2, n, gi, i) * 2 - 1) * 3.2 });
+      return;
+    case 'phalanx': {
+      const W = 3;                                      // three abreast
+      for (let i = 0; i < count; i++)
+        out.push({ tick: at(delay + ((i / W) | 0) * interval * W), type, pid,
+                   laneAdd: ((i % W) - (W - 1) / 2) * 1.7,
+                   // the rank id IS the speed-sync flag: a rank walks at its slowest free
+                   // member's pace (see tickSim), so a wall stays a wall through a slow patch
+                   rank: n * 100000 + gi * 1000 + ((i / W) | 0) });
+      return;
+    }
+    case 'stampede': {
+      const B = 8, sil = Math.min(3, B * interval * 0.5), tight = Math.max(0.04, interval - sil / B);
+      for (let i = 0; i < count; i++)
+        out.push({ tick: at(delay + ((i / B) | 0) * (B * tight + sil) + (i % B) * tight), type, pid,
+                   laneAdd: (fjit(3, n, gi, i) * 2 - 1) * 1.1 });
+      return;
+    }
+    case 'vanguard': {
+      const h = Math.ceil(count / 2), span = count * interval;
+      for (let i = 0; i < count; i++) {
+        const fast = i < h;
+        out.push({ tick: at(delay + (fast ? i * interval * 0.55 : span * 0.52 + (i - h) * interval * 0.62)),
+                   type, pid, spd: fast ? 1.12 : 1, laneAdd: fast ? -0.9 : 0.9 });
+      }
+      return;
+    }
+    default:                                            // column — bit-identical to r9
+      for (let i = 0; i < count; i++) out.push({ tick: at(delay + i * interval), type, pid });
+  }
+}
+// ══ CHAMPIONS (SPEC5 §B4) ════════════════════════════════════════════
+// From wave 7, exactly ONE unit of the wave is promoted — ×2.5 hit points, ×6 bounty, +15%
+// scale and a name off a seeded list. Bosses and mini-bosses are excluded: an ogre at ×2.5
+// is not per-run variance, it is a different campaign. The pick is srng on (map, wave), so
+// the same seed always fields the same champion and a new seed fields another — which is
+// the anti-staleness lever §C asks it to be, at a cost of at most ~375 hit points a wave.
+const CHAMP_FROM = 7, CHAMP_N = 8;
+G.CHAMP_FROM = CHAMP_FROM;
+G.champName = (e) => (e && e.champ && e.cname >= 0) ? L('ch.' + e.cname) : '';
+function promoteChampion(q, n) {
+  if (n < CHAMP_FROM) return;
+  const el = [];
+  for (let i = 0; i < q.length; i++) {
+    const d = ENEMY_DEFS[q[i].type];
+    if (!d || d.elite || d.art === 'boss' || q[i].type === 'boss') continue;
+    el.push(i);
+  }
+  if (!el.length) return;
+  const ci = n + MAP.id * 313;
+  const pick = el[Math.min(el.length - 1, (srng(0xC4A, ci) * el.length) | 0)];
+  q[pick].champ = Math.min(CHAMP_N - 1, (srng(0xC4B, ci) * CHAMP_N) | 0);
+  if (SHOT) console.log('ROSTLOG champion map=' + MAP.id + ' wave=' + n + ' seed=' + G.runSeed +
+    ' type=' + q[pick].type + ' name=' + L('ch.' + q[pick].champ));
+}
+// ══ THE LONG NIGHT (SPEC5 §B2) ═══════════════════════════════════════
+// One marked wave per road runs TWICE. When the first host is spent — its queue empty and
+// under five still standing — the field goes quiet for six seconds and a low horn sounds,
+// and then a second host at 60% size comes out of the same gates. The wave is not CLEARED
+// until that second host is dead, which is the whole trick: the plate that says "held"
+// never appears, and the countdown never starts.
+const LONG_NIGHT = { 1: 8, 2: 10, 3: 12 };
+const SURGE_W = LONG_NIGHT[MAP.id] || 0;
+G.isSurge = (n) => n > 0 && n === SURGE_W;
+const night = { wave: 0, part: 0, at: 0 };
+G.night = night;
+// Builds a wave's spawn queue. `part` 2 is the Long Night's second host: 60% of every
+// group's head count, delays halved so it arrives as a rush rather than a re-run, and no
+// champion (the wave already has one, and two would read as a bug).
+function buildWave(n, part) {
+  const q = [], sc = part === 2 ? 0.6 : 1;
+  const W = waveDefs(n);
+  for (let gi = 0; gi < W.length; gi++) {
+    let [type0, count0, interval0, delay, pid, form] = W[gi];
+    // A single-gate map has no gate index to hand over, so its tables are allowed to put the
+    // FORMATION straight in the 5th field. The two can never be confused: a gate is a
+    // number, a formation is a string.
+    if (typeof pid === 'string') { form = pid; pid = undefined; }
     // SPEC3 §E: an elite swap slot re-casts one group of this wave for the whole run.
     const sw = SWAPS.find(s => s.wave === n && s.from === type0);
     const type = sw ? sw.k : type0;
-    const count = Math.max(1, Math.round(count0 * (sw ? sw.n : 1) * OMEN_FX.count));
+    const count = Math.max(1, Math.round(count0 * (sw ? sw.n : 1) * OMEN_FX.count * sc));
     const interval = interval0 * (sw ? sw.iv : 1) * OMEN_FX.interval;
-    for (let i = 0; i < count; i++)
-      spawnQueue.push({ tick: state.tick + Math.round((delay + i * interval) * TPS), type, pid });
+    pushGroup(q, n, gi + (part === 2 ? 64 : 0), type, count, interval,
+      (delay || 0) * (part === 2 ? 0.5 : 1), pid, form);
   }
-  spawnQueue.sort((a, b) => a.tick - b.tick);
+  if (part !== 2) promoteChampion(q, n);
+  q.sort((a, b) => a.tick - b.tick);
+  spawnQueue = part === 2 ? spawnQueue.concat(q) : q;
+  return q.length;
+}
+function startWave(n) {
+  state.wave = n; state.phase = 'wave'; spawnQueue = [];
+  commitOmen(n);                                        // SPEC3 §D — the omen is locked in here
+  deadN = 0;                                            // SPEC5 §A — last wave's dead are carried off
+  night.wave = G.isSurge(n) ? n : 0; night.part = night.wave ? 1 : 0; night.at = 0;
+  // 5th field of a wave group = the spawn gate it marches out of (Frostfell); the 6th is its
+  // FORMATION (§B1). Both flow through waveDefs(n), so the endless generator inherits them.
+  buildWave(n, 1);
   // SPEC4 §B: SIM signals WHAT happened, UI owns the sentence. Passing an English string to
   // be regex-matched on the other side made the banner untranslatable by construction.
-  UI.msg({ wave: n, finale: n === FINALE_W, endless: n > FINALE_W });
+  UI.msg({ wave: n, finale: n === FINALE_W, endless: n > FINALE_W, surge: night.wave === n ? 1 : 0 });
   // HOOK: AUDIO builder — the horn reads the wave's COMPOSITION, so a pack wave answers
   // with hounds and a finale answers with the boss's own sting (SPEC2 §D/§E).
   Audio.waveCue(waveDefs(n));
   UI.sync();
+}
+// ══ GATE HERALDS — DATA (SPEC5 §B3) ══════════════════════════════════
+// What FRACTION of wave `n` comes out of each gate. A group tagged with a gate (the 5th
+// field) is that gate's alone; an untagged group is split evenly, because spawnEnemy deals
+// its units across the map's gates one at a time. The choreography agent hangs the prewave
+// war-drums and banner FX off this; nothing in the sim reads it, so it is safe to call from
+// render side at any time. Indexed to match G.spawnRoutes, memoized per wave.
+const GATE_SHARE = {};
+G.gateShare = (n) => {
+  if (GATE_SHARE[n]) return GATE_SHARE[n];
+  const R = G.spawnRoutes, out = new Array(R.length).fill(0);
+  let tot = 0;
+  for (const g of (waveDefs(n) || [])) {
+    const c = g[1] || 0, pid = typeof g[4] === 'string' ? undefined : g[4];
+    tot += c;
+    const gi = pid === undefined ? -1 : R.indexOf(pid);
+    if (gi >= 0) out[gi] += c;
+    else for (let i = 0; i < R.length; i++) out[i] += c / R.length;
+  }
+  if (tot > 0) for (let i = 0; i < out.length; i++) out[i] /= tot;
+  return (GATE_SHARE[n] = out);
+};
+// Machine-readable proof the herald data is real on the maps that have gates to herald —
+// and the choreography agent's read-out while it wires the drums. Single-gate roads print
+// nothing (their answer is always 1.00).
+if (SHOT && G.spawnRoutes.length > 1)
+  for (let n = 1; n <= FINALE_W; n++)
+    console.log('GATELOG map=' + MAP.id + ' wave=' + n + ' gates=' + G.spawnRoutes.join(',') +
+      ' share=' + G.gateShare(n).map(v => v.toFixed(2)).join('/'));
+// ══ GATE HERALDS — THE BEAT (SPEC5 §B3) ══════════════════════════════
+// Defense Grid's entrance pressure, made diegetic. Through the whole prewave, each gate that
+// the NEXT wave will actually use beats a war-drum and shows a banner flare, and BOTH are
+// scaled by that gate's share of the coming host: the loud mouth is the one most of the wave
+// walks out of. This is the map's routing information delivered as theatre rather than as a
+// number — the number is on the dispatch card beside it, for the player who wants to read it.
+//
+// Nothing here touches the sim: no rng draw, no state, no enemy. It is called from the
+// prewave branch only so that its cadence rides the SIM clock (and therefore ×2/×3 speed and
+// the shot harness) instead of a wall timer — GAME_SPEC §2.3b forbids the latter outright.
+const HERALD_IV = Math.round(2.4 * TPS);
+let heraldT = 0, heraldFor = -1;
+function heraldTick() {
+  const R = G.spawnRoutes;
+  if (R.length < 2) return;                             // one mouth has nothing to compare itself to
+  const nx = state.wave + 1;
+  if (nx !== heraldFor) { heraldFor = nx; heraldT = state.tick; }   // first beat lands at once
+  if (state.tick < heraldT) return;
+  heraldT = state.tick + HERALD_IV;
+  const sh = G.gateShare(nx);
+  for (let i = 0; i < R.length; i++) {
+    const g = G.spawnGates[i], s = sh[i] || 0;
+    if (!g || s < 0.02) continue;                       // a gate this wave does not use stays dark
+    // ON THE THRESHOLD, not inside it. `g.x/g.z` is the gate ANCHOR, which sits 2.5 u back
+    // INSIDE the arch — a herald drawn there is behind the arch's own hanging banners from
+    // every camera the game can reach (the first cut of shots\_herald.png is exactly that:
+    // a warm smear with the effect eaten by the drapes). `rx/rz` is the road's outbound
+    // tangent, so stepping along it puts the drum where the horde will actually walk out.
+    const hx = g.x + g.rx * 4.0, hz = g.z + g.rz * 4.0;
+    VFX.gateHerald(hx, hz, s);                          // HOOK: VFX — drum-skin flare + banner pulse
+    Audio.play('wardrum', hx, hz, 0.30 + 0.70 * s);     // HOOK: AUDIO — the drum, weighted by share
+  }
+  G.heraldAt = state.tick;                              // the `_herald` rig lands its frame on a beat
+}
+// ══ ENDLESS TRICKLE — THE BEAT (SPEC5 §B5) ═══════════════════════════
+// One party per interwave, at a seeded moment inside it. The window is deliberately the
+// FRONT of the gap (30-55% elapsed): the party has to be through the gate and walking before
+// startWave() clears the spawn queue, and the widest party is 3 × 0.9 s of queue.
+let trickleFor = 0;
+function trickleTick() {
+  const nx = state.wave + 1;
+  if (!state.endless || nx <= FINALE_W || trickleFor === nx) return;
+  // AUTO-CALL (SPEC4 §A) shortens the muster to three seconds, which is less than the widest
+  // party's own queue — a trickle fired into that gap would have half of it deleted by
+  // startWave()'s `spawnQueue = []`. A player who has asked not to wait does not get a
+  // trickle, which is the honest reading of "between waves" as well as the safe one.
+  if (state.countdown < 4) return;
+  const e = nx - FINALE_W;
+  const gone = INTERWAVE - state.countdown;
+  if (gone < INTERWAVE * (0.30 + srng(0x5C2, e * 7 + MAP.id) * 0.25)) return;
+  trickleFor = nx;
+  const P = G.scoutParty(nx);
+  if (!P) return;
+  let k = 0;
+  for (let gi = 0; gi < P.length; gi++) {
+    const [type, count, interval, delay, pid, form] = P[gi];
+    // group index 128+ keeps the formation's srng key clear of both wave parts (0-63 and
+    // 64-127), so a scout party can never share a jitter draw with the wave it precedes
+    pushGroup(spawnQueue, nx, 128 + gi, type, count, interval, delay || 0, pid, form);
+    k += count;
+  }
+  spawnQueue.sort((a, b) => a.tick - b.tick);
+  UI.msg({ scouts: k });
+  if (SHOT) console.log('TRICKLELOG wave=' + nx + ' party=' + P[0][0] + '×' + k + ' tick=' + state.tick);
 }
 G.startWave = startWave;
 
@@ -7589,6 +8640,11 @@ function fireTower(tw) {
   const mode = tw.mode || def.mode || 'first';
   for (const e of G.enemies) {
     if (!e.alive) continue;
+    // SPEC5 §A — AIR. The one filter that decides whether a comp can answer a flock at all:
+    // archer, ballista and storm carry `air`, a catapult and a pyre do not. It sits in the
+    // TARGET filter rather than in the damage path so a ground-only battery does not merely
+    // do less to a wyvern — it never looses at one, and the flock crosses the vale untouched.
+    if (e.def.fly && !def.air) continue;
     const q = (e.px - tw.x) ** 2 + (e.pz - tw.z) ** 2;
     if (q > rq || q < minq) continue;
     const take = mode === 'strong' ? (e.hp > bestH || (e.hp === bestH && e.d > bestD))
@@ -7821,14 +8877,16 @@ function tickTraps() {
       const tq = D.trig * D.trig;
       let hit = null;
       for (const e of G.enemies) {
-        if (!e.alive) continue;
+        // SPEC5 §A — nothing on the road surface touches a flyer: it does not tread on the
+        // barrel and the blast does not reach it.
+        if (!e.alive || e.def.fly) continue;
         if ((e.px - tr.x) ** 2 + (e.pz - tr.z) ** 2 <= tq) { hit = e; break; }
       }
       if (!hit) continue;
       const rq = D.rad * D.rad;
       let dressed = 0;
       for (const e of G.enemies) {
-        if (!e.alive) continue;
+        if (!e.alive || e.def.fly) continue;
         const dd = (e.px - tr.x) ** 2 + (e.pz - tr.z) ** 2;
         if (dd > rq) continue;
         const f = 1 - 0.55 * Math.sqrt(dd) / D.rad;      // full weight at the barrel, half at the rim
@@ -7861,7 +8919,8 @@ function tickTraps() {
         }
     }
     for (const e of G.enemies) {
-      if (!e.alive || e.noSlow) continue;              // sappers walk through a laid trap
+      // sappers walk through a laid trap; SPEC5 §A flyers fly over one
+      if (!e.alive || e.noSlow || e.def.fly) continue;
       if ((e.px - tr.x) ** 2 + (e.pz - tr.z) ** 2 > rq) continue;
       touched = true;
       if (tr.sprung < 0) continue;                     // sprung on THIS tick: it bites next
@@ -7886,13 +8945,57 @@ function tickSim() {
   const t = vt();
   if (state.phase === 'prewave') {
     omenTick();                                         // SPEC3 §D — three omens on the table
+    heraldTick();                                       // SPEC5 §B3 — war-drums at the gates
+    trickleTick();                                      // SPEC5 §B5 — endless scout parties
     state.countdown -= TICK;
     if (state.countdown <= 0) startWave(state.wave + 1);
     UI.syncCountdown();
   }
   if (state.phase !== 'wave' && state.phase !== 'prewave') return;
-  // spawns
-  while (spawnQueue.length && spawnQueue[0].tick <= state.tick) { const sq = spawnQueue.shift(); spawnEnemy(sq.type, sq.pid); }
+  // spawns. The queue entry IS the arrival order (SPEC5 §B1): lane spread, pace factor,
+  // rank id and the champion's name index all ride on it into makeEnemy.
+  while (spawnQueue.length && spawnQueue[0].tick <= state.tick) { const sq = spawnQueue.shift(); spawnEnemy(sq.type, sq.pid, sq); }
+  // ── THE LONG NIGHT (SPEC5 §B2) ──────────────────────────────────────────────
+  // Part one is spent when its queue is empty and the field is under five. Then six seconds
+  // of nothing — the false ending — and the second host comes.
+  if (night.wave === state.wave) {
+    if (night.part === 1 && !spawnQueue.length) {
+      let alive = 0;
+      for (const e of G.enemies) if (e.alive && ++alive >= 5) break;
+      if (alive < 5) {
+        night.part = 1.5; night.at = state.tick + Math.round(6 * TPS);
+        UI.msg({ lull: true });
+        Audio.play('lull');                             // HOOK: AUDIO builder — the low horn
+        VFX.nightLull();                                // HOOK: VFX — cold fog down the emptied road
+        if (SHOT) console.log('NIGHTLOG lull wave=' + state.wave + ' tick=' + state.tick + ' alive=' + alive);
+      }
+    } else if (night.part === 1.5 && state.tick >= night.at) {
+      night.part = 2;
+      const q = buildWave(state.wave, 2);
+      UI.msg({ surge: true });
+      // HOOK: VFX/AUDIO — the horn that ends the lull, and its picture at every mouth the
+      // second host is coming out of. The surge horn is the lull's exact inverse (it rises
+      // and takes its octave where the lull fell and refused one), so the pair reads as one
+      // sentence; `waveCue` still follows with whatever the wave is MADE of.
+      Audio.play('surge');
+      for (const g of G.spawnGates) if (g) VFX.nightSurge(g.x + g.rx * 4.0, g.z + g.rz * 4.0);
+      Audio.waveCue(waveDefs(state.wave));
+      if (SHOT) console.log('NIGHTLOG surge wave=' + state.wave + ' queued=' + q);
+    }
+  }
+  // ── PHALANX LOCKSTEP (SPEC5 §B1) ────────────────────────────────────────────
+  // A rank walks at the pace of its slowest FREE member, so a shield wall crossing caltrops
+  // stays a wall instead of fraying into a file. Members that are held in melee (or halted
+  // and shooting) are excluded from the reckoning — otherwise one knight could stall a whole
+  // rank indefinitely, which is a stalemate, not a formation. Costs nothing on a wave that
+  // fields no phalanx: the map is only allocated if a ranked unit is actually on the road.
+  let rankMin = null;
+  for (const e of G.enemies) {
+    if (!e.alive || e.rank === undefined || e.blockedBy >= 0 || e.shooting) continue;
+    if (!rankMin) rankMin = new Map();
+    const m = rankMin.get(e.rank);
+    if (m === undefined || e.d < m) rankMin.set(e.rank, e.d);
+  }
   // enemies
   for (const e of G.enemies) {
     if (!e.alive) continue;
@@ -7926,6 +9029,11 @@ function tickSim() {
         // slowF is the strongest slow currently on this foe (catapult 0.6, storm L3 0.75);
         // it resets when the timer runs out so a stale factor can never outlive its source
         e.d += e.def.speed * (e.spdM || 1) * TICK * (e.slowT > 0 ? e.slowF : 1);
+        // SPEC5 §B1 — hold station on the rank (see the pre-pass above)
+        if (e.rank !== undefined && rankMin) {
+          const m = rankMin.get(e.rank);
+          if (m !== undefined && e.d > m + 0.7) e.d = m + 0.7;
+        }
         // JUNCTIONS (SPEC2 §E): crossing a handoff distance moves the walker onto another
         // route and carries the overshoot with it, so no step is ever lost or doubled. A
         // tagged handoff clears the tag, which is what stops the Ember fork re-firing when
@@ -7940,7 +9048,16 @@ function tickSim() {
         }
         if (e.pathId === G.endRoute && e.d >= PTS[e.pathId].len - 1.5) {
           e.alive = false; e.deathT = -2; state.lives = Math.max(0, state.lives - e.def.leak); state.leaked++;
-          UI.msg({ breach: true }); Audio.play('leak'); UI.sync();
+          // SPEC5 §A — a cutpurse through the gate cuts the PURSE as well as the vale, down
+          // to a floor of nothing. Through the leak path itself, so it can never be paid
+          // twice and can never be dodged by a leak that arrives some other way.
+          let stole = 0;
+          if (e.def.steal) { stole = Math.min(state.gold, e.def.steal); state.gold -= stole; }
+          UI.msg(stole ? { breach: true, steal: stole } : { breach: true }); Audio.play('leak'); UI.sync();
+          // HOOK: VFX/AUDIO (SPEC5 §A) — the purse going through the gate with him. Scaled by
+          // what was ACTUALLY taken, so an empty treasury produces no scatter and no cue: the
+          // one leak that costs gold must not claim to when there was none left to cut.
+          if (stole > 0) { VFX.purse(e.px, G.groundY(e.px, e.pz), e.pz, stole); Audio.play('purse', e.px, e.pz); }
           if (state.lives <= 0) return endGame(false);
         }
       }
@@ -7977,6 +9094,52 @@ function tickSim() {
       Audio.play('heal', h.px, h.pz, 0.5);
     }
   }
+  // ── WARD RECHARGE + THE RAISING (SPEC5 §A) ──────────────────────────────────
+  // Both run after the movement pass for the same reason the shaman does: every position
+  // they read is this tick's. Both are counted in TICKS, never in wall-clock seconds.
+  for (const e of G.enemies) {
+    if (!e.alive) continue;
+    // The warded one's runes come back whole `recover` seconds after the last real blow —
+    // not one rune at a time. Sustained focus beats it; a trickle never does.
+    const HW = e.def.hitward;
+    if (HW && e.wardN < HW.hits && state.tick - e.wardT >= HW.recover * TPS) {
+      e.wardN = HW.hits; e.wardFX = state.tick;         // HOOK: VFX — the runes re-light
+    }
+    const R = e.def.raise;
+    if (!R) continue;
+    e.raiseT -= TICK;
+    if (e.raiseT > 0) continue;
+    e.raiseT = R.cd;
+    // The cap is PER CHANTER (`riser` is the necromancer's own id), so two of them on the
+    // road is genuinely twice the problem and neither is throttled by the other's work.
+    let held = 0;
+    for (const s of G.enemies) if (s.alive && s.riser === e.id) held++;
+    const room = Math.min(R.n, R.cap - held);
+    let rose = 0;
+    for (let i = 0; i < room; i++) {
+      const c = takeDead();
+      if (!c) break;                                    // nothing has fallen yet: nothing rises
+      // BEHIND THE FRONT. A corpse further down the road than the chanter is dragged back to
+      // it, so risen bones never appear ahead of the thing that called them — and a corpse
+      // from another route is raised at the chanter's own feet rather than teleported.
+      const same = c.pathId === e.pathId;
+      const at = same ? Math.min(c.d, e.d) : Math.max(0, e.d - 2);
+      const sk = makeEnemy(R.to, same ? c.pathId : e.pathId, same ? c.branch : e.branch,
+        same ? c.lane : e.lane + (i - 1) * 1.2, Math.max(0, at - 0.4), hpRampMul(), {});
+      sk.riser = e.id;
+      rose++;
+      // HOOK: VFX — bones coming up out of the road. The wisp is AT THE CORPSE, so the eye
+      // is already on the spot when ARMIES puts a skeleton there next frame.
+      VFX.raiseWisp(sk.px, sk.pz);
+    }
+    if (rose) {
+      // HOOK: VFX/AUDIO — and the hand that called them, at the chanter, so the player can
+      // tell which of the sixty bodies on the road is doing this to him.
+      VFX.raiseHand(e.px, G.groundY(e.px, e.pz), e.pz, 1.74);
+      Audio.play('raisew', e.px, e.pz, 0.8);            // HOOK: AUDIO — the chanter's own cue
+      if (SHOT) console.log('RAISELOG necro=' + e.id + ' rose=' + rose + ' held=' + (held + rose) + ' wave=' + state.wave);
+    }
+  }
   // knights
   for (let ki = 0; ki < G.knights.length; ki++) {
     const kn = G.knights[ki];
@@ -8001,7 +9164,10 @@ function tickSim() {
       kn.target = -1;
       let bq = 64;
       for (const e of G.enemies) { // claim nearest free enemy near home
-        if (!e.alive || e.blockedBy >= 0 || e.def.unblockable) continue;
+        // SPEC5 §A — a flyer is never claimed, by a barracks knight or by a rallied
+        // militiaman. It is the ONE gate: nothing else in the sim ever writes blockedBy, so
+        // a wyvern can never enter it from either direction.
+        if (!e.alive || e.blockedBy >= 0 || e.def.unblockable || e.def.fly) continue;
         const q = (e.px - kn.hx) ** 2 + (e.pz - kn.hz) ** 2;
         if (q < bq) { bq = q; tgt = e; }
       }
@@ -8036,8 +9202,9 @@ function tickSim() {
     if (t - pa.born >= pa.dur) { G.patches.splice(i, 1); continue; }
     const rq = pa.r * pa.r;
     for (const e of G.enemies) {
-      // Sappers (SPEC3 §D) smother burning ground as they cross it.
-      if (!e.alive || e.noSlow) continue;
+      // Sappers (SPEC3 §D) smother burning ground as they cross it; a flyer (SPEC5 §A) is
+      // 2.6 units above it and never crosses it at all.
+      if (!e.alive || e.noSlow || e.def.fly) continue;
       if ((e.px - pa.x) ** 2 + (e.pz - pa.z) ** 2 <= rq) dealDamage(e, pa.dps * TICK, 'fire');
     }
   }
@@ -8070,7 +9237,10 @@ function tickSim() {
         // victims dressed per blast — enough to read, cheap enough to spam.
         let dressed = 0;
         for (const e of G.enemies) {
-          if (!e.alive) continue;
+          // SPEC5 §A — a boulder is a GROUND blast. A catapult carries `air: false`, so it
+          // never aimed at the flock; letting its splash clip one anyway would hand the
+          // airless comp a back door into the one thing it is not supposed to answer.
+          if (!e.alive || e.def.fly) continue;
           const dd = Math.hypot(e.px - p.ex, e.pz - p.ez);
           if (dd <= p.splash) {
             if (!e.noSlow) { e.slowT = 0.4; e.slowF = Math.min(e.slowF, 0.6); }
@@ -8084,7 +9254,10 @@ function tickSim() {
     } else {
       const tgt = G.enemies.find(e => e.id === p.tid);
       if (!tgt || !tgt.alive) { G.projectiles.splice(i, 1); continue; }
-      const dx = tgt.px - p.x, dy = tgt.def.scale + G.groundY(tgt.px, tgt.pz) - p.y, dz = tgt.pz - p.z;
+      // SPEC5 §A — the aim height is the SAME number ARMIES draws the body at: def.scale is
+      // the archetype's aim point and `alt` lifts a flyer above the road, so an arrow loosed
+      // at a wyvern actually climbs to it instead of skimming the meadow underneath.
+      const dx = tgt.px - p.x, dy = tgt.def.scale + (tgt.def.alt || 0) + G.groundY(tgt.px, tgt.pz) - p.y, dz = tgt.pz - p.z;
       const dist = Math.hypot(dx, dy, dz), step = p.speed * TICK;
       if (dist <= step + 0.4) {
         G.projectiles.splice(i, 1);
@@ -8105,7 +9278,11 @@ function tickSim() {
     }
   }
   // wave cleared?
-  if (state.phase === 'wave' && !spawnQueue.length && !G.enemies.some(e => e.alive)) {
+  // SPEC5 §B2 — a Long Night wave is NOT cleared until its second host is dead: the flag
+  // gates the whole plate/countdown/omen chain, which is what makes the lull a false ending
+  // rather than a pause.
+  if (state.phase === 'wave' && !spawnQueue.length && !G.enemies.some(e => e.alive)
+      && !(night.wave === state.wave && night.part < 2)) {
     if (SHOT) console.log('LIVESLOG wave=' + state.wave + ' lives=' + state.lives + ' leaked=' + state.leaked + ' gold=' + state.gold);
     // SPEC4 §E: past the finale a cleared wave is a RECORD, not a victory. The run only
     // ends when the vale does.
@@ -8124,6 +9301,36 @@ function tickSim() {
   }
   if (state.tick % 90 === 0) { G.enemies = G.enemies.filter(e => e.alive || vt() - e.deathT < 2); reapMilitia(); }
 }
+// ══ SPEC5 §A — the recent-death ring ═════════════════════════════════
+// A necromancer animates what has just FALLEN, so the sim keeps a small ring of the last
+// corpses — a position on the road, not a body. Fixed size, oldest overwritten, zero
+// allocation in the hot path, and a raise CONSUMES its corpse so two chanters can never
+// animate the same one twice. Cleared at every wave start: the dead of the last wave have
+// been carried off, and a ring that survived the muster would let a necromancer open a
+// wave with a full dozen already standing.
+const DEAD_CAP = 24, DEAD_RING = new Array(DEAD_CAP);
+let deadN = 0;
+function pushDead(e) {
+  DEAD_RING[deadN % DEAD_CAP] = { d: e.d, lane: e.lane, pathId: e.pathId, branch: e.branch };
+  deadN++;
+}
+function takeDead() { return deadN > 0 ? DEAD_RING[--deadN % DEAD_CAP] : null; }
+// SPLIT (§A). Deterministic on purpose: a fixed fan either side of the parent's own lane,
+// NO rng draw — a mold dying is a damage event, and pulling from the sim stream inside one
+// would shift every lane jitter downstream of whichever tick the player happened to kill it.
+function splitEnemy(e) {
+  const S = e.def.split;
+  for (let i = 0; i < S.n; i++) {
+    const c = makeEnemy(S.to, e.pathId, e.branch, e.lane + (i - (S.n - 1) / 2) * 1.6,
+      Math.max(0, e.d - 0.6), hpRampMul(), { isSplit: true });
+    c.spdM = e.spdM;                                     // children inherit their parent's omen pace
+  }
+  // HOOK: VFX/AUDIO — the burst that IS the split. Two beats, deliberately: killEnemy has
+  // already fired the parent's spore cloud through VFX.death, and this is the pair of
+  // children coming out of the wreck sideways on top of it.
+  VFX.splitPop(e.px, G.groundY(e.px, e.pz), e.pz);
+  Audio.play('spore', e.px, e.pz);
+}
 function killEnemy(e) {
   if (!e.alive) return;
   // Bounty rides the omen: a challenge wave pays danger money (+20%), Thin Ranks pays less.
@@ -8131,14 +9338,23 @@ function killEnemy(e) {
   // 2-gold levyman is 0.4 gold, and rounding each kill would have paid the player nothing
   // at all for the whole chaff stream (which is most of a wave's income).
   e.alive = false; e.deathT = vt(); state.kills++;
-  _bountyFrac += e.def.bounty * OMEN_FX.bounty * bountyMul();
+  // SPEC5 §B4 — a champion is worth six of its own kind. It rides the same fractional bank
+  // as every other bounty, so nothing about the purse's arithmetic changes.
+  _bountyFrac += e.def.bounty * (e.champ ? 6 : 1) * OMEN_FX.bounty * bountyMul();
   const paid = Math.floor(_bountyFrac); _bountyFrac -= paid; state.gold += paid;
   if (e.blockedBy >= 0) { const kn = G.knights[e.blockedBy]; if (kn) kn.target = -1; e.blockedBy = -1; }
   for (const kn of G.knights) if (kn.target === e.id) kn.target = -1;
-  VFX.burst(e.px, 1, e.pz, 0xc03828, 1.1, 0.4);
+  // HOOK: VFX — the generic death spark takes the species' own colour. A gravemold and its
+  // offspring burst fungal green (SPEC5 §A); everything else keeps the horde's crimson.
+  VFX.burst(e.px, 1, e.pz, (e.def.split || e.isSplit) ? 0x8fbf3a : 0xc03828, 1.1, 0.4);
   Audio.play('die', e.px, e.pz); UI.sync();
   // HOOK: VFX builder — coin pop / death effect (e)
   VFX.death(e);
+  // SPEC5 §A. Order matters: the corpse is registered BEFORE the split, so a necromancer
+  // walking behind a gravemold can raise the mold as well as meet its children. Raised bones
+  // are excluded — a chanter that fed on its own risen would never run out of them.
+  if (e.type !== 'skeleton') pushDead(e);
+  if (e.def.split && !e.isSplit) splitEnemy(e);
 }
 function endGame(won) {
   state.phase = won ? 'won' : 'lost';
@@ -9270,6 +10486,369 @@ VFX.banner = (x, z, rad) => {
   }
 };
 
+// ── GATE HERALD (SPEC5 §B3) ──────────────────────────────────────────────────
+// The prewave war-drum at a spawn gate. `share` (0..1) is that gate's fraction of the wave
+// about to walk out of it, and it drives EVERY dimension of the effect — ring radius, the
+// height and brightness of the banner flare, ember count — so a player reading the two
+// gates against each other gets the routing answer without reading a number anywhere.
+// Deliberately the ENEMY's palette (hot red-amber), not the warbanner's heraldic blue: this
+// is the horde announcing itself, and the one thing it must never be mistaken for is a
+// friendly standard. Seeded off the gate position and the beat index, so a headless capture
+// of a given tick draws the same beat every time.
+VFX.gateHerald = (x, z, share) => {
+  const s = Math.max(0.06, Math.min(1, share || 0)), gy = G.groundY(x, z);
+  eseed((x * 331 + z * 173) | 0, (G.vt() * 2.4) | 0);
+  const R = 4.4 + 7.6 * s;
+  // the drum-skin: a ground shock ring out to the herald's reach. LEAD as in VFX.banner —
+  // a one-shot ring caught on its first rendered frame would otherwise have radius zero.
+  eReset();
+  E.x = x; E.y = gy + 0.13; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 1.6; E.s1 = R * 2.0; E.r = 2.40; E.g = 0.72; E.b = 0.40;
+  E.a = 0.34 + 0.46 * s; E.life = 1.05; E.fade = 2; E.lead = 0.30; push(BB);
+  // a second, tighter ring a beat behind the first — one hoop reads as a spell, two read as
+  // a SKIN being struck, and the pair is also what survives being seen from a shallow angle
+  eReset();
+  E.x = x; E.y = gy + 0.15; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 1.0; E.s1 = R * 1.05; E.r = 2.55; E.g = 0.94; E.b = 0.52;
+  E.a = 0.30 + 0.38 * s; E.life = 0.62; E.fade = 2; E.lead = 0.12; push(BB);
+  // the banner flare ABOVE the arch, lifted by share so the loud gate is also the TALL one.
+  // Sits clear of the gate structure on purpose: a flare level with the arch is hidden by
+  // the arch's own hanging standards from any camera low enough to see the road.
+  eReset();
+  E.x = x; E.y = gy + 8.5 + 5.0 * s; E.z = z; E.tile = T_FLASH;
+  E.s0 = 1.6 + 2.0 * s; E.s1 = 4.0 + 5.5 * s;
+  E.r = 2.40; E.g = 0.90; E.b = 0.46; E.a = 0.40 + 0.46 * s; E.life = 0.72; E.fade = 2;
+  E.rot = er() * 6.28; E.lead = 0.18; push(BB);
+  // embers off the drum: 3 at a token share, 14 at a full one
+  for (let i = 0, k = 3 + Math.round(11 * s); i < k; i++) {
+    eReset();
+    const an = er() * 6.2832, rr = er() * (1.4 + 1.8 * s);
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.7 + er() * (3.0 + 3.5 * s); E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 0.7 + WX * 0.6; E.vy = 2.0 + er() * (1.8 + 2.4 * s); E.vz = Math.sin(an) * 0.7 + WZ * 0.6;
+    E.drag = 1.3; E.grav = -0.3; E.tile = er() < 0.45 ? T_GLINT : T_EMBER;
+    E.s0 = 0.18 + er() * 0.20; E.s1 = 0.04;
+    E.r = 2.40; E.g = 1.00; E.b = 0.42; E.a = 0.9; E.life = 0.8 + er() * 0.9; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 4; E.lead = er() * 0.22; push(BB);
+  }
+  // dust the beat knocks off the threshold — the only non-additive half, so the effect still
+  // reads as a physical drum on a mobile tier that dims the bloom
+  for (let i = 0, k = 2 + Math.round(4 * s); i < k; i++) {
+    eReset();
+    const an = er() * 6.2832;
+    E.x = x + Math.cos(an) * 1.5; E.y = gy + 0.3; E.z = z + Math.sin(an) * 1.5;
+    E.vx = Math.cos(an) * (1.8 + 2.2 * s); E.vz = Math.sin(an) * (1.8 + 2.2 * s); E.vy = 0.5; E.drag = 2.4;
+    E.tile = T_DUST; E.mode = 1; E.s0 = 0.7; E.s1 = 2.2 + 1.6 * s;
+    E.r = 0.74; E.g = 0.60; E.b = 0.46; E.a = 0.20 + 0.16 * s; E.life = 1.0 + er() * 0.5;
+    E.rot = er() * 6.28; E.lead = 0.05; push(BA);
+  }
+};
+
+// ══════════ SPEC5 §A/§B — NEW CONTENT DRESSING ═══════════════════════════════
+// Every one-shot below follows the three rules at the head of this section: seeded off its
+// own world position and the virtual time (so a headless capture of a given tick draws the
+// same effect every time), pooled through the two ring buffers, and LEAD-dated wherever the
+// frame worth looking at is not the frame the effect was born on. Mobile thinning is by
+// LOWQ where an effect can run several copies at once; the single-instance ones are already
+// inside budget on a 760/520 phone tier.
+const _v5 = new THREE.Vector3();
+
+// ── HIT-WARD (§A): a blow eaten by a rune ────────────────────────────────────
+// The hardest brief in the pass, because this effect's entire job is to NOT read as the
+// damage effect firing beside it. A player watching an archer wall waste itself on a warded
+// one has to see, without a tutorial and without a number, that the arrows are landing and
+// nothing is happening. Three separations carry it, and all three are load-bearing:
+//   HUE       cold rune blue-white. Every damage school in the game is warm or violet
+//             (pierce sparks, crush dust, fire, storm) — nothing warm is allowed in here.
+//   FORM      a SURFACE event: a shell flash at the body's own radius and one hard glyph.
+//             A ward does not throw anything off a body; it stops the blow at the skin.
+//   DIRECTION the sparks skid TANGENTIALLY along the shell instead of away from it, which
+//             is the difference between a blow being turned and a blow going in.
+// `left` is the rune count AFTER this one was spent: the last rune going out flares harder
+// and wider, because the very next hit is the one that lands.
+VFX.wardHit = (x, gy, z, h, left) => {
+  eseed((x * 419 + z * 271) | 0, (G.vt() * 733) | 0);
+  const y = gy + h * 0.62, brk = left <= 0 ? 1 : 0;
+  eReset();                                                       // the shell, seen edge-on
+  // FIRST CUT was `a 0.50 / s1 h*1.02` and the hoop clipped to WHITE and swallowed the
+  // wardedone's shoulders — a bubble around the body rather than a blow being turned by it.
+  // Held under the body's own width now, and the blue channel is pushed well past the red so
+  // the additive bucket's headroom cannot bleach the hue back out at the ring's peak.
+  E.x = x; E.y = y; E.z = z; E.tile = T_RING;
+  E.s0 = h * 0.62; E.s1 = h * (0.86 + 0.30 * brk);
+  E.r = 0.44; E.g = 1.08; E.b = 2.45; E.a = 0.34 + 0.24 * brk; E.life = 0.26 + 0.14 * brk;
+  E.fade = 2; E.rot = er() * 6.28; E.lead = 0.03; push(BB);
+  eReset();                                                       // the rune that spent itself
+  E.x = x; E.y = y; E.z = z; E.tile = T_FLASH;
+  E.s0 = 0.24; E.s1 = 0.85 + 0.60 * brk;
+  E.r = 0.80; E.g = 1.50; E.b = 2.60; E.a = 0.62; E.life = 0.17; E.fade = 2;
+  E.rot = er() * 6.28; push(BB);
+  for (let i = 0, k = (LOWQ ? 3 : 4) + (brk ? 5 : 0); i < k; i++) {
+    eReset();
+    const an = er() * 6.2832, tg = an + 1.5708 * (er() < 0.5 ? 1 : -1);
+    E.x = x + Math.cos(an) * h * 0.50; E.y = y + es1() * h * 0.30; E.z = z + Math.sin(an) * h * 0.50;
+    E.vx = Math.cos(tg) * (3.4 + er() * 3.0); E.vz = Math.sin(tg) * (3.4 + er() * 3.0);
+    E.vy = 0.5 + er() * 1.0; E.drag = 4.2; E.grav = 3.0;
+    E.tile = T_GLINT; E.s0 = 0.15 + er() * 0.14; E.s1 = 0.03;
+    E.r = 0.90; E.g = 1.60; E.b = 2.45; E.a = 0.95; E.life = 0.24 + er() * 0.20; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 8; push(BB);
+  }
+};
+
+// ── GRAVEMOLD (§A): the burst, and the two that come out of it ───────────────
+// A fungal mass under pressure. The read has to be SPORES and not dust: the cloud is
+// yellow-green, it EXPANDS instead of settling (negative gravity, low drag, a long fade)
+// and it is the one death cloud in the game that outlives the body by two full seconds.
+// `child` halves everything — a moldling is a quarter of the parent's mass and there are
+// two of them, so an unthinned copy would make the offspring louder than the parent.
+VFX.spores = (x, gy, z, child) => {
+  eseed((x * 617 + z * 331) | 0, (G.vt() * 811) | 0);
+  const k = child ? 0.55 : 1, N = Math.round((child ? 5 : 11) * (LOWQ ? 0.6 : 1));
+  for (let i = 0; i < N; i++) {                                   // the cloud getting out
+    eReset();
+    const an = er() * 6.2832, rr = er() * 0.5 * k;
+    E.x = x + Math.cos(an) * rr; E.y = gy + (0.35 + er() * 0.7) * k; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * (1.1 + er() * 1.9) * k; E.vz = Math.sin(an) * (1.1 + er() * 1.9) * k;
+    E.vy = 0.75 + er() * 0.9; E.grav = -0.55; E.drag = 1.5;       // spores RISE and hang
+    E.tile = er() < 0.55 ? T_WISP : T_SMOKE; E.mode = 0;
+    E.s0 = 0.5 * k; E.s1 = (2.3 + er() * 1.6) * k;
+    // the mold's own mesh is bone-pale, so an olive cloud at 0.20 sat INSIDE its silhouette
+    // and read as a shadow on it. Pushed toward chartreuse and up in opacity: the cloud has
+    // to be the brightest thing in the two metres around the body it came out of.
+    E.r = 0.55; E.g = 0.72; E.b = 0.26;                            // #8cb742, sunlit spore
+    E.a = 0.30 + er() * 0.14; E.life = (1.6 + er() * 1.5) * (child ? 0.7 : 1);
+    E.rot = er() * 6.28; E.rotV = es1() * 0.9; E.lead = 0.05; push(BA);
+  }
+  for (let i = 0, m = child ? 3 : 7; i < m; i++) {                 // wet flesh thrown clear
+    eReset();
+    E.x = x + es1() * 0.3 * k; E.y = gy + (0.4 + er() * 0.5) * k; E.z = z + es1() * 0.3 * k;
+    E.vx = es1() * 3.2 * k; E.vy = 1.6 + er() * 2.6; E.vz = es1() * 3.2 * k;
+    E.grav = 15; E.drag = 0.7; E.tile = T_CHUNK;
+    E.s0 = (0.20 + er() * 0.16) * k; E.s1 = (0.14 + er() * 0.10) * k;
+    E.r = 0.31; E.g = 0.34; E.b = 0.17; E.a = 0.85; E.life = 0.55 + er() * 0.4;
+    E.rot = er() * 6.28; E.rotV = es1() * 9; E.lead = 0.03; push(BA);
+  }
+  eReset();                                                        // the pop itself, one quad
+  E.x = x; E.y = gy + 0.55 * k; E.z = z; E.tile = T_SOFT;
+  E.s0 = 0.4 * k; E.s1 = (2.6 + 0.8) * k; E.vy = 0.9;
+  E.r = 0.72; E.g = 1.10; E.b = 0.30; E.a = 0.34; E.life = 0.34; E.fade = 2; E.lead = 0.04; push(BB);
+};
+// The SPLIT is a different beat from the death: the parent has already burst, and this is
+// the two children coming out of the wreck sideways. Deterministic fan (splitEnemy's own
+// lane offsets are ±0.8), so the effect points where the bodies actually go.
+VFX.splitPop = (x, gy, z) => {
+  eseed((x * 947 + z * 149) | 0, (G.vt() * 577) | 0);
+  for (let s = -1; s <= 1; s += 2) {
+    eReset();
+    E.x = x + s * 0.5; E.y = gy + 0.55; E.z = z; E.tile = T_FLASH;
+    E.s0 = 0.30; E.s1 = 1.35; E.vx = s * 1.4;
+    E.r = 0.95; E.g = 1.55; E.b = 0.42; E.a = 0.62; E.life = 0.26; E.fade = 2;
+    E.rot = er() * 6.28; E.lead = 0.05; push(BB);
+    for (let i = 0; i < (LOWQ ? 2 : 4); i++) {
+      eReset();
+      E.x = x + s * 0.45; E.y = gy + 0.3 + er() * 0.5; E.z = z + es1() * 0.4;
+      E.vx = s * (2.2 + er() * 2.4); E.vy = 1.0 + er() * 1.4; E.vz = es1() * 1.6;
+      E.grav = 9; E.drag = 2.0; E.tile = T_MOTE;
+      E.s0 = 0.16 + er() * 0.12; E.s1 = 0.04;
+      E.r = 0.80; E.g = 1.45; E.b = 0.36; E.a = 0.9; E.life = 0.42 + er() * 0.3; E.fade = 2;
+      E.rot = er() * 6.28; E.rotV = es1() * 6; push(BB);
+    }
+  }
+  eReset();                                                        // ground ring: something gave way
+  E.x = x; E.y = gy + 0.12; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 0.8; E.s1 = 4.6; E.r = 0.55; E.g = 1.15; E.b = 0.34;
+  E.a = 0.34; E.life = 0.48; E.fade = 2; E.lead = 0.06; push(BB);
+};
+
+// ── THE RAISING (§A): green wisps out of the road, and the hand that called them ──
+// Two halves on purpose. The WISP is at the corpse — it comes up out of the ground where a
+// body fell, rises past where the shoulders were and turns over at the top, so the eye is
+// already at the spot when the skeleton's mesh appears there. The FLARE is at the chanter,
+// three metres away, and it is what tells the player which of the sixty things on the road
+// is doing this to him. Same green as `EMIT.necromancer` so the effect and the mesh's own
+// hand-glow are one material rather than two.
+VFX.raiseWisp = (x, z) => {
+  const gy = G.groundY(x, z);
+  eseed((x * 733 + z * 457) | 0, (G.vt() * 389) | 0);
+  // FIRST CUT put five 0.22-wide motes against a sunlit dirt road and hung a 3.2 u hoop
+  // under them: at gameplay zoom the hoop was the only thing that read, so a RAISING looked
+  // like a spell circle with nothing coming out of it. The wisps carry the effect now — big
+  // soft ones, born low, lifting past shoulder height — and the hoop is pulled in under the
+  // body it belongs to so it frames them instead of competing with them.
+  // ...and the second cut over-corrected into three fat additive BALLS of green sitting on
+  // the road. The fix is SHAPE, not size: `asp` stretches the quad vertically, so a wisp is
+  // a rising streak — which is what the word means — at a fraction of the screen area a
+  // round blob of the same legibility would cost. Opacity comes back down with it.
+  for (let i = 0, k = LOWQ ? 4 : 6; i < k; i++) {
+    eReset();
+    const an = er() * 6.2832, rr = 0.12 + er() * 0.40;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.05 + er() * 0.25; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 0.30 + WX * 0.25; E.vz = Math.sin(an) * 0.30 + WZ * 0.25;
+    E.vy = 1.6 + er() * 1.4; E.drag = 1.6; E.grav = -0.30;
+    E.tile = T_WISP; E.asp = 2.3 + er() * 0.9;                     // tall, not round
+    E.s0 = 0.30 + er() * 0.24; E.s1 = 0.05 + er() * 0.14;
+    E.r = 0.30; E.g = 1.42; E.b = 0.60; E.a = 0.52; E.life = 1.0 + er() * 0.7; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = er() * 0.26; push(BB);
+  }
+  eReset();                                                        // the chant-light at the spot
+  E.x = x; E.y = gy + 0.45; E.z = z; E.tile = T_SOFT;
+  E.s0 = 0.35; E.s1 = 1.45; E.vy = 0.5; E.drag = 1.3;
+  E.r = 0.20; E.g = 0.95; E.b = 0.40; E.a = 0.30; E.life = 0.75; E.fade = 2; E.lead = 0.10; push(BB);
+  eReset();                                                        // the ground letting go
+  E.x = x; E.y = gy + 0.10; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 0.4; E.s1 = 1.9; E.r = 0.26; E.g = 1.20; E.b = 0.52;
+  E.a = 0.30; E.life = 0.62; E.fade = 2; E.lead = 0.14; push(BB);
+  eReset();                                                        // the earth it turns over
+  E.x = x; E.y = gy + 0.20; E.z = z; E.tile = T_DUST; E.mode = 1;
+  E.s0 = 0.5; E.s1 = 2.0; E.vy = 0.4; E.drag = 2.6;
+  E.r = 0.62; E.g = 0.56; E.b = 0.42; E.a = 0.26; E.life = 1.0; E.rot = er() * 6.28; push(BA);
+};
+VFX.raiseHand = (x, gy, z, h) => {
+  eseed((x * 199 + z * 883) | 0, (G.vt() * 641) | 0);
+  eReset();                                                        // the hand itself
+  E.x = x; E.y = gy + h * 0.72; E.z = z; E.tile = T_FLASH;
+  E.s0 = 0.34; E.s1 = 1.55; E.r = 0.40; E.g = 1.75; E.b = 0.70;
+  E.a = 0.72; E.life = 0.46; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.06; push(BB);
+  eReset();                                                        // and the breath around it
+  E.x = x; E.y = gy + h * 0.62; E.z = z; E.tile = T_SOFT;
+  E.s0 = 0.9; E.s1 = 3.4; E.vy = 0.55; E.drag = 1.4;
+  E.r = 0.22; E.g = 0.98; E.b = 0.44; E.a = 0.34; E.life = 0.85; E.fade = 2; E.lead = 0.08; push(BB);
+};
+
+// ── CUTPURSE (§A): the purse going through the gate with him ─────────────────
+// The one leak in the game that costs something other than the vale, so it gets the one
+// leak effect that is not an alarm: the coins BOUNCE and then go the way the thief went.
+// Scaled by what was actually taken (0 gold stolen = a dry gate, and no scatter at all),
+// because a fat scatter over an empty purse would be a lie about the state of the treasury.
+VFX.purse = (x, gy, z, amount) => {
+  const s = Math.max(0, Math.min(1, (amount || 0) / 35));
+  if (s < 0.05) return;
+  eseed((x * 281 + z * 601) | 0, (G.vt() * 907) | 0);
+  for (let i = 0, k = Math.round((LOWQ ? 6 : 11) * s); i < k; i++) {
+    eReset();
+    const an = er() * 6.2832;
+    E.x = x + es1() * 0.4; E.y = gy + 0.9 + er() * 0.6; E.z = z + es1() * 0.4;
+    E.vx = Math.cos(an) * (2.2 + er() * 3.4); E.vz = Math.sin(an) * (2.2 + er() * 3.4);
+    E.vy = 1.8 + er() * 2.8; E.grav = 19; E.drag = 0.55;
+    E.tile = T_COIN; E.s0 = 0.26 + er() * 0.12; E.s1 = 0.22;
+    E.r = 2.05; E.g = 1.52; E.b = 0.52; E.a = 0.95; E.life = 0.75 + er() * 0.5; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 12; E.lead = er() * 0.10; push(BB);
+  }
+  eReset();                                                        // the cut leather landing
+  E.x = x; E.y = gy + 0.25; E.z = z; E.tile = T_DUST; E.mode = 1;
+  E.s0 = 0.5; E.s1 = 2.4; E.vy = 0.3; E.drag = 2.8;
+  E.r = 0.66; E.g = 0.55; E.b = 0.40; E.a = 0.28; E.life = 0.9; E.rot = er() * 6.28;
+  E.lead = 0.05; push(BA);
+};
+
+// ── CHAMPION (§B4): the promotion flourish ───────────────────────────────────
+// One brief gold flare as the champion walks out of the gate, and nothing after it. This is
+// the answer to the sim pass's own risk note — a champion is +15% scale and a nameplate, and
+// at a hundred and twenty bodies a column neither is enough to make the eye FIND it on the
+// frame it arrives. A flare is: it happens once, at a known place, and it hands the eye off
+// to the plate that slides in over the same body. Gold, and only gold — the heraldic blue is
+// the player's colour and the hot red-amber is the gate's.
+VFX.champion = (x, gy, z, h) => {
+  eseed((x * 373 + z * 619) | 0, (G.vt() * 269) | 0);
+  eReset();                                                        // the flare at the shoulders
+  E.x = x; E.y = gy + h * 0.75; E.z = z; E.tile = T_FLASH;
+  E.s0 = 0.7; E.s1 = 3.1; E.r = 2.30; E.g = 1.72; E.b = 0.68;
+  E.a = 0.80; E.life = 0.52; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.10; push(BB);
+  eReset();                                                        // a hoop at the feet
+  E.x = x; E.y = gy + 0.13; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 1.0; E.s1 = 6.2; E.r = 2.05; E.g = 1.55; E.b = 0.60;
+  E.a = 0.50; E.life = 0.80; E.fade = 2; E.lead = 0.16; push(BB);
+  for (let i = 0, k = LOWQ ? 6 : 12; i < k; i++) {                 // gilt lifting off it
+    eReset();
+    const an = er() * 6.2832, rr = er() * 1.1;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.3 + er() * h; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 0.9 + WX * 0.5; E.vy = 2.2 + er() * 2.4; E.vz = Math.sin(an) * 0.9 + WZ * 0.5;
+    E.drag = 1.5; E.grav = -0.3; E.tile = er() < 0.5 ? T_GLINT : T_MOTE;
+    E.s0 = 0.18 + er() * 0.18; E.s1 = 0.04;
+    E.r = 2.25; E.g = 1.66; E.b = 0.62; E.a = 0.92; E.life = 0.8 + er() * 0.7; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 5; E.lead = er() * 0.24; push(BB);
+  }
+};
+
+// ── THE LONG NIGHT (§B2): the lull, and the horn that ends it ────────────────
+// SPEC5 asks whether the lull should desaturate the frame. It must not: the grade is a
+// static CSS layer (see VFX.post's note) and animating it would repaint the DOM after the
+// final shot render, which GAME_SPEC §2.3b forbids outright. So the beat is carried IN THE
+// WORLD instead — a cold fog that rolls down the road the wave just died on. That is also
+// the better picture: a post filter dims the whole diorama, a fog bank dims THE ROAD, and
+// the road is the thing the player is being told is not finished with him.
+// One pass down the spline, big soft puffs at a low ceiling, lifetimes that cover the six
+// seconds of silence, drifting on the map wind so it is moving when the horn cuts it.
+VFX.nightLull = () => {
+  eseed(0x1043, (G.vt() * 13) | 0);
+  const N = LOWQ ? 24 : 44, L = PT.len;
+  for (let i = 0; i < N; i++) {
+    const d = (i + 0.5) / N * L + es1() * (L / N) * 0.4;
+    G.pathPos(d, _v5, es1() * 5.5);
+    eReset();
+    // FIRST CUT was 26 puffs at a 0.13 peak with a lead under a second, and on the frame the
+    // banner reads THE HORNS FALL SILENT the road was still bare meadow: `fade = 1`'s sine
+    // envelope is at 0.4× that early, so the effective alpha was 0.05 and the bank had not
+    // arrived yet. LEAD is the fix, not opacity — the fog is born up to 2.4 s in the past, so
+    // the lull's FIRST frame already has weather on the road and the six seconds are spent
+    // watching it thin, which is the right way round for a false ending.
+    E.x = _v5.x; E.y = _v5.y + 0.20 + er() * 0.7; E.z = _v5.z;
+    E.vx = WX * (0.55 + er() * 0.5); E.vz = WZ * (0.55 + er() * 0.5); E.vy = 0.10 + er() * 0.12;
+    // ground-aligned for all but a sixth of the bank: a fog that BILLBOARDS at this size
+    // stands up off the meadow like a wall and the eye reads it as a rendering fault. It has
+    // to lie on the road. The few uprights are what stop the bank looking like a decal.
+    E.drag = 0.35; E.mode = er() < 0.84 ? 1 : 0; E.tile = er() < 0.6 ? T_SMOKE : T_WISP;
+    E.s0 = 5.0 + er() * 3.0; E.s1 = 15.0 + er() * 6.0;
+    // cold slate-blue, and DARKER than the meadow it sits on — a bright fog would read as
+    // dawn, and the one thing this moment is not is morning
+    E.r = 0.30; E.g = 0.38; E.b = 0.58;
+    // A THIRD cut on opacity, and the arithmetic is worth writing down because it caught two
+    // passes: the number here is multiplied by the ATLAS TILE's own alpha (T_SMOKE's cloud is
+    // authored at 0.52 peak and feathered to nothing at the rim, so call it 0.4 in the body)
+    // AND by `fade = 1`'s sine envelope. 0.26 therefore reached the screen at about 0.08 — a
+    // haze the camera at this preset's 76 u pull-back could not resolve at all. Nothing under
+    // 0.5 authored is a fog bank at this distance.
+    E.a = 0.72 + er() * 0.16; E.life = 7.5 + er() * 2.5; E.fade = 1;   // sin envelope: in and out
+    E.rot = er() * 6.28; E.rotV = es1() * 0.16; E.lead = 1.6 + er() * 0.8; push(BA);
+  }
+};
+// The horn's picture. Fired at each gate the second host is coming out of, so the answer to
+// "where" is on the frame the answer to "what" is on. The ember column is the gate herald's
+// palette on purpose: the drums were the promise, this is the promise being kept.
+VFX.nightSurge = (x, z) => {
+  const gy = G.groundY(x, z);
+  eseed((x * 151 + z * 787) | 0, (G.vt() * 331) | 0);
+  decal(x, z, 13, 1, 1.25, 2.20, 0.66, 0.34, er(), 0.30);
+  eReset();
+  E.x = x; E.y = gy + 0.15; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 2.4; E.s1 = 30; E.r = 2.45; E.g = 0.78; E.b = 0.40;
+  E.a = 0.62; E.life = 1.30; E.fade = 2; E.lead = 0.34; push(BB);
+  eReset();                                                        // the flare over the arch
+  E.x = x; E.y = gy + 13.5; E.z = z; E.tile = T_FLASH;
+  E.s0 = 3.4; E.s1 = 10.5; E.r = 2.50; E.g = 0.94; E.b = 0.44;
+  E.a = 0.80; E.life = 0.95; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.22; push(BB);
+  for (let i = 0, k = LOWQ ? 10 : 22; i < k; i++) {                 // the column of embers
+    eReset();
+    const an = er() * 6.2832, rr = er() * 3.2;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.6 + er() * 7.0; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 1.0 + WX * 0.7; E.vy = 3.0 + er() * 4.2; E.vz = Math.sin(an) * 1.0 + WZ * 0.7;
+    E.drag = 1.1; E.grav = -0.4; E.tile = er() < 0.4 ? T_GLINT : T_EMBER;
+    E.s0 = 0.22 + er() * 0.24; E.s1 = 0.04;
+    E.r = 2.45; E.g = 1.02; E.b = 0.40; E.a = 0.92; E.life = 1.0 + er() * 1.1; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 5; E.lead = er() * 0.30; push(BB);
+  }
+  for (let i = 0, k = LOWQ ? 4 : 8; i < k; i++) {                   // the fog blown off the road
+    eReset();
+    const an = er() * 6.2832;
+    E.x = x + Math.cos(an) * 2.2; E.y = gy + 0.4; E.z = z + Math.sin(an) * 2.2;
+    E.vx = Math.cos(an) * (7.5 + er() * 5.0); E.vz = Math.sin(an) * (7.5 + er() * 5.0);
+    E.vy = 0.6; E.drag = 1.5; E.mode = 1; E.tile = T_DUST;
+    E.s0 = 1.2; E.s1 = 6.5 + er() * 3.0;
+    E.r = 0.66; E.g = 0.56; E.b = 0.46; E.a = 0.24; E.life = 1.5 + er() * 0.8;
+    E.rot = er() * 6.28; E.lead = 0.10; push(BA);
+  }
+  VFX.shakeAt(x, gy, z, 0.55);
+};
+
 // ── directional arrow / bolt impact (sparks kick back along the shaft) ────────
 VFX.impact = (x, y, z, dx, dy, dz, s) => {
   eseed((x * 71 + z * 113) | 0, (G.vt() * 997) | 0);
@@ -9734,6 +11313,15 @@ VFX.death = (e) => {
     if (er() < 0.30) VFX.coin(x, gy + 0.8, z);
     return;
   }
+  // GRAVEMOLD / MOLDLING (SPEC5 §A): a fungal mass does not shed gear and does not land
+  // heavy — it BURSTS. Branching here rather than at the call site keeps the species' whole
+  // death in one place, exactly as the hound's is, and means the offspring inherit the same
+  // read at half the mass without a second entry point.
+  if (e.def.split || e.isSplit) {
+    VFX.spores(x, gy, z, !!e.isSplit);
+    if (e.def.bounty >= 4 || er() < 0.30) VFX.coin(x, gy + h * 0.6, z);
+    return;
+  }
   const TC = e.def.tint;                                          // boss-variant palette
   for (let i = 0; i < (big > 2 ? 12 : big > 1.2 ? 6 : 3); i++) {   // ground dust collapse
     eReset();
@@ -9971,6 +11559,14 @@ const MAPID = (G.MAP && G.MAP.id) || 1;
 // Phone budget: the burning-ground dressing is the one new emitter that can run four
 // instances at once, and the mobile additive bucket is 520 slots wide against 1900.
 const LOWQ = tier === 'mobile';
+// SPEC5 §A/§B1 rhythms. Both are DERIVED from the sim tick rather than stored on a unit, so
+// they cost nothing on a wave that fields neither and they survive the harness's catch-up
+// (a beat is a function of virtual time, not of how many frames have been drawn).
+const WING_PER = 0.62;                               // one wyvern wing-beat, in seconds
+const RANK_PER = 0.58;                               // one phalanx footfall
+// Arrival-rate watch behind the stampede pulse — see the pass in emitTick for why the
+// formation is detected rather than flagged.
+let _arrHi = -1, _arrAcc = 0, _arrX = 0, _arrZ = 0, _arrPulse = -999;
 const _bnSeen = new Set();                           // warbanner uids already dressed
 let _bnInit = false;                                 // ...and whether first sight has passed
 // Ember Wastes: fixed scorch vents that breathe sparks. Chosen ONCE off the private
@@ -10049,6 +11645,141 @@ function emitTick(tick, lead) {
         E.vy = 0.16; E.drag = 2.4; E.r = 0.72; E.g = 0.59; E.b = 0.41;
         E.a = 0.16; E.life = 0.75 + er() * 0.5; E.rot = er() * 6.28;
         push(BA);
+      }
+    }
+  }
+  // ── WYVERN WING-BEAT (SPEC5 §A) ────────────────────────────────────────────
+  // A flyer is the one body in the game whose weight is invisible: it never touches the
+  // road, so nothing in the frame says it is heavy. The downwash is what says it — dust
+  // pressed OUT of the meadow under a body that is three metres above it, timed to the
+  // wing that made it. The beat is derived, not stored: a golden-ratio phase off the unit
+  // id means a fourteen-strong flock never beats in unison (which would read as a machine)
+  // and never drifts into a mush either, and it is a pure function of the sim tick, so a
+  // headless capture of a tick catches exactly the beats a live frame would.
+  // The AUDIO cue is emitted from here for the same reason: this is the only place in the
+  // file where the wing rhythm exists. `lead === 0` keeps the back-fill silent — priming
+  // ninety historical ticks must dress the meadow, not fire ninety wingbeats.
+  {
+    let budget = LOWQ ? 1 : 3;
+    const t1 = tick * TICK, t0 = t1 - TICK;
+    eseed(tick, 0x3ba71d);
+    for (let i = 0; i < EN.length && budget > 0; i++) {
+      const e = EN[i];
+      if (!e.alive || !e.def.alt) continue;
+      const ph = (e.id * 0.61803399) % 1;
+      if (((t1 / WING_PER + ph) | 0) === ((t0 / WING_PER + ph) | 0)) continue;
+      budget--;
+      const gy = G.groundY(e.px, e.pz), ay = gy + e.def.alt;
+      // FIRST CUT put two 0.12-alpha puffs under each flyer and they vanished into the
+      // marching haze the column was already raising — a flock over a road is the worst
+      // possible background for more warm dust. What separates them is SHAPE, not opacity:
+      // the downwash is a ring pressed OUT from under the body, so it reads as pressure
+      // rather than as more of the same drift.
+      eReset();
+      E.x = e.px; E.y = gy + 0.11; E.z = e.pz; E.tile = T_RING; E.mode = 1;
+      E.s0 = 0.7; E.s1 = 4.2; E.r = 0.92; E.g = 0.80; E.b = 0.60;
+      E.a = 0.17; E.life = 0.62; E.fade = 2; E.lead = 0.07; push(BB);
+      for (let j = 0; j < 2; j++) {                  // downwash: dust pressed off the ground
+        eReset();
+        const an = er() * 6.2832, rr = 0.5 + er() * 0.9;
+        E.x = e.px + Math.cos(an) * rr; E.y = gy + 0.12; E.z = e.pz + Math.sin(an) * rr;
+        E.vx = Math.cos(an) * (2.4 + er() * 2.2); E.vz = Math.sin(an) * (2.4 + er() * 2.2);
+        E.vy = 0.30; E.drag = 3.0; E.mode = 1; E.tile = T_DUST;
+        E.s0 = 0.5; E.s1 = 2.7 + er() * 1.3;
+        E.r = 0.76; E.g = 0.63; E.b = 0.45; E.a = 0.17 + er() * 0.07;
+        E.life = 0.85 + er() * 0.55; E.rot = er() * 6.28; push(BA);
+      }
+      // WING-TIP SPILL, and this is the half that actually carries the beat. Two cuts of this
+      // pass tried to sell a flyer's weight with GROUND dust alone and both failed for the
+      // same reason: a flock rides over the column, so the meadow under it is covered in
+      // bodies and there is nothing left to raise dust off. Air spilling off the tips is at
+      // the WYVERN's height, always in front of whatever is behind it, and it is the read
+      // every aerial shot in the reference material uses. The pair is thrown along the road
+      // normal so it flanks the body rather than trailing it.
+      const tn = G.pathTan(e.d, e.pathId), nx = -tn.z, nz = tn.x;
+      for (let s = -1; s <= 1; s += 2) {
+        eReset();
+        E.x = e.px + nx * 1.45 * s; E.y = ay - 0.25; E.z = e.pz + nz * 1.45 * s;
+        E.vx = nx * 1.9 * s + WX * 0.4; E.vz = nz * 1.9 * s + WZ * 0.4; E.vy = -1.25;
+        E.drag = 2.2; E.tile = T_WISP; E.s0 = 0.38; E.s1 = 2.3 + er() * 0.8;
+        E.r = 0.86; E.g = 0.75; E.b = 0.60; E.a = 0.30 + er() * 0.08;
+        E.life = 0.55 + er() * 0.30; E.rot = er() * 6.28; E.rotV = es1() * 1.2; push(BA);
+      }
+      if (lead === 0) Audio.play('wing', e.px, e.pz, 0.62);
+    }
+  }
+  // ── PHALANX FOOTFALL (SPEC5 §B1) ───────────────────────────────────────────
+  // Three abreast walking in lockstep, and the one thing that sells lockstep is that the
+  // dust arrives as a ROW. Every member of a rank shares `e.rank`, so every member passes
+  // the same beat test on the same tick and plants together — the effect is synced because
+  // the DATA is synced, not because anything here coordinates them. Held members are
+  // excluded for the same reason tickSim excludes them from the rank minimum: a man in
+  // melee is not marching, and dust under his boots would say he was.
+  if (lead < 1.0) {
+    eseed(tick, 0x71c40b);
+    let budget = LOWQ ? 3 : 6;
+    const t1 = tick * TICK, t0 = t1 - TICK;
+    for (let i = 0; i < EN.length && budget > 0; i++) {
+      const e = EN[i];
+      if (!e.alive || e.rank === undefined || e.blockedBy >= 0 || e.shooting) continue;
+      const ph = ((e.rank % 97) * 0.37) % 1;
+      if (((t1 / RANK_PER + ph) | 0) === ((t0 / RANK_PER + ph) | 0)) continue;
+      budget--;
+      const gy = G.groundY(e.px, e.pz);
+      // ONE puff per man per beat, and small. The first cut fired two at 0.16-0.22 alpha and
+      // 2.1 u wide, and because a whole rank plants on the SAME tick that stacked four to six
+      // overlapping ground quads under three bodies — which resolved as a pale DISC under
+      // each shield, indistinguishable from a selection ring (visible in the first cut of
+      // shots\_champion.png). A footfall is a scuff. The synchrony is the effect; the
+      // individual puff must stay under the boot that made it.
+      eReset();
+      E.x = e.px + es1() * 0.26; E.y = gy + 0.09; E.z = e.pz + es1() * 0.26;
+      // kicked BACKWARD off the boot: a marching puff that expands evenly reads as a
+      // body landing, one that trails behind reads as a body moving forward
+      E.vx = es1() * 0.5 - WX * 0.25; E.vz = es1() * 0.5 - WZ * 0.25; E.vy = 0.20;
+      E.drag = 3.6; E.mode = 1; E.tile = T_DUST;
+      E.s0 = 0.22; E.s1 = 1.05 + er() * 0.35;
+      E.r = 0.75; E.g = 0.62; E.b = 0.44; E.a = 0.105 + er() * 0.035;
+      E.life = 0.62 + er() * 0.30; E.rot = er() * 6.28; push(BA);
+    }
+  }
+  // ── STAMPEDE PULSE (SPEC5 §B1) ─────────────────────────────────────────────
+  // A stampede is eight bodies out of the gate inside a second and then three seconds of
+  // silence. Nothing on a UNIT says so — a formation is a shape in the spawn queue, not a
+  // property of a body — so this reads the arrival RATE instead. That has the happy
+  // property of also catching a hound pack, a Long Night surge and a swarm's densest
+  // stretch without being told about any of them: whenever the gate disgorges a knot, the
+  // ground answers. `e.id` is monotonic and G.enemies is append-ordered, so new arrivals
+  // are exactly the tail past the high-water mark; `d < 5` keeps the test at the MOUTH, so
+  // a necromancer raising three bodies mid-road can never be mistaken for a charge.
+  if (lead === 0) {
+    let hi = _arrHi, nn = 0, sx = 0, sz = 0;
+    for (let i = EN.length - 1; i >= 0; i--) {
+      const e = EN[i];
+      if (e.id <= _arrHi) break;
+      if (e.id > hi) hi = e.id;
+      if (e.d < 5) { nn++; sx += e.px; sz += e.pz; }
+    }
+    _arrHi = hi;
+    _arrAcc = _arrAcc * 0.86 + nn;                   // ~0.4 s of memory at 30 tps
+    if (nn) { _arrX = sx / nn; _arrZ = sz / nn; }
+    if (_arrAcc >= 4 && tick - _arrPulse > 24) {
+      _arrPulse = tick;
+      const s = Math.min(1.6, _arrAcc / 6), gy = G.groundY(_arrX, _arrZ);
+      eseed(tick, 0x2ad901);
+      eReset();
+      E.x = _arrX; E.y = gy + 0.12; E.z = _arrZ; E.tile = T_RING; E.mode = 1;
+      E.s0 = 1.6; E.s1 = 9.0 * s; E.r = 1.35; E.g = 1.05; E.b = 0.74;
+      E.a = 0.20 * s; E.life = 0.72; E.fade = 2; E.lead = 0.10; push(BB);
+      for (let i = 0, k = Math.round((LOWQ ? 4 : 8) * s); i < k; i++) {
+        eReset();
+        const an = er() * 6.2832, rr = 0.6 + er() * 2.0;
+        E.x = _arrX + Math.cos(an) * rr; E.y = gy + 0.14 + er() * 0.3; E.z = _arrZ + Math.sin(an) * rr;
+        E.vx = Math.cos(an) * (2.4 + er() * 2.6) * s; E.vz = Math.sin(an) * (2.4 + er() * 2.6) * s;
+        E.vy = 0.45; E.drag = 2.6; E.mode = 1; E.tile = T_DUST;
+        E.s0 = 0.7; E.s1 = (3.0 + er() * 1.8) * s;
+        E.r = 0.76; E.g = 0.63; E.b = 0.45; E.a = 0.16 + er() * 0.07;
+        E.life = 1.1 + er() * 0.6; E.rot = er() * 6.28; push(BA);
       }
     }
   }
@@ -10607,7 +12338,22 @@ const Audio = (() => {
     // SPEC4 §C/§D. All five are player ACTS, so they are rate-limited by their own cooldowns
     // and costs already; the gaps here only stop a double-tap from stacking two copies of
     // the same brass into a phasing mess.
-    rally: .4, choir: .5, smitehit: .4, keg: .12, traparm: .09 };
+    rally: .4, choir: .5, smitehit: .4, keg: .12, traparm: .09,
+    // SPEC5 §B2. `lull` fires once a run per road; the gap only stops a repeated harness tick
+    // from stacking two copies of a 4.6 s bell.
+    // `wardrum` is DELIBERATELY ABSENT from this table: heraldTick plays it once per GATE on
+    // the same tick, and MINGAP is keyed by cue name, not by position — any gap at all would
+    // silence every gate after the first and turn a two-drum routing signal into a one-drum
+    // one that always names the same mouth. Its own 2.4 s tick cadence is the rate limit.
+    lull: 5, surge: 4,
+    // SPEC5 §A. `wing` is the tightest leash in the table for its own good: a fourteen-strong
+    // flock beats fourteen times a second and the cue is BROADBAND, so without a gap wide
+    // enough to hear one beat end it stops being wingbeats and becomes a rotor. 0.22 s lands
+    // roughly a third of the flock's beats, which is what a flock actually sounds like from
+    // fifty metres — you hear individuals, not the sum. `tink` sits on the same leash as the
+    // element impacts it has to be distinguished FROM (a warded one under an archer wall
+    // absorbs six blows in under a second), and `purse` is a once-per-leak story cue.
+    wing: .22, spore: .09, raisew: .8, tink: .085, purse: 1.2 };
   // Voice ceiling. A dense wave can ask for far more than it can usefully hear, so the
   // ambient layers get culled first — but story cues (horn, alarm, stingers, UI) must never
   // be dropped, so they raise `prio` for the duration of their scheduling call.
@@ -10615,7 +12361,14 @@ const Audio = (() => {
   // SPEC4 §C: a power the player spent a 25/45 s cooldown on must never be culled by a
   // dense wave's voice ceiling — that is precisely the moment it will be cast.
   const PRIO = { horn: 1, leak: 1, cleared: 1, victory: 1, defeat: 1, build: 1, ui: 1,
-    banner: 1, howl: 1, bosshorn: 1, omen: 1, rally: 1, choir: 1, smitehit: 1, keg: 1 };
+    banner: 1, howl: 1, bosshorn: 1, omen: 1, rally: 1, choir: 1, smitehit: 1, keg: 1,
+    // SPEC5 §B2 — the Long Night's horn is a STORY cue and the one moment the player is being
+    // told the wave is not over. It may never be culled. (`wardrum` is not here on purpose:
+    // it is prewave ambience, and a quiet field has all the voices it needs anyway.)
+    // `surge` is the other half of that sentence and `purse` reports a loss the player has to
+    // hear over the alarm it rides on — both are story, neither may be dropped by a dense
+    // field. `wing`/`spore`/`raisew`/`tink` are texture and are culled like every other.
+    lull: 1, surge: 1, purse: 1 };
   const MAPID = (G.MAP && G.MAP.id) || 1;                    // per-map ambience (SPEC2 §E)
   const room = n => prio || voices < VCAP - n;
   // private noise stream — see the header note about G.rng()
@@ -10978,6 +12731,98 @@ const Audio = (() => {
         tone(d, t0 + 0.02, 'triangle', f * 1.2, f * 2.2, 0.045, 0.10, 0.48, 0.30);
         nz(d, t0, 0.05, 0.08, 0.46, 'bandpass', f * 2, f * 3, 2.4);
       }
+    },
+    // ══ SPEC5 §B2/§B3 — the choreography cues ════════════════════════════════
+    // THE LONG NIGHT'S LOW HORN. The false ending's whole trick is that the road looks won,
+    // so this cue may not sound like a threat and may not sound like a victory: it is the
+    // horns going the WRONG WAY. A minor third UNDER the war horn's D (B♭1 → F2), no drum
+    // under it at all — every other brass cue in the game lands on a drum, and taking the
+    // floor away is what makes this one feel like the ground opening. The long bell tail
+    // carries the six seconds of silence that follow it.
+    lull(d, t) {
+      duck(0.42, 4.2);
+      const f = mf(34);                                    // B♭1 — a third below the war horn
+      brass(d, t, f, 2.4, 0.26);
+      brass(d, t + 0.05, f * 1.5, 2.2, 0.11);              // hollow fifth, no octave: no brightness
+      tone(d, t, 'sine', mf(22), 0, 0.34, 0.20, 3.2);      // sub, slow attack — it arrives, it does not hit
+      bell(d, t + 0.55, 147, 0.10, 4.6);                   // D3 tail across the lull itself
+      nz(d, t + 0.30, 0.055, 0.9, 3.4, 'lowpass', 420, 190, 0.8, true);   // wind through the empty road
+    },
+    // THE SURGE HORN (§B2). The answer to `lull`, and deliberately its exact inverse: where
+    // the lull FALLS to a hollow fifth and refuses its octave, this RISES and takes the
+    // octave and the twelfth — same instrument, opposite gesture, so the pair reads as one
+    // sentence rather than as two unrelated horns. The sub sweeps up under it and three
+    // drums walk in behind, because what the player is being told is that the thing he just
+    // watched end has not ended.
+    surge(d, t) {
+      duck(0.46, 2.6);
+      const f = mf(41);                                    // F2 — a fifth ABOVE the lull's B♭1
+      brass(d, t, f, 1.7, 0.30);
+      brass(d, t + 0.04, f * 2, 1.55, 0.17);
+      brass(d, t + 0.42, f * 3, 1.20, 0.11);
+      tone(d, t, 'sine', mf(29), mf(41), 0.34, 0.05, 1.35, 1.05);
+      drum(d, t + 0.02, 0.52, true); drum(d, t + 0.50, 0.40, true); drum(d, t + 0.80, 0.30, true);
+      nz(d, t, 0.11, 0.004, 0.42, 'bandpass', 240, 620, 1.1);
+    },
+    // THE GATE WAR-DRUM (§B3). Called once per gate per beat through the prewave with the
+    // gate's SHARE as its volume, so the mix itself carries the routing information: two
+    // drums at different weights on opposite sides of the field, panned by Audio.play's own
+    // world-space panner. Deliberately short and dry — it repeats every 2.4 s for the whole
+    // muster, and anything with a tail would smear into a drone by the fourth beat.
+    wardrum(d, t) {
+      drum(d, t, 0.52, true);
+      drum(d, t + 0.20, 0.24, true);                       // the answering half-beat
+      nz(d, t, 0.10, 0.003, 0.11, 'bandpass', 190, 90, 1.6);   // skin and shell
+      tone(d, t, 'sine', 62, 41, 0.16, 0.006, 0.22, 0.06);     // the low body of the drum
+    },
+    // ══ SPEC5 §A — the new roster's own cues ════════════════════════════════════
+    // WING. Asked for once per wyvern per beat by the VFX wing pass, so it is the one cue in
+    // the file a full flock can request ten times a second — MINGAP is what turns that into
+    // a rhythm instead of a rotor. AIR MOVING, not a leather flap: the downbeat is brown
+    // noise under a low bandpass and the only bright element is the membrane snapping on the
+    // recovery, which is what makes it read as a big animal rather than as a bird.
+    wing(d, t) {
+      nz(d, t, 0.075, 0.030, 0.155, 'bandpass', 300, 132, 0.9, true);
+      nz(d, t + 0.055, 0.034, 0.018, 0.10, 'bandpass', 940, 540, 1.5);
+      tone(d, t, 'sine', 86, 52, 0.040, 0.020, 0.17, 0.09);
+    },
+    // SPORE. Wet and low, then dry and high — a body under pressure giving way, and then the
+    // cloud getting out of it. Deliberately NOT a boom: a gravemold is 90 hit points, and a
+    // pop with a bass end would out-weigh the catapult shot that killed it.
+    spore(d, t) {
+      nz(d, t, 0.17, 0.002, 0.075, 'lowpass', 620, 230, 0.9);
+      nz(d, t + 0.028, 0.085, 0.055, 0.50, 'highpass', 2700, 4400, 0.8);
+      tone(d, t, 'triangle', 162, 92, 0.085, 0.003, 0.13, 0.07);
+    },
+    // RAISE. A whisper, not a spell: two detuned breaths a beat apart with a minor third
+    // ringing under them. It has to sit UNDER a wave that is already fighting, so nothing in
+    // it lives above 1.4 kHz and the whole cue is quieter than a single arrow.
+    raisew(d, t) {
+      nz(d, t, 0.050, 0.13, 0.62, 'bandpass', 520, 340, 3.0, true);
+      nz(d, t + 0.16, 0.036, 0.11, 0.50, 'bandpass', 780, 430, 3.6, true);
+      tone(d, t + 0.02, 'sine', mf(45), 0, 0.045, 0.14, 0.66);      // A2
+      tone(d, t + 0.02, 'sine', mf(48), 0, 0.032, 0.18, 0.58);      // C3 — the minor third
+      bell(d, t + 0.30, mf(60), 0.024, 1.1);
+    },
+    // TINK. A blow landing on a rune and going nowhere. The whole point is that it must not
+    // sound like DAMAGE: no body, no noise floor, no low end — a glass-hard partial pair that
+    // stops dead. Next to `thud`/`crack`/`shrug` it is instantly the odd one out, which is
+    // exactly the information the player needs (§A: an archer wall is the wrong answer).
+    tink(d, t) {
+      tone(d, t, 'sine', 3520, 3140, 0.075, 0.001, 0.055, 0.03);
+      tone(d, t, 'sine', 5274, 0, 0.028, 0.001, 0.035);
+      nz(d, t, 0.026, 0.001, 0.020, 'highpass', 7200, 0, 0.7);
+    },
+    // PURSE. A cut purse hitting the flags inside the gate: leather, then coin, then coin
+    // going away from you (the arpeggio walks OUT, unlike `coin`'s, which walks in). Rides on
+    // top of `leak`, so it is short and sits above the alarm's register rather than in it.
+    purse(d, t) {
+      nz(d, t, 0.09, 0.002, 0.06, 'lowpass', 900, 380, 0.9);
+      const F = [3136, 2637, 2093, 2794, 1760, 1568];
+      for (let i = 0; i < 6; i++)
+        tone(d, t + 0.03 + i * 0.038 + rr(0, 0.018), 'triangle', F[i] * rr(0.98, 1.02), 0,
+             0.072 - i * 0.008, 0.002, 0.11);
+      nz(d, t + 0.05, 0.033, 0.02, 0.28, 'highpass', 5200, 0, 0.8);
     },
     bosshorn(d, t) {                                       // a map finale naming itself
       duck(0.45, 2.8);
@@ -12302,6 +14147,161 @@ function enemyIcon(type, px) {
     g.strokeStyle = '#8b7a44'; g.lineWidth = 1.8;
     g.beginPath(); g.moveTo(-4.0, 16.4); g.lineTo(-6.6, 12.4); g.stroke();
     for (const [cx, cy] of [[-3.2, 8.6], [-1.0, 7.2], [1.4, 8.2]]) { g.fillStyle = '#e6dcc2'; g.fillRect(cx, cy, 1.0, 3.0); }  // charms
+  } else if (type === 'wyvern') {                                                  // SPEC5 §A
+    // The only bust in the set with NO GROUND CONTACT: it is drawn clear of the baseline
+    // with its shadow blob under it, because "this one is in the air" is the whole card.
+    const SCL = '#4a6156', DSCL = '#2b3a34', MEM = '#7b3a2a', DMEM = '#4a2118';
+    g.fillStyle = 'rgba(20,26,18,.30)';                                            // ground shadow
+    g.beginPath(); g.ellipse(0, 2.0, 8.6, 1.7, 0, 0, 7); g.fill();
+    poly(g, [-2.0, 20.0, -6.6, 27.6, -12.4, 28.4, -15.6, 24.0, -11.0, 22.6, -13.2, 19.6,
+             -8.4, 19.2, -9.4, 15.8, -4.6, 16.8], MEM, DMEM, 0.7);                 // left wing
+    poly(g, [2.0, 20.4, 7.2, 28.6, 13.4, 29.2, 16.4, 24.6, 11.6, 23.0, 13.8, 20.0,
+             9.0, 19.6, 10.0, 16.2, 4.8, 17.2], MEM, DMEM, 0.7);                   // right wing
+    g.strokeStyle = DSCL; g.lineWidth = 1.0; g.lineCap = 'round';                  // wing spars
+    for (const [ex, ey] of [[-12.4, 28.4], [-13.2, 19.6], [-9.4, 15.8]]) { g.beginPath(); g.moveTo(-3.4, 20.6); g.lineTo(ex, ey); g.stroke(); }
+    for (const [ex, ey] of [[13.4, 29.2], [13.8, 20.0], [10.0, 16.2]]) { g.beginPath(); g.moveTo(3.4, 21.0); g.lineTo(ex, ey); g.stroke(); }
+    poly(g, [-4.2, 17.2, 3.8, 18.0, 4.8, 21.8, -3.4, 22.2], SCL, DSCL, 0.7);       // barrel body
+    poly(g, [-4.2, 17.2, -0.4, 17.6, -1.0, 22.0, -3.4, 22.2], DSCL);
+    g.strokeStyle = SCL; g.lineWidth = 2.0;                                        // serpentine tail
+    g.beginPath(); g.moveTo(-3.6, 19.4);
+    g.bezierCurveTo(-9.0, 17.0, -6.0, 11.0, -12.0, 8.4); g.stroke();
+    poly(g, [-12.0, 8.4, -16.4, 9.6, -14.6, 5.2], MEM);                            // tail fin
+    g.strokeStyle = SCL; g.lineWidth = 2.4;                                        // neck
+    g.beginPath(); g.moveTo(3.4, 20.6); g.lineTo(8.0, 24.4); g.stroke();
+    poly(g, [7.2, 23.0, 13.8, 25.0, 14.2, 27.2, 7.4, 26.2], SCL, DSCL, 0.6);       // wedge skull
+    poly(g, [8.0, 26.0, 6.2, 30.6, 10.0, 27.2], '#e6dcc2');                        // backswept horn
+    g.fillStyle = '#ff8a2a'; g.beginPath(); g.arc(10.4, 26.0, 0.9, 0, 7); g.fill();
+    poly(g, [12.6, 24.8, 14.4, 23.4, 13.0, 23.2], '#efe3c8');                       // fang
+    g.strokeStyle = DSCL; g.lineWidth = 1.6;                                       // tucked hind legs
+    g.beginPath(); g.moveTo(-1.0, 17.6); g.lineTo(0.6, 14.0); g.stroke();
+    g.beginPath(); g.moveTo(1.8, 17.8); g.lineTo(3.6, 14.6); g.stroke();
+  } else if (type === 'gravemold') {                                               // SPEC5 §A
+    const FL = '#9c9a80', DFL = '#5e5f46', GIL = '#2e3122';
+    g.strokeStyle = DFL; g.lineWidth = 3.4; g.lineCap = 'round';                   // stub legs
+    g.beginPath(); g.moveTo(-3.6, 7.0); g.lineTo(-4.2, 1.0); g.stroke();
+    g.beginPath(); g.moveTo(3.6, 7.0); g.lineTo(4.2, 1.0); g.stroke();
+    poly(g, [-10.4, 6.4, 10.4, 6.4, 12.0, 14.6, 8.0, 19.8, -8.0, 19.8, -12.0, 14.6], FL, DFL, 0.8);
+    poly(g, [-10.4, 6.4, -1.2, 6.4, -2.0, 19.8, -8.0, 19.8, -12.0, 14.6], DFL);    // shaded flank
+    for (const [bx, by, br] of [[-6.0, 15.8, 2.4], [5.4, 12.4, 2.0], [-2.0, 9.0, 1.8], [7.0, 17.0, 1.6]]) {
+      g.fillStyle = 'rgba(30,32,20,.42)'; g.beginPath(); g.arc(bx, by, br, 0, 7); g.fill();  // rot
+    }
+    for (const [cx, cy, cr, sh] of [[-0.6, 21.0, 5.2, 4.4], [-7.2, 19.4, 3.6, 2.6], [6.4, 18.6, 3.2, 2.4]]) {
+      g.strokeStyle = FL; g.lineWidth = 1.8;                                       // stalk
+      g.beginPath(); g.moveTo(cx - 0.4, cy - sh); g.lineTo(cx, cy); g.stroke();
+      g.fillStyle = GIL; g.beginPath(); g.ellipse(cx, cy, cr * 0.86, cr * 0.30, 0, 0, 7); g.fill();  // gills
+      const cg = g.createLinearGradient(cx - cr, 0, cx + cr, 0);
+      cg.addColorStop(0, '#6d6f52'); cg.addColorStop(0.42, '#c2bf9e'); cg.addColorStop(1, '#6d6f52');
+      g.fillStyle = cg; g.beginPath(); g.ellipse(cx, cy + 0.5, cr, cr * 0.72, 0, Math.PI, 0); g.fill();
+    }
+    g.fillStyle = GIL;                                                             // the maw
+    g.beginPath(); g.ellipse(0.4, 10.0, 4.2, 1.5, 0, 0, 7); g.fill();
+    for (const [ex, ey] of [[-2.6, 13.8], [1.6, 14.2], [-0.4, 12.0]]) { g.fillStyle = '#1c1e14'; g.beginPath(); g.arc(ex, ey, 0.95, 0, 7); g.fill(); }
+    g.strokeStyle = DFL; g.lineWidth = 2.4;                                        // root arms
+    g.beginPath(); g.moveTo(-9.4, 13.4); g.lineTo(-13.4, 8.0); g.stroke();
+    g.beginPath(); g.moveTo(9.4, 13.4); g.lineTo(13.4, 8.0); g.stroke();
+    g.strokeStyle = '#e6dcc2'; g.lineWidth = 0.9;
+    for (const sx of [-1, 1]) for (const d of [-1.2, 0, 1.2]) { g.beginPath(); g.moveTo(sx * 13.4, 8.0); g.lineTo(sx * 13.4 + d, 4.6); g.stroke(); }
+  } else if (type === 'necromancer') {                                             // SPEC5 §A
+    const RB = '#2b2930', DRB = '#17161a', GLO = '#62ff9e';
+    g.strokeStyle = '#1c1a20'; g.lineWidth = 1.6; g.lineCap = 'round';             // the staff
+    g.beginPath(); g.moveTo(7.6, 1.0); g.lineTo(9.0, 25.0); g.stroke();
+    g.strokeStyle = '#e6dcc2'; g.lineWidth = 1.1;                                  // bone cage
+    for (const dx of [-2.2, 0.4, 2.4]) { g.beginPath(); g.moveTo(9.0, 25.6); g.lineTo(9.2 + dx, 31.0); g.stroke(); }
+    g.fillStyle = GLO; g.globalAlpha = .95; g.beginPath(); g.arc(9.2, 28.4, 2.3, 0, 7); g.fill();
+    g.globalAlpha = .30; g.fillStyle = '#c8ffe0'; g.beginPath(); g.arc(9.2, 28.4, 4.8, 0, 7); g.fill(); g.globalAlpha = 1;
+    poly(g, [-6.2, 0.6, 5.6, 0.6, 4.2, 21.0, -5.0, 21.0], RB);                     // tall straight robe
+    poly(g, [-6.2, 0.6, -0.8, 0.6, -1.6, 21.0, -5.0, 21.0], DRB);
+    poly(g, [-6.8, 18.2, 6.2, 18.2, 5.2, 22.0, -5.8, 22.0], '#3c3d42');            // graven gorget
+    for (const gx of [-4.2, -1.0, 2.2]) { g.fillStyle = GLO; g.globalAlpha = .8; g.fillRect(gx, 19.0, 0.9, 2.2); g.globalAlpha = 1; }
+    poly(g, [-7.0, 20.4, 6.4, 20.4, 5.0, 29.0, -0.4, 31.4, -5.6, 29.6, -7.8, 25.0], RB, DRB, 0.8);   // tall cowl
+    poly(g, [-0.4, 31.4, 2.6, 34.6, -3.4, 32.6], RB);                              // peak, falling back
+    poly(g, [-3.8, 22.4, 3.2, 22.4, 2.4, 28.0, -0.4, 29.4, -3.0, 28.0], '#08070a'); // the void
+    g.fillStyle = GLO; g.globalAlpha = .95;                                        // two green sparks
+    g.beginPath(); g.arc(-1.6, 26.0, 1.1, 0, 7); g.fill();
+    g.beginPath(); g.arc(1.4, 26.0, 1.1, 0, 7); g.fill();
+    g.globalAlpha = .28; g.fillStyle = '#c8ffe0';
+    g.beginPath(); g.arc(-1.6, 26.0, 2.4, 0, 7); g.fill(); g.beginPath(); g.arc(1.4, 26.0, 2.4, 0, 7); g.fill();
+    g.globalAlpha = 1;
+    g.strokeStyle = '#d8ccb6'; g.lineWidth = 1.5;                                  // bone hand, raised
+    g.beginPath(); g.moveTo(-4.4, 15.6); g.lineTo(-8.6, 12.2); g.stroke();
+    g.fillStyle = GLO; g.globalAlpha = .9; g.beginPath(); g.arc(-9.4, 11.4, 2.1, 0, 7); g.fill();
+    g.globalAlpha = .28; g.fillStyle = '#c8ffe0'; g.beginPath(); g.arc(-9.4, 11.4, 4.4, 0, 7); g.fill(); g.globalAlpha = 1;
+  } else if (type === 'skeleton') {                                                // SPEC5 §A
+    const BN = '#ded3b6', DBN = '#8e8468';
+    g.strokeStyle = '#7d7259'; g.lineWidth = 1.7; g.lineCap = 'round';             // bare leg bones
+    g.beginPath(); g.moveTo(-1.8, 9.0); g.lineTo(-3.4, 0.6); g.stroke();
+    g.beginPath(); g.moveTo(2.2, 9.0); g.lineTo(3.8, 0.6); g.stroke();
+    poly(g, [-3.4, 8.6, 3.6, 8.6, 3.0, 11.4, -2.8, 11.4], DBN);                    // pelvis
+    g.strokeStyle = BN; g.lineWidth = 1.5;                                         // spine
+    g.beginPath(); g.moveTo(0.2, 11.0); g.lineTo(0.6, 20.6); g.stroke();
+    g.strokeStyle = BN; g.lineWidth = 1.3;                                         // rib cage
+    for (let i = 0; i < 4; i++) {
+      const y = 13.2 + i * 1.9, w = 3.9 - i * 0.42;
+      g.beginPath(); g.moveTo(0.4, y); g.quadraticCurveTo(-w, y + 0.3, -w * 0.72, y - 1.5); g.stroke();
+      g.beginPath(); g.moveTo(0.4, y); g.quadraticCurveTo(w, y + 0.3, w * 0.72, y - 1.5); g.stroke();
+    }
+    poly(g, [-5.2, 19.6, 5.8, 19.6, 4.8, 21.6, -4.4, 21.6], DBN);                  // clavicle bar
+    poly(g, [-6.4, 20.6, -2.0, 21.4, -3.0, 27.0, -8.0, 25.2], '#2f2e33');          // shroud rag
+    g.fillStyle = BN; g.beginPath(); g.arc(0.6, 24.8, 3.5, 0, 7); g.fill();        // skull
+    poly(g, [-2.4, 21.6, 3.6, 21.6, 3.0, 23.4, -1.8, 23.4], DBN);                  // jaw
+    g.fillStyle = '#141310';
+    g.beginPath(); g.ellipse(-0.8, 25.2, 1.15, 1.35, 0, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(2.2, 25.2, 1.15, 1.35, 0, 0, 7); g.fill();
+    g.fillStyle = '#141310'; poly(g, [0.6, 23.2, 1.5, 24.4, -0.3, 24.4], '#141310');
+    g.strokeStyle = BN; g.lineWidth = 1.4;                                         // arms
+    g.beginPath(); g.moveTo(4.6, 20.4); g.lineTo(8.2, 16.2); g.stroke();
+    g.beginPath(); g.moveTo(-4.4, 20.4); g.lineTo(-7.4, 15.6); g.stroke();
+    g.strokeStyle = '#8e929a'; g.lineWidth = 1.6;                                  // rusted blade
+    g.beginPath(); g.moveTo(8.2, 16.2); g.lineTo(12.6, 25.0); g.stroke();
+    poly(g, [12.6, 25.0, 14.2, 28.0, 11.0, 25.6], '#a8adb6');
+  } else if (type === 'wardedone') {                                               // SPEC5 §A
+    const ST1 = '#4b5057', ST2 = '#2c3035', GLO = '#62ff9e';
+    g.strokeStyle = '#2a2e33'; g.lineWidth = 4.2; g.lineCap = 'round';             // pillar legs
+    g.beginPath(); g.moveTo(-3.0, 7.6); g.lineTo(-4.4, 0.5); g.stroke();
+    g.beginPath(); g.moveTo(3.6, 7.6); g.lineTo(5.0, 0.5); g.stroke();
+    g.strokeStyle = '#5a4126'; g.lineWidth = 2.4;                                  // maul haft
+    g.beginPath(); g.moveTo(8.0, 3.0); g.lineTo(12.0, 22.0); g.stroke();
+    poly(g, [9.4, 21.2, 16.2, 22.8, 14.8, 29.4, 8.0, 27.8], ST1, '#1d2126', 0.9);  // quarried head
+    g.fillStyle = GLO; g.globalAlpha = .85; g.fillRect(10.4, 24.2, 4.4, 0.9); g.fillRect(11.6, 22.6, 0.9, 4.2); g.globalAlpha = 1;
+    poly(g, [-7.2, 7.6, 7.6, 7.6, 9.0, 21.6, -8.6, 21.6], ST1, '#1d2126', 0.9);    // slab torso
+    poly(g, [-7.2, 7.6, -0.6, 7.6, -1.6, 21.6, -8.6, 21.6], ST2);
+    g.fillStyle = GLO; g.globalAlpha = .8;                                         // graven channels
+    g.fillRect(-5.2, 11.0, 0.9, 7.4); g.fillRect(-5.2, 14.4, 4.0, 0.9);
+    g.fillRect(3.0, 10.0, 0.9, 5.0); g.fillRect(0.4, 17.6, 5.6, 0.9); g.globalAlpha = 1;
+    poly(g, [-10.4, 18.4, -3.6, 23.0, 4.4, 23.0, 11.2, 18.4, 9.0, 21.6, -8.6, 21.6], ST1, '#1d2126', 0.8);  // pauldrons
+    poly(g, [-6.4, 22.4, 6.6, 22.4, 6.0, 28.0, -5.8, 28.0], ST1, '#1d2126', 0.9);  // HORIZONTAL head
+    poly(g, [-7.2, 28.0, 7.4, 28.0, 7.4, 29.6, -7.2, 29.6], ST1);                  // capstone
+    for (const px of [-2.6, 0.1, 2.8]) { g.fillStyle = ST1; g.fillRect(px, 29.6, 1.6, 2.2 - Math.abs(px) * 0.3); }
+    g.fillStyle = GLO; g.globalAlpha = .95; g.fillRect(-4.8, 24.4, 9.6, 1.5); g.globalAlpha = 1;
+    g.globalAlpha = .26; g.fillStyle = '#c8ffe0'; g.fillRect(-5.6, 23.6, 11.2, 3.1); g.globalAlpha = 1;
+  } else if (type === 'cutpurse') {                                                // SPEC5 §A
+    const CL = '#2a2930', DCL = '#151419';
+    poly(g, [-2.4, 21.4, -12.6, 22.8, -14.0, 16.0, -4.0, 12.0], CL, DCL, 0.7);     // cloak, streaming
+    g.strokeStyle = '#3a2f22'; g.lineWidth = 2.2; g.lineCap = 'round';             // long low stride
+    g.beginPath(); g.moveTo(-0.4, 7.8); g.lineTo(-7.6, 1.0); g.stroke();
+    g.beginPath(); g.moveTo(2.4, 7.8); g.lineTo(9.0, 2.4); g.stroke();
+    poly(g, [-2.2, 7.8, 3.4, 7.8, 5.8, 18.4, -0.4, 18.4], '#3d3b34', DCL, 0.6);    // slim leaning torso
+    poly(g, [-2.2, 7.8, 0.6, 7.8, 2.6, 18.4, -0.4, 18.4], DCL);
+    { const sg = g.createRadialGradient(-4.6, 11.0, 0.6, -5.2, 9.6, 5.2);          // THE SACK
+      sg.addColorStop(0, '#7a5c39'); sg.addColorStop(1, '#332516');
+      g.fillStyle = sg; g.beginPath(); g.ellipse(-5.2, 9.4, 3.9, 4.4, 0.18, 0, 7); g.fill();
+      g.strokeStyle = '#1c1409'; g.lineWidth = 0.8; g.stroke();
+      g.fillStyle = '#4a3520'; poly(g, [-7.0, 12.8, -3.2, 12.8, -3.8, 15.0, -6.6, 15.0], '#4a3520');
+      g.fillStyle = '#e8b64c'; g.beginPath(); g.ellipse(-5.2, 15.3, 2.0, 0.9, 0, 0, 7); g.fill();
+      for (const [cx, cy] of [[-7.8, 17.0], [-3.4, 17.8], [-6.2, 19.4]]) {         // spilling coins
+        g.fillStyle = '#e8b64c'; g.beginPath(); g.ellipse(cx, cy, 1.15, 0.62, 0.5, 0, 7); g.fill();
+        g.fillStyle = '#fff3cf'; g.beginPath(); g.ellipse(cx - 0.25, cy + 0.15, 0.5, 0.28, 0.5, 0, 7); g.fill();
+      } }
+    poly(g, [-2.4, 16.6, 5.2, 16.6, 4.4, 24.4, -0.2, 26.4, -4.2, 23.8], CL, DCL, 0.7);   // black hood
+    g.strokeStyle = CL; g.lineWidth = 2.0;
+    g.beginPath(); g.moveTo(-3.0, 23.4); g.lineTo(-8.4, 25.6); g.stroke();          // flopped peak
+    g.fillStyle = '#0d0c10'; poly(g, [-0.6, 18.4, 3.6, 18.4, 3.0, 22.4, -0.2, 23.2], '#0d0c10');
+    g.fillStyle = SK; g.fillRect(0.8, 19.6, 2.2, 1.6);
+    g.strokeStyle = SK; g.lineWidth = 1.5;                                         // dagger arm, held low
+    g.beginPath(); g.moveTo(4.4, 15.4); g.lineTo(8.6, 12.4); g.stroke();
+    g.strokeStyle = ST; g.lineWidth = 1.4;
+    g.beginPath(); g.moveTo(8.6, 12.4); g.lineTo(11.4, 7.4); g.stroke();
+    poly(g, [11.4, 7.4, 12.8, 4.4, 9.8, 7.0], ST);
   } else if (type === 'brute') {
     g.strokeStyle = '#5a4126'; g.lineWidth = 2; g.lineCap = 'round';
     g.beginPath(); g.moveTo(8, 3); g.lineTo(11, 27); g.stroke();                   // axe haft
@@ -12389,12 +14389,20 @@ function powerIcon(k, px) {
 const E_NAME = {};
 for (const k of ['grunt', 'runner', 'brute', 'boss', 'shield', 'hound', 'marauder', 'ogre',
   'matriarch', 'emberlord', 'cinderqueen', 'ironclad', 'ashwraith', 'frostrevenant',
-  'warshaman', 'ram']) E_NAME[k] = L('e.' + k);
+  'warshaman', 'ram',
+  // SPEC5 §A — the five newcomers plus the two bodies they PUT on the road
+  'wyvern', 'gravemold', 'moldling', 'necromancer', 'skeleton', 'wardedone',
+  'cutpurse']) E_NAME[k] = L('e.' + k);
 // headline priority: whatever the player most needs to have an answer ready for. The ram
 // outranks even an ogre (nothing can block it), and the shaman outranks the units it heals
 // — naming him on the card is half the teaching this roster does.
-const E_HEAD = ['matriarch', 'emberlord', 'cinderqueen', 'boss', 'ram', 'ogre', 'ironclad',
-  'warshaman', 'brute', 'frostrevenant', 'shield', 'ashwraith', 'marauder', 'hound'];
+// SPEC5 §A slots the newcomers in by how badly the player needs an answer READY: a flock
+// outranks any ground unit (a comp with no `air` tower simply cannot fight it), the warded
+// one sits with the ironclads, and the necromancer sits beside the shaman — both are
+// priority kills whose whole cost is paid in how long you leave them alone.
+const E_HEAD = ['matriarch', 'emberlord', 'cinderqueen', 'boss', 'ram', 'ogre', 'wardedone',
+  'ironclad', 'wyvern', 'necromancer', 'warshaman', 'brute', 'frostrevenant', 'shield',
+  'gravemold', 'ashwraith', 'cutpurse', 'marauder', 'hound'];
 // Wave copy is per map — a 12- or 14-wave campaign that fell back to the Vale's ten titles
 // would print `undefined` on its last waves. SPEC3 §B: the waves that carry a mini-boss say
 // so on the card, because a title is the only warning a player gets before the countdown
@@ -12418,6 +14426,25 @@ function waveHead(n) {
   for (const k of E_HEAD) { key = mix.find(m => m[0] === k); if (key) break; }
   key = key || mix[0];
   return L('wave.in', E_NAME[key[0]] || L('wave.horde'));
+}
+// SPEC5 §B3 — the gate-share read-out. The war-drums at the gates carry this information
+// diegetically (louder drum = more of the wave); this row is the exact number for the player
+// who would rather read than listen, and it is the only place on a two-gate map where the
+// split is stated before the wave is on the road. Single-gate roads print nothing at all —
+// "Gate 1: 100%" is noise, and the Ember Wastes' FORK is a branch off one mouth, not a
+// second gate, so it correctly says nothing here either.
+// The bar widths are the shares themselves, so the row reads at a glance without the digits.
+function gateLine(n) {
+  const R = G.spawnRoutes;
+  if (R.length < 2) return '';
+  const sh = G.gateShare(n);
+  let cells = '';
+  for (let i = 0; i < R.length; i++) {
+    const p = Math.round((sh[i] || 0) * 100);
+    cells += '<i class="wgC' + (p >= 50 ? ' hi' : '') + '" title="' + L('hd.gateT', i + 1, p) + '">' +
+      '<b>' + L('hd.gate', i + 1) + '</b><u style="width:' + Math.max(2, p) + '%"></u><s>' + p + '%</s></i>';
+  }
+  return '<div class="wpG"><em>' + L('hd.gates') + '</em>' + cells + '</div>';
 }
 const ICO_CACHE = {};
 function icoFor(t) {                     // cloneNode does NOT copy a canvas bitmap — blit instead
@@ -12472,12 +14499,22 @@ UI.msg = (ev, sub) => {
   let head = '', wave = false;
   if (typeof ev === 'string') head = ev;
   else if (ev && ev.cleared) { head = L('wave.held', ev.cleared); sub = sub || L('wave.quiet'); }
-  else if (ev && ev.breach) { head = L('wave.breach'); sub = sub || L('wave.hold'); }
+  // SPEC5 §A — a cutpurse through the gate says so on the breach banner: the vale lost lives
+  // AND the purse lost coin, and a player who is not told will read the gold as a bug.
+  else if (ev && ev.breach) { head = L('wave.breach'); sub = sub || (ev.steal ? L('wave.steal', ev.steal) : L('wave.hold')); }
   else if (ev && ev.wave) {
     const n = ev.wave, tot = waveMix(n).reduce((a, x) => a + x[1], 0);
     head = L('wave.n', n); wave = true;
     sub = sub || L('wave.sub', ev.finale ? MAP.finale : waveTitle(n), tot);
   }
+  // SPEC5 §B2 — the Long Night's two beats. The lull is deliberately quiet copy (it has to
+  // read as an ending) and the surge answers it in the wave-banner's own voice.
+  else if (ev && ev.lull) { head = L('wave.lull'); sub = sub || L('wave.lullS'); }
+  else if (ev && ev.surge) { head = L('wave.surge'); sub = sub || L('wave.surgeS'); wave = true; }
+  // SPEC5 §B5 — the endless trickle. NOT flagged `wave`: a scout party is not a muster, and
+  // the phone layout's rule for suppressing wave banners under the dispatch card must not
+  // swallow the one banner that explains why there are enemies during a countdown.
+  else if (ev && ev.scouts) { head = L('wave.scouts'); sub = sub || L('wave.scoutsS', ev.scouts); }
   const m = $('msg');
   // `wv` marks the banner as a WAVE announcement, which the phone layout suppresses while the
   // parchment card is up (same sentence twice, over the only battle content in frame). A
@@ -12534,6 +14571,7 @@ UI.sync = () => {
       const alive = G.enemies.filter(e => e.alive).length;
       h += '<div class="bar"><i style="width:' + clamp(100 - alive / Math.max(1, tot) * 100, 2, 100).toFixed(0) + '%"></i></div>';
     }
+    h += gateLine(nx);                                  // SPEC5 §B3 — per-gate share of this wave
     h += omenLine(nx, pre);
     wp.innerHTML = h;
     const row = wp.querySelector('.wpRow');
@@ -13462,6 +15500,13 @@ function armMul(def, e) {
   if (e && e.ward === el) r += G.OMEN_FX.ward;
   return (1 - Math.min(r, 0.85)) * (G.OMEN_FX.dmg[el] || 1);
 }
+// SPEC5 §A — two blows the resist arithmetic above cannot see, because neither is a resist:
+// a hit-ward with runes still standing absorbs the WHOLE blow, and a ground weapon never
+// reaches a flyer at all. Both used to print a full-damage number over a unit that took
+// nothing (visible in the first cut of shots\_wardhit.png: a floating 38 over a warded one
+// still at full health). A blow that does not land prints nothing.
+const wontLand = (d, e) => !e || !e.def || (e.def.fly && !d.air) ||
+  (e.def.hitward && e.wardN > 0 && d.dmg >= e.def.hitward.min);
 // OCCLUSION. layoutFloaters only rejected z > 1 (behind the camera), so a number belonging
 // to a unit hidden behind a foreground conifer was painted at full opacity on top of the
 // tree with no unit anywhere near it — the reader has no way to attach it to anything.
@@ -13489,8 +15534,9 @@ function harvestFire(t) {
     const crit = tw.type === 'catapult' || (tw.shots | 0) % 4 === 0;
     const base = d.dmg * Math.pow(1.55, tw.level - 1), t0 = ev.t + (FLIGHT[tw.type] || 0.2);
     const jit = s => (((tw.uid * 37 + (tw.shots | 0) * 19 + s * 53) % 11) - 5) * 5;
-    pushFloater({ t0, e: ev.tgt, txt: '' + Math.round(base * (crit ? 1.85 : 1) * armMul(d, ev.tgt)),
-      cls: 'fl' + (crit ? ' crit' : ''), sx: jit(0) });
+    if (!wontLand(d, ev.tgt))
+      pushFloater({ t0, e: ev.tgt, txt: '' + Math.round(base * (crit ? 1.85 : 1) * armMul(d, ev.tgt)),
+        cls: 'fl' + (crit ? ' crit' : ''), sx: jit(0) });
     // splash / pierce victims get their own (smaller) number — this is what makes a catapult
     // volley read as a volley instead of a single hit.
     if (tw.type === 'catapult' || d.pierce) {
@@ -13500,7 +15546,10 @@ function harvestFire(t) {
         if (extra <= 0) break;
         if (!e2.alive || e2 === ev.tgt) continue;
         if (Math.hypot(e2.px - ev.tgt.px, e2.pz - ev.tgt.pz) > R) continue;
-        pushFloater({ t0: t0 + s * 0.045, e: e2, txt: '' + Math.round(base * 0.52 * armMul(d, e2)), cls: 'fl', sx: jit(s) });
+        // the sim's pierce counter spends a hit on a warded body too, so the budget is spent
+        // either way — only the NUMBER is withheld
+        if (!wontLand(d, e2))
+          pushFloater({ t0: t0 + s * 0.045, e: e2, txt: '' + Math.round(base * 0.52 * armMul(d, e2)), cls: 'fl', sx: jit(s) });
         extra--; s++;
       }
     }
@@ -13546,6 +15595,80 @@ function layoutFloaters(t) {
     console.log('FLDBG occ=' + flOccluders().length + ' live=' + live + ' hidden=' + hid);
   }
 }
+// ══ CHAMPION NAMEPLATES (SPEC5 §B4) ════════════════════════════════════════════
+// A promoted unit is ×2.5 hit points and +15% silhouette, and BOTH of those are invisible in
+// a hundred-strong column — SIM's own hand-off note called this the mechanic's weakest link
+// ("a champion levyman is a weak headline"). The nameplate is the fix that costs no balance:
+// an iron chip over the champion's head with its seeded name on it, so the promotion is
+// legible at gameplay zoom on the most numerous species in the wave rather than only on the
+// rare wave where the pick happened to land on something big.
+//
+// Pooled DOM projected world → screen, exactly like the damage floaters below it, and laid
+// out from the same UI.frame() call — which is what keeps the harness contract: UI.frame
+// stops mutating the DOM after its second frame in SHOT mode, so nothing here can repaint
+// after the final GL present.
+const CNP_N = 3, cnpEl = [], cnpFor = [];
+{
+  const host = $('floaters');
+  for (let i = 0; i < CNP_N; i++) {
+    const d = document.createElement('div');
+    d.className = 'cnp'; d.style.opacity = '0';
+    host.appendChild(d); cnpEl.push(d); cnpFor.push(-1);
+  }
+}
+// One hue per name in the list, so a run's champion is a consistent COLOUR as well as a
+// consistent name — the chip is recognisable across the waves it survives.
+const CNP_HUE = [4, 28, 272, 44, 158, 202, 96, 322];
+let _cnpFrame = 0;
+function layoutPlates() {
+  const test = (_cnpFrame++ & 3) === 0, occ = test ? flOccluders() : null;
+  let k = 0;
+  for (let i = 0; i < G.enemies.length && k < CNP_N; i++) {
+    const e = G.enemies[i];
+    if (!e.alive || !e.champ) continue;
+    const el = cnpEl[k];
+    if (cnpFor[k] !== e.id) {
+      cnpFor[k] = e.id;
+      // the occlusion verdict belongs to the OLD occupant of this slot — carrying it over
+      // would hide a fresh champion for up to three frames (the ray only runs every fourth)
+      el.dataset.hid = '';
+      el.style.setProperty('--h', CNP_HUE[Math.max(0, e.cname) % CNP_HUE.length] + '');
+      // the <u> is the PLATE (see main.css): .cnp is the anchor UI re-transforms every frame,
+      // and rewriting innerHTML here recreates the plate, which replays its arrival slide —
+      // so a champion's nameplate rises into place under VFX's promotion flare (SPEC5 §B4).
+      el.innerHTML = '<u><i>' + L('champ.tag') + '</i><b>' + G.champName(e) + '</b></u>';
+    }
+    // the chip rides ABOVE the health bar, and a flyer's chip rides with it (`alt` is the
+    // height ARMIES draws the body at, so a wyvern champion's plate would otherwise sit on
+    // the ground shadow it left behind)
+    _fa.set(e.px, G.groundY(e.px, e.pz) + (e.def.alt || 0) + (e.def.scale || 1) * 1.9, e.pz);
+    if (test && occ.length) {
+      _flRay.ray.origin.copy(G.camera.position);
+      _flRay.ray.direction.copy(_fa).sub(G.camera.position);
+      const dist = _flRay.ray.direction.length();
+      _flRay.ray.direction.multiplyScalar(1 / dist);
+      _flRay.near = 0.1; _flRay.far = dist - 0.6;
+      el.dataset.hid = (dist > 10 && _flRay.intersectObjects(occ, false).length) ? '1' : '';
+    }
+    if (el.dataset.hid) { if (el.style.opacity !== '0') el.style.opacity = '0'; k++; continue; }
+    _fv.copy(_fa).project(G.camera);
+    // Behind the camera, or so far off the frustum that the chip would clamp to a screen
+    // edge and point at nothing. The margin is generous (±1.3) so a chip only just outside
+    // the frame still eases out rather than popping.
+    if (_fv.z > 1 || Math.abs(_fv.x) > 1.3 || Math.abs(_fv.y) > 1.3) {
+      if (el.style.opacity !== '0') el.style.opacity = '0';
+      k++; continue;
+    }
+    const x = (_fv.x * 0.5 + 0.5) * innerWidth, y = (-_fv.y * 0.5 + 0.5) * innerHeight;
+    el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) translate(-50%,-100%)';
+    if (el.style.opacity !== '1') el.style.opacity = '1';
+    k++;
+  }
+  for (; k < CNP_N; k++) {
+    cnpFor[k] = -1;
+    if (cnpEl[k].style.opacity !== '0') cnpEl[k].style.opacity = '0';
+  }
+}
 // ══ per-frame UI: count-up gold, floaters, title Ken-Burns ═════════════════════
 // Called from MAIN's render(). In SHOT mode it stops mutating the DOM before the FINAL
 // render so the headless compositor never repaints after the GL frame is presented.
@@ -13572,6 +15695,7 @@ UI.frame = (rt) => {
   const t = G.vt();
   harvestFire(t);
   layoutFloaters(t);
+  layoutPlates();                                       // SPEC5 §B4 — champion nameplates
 };
 // ══ controls ═══════════════════════════════════════════════════════════════════
 $('btnWave').onclick = () => { if (state.phase === 'prewave') { state.gold += Math.ceil(state.countdown); startWave(state.wave + 1); } };
@@ -13876,12 +16000,17 @@ function frameFight(cam, tw, h, side) {
 // SPEC4 §C/§D rigs: a point ON the road, `ahead` units DOWN-road of the column's leader
 // (negative = behind it, i.e. inside the mass). Writes _v3, which the caller reads for z —
 // the same temp every other camera rig in this table already borrows.
-function roadAhead(ahead) {
+// SPEC5 §C rigs stage bodies at a DISTANCE rather than at a point, so the same helper is
+// split in two: roadD() is the distance, roadAhead() the world x it lands on.
+function roadD(ahead) {
   let lead = null;
   for (const e of G.enemies) if (e.alive && e.pathId === G.endRoute && (!lead || e.d > lead.d)) lead = e;
   const len = G.pathLen;
-  const d = clamp((lead ? lead.d : len * 0.45) + ahead, 12, len - 22);
-  G.pathPos(d, _v3, 0, G.endRoute);
+  return clamp((lead ? lead.d : len * 0.45) + ahead, 12, len - 22);
+}
+G.roadD = roadD;
+function roadAhead(ahead) {
+  G.pathPos(roadD(ahead), _v3, 0, G.endRoute);
   return _v3.x;
 }
 // Picks a spot `ahead` units down-road of the column, then TICKS THE SIM UNTIL THE COLUMN
@@ -13899,6 +16028,34 @@ function openRoad(ahead) {
     tickSim();
   }
   return [x, z];
+}
+// SPEC5 §C — frame a staged subject from a computed high three-quarter bearing. The orbit
+// rig (tgt+dist) inherits the game's own azimuth, and at ground level on a rolling meadow
+// that azimuth lands inside a hillside about half the time — measured: the first cut of
+// _split framed a grass bank with the horde at the frame edge. A steep bearing derived from
+// the subject itself cannot, whatever the balance tables do to where the column stands.
+// `bear` rotates that bearing about the subject. The elevation test below clears TERRAIN,
+// not canopy, so a fixed bearing eventually stands the lens behind a conifer — which is
+// exactly what _raise shipped with. One number per rig is cheaper and more honest than
+// teaching this function about the tree scatter.
+// `&bear=` / `&fdist=` override every rig on this helper from the command line, which is the
+// only cheap way to HUNT a bearing: the obstruction is terrain the rig cannot see, so the
+// search is empirical (three shots per rig, then the winner is written back as the literal
+// argument below). Same opt-in idiom as `&zm=` on _bestiary and `&dbg=1` on frameTower.
+function frameAt(cam, x, z, h, dist, bear) {
+  if (P.has('bear')) bear = +P.get('bear');
+  if (P.has('fdist')) dist = +P.get('fdist');
+  const gy = G.groundY(x, z);
+  const cb = Math.cos(bear || 0), sb = Math.sin(bear || 0);
+  const ox = 0.52 * cb - 0.62 * sb, oz = 0.52 * sb + 0.62 * cb;
+  const px = x + dist * ox, pz = z + dist * oz;
+  // ...and CLEAR the ground the LENS stands on, not only the subject's. Height measured at
+  // the subject alone puts the camera inside a grass bank whenever the subject sits in a dip
+  // — the first cut of _split shipped a frame of hillside with the horde at the edge. The
+  // bearing is fixed; the elevation is whichever of the two clearances is larger.
+  const py = Math.max(gy + dist * 0.80, G.groundY(px, pz) + dist * 0.55);
+  cam.pos = [px, py, pz];
+  cam.look = [x, gy + h, z];
 }
 const SHOT_PRESETS = {
   // WORLD: yawed off the orbit rig onto an explicit pose. The old framing put the road's
@@ -14003,25 +16160,34 @@ const SHOT_PRESETS = {
   // out — that is the only test this frame exists to fail.
   _bestiary: { t: 8, bare: true, builds: [], cam: { pos: [0, 0, 0], look: [0, 0, 0] },
     fx: () => {
-      // SPEC3 §B raises the line-up to the whole nine-strong non-boss roster, ordered by
-      // MASS so neighbouring silhouettes are never the same height — nine units that all
-      // read alike is the failure this frame exists to catch, and it can only be judged
-      // when the biggest and the smallest are not sorted into two separate halves.
-      const kinds = ['ogre', 'shield', 'ram', 'marauder', 'ironclad', 'hound',
-                     'frostrevenant', 'ashwraith', 'warshaman'];
-      const D0 = 44, GAP = 2.85;
+      // SPEC3 §B raised the line-up to nine; SPEC5 §A takes it to SIXTEEN, which no longer
+      // fits on one file of road at inspection range. It is now two ranks: the array steps
+      // one GAP every PAIR and alternates the lane, so neighbours are 2.9 u apart along the
+      // road and 5.2 u apart across it and nothing can overlap anything. Ordering still
+      // alternates heavy and light down the line — sixteen units that read alike is the
+      // failure this frame exists to catch, and it can only be judged when the biggest and
+      // the smallest are interleaved rather than sorted into two halves.
+      // ...and the two FILES alternate heavy/light as well, not just the line: with every
+      // mini-boss on the same side of the road the near file simply hid the far one (the
+      // ram stood squarely in front of the warded one at this bearing).
+      const kinds = ['ogre', 'hound', 'cutpurse', 'ram', 'wardedone', 'skeleton',
+                     'gravemold', 'ironclad', 'frostrevenant', 'marauder',
+                     'ashwraith', 'necromancer', 'shield', 'wyvern',
+                     'moldling', 'warshaman'];
+      const D0 = 44, GAP = 2.90;
       for (let i = 0; i < kinds.length; i++) {
         spawnEnemy(kinds[i]);
         const e = G.enemies[G.enemies.length - 1];
-        e.d = D0 + i * GAP; e.lane = (i & 1 ? 2.0 : -2.0);
+        e.d = D0 + (i >> 1) * GAP; e.lane = (i & 1 ? 2.6 : -2.6);
         G.pathPos(e.d, _v3, e.lane); e.px = _v3.x; e.pz = _v3.z;
         e.hp = e.maxhp * (0.44 + (i % 5) * 0.12);      // every new type must grow a health bar
+        if (e.def.hitward) e.wardN = 4;                // ...and the ward strip must be part-spent
       }
-      const dm = D0 + (P.has('bi') ? +P.get('bi') : (kinds.length - 1) / 2) * GAP;   // "&bi=0" frames one subject
+      const dm = D0 + (P.has('bi') ? +P.get('bi') : (kinds.length - 1) / 4) * GAP;   // "&bi=0" frames one subject
       G.pathPos(dm, _v3);
       const mx = _v3.x, mz = _v3.z, gy = G.groundY(mx, mz), tn = G.pathTan(dm);
       const c = SHOT_PRESETS._bestiary.cam;
-      const ZM = +(P.get('zm') || 21);                 // -Extra "&zm=7" for a tight critic pass
+      const ZM = +(P.get('zm') || 22);                 // -Extra "&zm=7" for a tight critic pass
       // stand off the road on the near flank AND a little down-road, so the line-up walks
       // toward the lens: a bestiary shot from behind proves nothing about a silhouette.
       c.look = [mx, gy + 1.5, mz];
@@ -14034,8 +16200,8 @@ const SHOT_PRESETS = {
       const row = document.querySelector('#wavePrev .wpRow'), ttl = document.querySelector('#wavePrev .wpT');
       if (!row) return;
       row.innerHTML = '';
-      for (const [t, c] of [['ironclad', 4], ['ram', 1], ['ashwraith', 12], ['frostrevenant', 8],
-                            ['warshaman', 4], ['ogre', 1]])
+      for (const [t, c] of [['wyvern', 11], ['wardedone', 3], ['gravemold', 6], ['necromancer', 2],
+                            ['cutpurse', 9], ['skeleton', 12], ['ironclad', 4], ['ram', 1]])
         row.appendChild(UI.bust(t, c));      // UI-2: same builder as the live card, resist pips and all
       // "Bestiary — The Siege Ram incoming" overran the card's 322 px (which now ellipses
       // rather than bleeding, but an elided hero frame is still a bad hero frame).
@@ -14380,6 +16546,192 @@ const SHOT_PRESETS = {
       G.enterTrap('caltrops');
       const gx = roadAhead(33), gz = _v3.z;
       G.setPlaceAt(gx, gz);
+    } },
+  // ══ SPEC5 §C critic rigs ═══════════════════════════════════════════════════════════
+  // Same idiom as the §C/§D power rigs: tick the sim to a full road, STAGE the thing under
+  // test with G.spawnAt (which takes no rng draw, so a preset can never shift the stream a
+  // balance run is measuring), nudge its own timer where a six-second cadence would
+  // otherwise own the frame, then tick on to the moment worth judging. Every camera is the
+  // game's orbit rig pointed at where the act actually happened — a hand-picked bearing at
+  // t=250 lands inside the conifer belt about half the time.
+  //
+  // A flock crossing a militia line that cannot touch it. The rally is cast first and given
+  // time to run in, so the frame carries the REFUSAL: spears up, wyverns overhead, no fight.
+  _wyvern: { t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 46 },
+    fx: () => {
+      const [x, z] = openRoad(16);
+      const v = G.canCast('rally', x, z);
+      if (!v.ok) console.log('CASTWARN rally ' + x.toFixed(1) + ',' + z.toFixed(1) + ' — ' + v.reason);
+      G.castPower('rally', x, z);
+      for (let i = 0; i < 45; i++) tickSim();             // militia run in and lock horns
+      // Stage the flock UP-ROAD of the spears and let it fly over them: the frame has to
+      // carry the refusal, and a flock parked past the line is just a flock.
+      let dAt = roadD(0), bq = 1e18;
+      for (let d0 = 10; d0 < G.pathLen - 20; d0 += 1.5) {
+        G.pathPos(d0, _v3, 0, G.endRoute);
+        const q = (_v3.x - x) ** 2 + (_v3.z - z) ** 2;
+        if (q < bq) { bq = q; dAt = d0; }
+      }
+      for (let i = 0; i < 10; i++)
+        G.spawnAt('wyvern', Math.max(6, dAt - 7 - (i % 4) * 2.1), ((i % 3) - 1) * 1.9 + (i > 4 ? 0.7 : -0.7));
+      for (let i = 0; i < 45; i++) tickSim();             // 2.6/s × 1.5s: over the spears
+      // The contract, stated in the log rather than trusted: no flyer is ever HELD, and no
+      // knight is ever holding one. A regression here is silent in a screenshot.
+      let fl = 0, held = 0;
+      for (const e of G.enemies) if (e.alive && e.def.fly) { fl++; if (e.blockedBy >= 0) held++; }
+      console.log('FLYLOG flock=' + fl + ' blocked=' + held + ' militia=' + G.knights.filter(k => k.mil && k.alive).length);
+      // Frame the FLOCK, not the point it was called down over: at 2.6 units of altitude
+      // and 2.6 units a second the two are never the same place by the time the rig fires.
+      let cx = x, cz = z, cn = 0;
+      for (const e of G.enemies) if (e.alive && e.def.fly) { cx += e.px; cz += e.pz; cn++; }
+      if (cn) { cx = (cx - x) / cn; cz = (cz - z) / cn; }
+      // BEARING 1.9 rad, hunted with `&bear=` (see frameAt). The default bearing stands the
+      // lens on the meadow's near bank, and at this point on the Vale that bank RISES — the
+      // shipped frame gave a third of its width to a green hillside and put the flock small
+      // and centre. Swung round to look UP the road instead: the column runs the frame's
+      // spine, the flock crosses it at altitude, and the militia line sits at the near end
+      // where the refusal happens. (This is the "bearing/zoom change on that preset" the VFX
+      // pass asked for after the wing-beat read as invisible here and fine on open road.)
+      frameAt(SHOT_PRESETS._wyvern.cam, (cx + x) / 2, (cz + z) / 2, 3.4, 23, 1.9);
+    } },
+  // A mold mid-split: three killed, six children a heartbeat old beside three still standing.
+  _split:  { t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 34 },
+    fx: () => {
+      // Mid-road, not "just ahead of the leader": under STD_BUILDS the Vale's first archer
+      // stands beside the gate, so the furthest-alive foe at t=250 is usually still on the
+      // crag — and the first cut of this rig staged six molds on a cliff face.
+      const d = Math.max(roadD(6), G.pathLen * 0.40), molds = [];
+      for (let i = 0; i < 6; i++) molds.push(G.spawnAt('gravemold', Math.max(6, d - i * 2.6), ((i % 3) - 1) * 1.6));
+      for (let i = 0; i < 8; i++) tickSim();
+      for (let i = 0; i < 3; i++) if (molds[i] && molds[i].alive) G.dealDamage(molds[i], 9999, 'pierce');
+      for (let i = 0; i < 3; i++) tickSim();
+      const a = molds.find(m => m && m.alive) || molds[0];
+      let kids = 0;
+      for (const e of G.enemies) if (e.alive && e.isSplit) kids++;
+      console.log('SPLITLOG children=' + kids + ' standing=' + molds.filter(m => m && m.alive).length +
+        ' at=' + a.px.toFixed(1) + ',' + a.pz.toFixed(1));
+      frameAt(SHOT_PRESETS._split.cam, a.px, a.pz, 1.2, 22);
+    } },
+  // Two chanters and the bones coming up behind them. The ring is fed by hand (a handful of
+  // levy fall in front of them) and the six-second cadence is short-circuited on the rig —
+  // waiting it out under a live tower line would just get the necromancers shot first.
+  _raise:  { t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 32 },
+    fx: () => {
+      const d = Math.max(roadD(4), G.pathLen * 0.40);     // mid-road meadow (see _split)
+      const n1 = G.spawnAt('necromancer', Math.max(8, d), -1.3);
+      const n2 = G.spawnAt('necromancer', Math.max(8, d - 2.6), 1.3);
+      for (let i = 0; i < 7; i++) {
+        const g = G.spawnAt('grunt', Math.max(4, d - 5 - i * 1.1), ((i % 3) - 1) * 1.5);
+        G.dealDamage(g, 9999, 'pierce');                  // a corpse for the ring
+      }
+      n1.raiseT = n2.raiseT = TICK;                       // the chant lands on the next tick
+      for (let i = 0; i < 4; i++) tickSim();
+      // Frame the CHANT AND WHAT IT RAISED, not the chanter: the bones come up behind him
+      // (see the raise tick — a corpse ahead of the necromancer is dragged back to him), so
+      // a lens on n1 alone put six risen skeletons off the bottom of the frame.
+      let cx = 0, cz = 0, cn = 0, sk = 0;
+      for (const e of G.enemies) {
+        if (!e.alive) continue;
+        if (e.type === 'skeleton') sk++;
+        else if (e.type !== 'necromancer') continue;
+        cx += e.px; cz += e.pz; cn++;
+      }
+      const a = n1.alive ? n1 : n2;
+      if (!cn) { cx = a.px; cz = a.pz; cn = 1; }
+      console.log('RAISESHOT necros=' + (cn - sk) + ' bones=' + sk);
+      // bearing flipped a half turn: the default one stands the lens inside the conifer belt
+      // on the road's near verge, and frameAt clears terrain but not canopy.
+      frameAt(SHOT_PRESETS._raise.cam, cx / cn, cz / cn, 1.2, 19, Math.PI * 0.96);
+    } },
+  // The ward eating hits: staged in front of the standing archer line and ticked until the
+  // runes are visibly part-spent (never to zero — a stripped ward has nothing to show).
+  _wardhit:{ t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 26 },
+    fx: () => {
+      // Stand it where the battery can actually REACH — the first cut staged it at the
+      // column's head and the head at t=250 happened to be between two towers, so the rig
+      // shipped a full ward and a log that said "hits=0". Walk back from the leader until
+      // the road passes inside some fighting tower's range.
+      let at = roadD(-2), bestq = 1e18;
+      for (const tw of G.towersList) {
+        if (!TOWER_DEFS[tw.type].dmg) continue;
+        for (let d0 = 10; d0 < G.pathLen - 20; d0 += 2) {
+          G.pathPos(d0, _v3, 0, G.endRoute);
+          const q = (_v3.x - tw.x) ** 2 + (_v3.z - tw.z) ** 2;
+          if (q < bestq) { bestq = q; at = d0; }
+        }
+      }
+      const w = G.spawnAt('wardedone', at, 0);
+      let i = 0;   // (frame bearing flipped below: the default one stands the lens in a tower's legs)
+      for (; i < 400 && w.alive && w.wardN > 2; i++) tickSim();
+      console.log('WARDLOG hits=' + (6 - w.wardN) + ' left=' + w.wardN + ' alive=' + w.alive + ' ticks=' + i);
+      frameAt(SHOT_PRESETS._wardhit.cam, w.px, w.pz, 1.5, 14, Math.PI * 0.72);
+    } },
+  // A pavise wall arriving three abreast (§B1). Wave 6 is the Vale's first phalanx.
+  _phalanx:{ t: 20, builds: 'std', until: 6, untilMax: 900, untilAfter: 7, cam: { tgt: [0, 0, 0], dist: 34 },
+    fx: () => {
+      let r = null;
+      for (const e of G.enemies) if (e.alive && e.rank !== undefined) { r = e; break; }
+      if (!r) console.log('FORMWARN no ranked unit on the road at wave ' + state.wave);
+      const x = r ? r.px : 0, z = r ? r.pz : 0;
+      frameAt(SHOT_PRESETS._phalanx.cam, x, z, 1.2, 22);
+    } },
+  // The Long Night's false ending (§B2): the road empty, the lull banner up, six seconds
+  // before the second host. Needs a line that can actually clear part one, so it fields the
+  // winnability rig's own eight tier-3 towers.
+  _longnight:{ t: 20, until: 8, untilMax: 1800, untilAfter: 0, cam: { tgt: [0, 0, 0], dist: 76 },
+    builds: [[32, -31, 'archer', 3], [16, -3, 'ballista', 3], [50, 3, 'archer', 3], [26, 21, 'catapult', 3],
+      [2, 20, 'barracks', 3], [-21, 25, 'catapult', 3], [-40, 4, 'ballista', 3], [-58, 17, 'archer', 3]],
+    fx: () => {
+      let i = 0;
+      for (; i < 5000 && G.night.part !== 1.5 && state.phase === 'wave'; i++) tickSim();
+      if (G.night.part !== 1.5) console.log('NIGHTWARN never reached the lull — part=' + G.night.part + ' phase=' + state.phase);
+      const x = roadAhead(-4), z = _v3.z;
+      frameAt(SHOT_PRESETS._longnight.cam, x, z, 2.0, 54);
+      console.log('NIGHTLOG shot wave=' + state.wave + ' part=' + G.night.part + ' ticks=' + i);
+    } },
+  // SPEC5 §B3 — the gate heralds beating through a muster on the only road with two mouths.
+  // Staged at the muster before FROSTFELL W9, which is the campaign's most lopsided arrival
+  // (0.67 / 0.33 — the whole GATELOG table is in the log beside this frame): the mechanic is
+  // a COMPARISON, and 52/48 would have demonstrated nothing. The lens stands inside the field
+  // looking back up the road at the loud mouth, so the drum ring, the banner flare and the
+  // arch are all one read; the quiet gate's own smaller beat is on the dispatch card in
+  // digits, which is the half of this feature that has to survive being screenshotted.
+  //
+  // Held on a BEAT: heraldTick stamps G.heraldAt, and the rig ticks until that stamp MOVES,
+  // so the capture can never land in the 2.4-second gap between two drums and ship a
+  // dark gate with a log that says the herald fired.
+  // The bearing is hand-set for the same reason _raise's and _wardhit's are: both of
+  // Frostfell's gates sit against the east cliff, and frameAt's default bearing stands the
+  // lens OUTSIDE the diorama looking at the back of the crag (the first cut of this frame
+  // shipped a wall of snow with neither gate in it).
+  _herald: { t: 20, builds: 'm2', until: 8, untilMax: 1800, untilAfter: 0,
+    cam: { tgt: [0, 0, 0], dist: 30 },
+    fx: () => {
+      let i = 0;
+      for (; i < 6000 && state.phase !== 'prewave'; i++) tickSim();   // clear the wave, reach the muster
+      if (state.phase !== 'prewave') console.log('HERALDWARN never reached a muster — phase=' + state.phase);
+      for (let j = 0, a0 = G.heraldAt; j < 200 && G.heraldAt === a0; j++) tickSim();
+      const sh = G.gateShare(state.wave + 1), R = G.spawnRoutes;
+      let hi = 0; for (let g = 1; g < R.length; g++) if (sh[g] > sh[hi]) hi = g;
+      console.log('HERALDLOG wave=' + (state.wave + 1) + ' share=' + sh.map(v => v.toFixed(2)).join('/') +
+        ' loud=' + hi + ' beat=' + G.heraldAt + ' phase=' + state.phase);
+      const A = G.spawnGates[hi];
+      // framed on the THRESHOLD (the drum's own position), not the gate anchor, and close
+      // enough that the two rings are a struck skin rather than a stain on the snow
+      frameAt(SHOT_PRESETS._herald.cam, A.x + A.rx * 4.0, A.z + A.rz * 4.0, 3.4, 31, Math.PI * 0.70);
+    } },
+  // The wave's one promoted unit (§B4), framed where it stands.
+  _champion:{ t: 20, builds: 'std', until: 7, untilMax: 900, untilAfter: 16, cam: { tgt: [0, 0, 0], dist: 26 },
+    fx: () => {
+      let c = null;
+      for (let i = 0; i < 600 && !c; i++) {
+        for (const e of G.enemies) if (e.alive && e.champ) { c = e; break; }
+        if (!c) tickSim();
+      }
+      if (!c) console.log('CHAMPWARN no champion reached the road on wave ' + state.wave);
+      else console.log('CHAMPLOG ' + c.type + ' "' + G.champName(c) + '" hp=' + Math.round(c.hp) + '/' + Math.round(c.maxhp));
+      const x = c ? c.px : 0, z = c ? c.pz : 0;
+      frameAt(SHOT_PRESETS._champion.cam, x, z, 1.2, 15);
     } },
   // bot harness (SPEC2 §F): no free builds — &plan= ops buy with real gold as it accrues
   bot:     { t: 400, builds: [], plan: true, cam: { tgt: [-2, 4, -8], dist: 152 } },

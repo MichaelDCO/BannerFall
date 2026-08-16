@@ -1,7 +1,7 @@
 // Bannerfall service worker — offline-capable PWA cache.
 // Strategy: network-first for app shell/code (always fresh online, cache fallback offline);
 // cache-first for the pinned vendor bundle (immutable at three@0.170.0).
-const VERSION = 'bannerfall-v4';
+const VERSION = 'bannerfall-v5';
 const SHELL = [
   './', 'index.html', 'css/main.css', 'js/game.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
