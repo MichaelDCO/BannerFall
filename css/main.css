@@ -119,7 +119,17 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    .ibtn and out-specify it — .ibtn sets its own background-image, and an equal-specificity
    rule earlier in the file is silently overwritten (which is how the pause button shipped
    as an empty plate on the first pass). */
-.ibtn.gl{ font-size:0; background-repeat:no-repeat,repeat,no-repeat;
+/* FIX6-UI §1 — THE PLATE MUST FILL THE BORDER BOX. The third layer (the iron gradient) was
+   `no-repeat` at `100% 100%`, and a background is sized against the PADDING box while it is
+   painted into the BORDER box — so on `.ibtn.frm.gl` (border:9px) the gradient covered a
+   26×26 core inside a 44×44 button and the 9px filigree gutter fell through to the world.
+   That is the "pause plate is inset and offset up-left inside its own frame" the critic
+   measured in _trueui_m at 3×: the dark plate is 18px smaller than its frame on every side
+   and the meadow shows through the gutter. #btnGear already carried this exact fix in its own
+   rule; the shared `.gl` rule never got it. Tile the plate (like .ibtn does) so it reaches
+   the border edge, and pin the glyph to the BORDER box so 50% is the frame's true centre. */
+.ibtn.gl{ font-size:0; background-repeat:no-repeat,repeat,repeat;
+  background-origin:border-box,padding-box,border-box;
   background-position:50% 50%,0 0,0 0; background-size:20px 20px,180px 180px,100% 100%; }
 .ibtn.gl-gear{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g stroke='%23e8b64c' stroke-width='3.6' fill='none'><path d='M12 1.9v4M12 18.1v4M1.9 12h4M18.1 12h4'/></g><g stroke='%23e8b64c' stroke-width='2.9' fill='none'><path d='M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M19.1 4.9l-2.8 2.8M7.7 16.3l-2.8 2.8'/></g><circle cx='12' cy='12' r='6.6' fill='%23e8b64c' stroke='%236d4a10' stroke-width='1'/><circle cx='12' cy='12' r='3' fill='%2317130e' stroke='%23ffe7ab' stroke-width='1.1'/></svg>"),var(--noise),linear-gradient(178deg,#2a251e,#15120e); }
 .ibtn.gl-pause{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23c8d2df' stroke='%23e8b64c' stroke-width='1.5' stroke-linejoin='round'><path d='M6.4 4.4h4.2v15.2H6.4z'/><path d='M13.4 4.4h4.2v15.2h-4.2z'/></g><g fill='%23f4f9ff' opacity='.55'><path d='M7.2 5.2h1.3v13.6H7.2zM14.2 5.2h1.3v13.6h-1.3z'/></g></svg>"),var(--noise),linear-gradient(178deg,#2a251e,#15120e); }
@@ -179,8 +189,14 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    with no resist gets a neutral empty slot so the row keeps one baseline either way. */
 #wavePrev .wpE{ position:relative; display:inline-flex; flex:0 0 auto; align-items:center; gap:5px;
    white-space:nowrap; }
-#wavePrev .wpI{ position:relative; display:block; flex:0 0 auto; width:31px; height:31px; }
-#wavePrev .wpP{ position:absolute; right:-2px; bottom:-1px; display:flex; align-items:flex-end; gap:4px; }
+/* FIX6-UI §4c — and the box CLIPS, so nothing docked in it can ever escape again. */
+#wavePrev .wpI{ position:relative; display:block; flex:0 0 auto; width:31px; height:31px; overflow:hidden; }
+/* FIX6-UI §4c — INSIDE means INSIDE. The slot was docked at right:−2px / bottom:−1px, so the
+   pip's rim (and its 1px outer ring) sat 3px outside the sprite box on two sides. On the last
+   chip in the row that is 3px past `.wpRow`'s own `overflow:hidden`, which is why the brute's
+   and the wyvern's pips came back shaved flat on one edge. Flush at 0/0 with a 1px inset: the
+   pip cannot reach the clip whatever the chip's position in the row. */
+#wavePrev .wpP{ position:absolute; right:2px; bottom:2px; display:flex; align-items:flex-end; gap:4px; }
 /* SPEC3 §A: the pip names the ELEMENT WHEEL, not "armour". Two at most — the school this
    silhouette shrugs off (▲) and the school that opens it up (▼) — because the whole lesson
    the dispatch has to teach now is "bring something else". Colour carries the school, the
@@ -196,10 +212,14 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    box on all four sides, which is what let it escape the sprite in the first place; the cap
    bar (gold along the top for "turns it aside", ember along the foot for "opens it up") plus
    a matching rim says the same thing without a single pixel outside the slot. */
+/* FIX6-UI §4c — the direction ring is INSET. As an outer `0 0 0 1px` it painted a pixel beyond
+   the pip's own box on all four sides, which is what still crossed the plate's 4px corner radius
+   after the slot itself had been pulled inside (measured on the brute chip in _omens: pip box
+   flush at the plate's bottom edge, ring one pixel past it and shaved by the corner). */
 #wavePrev .wpE .pip.up{ box-shadow:0 1px 3px rgba(40,26,6,.8), inset 0 2.5px 0 rgba(255,231,171,.95),
-   0 0 0 1px rgba(255,231,171,.5); }
+   inset 0 0 0 1px rgba(255,231,171,.5); }
 #wavePrev .wpE .pip.dn{ box-shadow:0 1px 3px rgba(40,26,6,.8), inset 0 -2.5px 0 rgba(255,138,92,.95),
-   0 0 0 1px rgba(255,138,92,.5); }
+   inset 0 0 0 1px rgba(255,138,92,.5); }
 /* school tints — one hue per element, reused by the pips and the omen sigils */
 .sc-pierce{ background-color:#6b7f96; }
 .sc-crush{  background-color:#7f7154; }
@@ -332,8 +352,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    text-shadow:0 1px 0 rgba(255,248,224,.5); }
 #omenRow .omD{ display:block; font-size:10.5px; line-height:1.28; color:#5d4a22; margin-top:1px; }
 #omenRow .omD b{ font-weight:400; color:#8f2d20; }
-#omenRow .omC.chal .omN{ color:#8f2d20; }
-#omenRow .omC.boon .omN{ color:#25497f; }
+/* FIX6-UI §5 — the coloured heading is GONE (see the cream rule and .omKd further down). These
+   two parchment-era rules carried 1 id + 2 classes and were quietly out-specifying it, which is
+   why the titles were still web-blue and web-red after the heading was set to cream. */
 /* sigil: a wax seal, crimson for a challenge, blue for a boon — the fastest read on the card.
    LONGHANDS ONLY: `background:` shorthand here out-specifies .sg-* and blanks every seal
    (same trap the .tag glyphs carry a comment about). */
@@ -560,9 +581,17 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #omenRow .omSub{ color:#a2947a; }
 #omenRow .omC{ color:#d8cdb4; }
 #omenRow .omN{ text-shadow:0 1px 0 #000; }
-/* the boon/bane pair is the blue and the red the rest of the HUD already speaks */
-#omenRow .omC.chal .omN{ color:#c8544a; }
-#omenRow .omC.boon .omN{ color:#7fa8dd; }
+/* FIX6-UI §5 — EVERY HEADING IN THIS GAME IS CREAM OR GOLD. These two were the only exceptions:
+   #c8544a and #7fa8dd are web red and web blue, and three cards in a row of them were the only
+   coloured titles in the product — they read as hyperlinks, not as portents. The heading is cream
+   like the build cards' and the garrison's; challenge-or-boon is carried by the wax seal's own
+   crimson/blue field (which was always the fastest read on the card) and, now, by a named tag
+   under the title, so the distinction survives a greyscale pass instead of resting on hue. */
+#omenRow .omN{ color:#f2e5c6; }
+#omenRow .omKd{ display:block; margin-top:1px; font-family:var(--sans); font-weight:600;
+   font-size:8.5px; letter-spacing:.22em; text-transform:uppercase; }
+#omenRow .omC.chal .omKd{ color:#c8544a; }
+#omenRow .omC.boon .omKd{ color:#7fa8dd; }
 #omenRow .omD{ color:#d8cdb4; }
 #omenRow .omD b{ color:#ffdc8e; }
 /* SMALL-CAPS, not lowercase serif: the omen blurb was the only true-lowercase body copy in
@@ -571,6 +600,75 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #omenRow button.omC:hover{ box-shadow:0 8px 20px rgba(0,0,0,.6), 0 0 18px rgba(232,182,76,.34),
    inset 0 1px 0 rgba(255,228,178,.16); }
 #omenRow .omSig{ filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
+/* the hotkey is the SAME numbered square the build bar stamps on its seven cards (.card .kb),
+   not a prose label — see omCard() for why "KEY 8" had to go. Fixed 17px box, so the side
+   column's width is the same on all three cards and the right edge cannot go ragged. */
+#omenRow .omK{ width:17px; height:17px; padding:0; border-radius:3px; text-align:center;
+   font-size:10.5px; line-height:17px; letter-spacing:0; color:#ffe2a2; opacity:1;
+   background:rgba(8,6,4,.75); border:1px solid rgba(232,182,76,.45); }
+
+/* ══ FIX6-UI §5 — THE OMEN OFFER AS A DECISION, NOT A NOTIFICATION ══════════════════
+   Three 320×60 strips in the top-left corner, stacked under the resource bar at the same
+   visual weight as the dispatch card 8px below them, body copy at 9px wrapping to three
+   lines, and the world running undimmed behind: that is a toast list, and what it was
+   carrying is the only branch point the game has. While the hand is on the table the row
+   becomes a centred spread of three portrait cards over a scrim.
+   THE SCRIM IS NOT A GATE. `pointer-events:none` on the row and on the ::before, `auto` only
+   on the cards, so the shop, the powers rail and the world stay live for the whole countdown —
+   the offer is dramatised, never blocking (there is a seeded default if the clock runs out, and
+   a player who has already decided must not be stopped from spending the same nine seconds
+   siting a tower). Once taken the scrim drops to a quarter so the road reads again while the
+   card keeps its ring and its ribbon.
+   NO CANVAS BLUR. The critic asked for the world blurred 2px; a `filter:blur()` on #gl is a
+   full-resolution gaussian on the framebuffer every frame, which is the one post pass SPEC §2's
+   30fps phone floor cannot afford (the tier system exists to avoid exactly this). The scrim
+   plus the vignette does the separation work at zero per-frame cost.
+   FREEZE-SAFE: purely static layout and a static scrim — no timers, no transitions to settle,
+   so a shot render lands on the shipped look. */
+#leftRail.omUp{ z-index:8; }              /* over the shop, which is z-index auto */
+#omenRow.mdl{ position:fixed; inset:0; z-index:8; pointer-events:none;
+   display:grid; grid-template-columns:repeat(3, minmax(0, 300px)); grid-auto-rows:min-content;
+   align-content:center; justify-content:center; gap:13px 20px; padding:0 4vw; }
+#omenRow.mdl::before{ content:''; position:fixed; inset:0; pointer-events:none;
+   background:radial-gradient(ellipse 68% 58% at 50% 50%, rgba(6,4,2,.44), rgba(6,4,2,.62) 62%, rgba(4,3,1,.74) 100%); }
+#omenRow.mdl.taken::before{ background:radial-gradient(ellipse 68% 58% at 50% 50%, rgba(6,4,2,.38), rgba(6,4,2,.50) 62%, rgba(4,3,1,.60) 100%); }
+/* the header spans the spread and is centred, because it now titles a screen rather than a rail */
+#omenRow.mdl .omHead{ grid-column:1 / -1; text-align:center; pointer-events:auto;
+   padding:8px 16px 9px; border-width:9px; border-image-width:9px; }
+#omenRow.mdl .omT{ font-size:14px; letter-spacing:.34em; }
+#omenRow.mdl .omCk{ font-size:11.5px; letter-spacing:.19em; }
+#omenRow.mdl .omSub{ font-size:10.5px; letter-spacing:.19em; }
+/* a portrait card: seal, name, kind, one sentence, and a fixed foot rail for the price and the
+   key. `align-items:stretch` is the grid default, so a three-line body no longer makes SAPPERS
+   taller than its siblings, and the foot rail is a fixed slot so all three right edges align. */
+#omenRow.mdl .omC{ flex-direction:column; align-items:center; text-align:center; gap:0;
+   min-height:340px; padding:24px 18px 16px; border-width:11px; border-image-width:11px;
+   pointer-events:auto; }
+/* the sentence sits in the middle of the card's own column rather than hanging off the name —
+   at 340px there is room for the seal, the title block and the sentence to breathe apart */
+#omenRow.mdl .omBody{ display:flex; flex-direction:column; justify-content:center; }
+#omenRow.mdl button.omC:hover{ transform:translateY(-3px); }
+#omenRow.mdl button.omC:active{ transform:translateY(0) scale(.995); }
+/* ONCE TAKEN THE SPREAD STOPS BEING A TARGET. The countdown keeps running after a pick and the
+   cards keep standing (the ribbon and the ring are the confirmation), but a resolved decision must
+   not go on eating clicks over the middle of the map — the next thing the player does with those
+   nine seconds is site a tower, on ground the cards happen to be covering. */
+#omenRow.mdl.taken .omC{ pointer-events:none; cursor:default; }
+#omenRow.mdl .omSig{ width:74px; height:74px; margin-bottom:14px; }
+#omenRow.mdl .omBody{ flex:1 1 auto; width:100%; }
+#omenRow.mdl .omN{ font-size:21px; letter-spacing:.15em; line-height:1.14; }
+#omenRow.mdl .omKd{ margin-top:5px; font-size:10px; letter-spacing:.3em; }
+#omenRow.mdl .omD{ margin-top:13px; font-size:15px; line-height:1.44; letter-spacing:.03em; }
+#omenRow.mdl .omSide{ flex-direction:row; align-items:center; justify-content:center; gap:11px;
+   width:100%; min-height:38px; margin-top:14px; padding-top:12px;
+   border-top:1px solid rgba(232,182,76,.22); }
+#omenRow.mdl .omCoin{ font-size:13px; padding:2px 11px 3px 4px; }
+#omenRow.mdl .omCoin .ic{ width:16px; height:16px; }
+#omenRow.mdl .omCoin em{ font-size:9px; }
+/* the ribbon owns the top-right corner of a 300px card, well clear of the centred seal */
+#omenRow.mdl .omC.on .omTk{ top:14px; right:14px; font-size:9.5px; letter-spacing:.22em; }
+#omenRow.mdl .omC.on .omSide{ padding-top:12px; }   /* no gutter needed: the ribbon is 300px away */
+#omenRow.mdl .omC.on::before{ inset:7px; }
 
 /* ── wave banner ───────────────────────────────────────────────────── */
 #msg{ position:absolute; top:13%; left:0; right:0; z-index:0; text-align:center; opacity:0; transition:opacity .35s; }
@@ -615,7 +713,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    the same inset bevel the two power discs wear, at 60% of their diameter. A 1px hairline on
    a 28px disc was the last piece of unframed chrome standing on the battlefield — read as a
    web affordance rather than as part of the same set of iron controls 12px below it. */
-#hint{ position:absolute; left:14px; bottom:86px; }
+/* FIX6-UI §1 — ON THE RAIL'S AXIS, not beside it. At left:14px a 30px disc centres on x=29
+   while the two 62px power discs centre on x=45 and x=120: the legend read as a stray control
+   dropped near the rail rather than as its third slot. Left is solved for the CENTRE
+   (45 − 30/2 = 30) and bottom for the rail's own stack (16 rail + 62 disc + 12 gap), so the
+   three controls are one column on one axis with one gap. */
+#hint{ position:absolute; left:30px; bottom:90px; }
 #hintT{ display:block; width:30px; height:30px; padding:0; border-radius:50%; line-height:1;
         font-family:var(--sans); font-weight:600; font-size:15px; color:#f0d9a4;
         border:2px solid rgba(232,182,76,.55); text-shadow:0 1px 2px #000;
@@ -722,9 +825,21 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .card:not(:disabled):active{ transform:translateY(-1px) scale(.985); filter:brightness(.94); }
 .card:disabled{ filter:grayscale(.7) brightness(.62); cursor:default; }
 .card .por{ width:100%; max-width:100%; height:74px; display:block; border-radius:4px; margin-bottom:5px;
+            /* FIX6-UI §4 — the plate under the canvas is the canvas's own niche now (#141008 →
+               #241a0d), not a blue-grey sky: it used to show as a cold band round a warm
+               miniature wherever the bitmap did not reach the corners. */
             background:radial-gradient(ellipse 78% 62% at 50% 74%, rgba(255,220,160,.13), rgba(0,0,0,0) 70%),
-                       linear-gradient(180deg,#1b2a33,#171512 78%); box-shadow:inset 0 0 0 1px rgba(0,0,0,.5); }
-.card .nm{ font-size:12px; letter-spacing:.17em; text-transform:uppercase; color:#f2e5c6; text-shadow:0 1px 0 #000; }   /* FIX2-UI §4b */
+                       linear-gradient(180deg,#241a0d,#141008 78%); box-shadow:inset 0 0 0 1px rgba(0,0,0,.5); }
+/* FIX6-UI §4a — A NAME CLAMPS, IT NEVER SPILLS. The card is a fixed 140px and the name had no
+   overflow plan at all, so a longer tongue's word simply grew the plate (or, at phone width,
+   the row). Two lines and an ellipsis: the tooltip carries the full name either way. */
+.card .nm{ font-size:12px; letter-spacing:.17em; text-transform:uppercase; color:#f2e5c6; text-shadow:0 1px 0 #000;
+           display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+           overflow:hidden; text-overflow:ellipsis;
+           /* the same rasteriser hint the micro-label tier carries at the top of this file:
+              without it Chrome rounds each letterspaced advance to a whole pixel and the error
+              accumulates into a false word break — "CALTRO PS", "STO RM" in the phone captures */
+           text-rendering:geometricPrecision; }   /* FIX2-UI §4b */
 /* the short name authored for the phone width — swapped in at the breakpoint (the flat
    silhouette tier that used to ride beside it is gone; see FIX4-UI §1) */
 .card .nmS{ display:none; }
@@ -1053,12 +1168,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .sg-ironskin{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%237d2419' stroke='%234a1009' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%23c4685a' stroke-width='.9' opacity='.55'/><g fill='none' stroke='%23f2c8bd' stroke-width='2.2'><path d='M8.2 22.2a7.8 7.8 0 0 1 15.6 0'/><path d='M9.8 15.4a6.2 6.2 0 0 1 12.4 0'/></g><circle cx='16' cy='9.4' r='2.1' fill='%23f2c8bd'/></svg>"); }
 .sg-ward{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%237d2419' stroke='%234a1009' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%23c4685a' stroke-width='.9' opacity='.55'/><path d='M16 6.2l7.2 2.4v6.2c0 5-4.2 8.4-7.2 10-3-1.6-7.2-5-7.2-10V8.6z' fill='none' stroke='%23f2c8bd' stroke-width='2.2' stroke-linejoin='round'/><path d='M12.4 16L16 12.4 19.6 16' fill='none' stroke='%23f2c8bd' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
 .sg-night{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%237d2419' stroke='%234a1009' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%23c4685a' stroke-width='.9' opacity='.55'/><path d='M19.8 7.4a8.8 8.8 0 1 0 0 17.6 10.4 10.4 0 0 1 0-17.6z' fill='%23f2c8bd'/><path d='M23.2 11.4l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z' fill='%23f2c8bd'/></svg>"); }
-.sg-sappers{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%237d2419' stroke='%234a1009' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%23c4685a' stroke-width='.9' opacity='.55'/><path d='M16 5.8c5.1 5.3 8.6 8.8 8.6 14.1A8.6 8.6 0 0 1 7.4 20c0-3 1.7-5.4 3.5-7.5.2 2.4 1.1 3.8 2.5 4.2.7-4 .7-7.5 2.6-10.9z' fill='%23f2c8bd'/><path d='M7.2 25.4L24.8 7.6' stroke='%234a1009' stroke-width='4.8' stroke-linecap='round'/></svg>"); }
+.sg-sappers{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%237d2419' stroke='%234a1009' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%23c4685a' stroke-width='.9' opacity='.55'/><g stroke='%23f2c8bd' stroke-width='2.2' stroke-linecap='round'><path d='M8.6 25.0L20.4 11.6'/><path d='M23.6 25.0L12.2 12.0'/></g><path d='M16.4 8.0l9.4 5.0-1.5 2.6-9.4-5.0z' fill='%23f2c8bd'/><path d='M13.4 12.6L7.0 9.0 5.4 4.6l4.6-1.0 5.6 5.4z' fill='%23f2c8bd'/></svg>"); }
 .sg-shafts{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><g fill='%23ffe7ab'><path d='M16 5.4l4.1 8-4.1 2.2-4.1-2.2z'/><path d='M14.9 14.4h2.2v10.4h-2.2z'/><path d='M14.9 17.2l-4 2v3.6l4-2zM17.1 17.2l4 2v3.6l-4-2z'/></g></svg>"); }
-.sg-front{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><path d='M19 5.6L9.8 17.8h5.2l-1.2 8.8 9-12.4h-5.2z' fill='%23ffe7ab'/></svg>"); }
+.sg-front{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><path d='M9.4 13.8a3.4 3.4 0 0 1 .6-6.2 4.6 4.6 0 0 1 8.6-1.0 3.6 3.6 0 0 1 4.4 3.4 3.2 3.2 0 0 1-.8 3.8z' fill='none' stroke='%23ffe7ab' stroke-width='1.8' stroke-linejoin='round'/><path d='M18.4 13.2l-6.6 8.8h4.0l-1.0 6.2 6.6-9.0h-4.0z' fill='%23ffe7ab'/></svg>"); }
 .sg-chest{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><g fill='none' stroke='%23ffe7ab' stroke-width='2'><ellipse cx='16' cy='10.8' rx='6.8' ry='2.7'/><path d='M9.2 10.8v4.4c0 1.5 3 2.7 6.8 2.7s6.8-1.2 6.8-2.7v-4.4'/><path d='M9.2 15.8v4.4c0 1.5 3 2.7 6.8 2.7s6.8-1.2 6.8-2.7v-4.4'/></g></svg>"); }
 .sg-wind{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><g stroke='%23ffe7ab' stroke-width='2.6' stroke-linecap='round'><path d='M10 7.2h12M10 24.8h12'/></g><path d='M11.4 8.6h9.2L16 16zM11.4 23.4h9.2L16 16z' fill='%23ffe7ab'/></svg>"); }
-.sg-thin{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><g fill='none' stroke='%23ffe7ab' stroke-width='2.9' stroke-linecap='round' stroke-linejoin='round'><path d='M16 6.4v10.2'/><path d='M10.9 12.2L16 17.4l5.1-5.2'/></g><rect x='8.6' y='21.2' width='14.8' height='3' rx='1.5' fill='%23ffe7ab'/></svg>"); }
+.sg-thin{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><g stroke='%23ffe7ab' stroke-width='2.3' stroke-linecap='round'><path d='M19.2 13.4l3.4-3.4'/><path d='M9.0 24.4l4.6-4.6'/></g><path d='M22.0 10.6l5.0-4.8-1.0 6.2-3.4 3.2z' fill='%23ffe7ab'/><g fill='%23ffe7ab'><path d='M19.6 12.8l-2.6 1.6 2.0 2.0z'/><path d='M13.2 19.4l2.6-1.6-2.0-2.0z'/></g></svg>"); }
 /* a small portent rune for the dispatch's omen line */
 .dg-omen{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.2l3 6.6 6.8.8-5 4.8 1.3 6.8L12 17.6 5.9 21.2l1.3-6.8-5-4.8 6.8-.8z' fill='none' stroke='%236b5527' stroke-width='1.8' stroke-linejoin='round'/></svg>"); }
 /* SPEC6 §A1 — the skull sigil of a cursed wave. REDRAWN FOR THIRTEEN PIXELS, which is the
@@ -1389,12 +1504,26 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
   transition:filter .14s, transform .14s; }
 /* the chain between tiers: a link drawn in the gap above every node (the first hangs off the
    branch seal itself), struck gold once the node it feeds has been granted */
-.cN::before{ content:''; position:absolute; left:50%; top:-14px; width:3px; height:12px; margin-left:-1.5px;
-  border-radius:2px; background:rgba(78,52,18,.34); }
-.cN.on::before{ background:linear-gradient(180deg,#e8b64c,#ad7a1e);
+/* FIX6-UI §2 — THE SPINE IS CONTINUOUS. The link was 12px tall in a 16px gap and sat at
+   top:−14px, so it reached NEITHER the plate above it nor the plate below: three stubs
+   floating in three gutters, and a gold diamond over tier I attached to nothing. It now spans
+   the gap exactly (top:−16px, height:16px against margin-top:16px), which puts its head under
+   the branch seal's diamond and its foot on the plate it feeds — one unbroken chain from the
+   diamond through every tier. A 1px rule, not a 3px bar: the diamond is the ornament, the
+   spine is only the thing that connects it. */
+.cN::before{ content:''; position:absolute; left:50%; top:-16px; width:1px; height:16px; margin-left:-.5px;
+  background:rgba(78,52,18,.5); }
+.cN.on::before{ width:2px; margin-left:-1px; background:linear-gradient(180deg,#e8b64c,#ad7a1e);
   box-shadow:0 0 7px rgba(232,182,76,.55); }
 .cNr{ position:absolute; top:6px; right:9px; font-size:12px; letter-spacing:.14em; color:#8a7038; }
-.cNe{ display:block; padding-right:30px; font-size:13.5px; line-height:1.28; letter-spacing:.04em; color:#3d2c0d; }
+/* FIX6-UI §2 — ONE TYPE REGISTER PER SHEET. The row label was the only run on this parchment
+   set in true lowercase with no tracking, so next to the small-caps branch name and the
+   small-caps flavour line it read as another product's body copy pasted in. (The critic called
+   it "a plain system sans"; the computed face is Palatino, but at 13.5px lowercase with .04em
+   that is a distinction without a difference — the register was the defect.) Small-caps and
+   the sheet's own tracking now, the treatment the garrison stat rows already wear. */
+.cNe{ display:block; padding-right:30px; font-size:13px; line-height:1.3; letter-spacing:.065em;
+  font-variant-caps:small-caps; color:#3d2c0d; }
 .cNc{ display:flex; align-items:center; gap:5px; margin-top:6px; font-size:13px;
   letter-spacing:.1em; color:#6b5227; font-variant-numeric:tabular-nums; }
 .cNc .lau{ width:17px; height:17px; filter:drop-shadow(0 1px 1px rgba(60,40,12,.5)); }
@@ -1419,8 +1548,26 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 /* affordable but not paid for, and chained behind a lower tier: both quiet, differently */
 .cN.poor{ cursor:default; filter:none; transform:none; opacity:.78; }
 .cN.poor .cNc{ color:#8f4f2c; }
-.cN.lk{ cursor:default; opacity:.5; background:linear-gradient(178deg,rgba(150,118,64,.16),rgba(90,66,28,.16)); }
-.cN.lk .cNe{ color:#5c4a26; }
+/* FIX6-UI §2 — LOCKED IS A STATE, NOT A FADE. `opacity:.5` multiplied every layer at once:
+   the effect line, the price, the laurel and the roman numeral all landed near 0.2 effective
+   alpha on #e2d3ab parchment, so Engineer II and III were invisible and their numerals read as
+   printing ghosts (a tier you cannot read is a tier you cannot plan for). No opacity anywhere
+   now — the lock is told by three things that survive a greyscale pass: an iron padlock in the
+   corner, a dashed rule round the plate, and a recessed field. Type is set at #6b5a3a, which
+   measures 4.9:1 on this parchment. */
+.cN.lk{ cursor:default; border-style:dashed; border-color:rgba(78,52,18,.5);
+  background:linear-gradient(178deg,rgba(120,94,50,.20),rgba(78,58,26,.24));
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.24), inset 0 2px 7px rgba(60,40,12,.20); }
+.cN.lk .cNe, .cN.lk .cNc{ color:#6b5a3a; }
+.cN.lk .cNr{ color:#7a6844; }
+/* dimmed, not DRAINED: full grayscale turned the gold laurel sprig into a steel-grey mark that
+   read as a different icon altogether beside its lit siblings two rows up. */
+.cN.lk .cNc .lau{ filter:saturate(.5) brightness(.78); }
+/* the padlock. Bottom-right so it cannot collide with the roman numeral top-right, and drawn
+   in the same #4a3712 ink the three branch seals are struck in. */
+.cN.lk::after{ content:''; position:absolute; right:8px; bottom:7px; width:13px; height:13px;
+  background:50% 50%/100% 100% no-repeat;
+  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='4.4' y='10.4' width='15.2' height='10.6' rx='1.8' fill='none' stroke='%236b5a3a' stroke-width='2.1'/><path d='M8 10.4V7.6a4 4 0 0 1 8 0v2.8' fill='none' stroke='%236b5a3a' stroke-width='2.1'/><circle cx='12' cy='15.6' r='1.7' fill='%236b5a3a'/></svg>"); }
 
 /* FIX2-UI §5 — PLATED. Both helper lines (this one and the war-seed tag) were set unbacked
    over a lit meadow, where a 13px small-caps grey run competes with grass, trees and road at
@@ -1455,7 +1602,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
   #cTree{ gap:9px; }
   .cBr{ width:33%; min-width:0; padding:9px 8px 11px; }
   .cBH .cBN{ font-size:12.5px; letter-spacing:.09em; }
-  .cNe{ font-size:11px; }
+  .cNe{ font-size:12px; }        /* FIX6-UI §2 — 12px is the floor for a small-caps run */
 }
 /* PHONE. Three parchment strips side by side need 740px; stacked at full height they need
    1050. Neither fits a 390×844 rail, so the branch is RE-LAID rather than merely shrunk: the
@@ -1480,9 +1627,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
   .cBH .cBD{ display:none; }
   .cBI{ width:21px; height:21px; }
   .cN{ display:flex; align-items:center; gap:9px; margin-top:9px; padding:6px 8px 7px; }
-  .cN::before{ top:-8px; height:7px; }
+  .cN::before{ top:-9px; height:9px; }      /* FIX6-UI §2 — bridges the 9px phone gap exactly */
+  /* the padlock becomes the last cell in the band rather than an overlay on the price */
+  .cN.lk::after{ position:static; right:auto; bottom:auto; order:9; flex:0 0 12px;
+    width:12px; height:12px; }
   .cNr{ position:static; order:-1; flex:0 0 21px; text-align:center; font-size:10px; }
-  .cNe{ flex:1 1 auto; min-width:0; padding-right:0; font-size:11px; line-height:1.22; }
+  .cNe{ flex:1 1 auto; min-width:0; padding-right:0; font-size:12px; line-height:1.24; }
   .cNc{ flex:0 0 auto; margin-top:0; }
   .cNc .lau{ width:15px; height:15px; }
   .cNc u{ font-size:8.5px; letter-spacing:.14em; padding:2px 6px 3px; }
@@ -1798,7 +1948,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    beside it, because the legend is 250px wide and the build bar starts at ~275px on a
    1600px frame — there is no room for a third column down there, and a power must never
    overlap the shop it is deliberately not part of. */
-#powers{ position:absolute; left:14px; bottom:12px; display:flex; gap:11px; pointer-events:auto; z-index:2; }
+/* FIX6-UI §1 — 16px of ground under the rail, and NO second safe-area inset: #ui is a padded
+   fixed box (see its rule), absolutely-positioned children resolve `bottom` against its
+   PADDING box, so `env(safe-area-inset-bottom)` is already spent here. Adding it again would
+   stack 34px twice on an iPhone and float the rail in the middle of the shop. */
+#powers{ position:absolute; left:14px; bottom:16px; display:flex; gap:11px; pointer-events:auto; z-index:2; }
 .pwB{ position:relative; width:62px; height:62px; padding:0; border-radius:50%; overflow:hidden;
    border:2px solid rgba(232,182,76,.34); display:flex; align-items:center; justify-content:center;
    box-shadow:0 6px 16px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,228,178,.12), inset 0 -8px 16px rgba(0,0,0,.55);
@@ -1816,10 +1970,18 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    which is what the clip was for, and nothing clips the type. */
 .pwB{ overflow:visible; }
 .pwB .pwSweep{ overflow:hidden; }
-.pwB .pwK{ position:absolute; z-index:3; bottom:-9px; left:50%; transform:translateX(-50%);
-   min-width:17px; padding:1px 5px 2px; border-radius:3px; text-align:center; line-height:1.05;
-   font-size:9.5px; letter-spacing:.1em; color:#e6d8b8; text-shadow:0 1px 0 #000;
-   background:rgba(8,6,4,.86); box-shadow:inset 0 0 0 1px rgba(232,182,76,.42); }
+/* FIX6-UI §1 — THE KEYCAP COMES BACK INSIDE THE DISC, because outside it the VIEWPORT clips
+   it. At `bottom:-9px` on a rail anchored `bottom:12px` the cap's own box ran to −10px past
+   the frame edge, and all six gameplay presets (ui, _place, _omens, _rally, _traps, _endless)
+   shipped with the top 55% of a 'Q' and a 'W' and nothing else. The original reason it was
+   evicted — `overflow:hidden` on the disc shearing the letterform — is gone: the clip lives
+   on `.pwSweep` now, so the disc is free to hold its own cap. It sits bottom-centre inset 4px
+   and the device rides 5px higher to clear it, which is the whole of the collision. */
+.pwB .pwK{ position:absolute; z-index:3; bottom:6px; left:50%; transform:translateX(-50%);
+   min-width:15px; padding:0 4px 2px; border-radius:3px; text-align:center; line-height:1.3;
+   font-size:9px; letter-spacing:.08em; color:#e6d8b8; text-shadow:0 1px 0 #000;
+   background:rgba(8,6,4,.9); box-shadow:inset 0 0 0 1px rgba(232,182,76,.46); }
+.pwB .pwIc{ transform:translateY(-7px); }
 /* FIX2-UI §6d — A HOTKEY IS FURNITURE ON A DEVICE WITH NO KEYS (SPEC §2 touch). The orb caps,
    the build cards' 1–7 and the traps' Z/X/C all told a phone player to press keys that do not
    exist, and on the 58px phone card the numeral was competing with the miniature for the same
@@ -1828,6 +1990,18 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 @media (pointer:coarse){
   .pwB .pwK{ display:none; }
   .card .kb, #buildMenu.min .card .kb{ display:none; }
+}
+/* FIX6-UI §3 — …AND ON ANY VIEWPORT NARROWER THAN 480px, whatever the pointer says it is.
+   Every keycap in the game was gated on `pointer:coarse` alone, which is the right test for a
+   real phone and the wrong one for the harness: a device-metrics override sets the width but
+   not the pointer type, so all three mobile captures shipped keycaps a phone never shows —
+   including the orphan 16×24 box holding a truncated 'T' beside ORDERS in the garrison sheet
+   (_true_omens_m at 3.4×). 480px is under any desktop window worth keeping hints for and over
+   every phone in portrait, so the two tests agree everywhere it matters. */
+@media (max-width:480px){
+  .pwB .pwK{ display:none; }
+  .card .kb, #buildMenu.min .card .kb{ display:none; }
+  #towerMenu .ordR>span .hk{ display:none; }
 }
 .pwB .pwT{ position:absolute; z-index:4; inset:0; display:flex; align-items:center; justify-content:center;
    font-size:19px; font-variant-numeric:tabular-nums; color:#f0e2c0; text-shadow:0 2px 4px #000; }
@@ -1849,9 +2023,15 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 
 /* ── phone / short-viewport layout ─────────────────────────────────── */
 @media (max-width:760px){
-  #hud{ top:7px; left:7px; right:7px; gap:5px; flex-wrap:nowrap; }
-  #hudL{ gap:5px; min-width:0; }
-  #hudRight{ gap:5px; flex:0 0 auto; }
+  /* FIX6-UI §1 — 7px, not 5. Each chip wears a 6px border-image frame whose outermost pixel
+     is a struck gold bracket, so a 5px gutter puts two gold verticals 5px apart and at phone
+     density they read as ONE overlapped ornament (measured in _trueui_m at 3×: chip 1's right
+     bracket and chip 2's left bracket sharing an edge). The left chip row and the right
+     ×1/pause/gear cluster are already separate flex containers — the gutter was the whole
+     defect, not the structure. */
+  #hud{ top:7px; left:7px; right:7px; gap:7px; flex-wrap:nowrap; }
+  #hudL{ gap:7px; min-width:0; }
+  #hudRight{ gap:7px; flex:0 0 auto; }
   .chip{ min-height:44px; font-size:15px; gap:5px; padding:2px 7px 2px 2px; border-width:6px; }
   .ic{ width:19px; height:19px; }
   .chip .lbl{ display:none; }
@@ -1879,6 +2059,25 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #wavePrev .wpE canvas{ width:27px; height:27px; }
   /* one line, not three: the subtitle only earns its place while it is a countdown */
   #wavePrev:not(.pre) .wpS{ display:none; }
+  /* FIX6-UI §3 — THE COLLAPSED DISPATCH. See the toggle in UI.sync for why this is keyed on the
+     garrison sheet rather than on the persistent shop. What survives is what you can act on
+     without the card: which wave, and how strong. Everything that is a READ rather than a
+     decision — the roster busts, the gate split, the curse and hex warnings, the omen footer,
+     the progress bar — comes back the instant the sheet closes. */
+  /* ONE row, not two: the title and the strength share a baseline, which is the difference
+     between a 54px card and a 28px line — and 26px of an 844px phone is a quarter of the gap
+     between the 39% world band that was measured and the 55% the fix is aimed at. */
+  #leftRail.sheet #wavePrev{ display:flex; align-items:baseline; gap:9px; padding:4px 10px 5px; }
+  #leftRail.sheet #wavePrev .wpT{ flex:1 1 auto; min-width:0; font-size:11.5px; letter-spacing:.07em;
+     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* .19em of tracking is right for a subtitle on its own line and wrong for one sharing a line:
+     at 9px it cost "30 STRONG ON THE ROAD" 25px it did not need, and the title paid for it by
+     ellipsizing to "WAVE 1 — RED RA…". Tightened, both runs fit whole at every wave title. */
+  #leftRail.sheet #wavePrev .wpS{ display:block; flex:0 0 auto; font-size:9px; margin-top:0;
+     letter-spacing:.06em; white-space:nowrap; }
+  #leftRail.sheet #wavePrev .wpRow, #leftRail.sheet #wavePrev .bar,
+  #leftRail.sheet #wavePrev .wpG,   #leftRail.sheet #wavePrev .wpCz,
+  #leftRail.sheet #wavePrev .wpHx,  #leftRail.sheet #wavePrev .wpOm{ display:none; }
   /* and the centre banner does not repeat the card's own sentence over the horde
      (the dispatch lives inside #leftRail since SPEC3 §D put the omens above it) */
   #leftRail:has(#wavePrev:not(.hidden)) ~ #msg.wv{ opacity:0 !important; }
@@ -1934,6 +2133,28 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #omenRow .omC.on .omTk{ position:static; width:100%; max-width:100%; margin-top:3px;
      text-align:center; border-radius:2px; font-size:7px; letter-spacing:.12em; padding:1px 4px 2px; }
   #omenRow button.omC:hover{ transform:none; }
+  /* ── FIX6-UI §5 — the phone modal. THREE ACROSS STAYS (that layout was never the defect);
+     what the modal buys is HEIGHT, and height is what gets the body copy off the 8.5px floor —
+     ~6px as captured at a true 390 — and onto 12px, which is the minimum a sentence carrying a
+     rule can be set at. The cards are centred in the frame instead of stacked under the resource
+     bar, so nothing has to be squeezed into a 100px rail any more. */
+  #omenRow.mdl{ padding:0 7px; gap:8px 7px; grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #omenRow.mdl .omC{ min-height:0; padding:13px 7px 10px; border-width:8px; border-image-width:8px; }
+  #omenRow.mdl .omSig{ width:40px; height:40px; margin-bottom:9px; }
+  #omenRow.mdl .omN{ font-size:12.5px; letter-spacing:.05em; line-height:1.14; }
+  #omenRow.mdl .omKd{ margin-top:3px; font-size:8px; letter-spacing:.16em; }
+  #omenRow.mdl .omD{ font-size:12px; line-height:1.34; margin-top:9px; -webkit-line-clamp:7; }
+  #omenRow.mdl .omSide{ min-height:0; gap:6px; margin-top:10px; padding-top:8px; }
+  #omenRow.mdl .omCoin{ font-size:11px; padding:1px 7px 2px 3px; }
+  #omenRow.mdl .omCoin .ic{ width:13px; height:13px; }
+  #omenRow.mdl .omHead{ padding:6px 10px 7px; border-width:8px; border-image-width:8px; }
+  #omenRow.mdl .omT{ font-size:11px; letter-spacing:.22em; }
+  #omenRow.mdl .omCk{ font-size:9.5px; letter-spacing:.14em; }
+  #omenRow.mdl .omSub{ font-size:8.5px; letter-spacing:.14em; }
+  /* the ribbon keeps the phone's foot-strip form: a 118px card cannot hold a corner ribbon and a
+     centred seal at once, and that is as true in the modal as it was in the rail */
+  #omenRow.mdl .omC.on .omTk{ position:static; top:auto; right:auto; }
+  #omenRow.mdl .omC.on .omSide{ margin-top:10px; padding-top:8px; }
   .pHead .mus{ min-height:44px; font-size:9px; letter-spacing:.11em; gap:5px; padding:2px 8px 2px 7px; }
   .pHead .mus b{ font-size:13px; }
   /* FIX4-UI §1 — the phone keeps a VERB. Dropping the label entirely left a flag, "8/8" and a
@@ -1943,9 +2164,27 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   .pHead .mus .lg{ display:none; }
   .pHead .mus .lgS{ display:inline; }
   #towerMenu .ordR .tgS i{ padding:5px 8px 6px; font-size:10.5px; }
+  /* FIX6-UI §3 — THE BOTTOM SHEET IS CAPPED. Measured at a true 390×844: the garrison sheet ran
+     503→844, i.e. 341px / 40vh of the frame, and with the dispatch card on top that left the
+     WORLD — the thing being defended — a 331px band, 39% of the screen. A sheet is capped at
+     34vh and scrolls inside itself now, and because the two things you came to the sheet FOR
+     must never be the two things below the fold, the UPGRADE/DISMANTLE pair is sticky to its
+     foot. `overscroll-behavior:contain` so a flick inside the sheet cannot rubber-band the page
+     (which on iOS Safari would drag the whole PWA and break the camera drag). */
   .panel{ left:0; right:0; bottom:0; transform:none; width:100%; border-radius:12px 12px 0 0;
           padding:8px 8px calc(10px + env(safe-area-inset-bottom));
-          border-width:13px 13px 0; }
+          border-width:13px 13px 0;
+          max-height:33vh; overflow-y:auto; overscroll-behavior:contain;
+          scrollbar-width:none; }
+  .panel::-webkit-scrollbar{ display:none; }
+  /* Header, scrolling body, PINNED ACTIONS — the standard bottom-sheet contract, and the reason
+     the cap is safe: the two controls you opened the sheet for cannot go below the fold. The tall
+     transparent-to-opaque band at the top of the plate is the scroll cue (same job the chronicle's
+     sticky fade does at #ddGrid::after), so the ORDERS row one flick below is advertised rather
+     than merely present. */
+  #towerMenu .tBtns{ position:sticky; bottom:0; z-index:2; margin-top:9px; padding:18px 0 2px;
+     background:linear-gradient(180deg,rgba(17,14,10,0),rgba(17,14,10,.62) 34%,
+                rgba(17,14,10,.96) 62%,rgba(17,14,10,.99)); }
   /* FIX2-UI §3 — the sub-rail is a DESKTOP arrangement. On a 390px slab there is no horizontal
      room to put anything beside the tower row: side by side, the scroller collapsed to 201px
      and five of seven towers went off the plate. Stacked here, with the block's rule turned
@@ -2105,8 +2344,14 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      and 34px squashed every trap into a puddle (the same trap FIX3-UI §4 documents) */
   .card.trap .por{ height:auto; margin-bottom:3px; }
   .card.trap .nm{ display:none; }
-  .card.trap .nmS{ display:block; font-size:8.5px; letter-spacing:.06em; text-transform:uppercase;
-     color:#e6d8b8; text-shadow:0 1px 0 #000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* FIX6-UI §4a — TWO LINES, NOT ONE TRUNCATED ONE. `white-space:nowrap` here is what forced
+     the trap names to be abbreviated to a single syllable ("TAR", "KEG"); a 78px cell holds
+     "TAR PIT" and "POWDER KEG" comfortably across two lines, so the names are whole words again
+     (see T_SHORT) and the clamp is the safety net rather than the layout. */
+  .card.trap .nmS{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;
+     font-size:8.5px; line-height:1.16; letter-spacing:.06em; text-transform:uppercase;
+     color:#e6d8b8; text-shadow:0 1px 0 #000; overflow:hidden; text-overflow:ellipsis;
+     text-rendering:geometricPrecision; }
   /* A ROW here, not a column, and bottom-anchored: UI.sync writes the exact offset above the
      shop (see the note there). Stacked at a fixed top:46% the pair was 117px tall and ran
      into the dispatch card whenever the omen row was up. */
