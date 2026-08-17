@@ -359,7 +359,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 /* the hotkey is a KEYBOARD hint, so it reads as one: unboxed, dimmed, tucked in the corner —
    never a second badge competing with the coin pill (FIX2-UI §3d/§5) */
 /* FIX3-UI §1 — 7.5px of letterspaced Palatino on parchment was a smudge, not a key. */
-#omenRow .omK{ display:block; font-size:9.5px; line-height:1;
+#omenRow .omK{ display:block; font-size:11px; line-height:1;
    letter-spacing:.06em; text-transform:uppercase; color:#6b5527; opacity:.9; padding-right:3px; }
 /* taken: gold ring plus a corner ribbon, because a ring alone reads as "hovered" */
 /* FIX4-UI §5 — the ring is INSET, not flush with the padding edge. Flush, it ran straight
@@ -498,14 +498,79 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .seedTag{ display:inline-flex; align-items:center; gap:7px; vertical-align:-4px; }
 .seedTag .sV{ font-variant-numeric:tabular-nums; letter-spacing:.22em; color:#e0cda2; }
 .seedTag .sD{ width:26px; height:26px; padding:0; border-radius:5px; font-size:0; flex:0 0 auto;
-   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='3.4' y='3.4' width='17.2' height='17.2' rx='4' fill='none' stroke='%23f0dcae' stroke-width='1.7'/><circle cx='8.4' cy='8.4' r='1.7' fill='%23f0dcae'/><circle cx='15.6' cy='15.6' r='1.7' fill='%23f0dcae'/><circle cx='12' cy='12' r='1.7' fill='%23f0dcae'/></svg>"),
+   /* FIX2-UI §6c — a 2x2-PIP DIE at the gold stroke weight the rest of the iconography uses.
+      Three 1.7-radius pips on the diagonal inside a 17px box gave 2.4px of ink each: at native
+      resolution the pips vanished into the rounded rect and what was left was a hollow bordered
+      square — a tofu box, i.e. exactly what a missing glyph looks like, sitting next to the war
+      seed on the title plinth and the chooser. Four fatter pips in a square read as a die. */
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='2.8' y='2.8' width='18.4' height='18.4' rx='4.2' fill='none' stroke='%23f0dcae' stroke-width='2.1'/><g fill='%23f0dcae'><circle cx='8.6' cy='8.6' r='2.5'/><circle cx='15.4' cy='8.6' r='2.5'/><circle cx='8.6' cy='15.4' r='2.5'/><circle cx='15.4' cy='15.4' r='2.5'/></g></svg>"),
      var(--noise),linear-gradient(178deg,#2c2620,#16130f);
    background-repeat:no-repeat,repeat,repeat; background-position:50% 50%,0 0,0 0;
    background-size:17px 17px,180px 180px,100% 100%;
    border:1px solid rgba(232,182,76,.34); box-shadow:0 3px 9px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.12);
    transition:filter .15s, transform .15s; }
 .seedTag .sD:hover{ filter:brightness(1.35); transform:rotate(-14deg); }
-#mapsFoot .seedTag{ font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:#a8977a; }
+#mapsFoot .seedTag{ font-size:12px; letter-spacing:.24em; text-transform:uppercase; color:#a8977a; }
+
+/* ══ FIX2-UI §4 — ONE MATERIAL FOR CHROME ══════════════════════════════════════
+   The battle HUD shipped TWO unrelated panel skins abutting each other. The wave dispatch and
+   the omen rail were cream parchment with paper grain; the chips, garrison, shop, settings,
+   toasts and nav were charcoal with a gold bezel — and in `_endless.png` a DARK omen banner at
+   y=70 sat four pixels above a PARCHMENT wave card at y=145 carrying the same class of
+   information. Parchment was also carrying a THIRD type register into the frame: true
+   lowercase serif body copy ("A fifth fewer foes — and a quarter less coin.") against
+   caps/small-caps everywhere else.
+   Resolution per the finding: chrome is charcoal+gold, everywhere, with no exceptions in the
+   battle HUD. The plates themselves swap `.parch` for `.iron` at their markup (index.html for
+   the dispatch, the omen builders in SECTION: UI for the rail); this block re-inks the type
+   that was authored for a cream ground, and nothing else moves.
+   PARCHMENT SURVIVES WHERE IT IS CONTENT, NOT CHROME — the map route charts, the Deeds sheet
+   and the Council's writ are all still drawn on it, because those are written things rather
+   than instrument panels. That distinction is the whole rule.
+   The one thing charcoal costs us is the enemy busts: they are inked for a light ground and a
+   near-black hound would vanish on #1b1712, so each bust gets the same recessed slate plate
+   the shop's tower miniatures already sit on. */
+#wavePrev .wpT{ color:#f2e5c6; text-shadow:0 1px 0 #000; }
+#wavePrev .wpT em{ color:#ffdc8e; }
+#wavePrev .wpS{ color:#b6a488; }
+/* the rest of the dispatch's registers, all of them authored as ink on cream: the enemy
+   counts, the champion/cursed/hex/omen footer lines and the wave-strength grade. Each keeps
+   its SEMANTIC hue (crimson for a threat, blue for a boon, green for the player's own) —
+   only the ground changed, so each is lifted to the value that hue needs on charcoal. */
+#wavePrev .wpN{ color:#e6d8b8; }
+#wavePrev .wpG .wgC b{ color:#c2b491; }
+#wavePrev .wpG .wgC.hi b, #wavePrev .wpG .wgC.hi s{ color:#e0574a; }
+#wavePrev .wpCz b{ color:#7fc08f; }
+#wavePrev .wpCz span, #wavePrev .wpHx span{ color:#c9b78e; }
+#wavePrev .wpCz s{ color:#e8a06a; }
+#wavePrev .wpHx b{ color:#6fc6b4; }
+#wavePrev .wpHx s{ color:#b6a488; }
+#wavePrev .wpOm b{ color:#c8544a; }
+#wavePrev .wpOm b.boon{ color:#7fa8dd; }
+#wavePrev .bar{ background:rgba(0,0,0,.5); }
+/* the recessed plate under each silhouette — a dark bust needs a ground of its own */
+#wavePrev .wpI{ border-radius:4px;
+   background:radial-gradient(ellipse 78% 62% at 50% 74%, rgba(255,220,160,.13), rgba(0,0,0,0) 70%),
+              linear-gradient(180deg,#26333b,#1c1a16 78%);
+   box-shadow:inset 0 0 0 1px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.08); }
+#omenRow .omT{ color:var(--gold-l); text-shadow:0 1px 0 #000; }
+#omenRow .omCk{ color:#b6a488; }
+#omenRow .omCk b{ color:#e0574a; }
+#omenRow .omBar{ background:rgba(0,0,0,.5); box-shadow:inset 0 1px 2px rgba(0,0,0,.6); }
+#omenRow .omSub{ color:#a2947a; }
+#omenRow .omC{ color:#d8cdb4; }
+#omenRow .omN{ text-shadow:0 1px 0 #000; }
+/* the boon/bane pair is the blue and the red the rest of the HUD already speaks */
+#omenRow .omC.chal .omN{ color:#c8544a; }
+#omenRow .omC.boon .omN{ color:#7fa8dd; }
+#omenRow .omD{ color:#d8cdb4; }
+#omenRow .omD b{ color:#ffdc8e; }
+/* SMALL-CAPS, not lowercase serif: the omen blurb was the only true-lowercase body copy in
+   the game and it read as a different product from the card above it */
+#omenRow .omD{ font-variant-caps:small-caps; letter-spacing:.04em; }
+#omenRow button.omC:hover{ box-shadow:0 8px 20px rgba(0,0,0,.6), 0 0 18px rgba(232,182,76,.34),
+   inset 0 1px 0 rgba(255,228,178,.16); }
+#omenRow .omSig{ filter:drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
 
 /* ── wave banner ───────────────────────────────────────────────────── */
 #msg{ position:absolute; top:13%; left:0; right:0; z-index:0; text-align:center; opacity:0; transition:opacity .35s; }
@@ -583,6 +648,69 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
             line-height:1; border-radius:4px; transition:color .15s,background .15s; }
 .pHead .x:hover{ color:#ffe2a2; background:rgba(232,182,76,.14); }
 #buildMenu .cards{ display:flex; gap:9px; }
+/* FIX2-UI §3 — THE SHOP IS A DOCK, NOT A WALL.
+   Measured at 1600x1000: the panel was 1090x399 at y583→982, i.e. 40% of the frame's height
+   and 68% of its width, laid over the road, the horde and the whole lower-right quadrant —
+   and roughly half of its own area was empty, because the ROAD TRAPS row inherited the tower
+   row's 1034px for three 106px cards. Two structural changes, no content removed:
+     · `width:max-content` — the panel is as wide as its widest ROW, so the trap rail can no
+       longer stretch the plate; and
+     · `.pBody` lays the trap sub-rail BESIDE the tower row instead of under it, which takes
+       the second row (and its 128px of head + cards) out of the height entirely.
+   Together the dock lands at ~205px tall instead of 399 — the battle keeps the band the shop
+   used to bury. The trap block keeps a hairline rule of its own so it still reads as a
+   separate register of the same shop. */
+#buildMenu{ width:max-content; max-width:calc(100vw - 24px); }
+#buildMenu .pBody{ display:flex; align-items:stretch; gap:13px; }
+#buildMenu .cRail{ position:relative; min-width:0; }
+/* FIX2-UI §3 — THE SWIPE AFFORDANCE. At 390px the tower row is a 442px scroller in a 374px
+   rail, so WARBANNER lives past the right edge; before this there was no edge treatment at
+   all and the shop simply looked like a five-tower shop with the sixth card sliced in half
+   ("PY…"). `.ovf` is written by cRailSync only when the row actually overflows, so a desktop
+   shop that fits gets nothing. The fade is pointer-transparent — it must never eat the tap
+   that lands on the card underneath it. */
+#buildMenu .cRail.ovf::after{ content:''; position:absolute; top:0; bottom:0; right:-1px; width:38px;
+   pointer-events:none; border-radius:0 5px 5px 0;
+   background:linear-gradient(90deg, rgba(14,11,8,0), rgba(14,11,8,.72) 58%, rgba(14,11,8,.92)),
+     url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M9 5l7 7-7 7' fill='none' stroke='%23f0dcae' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+   background-repeat:no-repeat,no-repeat; background-position:0 0,right 7px center;
+   background-size:100% 100%,15px 15px; }
+/* once the player has swiped, the edge stops nagging — the fade is a hint, not furniture */
+#buildMenu .cRail.ovf .cards{ scrollbar-width:none; }
+#buildMenu .cRail.ovf .cards::-webkit-scrollbar{ height:0; }
+/* the compact in-wave rail is one flat strip, so the two structural wrappers step out of the
+   flex row entirely and the cards remain its direct items */
+#buildMenu.min .pBody, #buildMenu.min .cRail{ display:contents; }
+#buildMenu.min .tBlk{ display:none; }
+#buildMenu .tBlk{ display:flex; flex-direction:column; min-width:0;
+   padding-left:13px; border-left:1px solid rgba(232,182,76,.22); }
+#buildMenu .tBlk .tHd{ margin:0 2px 6px; }
+#buildMenu .tBlk .cards.traps{ flex:1 1 auto; align-items:stretch; }
+/* FIX2-UI §3 — and the DOCK's own metrics. Beside the sub-rail the plate is already 143px
+   shorter; these take the shop card from 140x166 to 122x131 so the whole dock lands inside a
+   ~205px band (20% of a 1000px frame, against the 40% the critic measured). The miniature is
+   still the same painted diorama at the same aspect — only the plate around it is thinner. */
+/* MIN-WIDTH GUARDED, and that is load-bearing. `#buildMenu .card` is (0,1,1) and the phone
+   rail's sizing is a plain `.card` at (0,1,0), so these would win inside the 760px block and
+   undo the whole compact shop — the same specificity trap the trap-card note below records.
+   The dock's metrics are a DESKTOP arrangement; the phone slab keeps its own. */
+@media (min-width:761px){
+  #buildMenu{ padding:9px 12px 10px; }
+  #buildMenu .pHead{ margin:-1px 2px 7px; }
+  #buildMenu .card{ width:122px; padding:6px 6px 7px; }
+  /* the stat chips WRAP rather than spill. Labelling the reach chip RNG (§6b) widened the
+     school+reach pair, and the longest school word (SUPPORT / French SOUTIEN) has to be able
+     to take a second line inside a 122px plate instead of pushing past its edge.
+     `align-items:stretch` (the flex default on .cards) keeps all seven plates level when one
+     of them wraps. */
+  #buildMenu .card .tags{ flex-wrap:wrap; row-gap:3px; }
+  #buildMenu .card .por{ height:58px; margin-bottom:4px; }
+  #buildMenu .card .nm{ font-size:11px; letter-spacing:.13em; }
+  #buildMenu .card .cost{ margin-top:3px; padding:1px 7px 1px 3px; font-size:12px; }
+  #buildMenu .card .cost .ic{ width:13px; height:13px; }
+  #buildMenu .card.trap{ width:100px; padding:5px 5px 6px; }
+  #buildMenu .card.trap .por{ height:38px; margin-bottom:3px; }
+}
 .card{ position:relative; width:140px; padding:8px 8px 9px; border-radius:6px; text-align:center;
        background-image:var(--noise),linear-gradient(176deg,#2b261f,#171310 70%,#100d0a);
        background-size:180px 180px,100% 100%,100% 100%;
@@ -720,9 +848,15 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    English still fits on one line, so no EN frame moves. */
 #towerMenu .rby b.nil{ color:#8a7f66; font-size:10px; letter-spacing:.06em; text-transform:uppercase;
    white-space:normal; text-align:right; }
-#towerMenu .rby b.nil .pip{ width:10px; height:10px; border-radius:3px;
-   background-color:rgba(58,44,20,.22); border:1px dashed rgba(140,118,70,.8);
-   box-shadow:inset 0 0 0 1px rgba(255,248,224,.14); }
+/* FIX2-UI §6a — a SOLID SLATE CHIP WITH A DASH, not a dashed empty box. "RESISTED BY ◌ NONE
+   ON THIS ROAD" put the browser's broken-image affordance in the middle of a sentence. A
+   filled chip carrying an em-rule is the same "there is nothing here" without ever looking
+   like a glyph that failed to arrive — and it matches the filled school chips beside it. */
+#towerMenu .rby b.nil .pip{ width:11px; height:11px; border-radius:3px;
+   background-color:#4a4740; border:1px solid rgba(20,14,4,.6);
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 12h12' fill='none' stroke='%23cfc7b4' stroke-width='3' stroke-linecap='round'/></svg>");
+   background-repeat:no-repeat; background-position:50% 50%; background-size:9px 9px;
+   box-shadow:0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.14); }
 /* ORDERS: the three doctrines as the row's VALUE. No plate of its own — the block is the
    plate — so it stops competing with Upgrade / Dismantle for "this is a button". */
 #towerMenu .ordR .tgt{ padding:0; border:0; background:none; box-shadow:none; }
@@ -880,7 +1014,18 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    card that already carries a school sigil it read as "detection / sees stealth", which is a
    mechanic this game does not have. A dashed radius circle with a struck radius line and
    crosshair ticks says the one thing the number means — how far this thing reaches. */
-.dg-rng{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='8.6' fill='none' stroke='%23e8b64c' stroke-width='1.7' stroke-dasharray='3.4 2.7' stroke-linecap='round'/><path d='M12 12L19 8' fill='none' stroke='%23ffe7ab' stroke-width='1.7' stroke-linecap='round'/><path d='M12 1.4v3.2M12 19.4v3.2M1.4 12h3.2M19.4 12h3.2' fill='none' stroke='%23c9922f' stroke-width='1.6' stroke-linecap='round'/><circle cx='12' cy='12' r='2' fill='%23ffe7ab'/></svg>"); }
+/* FIX2-UI §6b — A CROSSHAIR IN AN ARC, not a dotted ring. The old mark was a full circle in
+   `stroke-dasharray:3.4 2.7`, i.e. eight evenly spaced dots around a hub — which is the exact
+   construction of a CSS loading spinner, and it appeared unlabelled on every one of the seven
+   build cards (10 / 14 / 12 / 8 / 11 / 8 / 9). Seven spinners across the bottom of the shop
+   read as seven cards still loading. Two solid quarter-ARCS plus a crosshair say "reach" with
+   no repeating dots anywhere in the figure, and the chip is labelled RNG (see .tag.rg) so the
+   number finally carries a unit. */
+.dg-rng{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23e8b64c' stroke-width='1.9' stroke-linecap='round'><path d='M20.6 12a8.6 8.6 0 0 0-8.6-8.6'/><path d='M3.4 12a8.6 8.6 0 0 0 8.6 8.6'/></g><g fill='none' stroke='%23c9922f' stroke-width='1.7' stroke-linecap='round'><path d='M12 6.6v3.1M12 14.3v3.1M6.6 12h3.1M14.3 12h3.1'/></g><circle cx='12' cy='12' r='1.9' fill='%23ffe7ab'/></svg>"); }
+/* the reach chip names its unit. An unlabelled numeral beside an abstract mark is a number
+   without a noun, and this is the only stat on the card that had none. */
+.tag.rg::before{ content:'rng'; font-size:8px; letter-spacing:.12em; text-transform:uppercase;
+   color:#c2b189; margin-right:1px; }
 .dg-bnr{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='4.4' y='2' width='2.2' height='20' rx='1' fill='%236d4a10'/><path d='M6.6 3.4h13l-3 4.6 3 4.6h-13z' fill='%233468b0' stroke='%23e8b64c' stroke-width='1'/><circle cx='5.5' cy='1.8' r='1.8' fill='%23e8b64c'/></svg>"); }
 /* SPEC3 §A: the badge now names the SCHOOL, so pierce stops borrowing the melee sword and
    crush stops borrowing the catapult — a school is a property of the damage, not of the
@@ -1064,11 +1209,11 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    keeps a two-line sentence readable while still belonging to the same type family. */
 .mCard .mN{ margin-top:8px; font-size:16px; letter-spacing:.15em; text-transform:uppercase;
    color:#f2e5c6; text-shadow:0 1px 0 #000; }
-.mCard .mB{ margin-top:4px; font-size:11.5px; line-height:1.34; letter-spacing:.055em;
+.mCard .mB{ margin-top:4px; font-size:12.5px; line-height:1.34; letter-spacing:.055em;
    font-variant-caps:small-caps; color:#a2947a; min-height:2.6em; }
 .mFoot{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:7px;
         border-top:1px solid rgba(232,182,76,.18); }
-.mFoot .mW{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#c2b491; }
+.mFoot .mW{ font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:#c2b491; }
 .stars{ display:flex; gap:3px; align-items:center; }
 /* a road already held says so before you count its stars */
 .stars .ck{ width:13px; height:13px; margin-right:4px; display:block; background:50% 50%/100% 100% no-repeat;
@@ -1099,7 +1244,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .mCard .mChain{ position:absolute; inset:0; z-index:2; pointer-events:none; }
 .mCard .mChain svg{ width:100%; height:100%; display:block;
    filter:drop-shadow(0 3px 6px rgba(0,0,0,.75)); }
-.mCard .mLk{ font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#c9b78e; }
+.mCard .mLk{ font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#c9b78e; }
 #mapsFoot{ margin-top:20px; display:flex; gap:12px; align-items:center; }
 #btnBack{ border-radius:6px; padding:10px 26px; font-size:14px; letter-spacing:.18em; text-transform:uppercase; color:#e2d4b4;
    background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
@@ -1110,7 +1255,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 /* The endless line is a SECOND foot on the card, under the wave count and the stars, and it
    only exists on a road that has one — so a card with no endless record is byte-for-byte
    the card that shipped. The ∞ carries the mode; the number carries the brag. */
-.mCard .mE{ display:flex; align-items:center; gap:6px; margin-top:5px; font-size:10px;
+.mCard .mE{ display:flex; align-items:center; gap:6px; margin-top:5px; font-size:12px;
    letter-spacing:.18em; text-transform:uppercase; color:#cdb078; }
 .mCard .mE i{ font-style:normal; font-size:14px; line-height:.8; color:#e8b64c;
    text-shadow:0 0 9px rgba(232,182,76,.55); }
@@ -1174,9 +1319,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #btnCouncil:hover{ filter:brightness(1.22); transform:translateY(-2px); }
 #btnCouncil:active{ transform:translateY(0) scale(.99); }
 #btnCouncil .cwB{ display:flex; flex-direction:column; gap:1px; min-width:0; }
-#btnCouncil .cwT{ font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:#e2d4b4;
+#btnCouncil .cwT{ font-size:12.5px; letter-spacing:.2em; text-transform:uppercase; color:#e2d4b4;
   text-shadow:0 1px 0 #000; }
-#btnCouncil .cwS{ font-size:10.5px; letter-spacing:.09em; font-variant-caps:small-caps; color:#a2947a;
+#btnCouncil .cwS{ font-size:12px; letter-spacing:.09em; font-variant-caps:small-caps; color:#a2947a;
   font-variant-numeric:tabular-nums; }
 /* a balance worth spending says so — the count goes gold, the plate gets a rim */
 #btnCouncil.rich .cwS{ color:#f2cf74; }
@@ -1198,14 +1343,19 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #cBal .cBn{ display:flex; align-items:center; gap:9px; }
 #cBal .cBn b{ font-size:31px; line-height:1; color:#f2cf74; font-variant-numeric:tabular-nums;
   text-shadow:0 1px 0 #5d3d0c, 0 3px 10px rgba(0,0,0,.8), 0 0 24px rgba(232,182,76,.35); }
-#cBal .cBn em{ font-style:normal; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#c2b491; }
-#cBal .cBs{ font-size:11px; letter-spacing:.14em; font-variant-caps:small-caps; color:#b6a488;
+#cBal .cBn em{ font-style:normal; font-size:12.5px; letter-spacing:.22em; text-transform:uppercase; color:#c2b491; }
+#cBal .cBs{ font-size:12.5px; letter-spacing:.14em; font-variant-caps:small-caps; color:#b6a488;
   font-variant-numeric:tabular-nums; text-shadow:0 1px 4px #000, 0 0 8px rgba(0,0,0,.8); }
 
 /* three parchment strips, one per branch. Parchment (not iron) because the tree is a WRIT —
    a thing the council signs — and the chooser behind it is already all iron plate. */
-#cTree{ display:flex; gap:14px; margin-top:16px; align-items:stretch; justify-content:center; }
-.cBr{ position:relative; width:236px; padding:11px 11px 13px; border-radius:6px; text-align:left;
+/* FIX2-UI §5 — BUY THE ROOM, THEN SPEND IT ON TYPE. Three 236px strips is 736px of a 1584px
+   canvas: the council was using 46% of the frame to hold copy it could not set legibly, and
+   the rest was empty diorama. At 372px a branch has room for its flavour line, a two-line
+   effect and a price rail without any of them going under 12px — and a tier-III node no longer
+   has its last line clipped by the strip's own bottom edge (visible in _council.png). */
+#cTree{ display:flex; gap:18px; margin-top:16px; align-items:stretch; justify-content:center; }
+.cBr{ position:relative; width:372px; padding:13px 14px 15px; border-radius:6px; text-align:left;
   background-image:var(--grain),
     radial-gradient(ellipse 120% 100% at 50% 40%, rgba(0,0,0,0) 44%, rgba(122,88,42,.30) 80%, rgba(96,66,28,.55) 100%),
     radial-gradient(130% 110% at 50% 0%, rgba(255,250,232,.38), rgba(255,250,232,0) 56%),
@@ -1219,9 +1369,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
   margin-left:-4px; transform:rotate(45deg);
   background:linear-gradient(135deg,#f2d99e,#c99a37 52%,#8a5f14);
   box-shadow:0 0 0 1px rgba(78,52,18,.45), 0 1px 2px rgba(60,40,12,.32); }
-.cBH .cBN{ font-size:14.5px; letter-spacing:.13em; text-transform:uppercase; color:#41300f;
+.cBH .cBN{ font-size:16px; letter-spacing:.13em; text-transform:uppercase; color:#41300f;
   text-shadow:0 1px 0 rgba(255,250,232,.5); }
-.cBH .cBD{ flex:0 0 100%; font-size:11px; line-height:1.32; letter-spacing:.04em;
+.cBH .cBD{ flex:0 0 100%; font-size:13px; line-height:1.36; letter-spacing:.04em;
   font-variant-caps:small-caps; color:#6b5227; min-height:2.6em; }
 /* one seal per branch, stamped in the same iron the HUD is cut from */
 .cBI{ flex:0 0 auto; width:26px; height:26px; background:50% 50%/100% 100% no-repeat; }
@@ -1243,12 +1393,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
   border-radius:2px; background:rgba(78,52,18,.34); }
 .cN.on::before{ background:linear-gradient(180deg,#e8b64c,#ad7a1e);
   box-shadow:0 0 7px rgba(232,182,76,.55); }
-.cNr{ position:absolute; top:6px; right:8px; font-size:10px; letter-spacing:.14em; color:#8a7038; }
-.cNe{ display:block; padding-right:26px; font-size:12px; line-height:1.28; letter-spacing:.04em; color:#3d2c0d; }
-.cNc{ display:flex; align-items:center; gap:5px; margin-top:5px; font-size:11.5px;
+.cNr{ position:absolute; top:6px; right:9px; font-size:12px; letter-spacing:.14em; color:#8a7038; }
+.cNe{ display:block; padding-right:30px; font-size:13.5px; line-height:1.28; letter-spacing:.04em; color:#3d2c0d; }
+.cNc{ display:flex; align-items:center; gap:5px; margin-top:6px; font-size:13px;
   letter-spacing:.1em; color:#6b5227; font-variant-numeric:tabular-nums; }
 .cNc .lau{ width:17px; height:17px; filter:drop-shadow(0 1px 1px rgba(60,40,12,.5)); }
-.cNc u{ text-decoration:none; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:#3a2708;
+.cNc u{ text-decoration:none; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:#3a2708;
   padding:2px 8px 3px; border-radius:3px;
   background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
   box-shadow:inset 0 1px 0 rgba(255,250,232,.6); }
@@ -1272,9 +1422,22 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .cN.lk{ cursor:default; opacity:.5; background:linear-gradient(178deg,rgba(150,118,64,.16),rgba(90,66,28,.16)); }
 .cN.lk .cNe{ color:#5c4a26; }
 
-#cHint{ margin-top:14px; max-width:min(76vw,700px); text-align:center; font-size:11.5px; line-height:1.4;
-  letter-spacing:.08em; font-variant-caps:small-caps; color:#b6a488;
-  text-shadow:0 1px 4px #000, 0 0 10px rgba(0,0,0,.85); }
+/* FIX2-UI §5 — PLATED. Both helper lines (this one and the war-seed tag) were set unbacked
+   over a lit meadow, where a 13px small-caps grey run competes with grass, trees and road at
+   whatever luminance the diorama happens to be under them. A text-shadow is not a ground; a
+   thin dark plate is, and it costs nothing next to the panels already on these screens. */
+#cHint{ margin-top:14px; max-width:min(76vw,860px); text-align:center; font-size:13px; line-height:1.4;
+  letter-spacing:.08em; font-variant-caps:small-caps; color:#c2b491;
+  padding:5px 15px 6px; border-radius:5px;
+  background:linear-gradient(180deg,rgba(12,9,6,.62),rgba(8,6,4,.74));
+  box-shadow:inset 0 0 0 1px rgba(232,182,76,.16);
+  text-shadow:0 1px 3px #000; }
+#mapsFoot .seedTag{ padding:4px 11px 5px; border-radius:5px; color:#c2b491;
+  background:linear-gradient(180deg,rgba(12,9,6,.62),rgba(8,6,4,.74));
+  box-shadow:inset 0 0 0 1px rgba(232,182,76,.16); }
+#ddHint{ padding:4px 13px 5px; border-radius:5px; color:#c2b491;
+  background:linear-gradient(180deg,rgba(12,9,6,.62),rgba(8,6,4,.74));
+  box-shadow:inset 0 0 0 1px rgba(232,182,76,.16); }
 #cFoot{ margin-top:16px; display:flex; gap:12px; align-items:center; }
 #btnCBack, #btnCRespec{ border-radius:6px; padding:10px 24px; font-size:13px; letter-spacing:.18em;
   text-transform:uppercase; color:#e2d4b4;
@@ -1363,7 +1526,13 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #tutHint .tH{ font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:#7a5f28; margin-bottom:3px; }
 
 /* ── settings ──────────────────────────────────────────────────────── */
-#settings{ position:absolute; top:58px; right:12px; width:238px; padding:10px 12px 12px; border-radius:6px; pointer-events:auto; }
+/* `max-width` and the `min()` are the clamp FIX2-UI §6e asks for. The panel already stood at
+   right:12px, and measured at 1584px it lands at 1572 with its bezel intact — the "clipped
+   right border" read came off a -Mobile PNG whose layout viewport is not its pixel width (see
+   tools/measure.mjs). It is clamped anyway, because a fixed 238px at right:12px genuinely does
+   run off any viewport under 250px and nothing in the file was stopping it. */
+#settings{ position:absolute; top:58px; right:12px; width:min(238px, calc(100vw - 24px));
+   max-width:calc(100vw - 24px); padding:10px 12px 12px; border-radius:6px; pointer-events:auto; }
 #settings .sT{ font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--gold-l); margin-bottom:8px; }
 /* FIX2-UI §4b — SETTINGS shipped a THIRD type language: plain sentence-case light serif
    ("Sound On", "Restart Campaign") that appears nowhere else in the game. Every interactive
@@ -1380,8 +1549,13 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #btnReset{ margin-top:11px; letter-spacing:.13em; white-space:nowrap; color:#e8a89c; border-color:rgba(226,120,90,.42);
    background-image:var(--noise),linear-gradient(178deg,#2e211c,#170f0c); background-size:180px 180px,100% 100%;
    box-shadow:0 -7px 0 -6px rgba(232,182,76,.3), 0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.1); }
-#btnReset::after{ content:'wipes every star'; display:block; margin-top:2px; font-size:8px;
-   letter-spacing:.13em; color:#a8776a; opacity:.9; }
+/* FIX2-UI §5/§6e — a DESTRUCTIVE-ACTION WARNING AT 8px IN #a8776a ON #170f0c is roughly 2:1
+   contrast: the one line in the game whose whole job is to stop a player losing 28 deeds and
+   every star was the least legible line in it. 12px, the dismantle plate's own ember, full
+   opacity, and a rule of its own separating it from the label above. */
+#btnReset::after{ content:'wipes every star'; display:block; margin-top:4px; padding-top:4px;
+   font-size:12px; letter-spacing:.1em; color:#e8724c; opacity:1;
+   border-top:1px solid rgba(232,114,76,.28); }
 /* SPEC4 §B — the only player-facing string in the stylesheet. CORE stamps the chosen tongue
    on <html data-lang>, so the generated content follows the rest of the copy. */
 :root[data-lang="fr"] #btnReset::after{ content:'efface chaque étoile'; }
@@ -1481,8 +1655,14 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .cnp i{ display:block; font-style:normal; font-family:var(--sans); font-weight:600;
    font-size:8px; line-height:1; letter-spacing:.26em; text-rendering:geometricPrecision;
    text-transform:uppercase; color:var(--gold-l); text-shadow:0 1px 0 rgba(0,0,0,.85); }
-.cnp b{ display:block; font-family:var(--serif); font-weight:400; font-size:13.5px; line-height:1.3;
-   letter-spacing:.075em; color:#f2e6cf; text-shadow:0 2px 3px rgba(0,0,0,.9), 0 0 9px rgba(0,0,0,.6); }
+/* FIX2-UI §4 — SMALL-CAPS, like every other string in the game. "Vael of the Black Tide" was
+   set in Title Case with a lowercase "of the", which made the champion nameplate the one piece
+   of chrome speaking sentence case (visible over the road in _endless.png). The tag line above
+   it is already letterspaced caps; small-caps keeps the name's proper-noun capitals reading as
+   capitals while the connective words drop into the same register as the rest of the HUD. */
+.cnp b{ display:block; font-family:var(--serif); font-weight:400; font-size:14.5px; line-height:1.3;
+   letter-spacing:.085em; font-variant-caps:small-caps; color:#f2e6cf;
+   text-shadow:0 2px 3px rgba(0,0,0,.9), 0 0 9px rgba(0,0,0,.6); }
 /* the phone has a third of the horizontal room and the chip is competing with the dispatch
    card for it — the tag line is the first thing to go */
 @media (max-width:760px){
@@ -1574,6 +1754,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    flat-silhouette tier the phone cards already use, and a live "2/4 armed" counter in the
    rule. The trap cards spend the same purse as the towers above them, so they have to live
    in the same box; they are smaller because a trap is a consumable, not a fortification. */
+/* FIX2-UI §3: the counter comes BEFORE the rule, so "0/4" sits on the words it counts. In the
+   old full-width row `.tRl{flex:1}` pushed it to the panel's far corner — 940px from the three
+   cards it was counting, which is a number the eye never pairs with its subject. */
 #buildMenu .tHd{ display:flex; align-items:center; gap:8px; margin:9px 2px 6px; }
 #buildMenu .tHl{ font-size:9.5px; letter-spacing:.26em; text-transform:uppercase; color:#c8ab6a; text-shadow:0 1px 0 #000; }
 #buildMenu .tRl{ flex:1; height:1px; background:linear-gradient(90deg,rgba(232,182,76,.34),rgba(232,182,76,.05)); }
@@ -1625,8 +1808,27 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 .pwB .pwSweep{ position:absolute; inset:0; z-index:2; border-radius:50%; pointer-events:none; }
 /* the hotkey rides the bottom of the DISC, centred — pinned to a corner it falls outside
    the circle and gets clipped to a sliver by overflow:hidden */
-.pwB .pwK{ position:absolute; z-index:3; bottom:3px; left:0; right:0; text-align:center;
-   font-size:9.5px; letter-spacing:.1em; color:#d2bf94; text-shadow:0 1px 2px #000; opacity:.9; }
+/* FIX2-UI §6d — THE KEYCAP COMES OUT OF THE DISC. Centred at bottom:3px inside a 62px circle
+   with `overflow:hidden`, the glyph's own bottom third was cut by the border-radius: the W read
+   as "\/\/" in ui.png / _rally.png / ui_m.png and the Q lost its tail. A letterform sheared by
+   a circular clip is the one thing a hotkey must never be, because the player has to match it
+   to a physical key. It is a small chip BELOW the rim now — the orb clips the cooldown sweep,
+   which is what the clip was for, and nothing clips the type. */
+.pwB{ overflow:visible; }
+.pwB .pwSweep{ overflow:hidden; }
+.pwB .pwK{ position:absolute; z-index:3; bottom:-9px; left:50%; transform:translateX(-50%);
+   min-width:17px; padding:1px 5px 2px; border-radius:3px; text-align:center; line-height:1.05;
+   font-size:9.5px; letter-spacing:.1em; color:#e6d8b8; text-shadow:0 1px 0 #000;
+   background:rgba(8,6,4,.86); box-shadow:inset 0 0 0 1px rgba(232,182,76,.42); }
+/* FIX2-UI §6d — A HOTKEY IS FURNITURE ON A DEVICE WITH NO KEYS (SPEC §2 touch). The orb caps,
+   the build cards' 1–7 and the traps' Z/X/C all told a phone player to press keys that do not
+   exist, and on the 58px phone card the numeral was competing with the miniature for the same
+   corner. The ORDERS [T] hint and the omen KEY hints were already gated this way; these are
+   the three that were missed. */
+@media (pointer:coarse){
+  .pwB .pwK{ display:none; }
+  .card .kb, #buildMenu.min .card .kb{ display:none; }
+}
 .pwB .pwT{ position:absolute; z-index:4; inset:0; display:flex; align-items:center; justify-content:center;
    font-size:19px; font-variant-numeric:tabular-nums; color:#f0e2c0; text-shadow:0 2px 4px #000; }
 .pwB.rdy{ border-color:rgba(255,216,130,.78); }
@@ -1744,6 +1946,22 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   .panel{ left:0; right:0; bottom:0; transform:none; width:100%; border-radius:12px 12px 0 0;
           padding:8px 8px calc(10px + env(safe-area-inset-bottom));
           border-width:13px 13px 0; }
+  /* FIX2-UI §3 — the sub-rail is a DESKTOP arrangement. On a 390px slab there is no horizontal
+     room to put anything beside the tower row: side by side, the scroller collapsed to 201px
+     and five of seven towers went off the plate. Stacked here, with the block's rule turned
+     from a left border into a top one. `width:max-content` also has to come off, or the
+     max-content of the row (442px) would set the slab's width. */
+  #buildMenu{ width:100%; max-width:100vw; padding:8px 8px calc(10px + env(safe-area-inset-bottom)); }
+  #buildMenu .pBody{ flex-direction:column; gap:0; }
+  #buildMenu .tBlk{ padding-left:0; border-left:0; margin-top:5px; padding-top:5px;
+     border-top:1px solid rgba(232,182,76,.22);
+     /* the label sits BESIDE the three trap cards rather than over them: on a slab where the
+        shop already spends 37% of the frame, a 19px head row for three cards is height the
+        battle can have back, and "ROAD TRAPS 0/4" reads the same turned on its side */
+     flex-direction:row; align-items:center; gap:9px; }
+  #buildMenu .tBlk .tHd{ flex:0 0 auto; margin:0; flex-wrap:wrap; max-width:88px; row-gap:2px; }
+  #buildMenu .tBlk .tRl{ display:none; }
+  #buildMenu .tBlk .cards.traps{ overflow-x:auto; }
   /* FIX4-UI §1 — ONE CARD RENDERER AT EVERY WIDTH. The phone used to run a second icon tier
      (towerGlyph: the same art flattened to one cream ink on black) on the expanded shop while
      the collapsed in-wave rail four pixels narrower drew the full-colour diorama miniature.
@@ -1926,7 +2144,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #ddBal{ display:flex; align-items:center; gap:9px; margin:7px 0 0; justify-content:center; }
 .ddBn{ display:flex; align-items:center; gap:8px; }
 .ddBn b{ font-size:23px; color:#f2cf74; font-variant-numeric:tabular-nums; text-shadow:0 2px 0 #3a2a10, 0 1px 6px #000; }
-.ddBn em{ font-style:normal; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#c2b491;
+.ddBn em{ font-style:normal; font-size:12.5px; letter-spacing:.2em; text-transform:uppercase; color:#c2b491;
   text-shadow:0 1px 4px #000; }
 .ddBs{ display:none; }                       /* the same sentence is the footer hint */
 
@@ -1945,14 +2163,26 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   scrollbar-width:thin; scrollbar-color:#8a6c33 rgba(120,88,40,.18); }
 #ddGrid::-webkit-scrollbar{ width:8px; }
 #ddGrid::-webkit-scrollbar-thumb{ background:#8a6c33; border-radius:4px; }
+/* FIX2-UI §1 — THE SHEET SAYS IT CONTINUES. Measured at 1600x1000 the chronicle shows 678px of
+   741, and at 390x844 it shows 646 of 1286 — so FEATS and COLLECTION are always below the fold
+   and the only thing that said so was a hairline scrollbar (absent entirely on touch). A
+   sticky gradient pinned to the sheet's foot is the affordance: `position:sticky` keeps it at
+   the bottom edge of the SCROLLER rather than at the end of the content, and the negative
+   margin means it overlays the last row instead of reserving a band from it.
+   `pointer-events:none` so a crest under the fade is still clickable. */
+#ddGrid::after, #cTree::after{ content:''; display:block; flex:0 0 auto; position:sticky;
+   bottom:0; height:34px; margin:0 0 -34px; pointer-events:none; border-radius:0 0 6px 6px;
+   background:linear-gradient(180deg, rgba(150,116,60,0), rgba(126,94,44,.72)); }
+/* nothing to continue to, nothing to advertise */
+#ddGrid.atEnd::after, #cTree.atEnd::after{ display:none; }
 .ddSH{ display:flex; align-items:center; gap:8px; padding-bottom:5px;
   border-bottom:1px solid rgba(78,52,18,.38); margin-bottom:8px; }
-.ddSH span{ font-size:12px; letter-spacing:.26em; text-transform:uppercase; color:#41300f;
+.ddSH span{ font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:#41300f;
   text-shadow:0 1px 0 rgba(255,250,232,.5); }
-.ddSH u{ margin-left:auto; text-decoration:none; font-size:11px; letter-spacing:.12em; color:#7a5f2a;
+.ddSH u{ margin-left:auto; text-decoration:none; font-size:12.5px; letter-spacing:.12em; color:#7a5f2a;
   font-variant-numeric:tabular-nums; }
 .ddSI{ width:17px; height:17px; flex:0 0 auto; background:50% 50%/100% 100% no-repeat; }
-.ddRow{ display:grid; grid-template-columns:repeat(auto-fill, minmax(163px, 1fr)); gap:6px; }
+.ddRow{ display:grid; grid-template-columns:repeat(auto-fill, minmax(232px, 1fr)); gap:7px; }
 
 /* a crest. Unwon: the device struck into the sheet, a faint recess, ink type.
    Won: a lit plate with a gold rim, gold leaf on the device, and the date under it. */
@@ -1965,26 +2195,26 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   border-color:rgba(173,122,30,.85);
   box-shadow:inset 0 1px 0 rgba(255,252,238,.7), 0 0 0 1px rgba(232,182,76,.42), 0 3px 9px rgba(60,40,12,.30); }
 .ddC .ddI{ grid-row:1 / span 3; align-self:start; margin-top:2px; }
-.ddN{ font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:#5d4718; line-height:1.14;
+.ddN{ font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:#5d4718; line-height:1.14;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   text-shadow:0 1px 0 rgba(255,250,232,.42); }
 .ddC.on .ddN{ color:#3d2c0d; }
 /* LANGUAGE-PROOF: three lines, whatever the tongue. French runs a quarter longer than
    English and a four-line description pushed the last register off the sheet. The whole
    sentence is still in the crest's tooltip, so nothing is lost — only bounded. */
-.ddD{ font-size:10px; line-height:1.22; letter-spacing:.01em; font-variant-caps:small-caps; color:#7a6231;
+.ddD{ font-size:12px; line-height:1.26; letter-spacing:.01em; font-variant-caps:small-caps; color:#7a6231;
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .ddC.on .ddD{ color:#5e4818; }
-.ddF{ margin-top:2px; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:#8a7444;
+.ddF{ margin-top:3px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#8a7444;
   font-variant-numeric:tabular-nums; }
-.ddC.on .ddF{ color:#3a2708; padding:1px 6px 2px; border-radius:3px; justify-self:start;
-  font-size:8.5px; letter-spacing:.06em; white-space:nowrap;
+.ddC.on .ddF{ color:#3a2708; padding:1px 7px 2px; border-radius:3px; justify-self:start;
+  font-size:11px; letter-spacing:.06em; white-space:nowrap;
   background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
   box-shadow:inset 0 1px 0 rgba(255,250,232,.6); }
-.ddP{ grid-column:2; display:block; height:3px; border-radius:2px; margin-top:3px;
+.ddP{ grid-column:2; display:block; height:4px; border-radius:2px; margin-top:3px;
   background:rgba(78,52,18,.22); box-shadow:inset 0 0 0 1px rgba(78,52,18,.28); overflow:hidden; }
 .ddP u{ display:block; height:100%; background:linear-gradient(90deg,#a3761a,#e8b64c); }
-#ddHint{ margin-top:7px; font-size:11px; letter-spacing:.13em; font-variant-caps:small-caps; color:#b6a488;
+#ddHint{ margin-top:7px; font-size:12.5px; letter-spacing:.13em; font-variant-caps:small-caps; color:#b6a488;
   text-shadow:0 1px 4px #000, 0 0 8px rgba(0,0,0,.8); }
 #ddFoot{ margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; }
 #btnDDBack{ border-radius:6px; padding:10px 24px; font-size:13px; letter-spacing:.18em;
@@ -1998,9 +2228,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #btnDeeds:active{ transform:translateY(0) scale(.99); }
 #btnDeeds .ddI{ width:23px; height:23px; }
 #btnDeeds .cwB{ display:flex; flex-direction:column; gap:1px; min-width:0; }
-#btnDeeds .cwT{ font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:#e2d4b4;
+#btnDeeds .cwT{ font-size:12.5px; letter-spacing:.2em; text-transform:uppercase; color:#e2d4b4;
   text-shadow:0 1px 0 #000; }
-#btnDeeds .cwS{ font-size:10.5px; letter-spacing:.09em; font-variant-caps:small-caps; color:#a2947a;
+#btnDeeds .cwS{ font-size:12px; letter-spacing:.09em; font-variant-caps:small-caps; color:#a2947a;
   font-variant-numeric:tabular-nums; }
 #btnDeeds.rich .cwS{ color:#f2cf74; }
 #btnDeeds.rich{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.5),
@@ -2072,7 +2302,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    that opens it reads as an arbitrary reward rather than as a door. */
 .mCard .mMode{ display:flex; gap:5px; margin-top:7px; flex-wrap:wrap; }
 .mCard .mMc{ pointer-events:auto; cursor:pointer; padding:3px 9px 4px; border-radius:4px;
-  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:#c4b391;
+  font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#c4b391;
   background:linear-gradient(180deg, rgba(60,50,36,.9), rgba(34,28,20,.94));
   box-shadow:inset 0 0 0 1px rgba(122,106,76,.4), inset 0 1px 0 rgba(226,206,166,.08);
   transition:filter .13s, transform .13s; }
