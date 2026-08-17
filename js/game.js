@@ -1087,9 +1087,31 @@ const MAPS = [
       // bounce authored as cool grey. Snow throws back most of what lands on it, so the
       // hemisphere's lower half is nearly as bright as its upper half on this map alone —
       // that is what fills the drift shadows with light instead of with blue.
-      sun: 0xffe6c4, sunI: 9.80, hemiSky: 0x9ec0ee, hemiGnd: 0xb6c0cc, hemiI: 1.42,
-      fill: 0x9fc0e8, fillI: 0.38, haze: 0xc2d0de, bg: 0xc6d4e2, envI: 0.42,
+      // WORLD-FIX6 §2 §4 §5. THE BLOWN MAP, measured three ways and all three agree:
+      // overview2's playfield crop is 59.6% pure white on all three channels with p99 =
+      // 255/255/255, battle2's is 40.7% clipped, and _herald 18.0%. Round 5 read "snow is a
+      // frozen lake" and answered it by fixing COVERAGE (correct) while leaving a 0.86-sRGB
+      // albedo under the game's strongest key (9.80) — so the moment the drifts joined, half
+      // the map became an information-free hole and the road vanished inside it.
+      // Snow's whole look is HIGH AMBIENT, LOW KEY — the inverse of what was authored here.
+      // Key down 36%; hemisphere ground swung from a pale grey (which only ever added more
+      // white) to the saturated cold blue #6d8cb8 the shade needs; fill up a third, because
+      // on this map the sky is what fills a drift shadow. Target: nothing clipped, p95
+      // 0.82-0.86, and a shadow floor that lands at L 0.34-0.40 instead of a cyan sticker.
+      // Second pass: the clip went to zero and the drift shade came back a saturated cobalt —
+      // "cold blue" was read too literally and the shadows became blue PAINT. Snow shade is a
+      // desaturated slate-blue: the hue survives, the chroma comes off, which is what a shadow
+      // does on any surface. All three ambient terms pulled toward grey by roughly a third.
+      sun: 0xffe6c4, sunI: 6.25, hemiSky: 0x9cbde8, hemiGnd: 0x7e97bc, hemiI: 1.34,
+      fill: 0xa9c8f0, fillI: 0.52, haze: 0xc2d0de, bg: 0xc6d4e2, envI: 0.34,
       shdWarm: 0.0,          // INTEGRATE §1: snow shade is blue. Do not warm it.
+      // ...but it still LOSES CHROMA. Second pass of §2.2: with the ambient swung to the cold
+      // blue the finding asks for, drift shadows came back a saturated cobalt that read as blue
+      // paint on a white field. This is the highest chroma loss of the four maps for that reason.
+      shdDS: 0.46, shdRot: [1.180, 1.000, 0.840],
+      granite: [0.1780, 0.1900, 0.2080],   // §9: cool granite, still inside the yellow-grey band
+      sunEl: 23, hfK: 1.0, macroK: 1.0,
+      snowN: 1.75,           // §2.3: drift + sastrugi relief — the surface the field never had
       hazeV: [0.385, 0.445, 0.535],
       // WORLD-FIX4 §6. The Vale got its cooled sky and Frostfell did not: overview2's dome
       // sampled (160,165,171) rising to (170,175,182) — saturation 0.06, no hue, no gradient,
@@ -1107,11 +1129,20 @@ const MAPS = [
       // than a meadow in its own right.
       gDark: [0.0560, 0.0700, 0.0640], gMid: [0.1180, 0.1420, 0.1330], gLit: [0.2050, 0.2320, 0.2200],
       dry0: [0.1300, 0.1280, 0.1000], dry1: [0.3000, 0.3000, 0.2700], bare: [0.1000, 0.0980, 0.0920],
-      dirt0: [0.1050, 0.1000, 0.0980], dirt1: [0.3000, 0.3000, 0.3100],
+      // WORLD-FIX6 §2.4 §7. THE LANE, which is a gameplay failure and not a taste note: the
+      // road sampled L 0.76 against snow at L 0.78 — a 2% delta — so on a tower-defence map
+      // you could not see where the enemies walk. Two causes, both fixed: the snow splat only
+      // scraped 86% off the road (see SNOW_GLSL, now 97%), and the bed under it was authored
+      // as a light NEUTRAL grey that read as more snow. It is trodden slush now — brown-grey,
+      // and well under the field — so the lane is the dark shape on a white map.
+      dirt0: [0.0790, 0.0725, 0.0640], dirt1: [0.1660, 0.1500, 0.1290],
       rockA: [0.0280, 0.0310, 0.0380], rockB: [0.1700, 0.1850, 0.2100],
       rockWarm: [1.10, 1.02, 0.92], rockCool: [0.84, 0.93, 1.16],
       moss: [0.0480, 0.0700, 0.0600], scree: [0.1500, 0.1600, 0.1750],
-      snow: 0.96, snowC: [0.760, 0.790, 0.860],
+      // WORLD-FIX6 §2.1 §4 §5a. 0.86 sRGB is paper. 0.72 sRGB (0.470 linear) with a cool cast
+      // (#d6e2ef, not white) leaves the headroom every highlight in the frame needs, and the
+      // snow is still the value CEILING of the map — it just is not the only value in it.
+      snow: 0.96, snowC: [0.452, 0.482, 0.545],
       lowG: [0.60, 0.72, 0.92], lowRiv: [0.120, 0.140, 0.175],
       ridge: [[0.070, 0.086, 0.108], [0.086, 0.104, 0.130], [0.100, 0.116, 0.142]],
       rockK: [0.92, 0.98, 1.14], tuftK: [1.06, 1.06, 1.10],
@@ -1178,6 +1209,8 @@ const MAPS = [
       // below) comes down ~25% so the eye lands on the road instead of the rim.
       sun: 0xffb884, sunI: 9.20, hemiSky: 0x7f93b4, hemiGnd: 0x3a3f4a, hemiI: 2.85,
       fill: 0x8fb2e8, fillI: 0.70, haze: 0x94897e, bg: 0xa2acb4, envI: 0.56,
+      shdDS: 0.20,           // §3: the ash shade must KEEP its violet-slate — it is the map's complement
+      shdRot: [1.180, 1.000, 0.840],
       // INTEGRATE §1: the violet-slate ash shadow IS this map's complement (WORLD-FIX4 §2 —
       // 87% of chromatic pixels were in one 30-degree red bin before it existed). Warming it
       // would re-open that finding, so the shadow grade is off here.
@@ -1208,7 +1241,15 @@ const MAPS = [
       // this key is already orange, so the albedo must be pushed further toward green-yellow
       // in the mid channel or the whole field lands on pure red (measured hue 2.9 before this).
       grassComp: [0.960, 1.070, 0.900],
-      dirt0: [0.1560, 0.1370, 0.1150], dirt1: [0.3120, 0.2740, 0.2280],
+      // WORLD-FIX6 §7. ROAD VALUE WAS INVERTED. Measured: overview3's road L 0.52 against
+      // surrounding ground L 0.37, battle3's 0.53 against 0.36 — the road ran +0.15 L BRIGHTER
+      // than the field and read as a chalk line or spilled milk, the lightest large shape in
+      // frame, stealing focus from the horde it is supposed to carry. WORLD-FIX4 §2 asked for
+      // exactly this ("the road has to be the brightest continuous shape") to drag scene p90
+      // out of the mud; §2 got its value range from `rockB` and the ambient instead, so the
+      // road no longer has to pay for it. Derived from the ground now — road = ground * 0.72
+      // with the hue nudged warm-brown — which is the rule §7 asks be applied on every map.
+      dirt0: [0.0855, 0.0680, 0.0505], dirt1: [0.1720, 0.1385, 0.0995],
       // ROCK — scorched basalt, warm and MUCH lighter than the floor. rockB is the exposed
       // course and is the map's value ceiling outside the lava; it is what gives the cliffs
       // a silhouette against the ash and drags scene p90 up out of the mud.
@@ -1218,8 +1259,12 @@ const MAPS = [
       lowG: [0.86, 0.80, 0.84], lowRiv: [0.145, 0.128, 0.120],
       ridge: [[0.090, 0.074, 0.070], [0.122, 0.098, 0.090], [0.155, 0.124, 0.110]],
       rockK: [1.30, 1.08, 0.88], tuftK: [1.00, 0.88, 0.76],
-      blade: [112, 92, 74], bladeW: [46, 26, 8], tuftN: 0.20, lava: 1,
-      rockComp: [1.120, 1.000, 0.800],
+      blade: [128, 106, 84], bladeW: [46, 26, 8], tuftN: 0.20, lava: 1,
+      // §9: rockComp is a VALUE lever now — the hue is fixed by `granite` after it (see
+      // graniteMat), so the old strong red push cannot rotate the basalt off the family.
+      rockComp: [1.040, 1.000, 0.940],
+      granite: [0.3060, 0.2620, 0.2160],   // scorched basalt: warm, light, still S <= 0.18
+      sunEl: 23, hfK: 1.0, macroK: 1.0, snowN: 0,
       // Weighted hard toward dark olive conifers (58%, was 26%): a wood of bright orange
       // autumn canopies sat in exactly the same hue wedge as the sand AND the enemy
       // tabard, so the horde had nowhere to read. The remaining broadleaves go deep
@@ -1308,10 +1353,33 @@ const MAPS = [
       // the finding asks for, the ambient comes down by a third, and the fill (the term that
       // was flattening the mounds) is cut by more than half. A mound's sunward face now has a
       // key to catch.
-      sun: 0xffb070, sunI: 13.60, hemiSky: 0x7d8ebc, hemiGnd: 0x6b6250, hemiI: 1.86,
-      fill: 0x9db2dc, fillI: 0.42, haze: 0x8b8f7e, bg: 0xa89c8c, envI: 0.50,
+      // WORLD-FIX6 §6. Measured: _dusk's play area has NOTHING above L 0.56 (p95 0.543,
+      // p50 0.182) and battle4's p95 is 0.599 — this is not dusk, it is ambient-only with the
+      // exposure pulled down, which is why the canopies are featureless silhouette blobs while
+      // the standing stones carry a bright front face that disagrees with the ground shadows.
+      // A low-key frame is defined by its KEY/FILL RATIO, not by being dim: the key roughly
+      // doubles again (authored pre-dusk, so x0.727 lands it near 12.9), the ambient drops to
+      // the thinnest of the four maps, and the sun drops to 15 degrees so the rake itself
+      // tells the hour. Target: stone tops and canopies reaching L 0.75+ against a
+      // blue-violet shadow mass at L 0.12-0.18 — four stops, not the one it had.
+      // Second pass: 15 degrees put the whole moor at a grazing incidence and the shadow mass
+      // measured p05 0.073 / p50 0.138 against the finding's 0.12-0.18 target — past low-key
+      // and into underexposed. 17 degrees keeps the rake (2.9x object height) and lets the key
+      // reach the ground between the barrows; the ambient comes back up a sixth to seat the
+      // shadow mass in band. The tops already reach L 0.81, which is the half that was missing.
+      sun: 0xffb268, sunI: 17.80, hemiSky: 0x7686bc, hemiGnd: 0x635b4c, hemiI: 1.48,
+      fill: 0x93a8d8, fillI: 0.34, haze: 0x8b8f7e, bg: 0xa89c8c, envI: 0.40,
+      sunEl: 17,
+      granite: [0.2540, 0.2610, 0.2600],   // §9: lichened grey granite, near-neutral
+      // §12a/b: the moor measured the LEAST chromatic and the NOISIEST surface in the game at
+      // once (sat 27.9, HF 7.23 against the meadow's 58-63 / 4-5). The dry splat was being
+      // blended on at full contrast over an unlit navy base, i.e. mint-on-navy camouflage
+      // print. Drop the fine octaves hard, raise the macro value masks: a moor has FORM
+      // (wet bog hollows, pale dry humps), not speckle.
+      hfK: 0.42, macroK: 1.85, snowN: 0,
       // dusk shade is COOL. The warm shadow grade is the Vale's alone (INTEGRATE §1).
       shdWarm: 0.0,
+      shdDS: 0.26, shdRot: [1.180, 1.000, 0.840],
       hazeV: [0.235, 0.225, 0.220],
       // Indigo overhead falling to a sullen rose-amber band on the horizon — the last of the
       // light, and the only saturated hue in the sky.
@@ -1339,7 +1407,11 @@ const MAPS = [
       // The scald patches take the same correction as the turf. Authored raw they rendered
       // hue 94 — yellow-green — and dragged the whole map's mean back onto the Vale's hue,
       // which is the identity collapse this fix exists to stop. Bone, but bone at dusk.
-      dry0: [0.0880, 0.1560, 0.1660], dry1: [0.1480, 0.2500, 0.2640], bare: [0.0800, 0.1180, 0.1220],
+      // WORLD-FIX6 §12a. Pulled ONTO the turf ramp rather than sitting a full stop above it:
+      // the scald patches were the bright half of the mint-on-navy splatter, and a patch you
+      // can find the edge of is not a patch. The hue identity (grey-green bone) survives; the
+      // 0.11 value jump over gLit does not.
+      dry0: [0.0810, 0.1330, 0.1400], dry1: [0.1280, 0.2020, 0.2100], bare: [0.0780, 0.1140, 0.1180],
       // The heaviest compensation of the four maps, because this key is the warmest AND the
       // strongest relative to its ambient — without it the green-teal turf renders neutral
       // grey (measured #5a5758, S 0.02).
@@ -1355,7 +1427,7 @@ const MAPS = [
       moss: [0.0560, 0.0720, 0.0520], scree: [0.1680, 0.1700, 0.1740],
       lowG: [0.74, 0.80, 0.88], lowRiv: [0.118, 0.130, 0.152],
       ridge: [[0.052, 0.058, 0.074], [0.068, 0.076, 0.094], [0.084, 0.092, 0.112]],
-      rockK: [0.96, 0.99, 1.08], rockComp: [1.080, 1.000, 0.860],
+      rockK: [0.96, 0.99, 1.08], rockComp: [1.030, 1.000, 0.960],
       // The ground clutter was the loudest thing in the first cut of `_dusk`: bright saturated
       // green tufts scattered over a bone field, i.e. the one element still rendering as the
       // Vale. Pulled onto the turf's own straw and thinned further (a moor is cropped by
@@ -1413,13 +1485,85 @@ const WPAL_BASE = {
   // instead of a warm oatmeal, so shadowed grass lands blue-shifted (B-share >= 30%) with
   // its noise intact. The key goes warmer (#ffcf8a) to buy the +6..+9 R-G the golden-hour
   // read wants in the highlights — the grass keeps its green via SUN_TINT_FIX below.
-  sun: 0xffcf8a, sunI: 7.95, hemiSky: 0x83b6f4, hemiGnd: 0x8d8f86, hemiI: 1.86,
-  fill: 0xa2c4ee, fillI: 0.86, haze: 0xccccc9, bg: 0xd6e2ee, envI: 0.58,
+  // WORLD-FIX6 §3 §6. MEASURED, and it is the finding that governs every other one in this
+  // pass: lit grass in overview.png came back RGB(129,148,89) and grass inside the valley's
+  // own cast shadow came back RGB(109,136,88) — a 1.15:1 sun/shade ratio, where a golden-hour
+  // exterior wants 2.2-3:1. B was IDENTICAL across the boundary (89 vs 88), so a shadow here
+  // carried no skylight either: it was a 12% multiply, which is why the big meadow shadow read
+  // as a discolouration or a lake rather than as shade. Cause: rounds 3-5 each answered a
+  // "detail dies in shadow" finding by RAISING the ambient, and it compounded — hemisphere
+  // 1.86 + fill 0.86 + env 0.58 against a 7.95 key is a 40% fill ratio, i.e. studio-flat.
+  // The ambient is cut to roughly a third and the key raised ~46% to carry the frame. The
+  // detail those rounds were protecting is now protected by the shadow-only albedo FLOORS
+  // (granite §4f, tufts §1, foliage §2f) instead — a floor lifts the dark side without
+  // flattening the ratio, which is the thing an ambient lift can never do.
+  // The fill is also the SKY now, not a warm bounce: #8fb6e0 at a third of its old strength,
+  // so shadowed grass finally resolves with B above R and the shadow is a colour change.
+  // Second pass: the first cut of this fix took the ratio from 1.15:1 to 1.35:1 (shade 0.74x
+  // lit) — the right direction and not yet the ask. The ambient comes down again, the key up
+  // again, and the sky terms go BLUER (#82ade8, B/R 3.0) because the finding's other half is
+  // that shadowed grass must resolve with B above R, and a green albedo only does that under a
+  // light whose own B/R beats the albedo's R/B.
+  // Third pass, and this is where the arithmetic of the finding's second clause bites: to make
+  // shadowed grass resolve with B above R, the SKY's own B/R has to beat the grass albedo's R/B
+  // (2.8 after grassComp). #8fb6e0 is 2.6 and could never do it however much of it there was —
+  // which is why round 6 measured shade B == R even under a nominally blue fill. #66a0ec is 6.9,
+  // and the ambient can therefore go back UP a little (a shadow needs its albedo detail lit by
+  // something) without giving the ratio back. Clear-sky shade is this blue; it is only ever
+  // authored grey because a grey one is easier to keep out of trouble.
+  // Fourth pass, and the finding's own measurement turns out to have been taken on a MIXED
+  // crop: (760,480)-(1150,620) is 51% shadow and 42% sunlit sward, so its mean could only ever
+  // report a blend. Split on luminance, the shipped rig measured shade/lit 0.56 (a real 1.8:1)
+  // — flat, but not the 1.15:1 the crop mean implied — and the first three passes of this fix
+  // drove it to 0.20 (4.97:1), which is past golden hour and into stage lighting. The ratio the
+  // finding asks for, 2.2-3:1, is where it belongs, and near black the tone curve is linear, so
+  // the ambient needed is a little over twice the third pass's. Roughly two thirds of the
+  // shipped ambient at 1.7x the key: a 6.3:1 key/fill against the shipped 2.4:1.
+  sun: 0xffd9a0, sunI: 13.80, hemiSky: 0x66a0ec, hemiGnd: 0x6d7c90, hemiI: 1.34,
+  fill: 0x66a0ec, fillI: 0.54, haze: 0xccccc9, bg: 0xd6e2ee, envI: 0.36,
   // INTEGRATE §1. Strength of the shadow-side ground grade (see the terrain shader). The
   // Vale is the only map that wants it: Frostfell's shade must stay blue because snow shade
   // IS blue, and Ember's violet-slate ash is the complement WORLD-FIX4 §2 built the whole
   // map around. Both set this to 0 in their own palettes.
-  shdWarm: 1.0,
+  // WORLD-FIX6 §3. Pulled from 1.0 to 0.40 and the grade's own rotation softened (see the
+  // terrain shader): the round-4 finding it exists for is about a shadow LOSING CHROMA, and
+  // that half stays. Rotating the remainder hard warm was also cancelling the skylight the
+  // shade needs, which is why shadowed grass measured B == R.
+  // Fifth pass. Cutting this to 0.22 traded one measured finding for another: with §3's fill now
+  // a genuine sky blue, the ROAD inside the valley's cast shadow went grey-blue asphalt again —
+  // which is the exact pixel pair INTEGRATE §1 exists for. The grade goes back up, and its
+  // rotation is split from its strength (see shdRot) so the Vale can keep an earthy shadow
+  // without the rotation cancelling the skylight in the sward, which is what §3 caught.
+  shdWarm: 0.55,
+  // WORLD-FIX6 §3. The warm rotation the shade grade applies, per map — it used to be a shared
+  // hard-coded vec3, so the only lever a map had was strength, and strength moves the chroma
+  // loss and the hue rotation together. They are different physical claims.
+  shdRot: [1.180, 1.000, 0.840],
+  // WORLD-FIX6 §3 §2.2. Chroma LOSS in shade, per map, and unlike the rotation it now runs on
+  // EVERY map, because every shadow on every surface loses chroma — that half was never the
+  // Vale's alone. Frostfell needs the most of it: with the ambient swung to the saturated cold
+  // blue §2 asks for, its drift shadows came back as cobalt PAINT.
+  shdDS: 0.24,
+  // WORLD-FIX6 §1a §9. ONE granite source per map. Every value decision in the rock shaders
+  // (strata, joints, buttress masses, pitting, per-facet cleave) now contributes LUMA only and
+  // reads its hue from here — because round 6 measured boulders at lime-green #a8c97e, blush
+  // #d8bfae and slate blue INSIDE ONE SQUARE METRE, and cliffs at mauve-pink with ice-blue
+  // bands. Cause: three independent chroma layers (a warm stain, a cool stain and two moss
+  // mixes) each stacked on a per-map compensation, so the rock family could be rotated
+  // anywhere. SPEC §3 puts granite at #8d8578 — a neutral warm grey — and each map now
+  // expresses identity as a rotation of THAT, clamped: S <= 0.18 in sRGB and inside a
+  // +/-8-degree hue window of the base. Linear albedo, authored at the map's own value level.
+  granite: [0.2320, 0.2010, 0.1640],
+  // WORLD-FIX6 §6. Sun elevation, per map. 23 degrees is the Vale's floor (see SUN_EL) — the
+  // cliff ring's own shadow swallows the basin below it. The Barrowmoor is allowed lower
+  // because a moor at last light is exactly the frame a raking key builds.
+  sunEl: 23,
+  // WORLD-FIX6 §12. Terrain detail gains, per map: hfK scales the high-frequency octaves
+  // (the ones that read as speckle when a map is low-chroma) and macroK the low-frequency
+  // value masks (the ones that give a surface macro FORM). Base map is 1/1 by definition.
+  hfK: 1.0, macroK: 1.0,
+  // WORLD-FIX6 §2.3. Drift/sastrugi relief gain on the snow splat (0 = no snow on this map).
+  snowN: 0,
   // Aerial perspective is COOL (SPEC §3 haze #cfe0ee). This was a warm oatmeal, and since
   // the game camera pitches ~50° down, the hazed lowland — not the sky — is what fills the
   // top corners of every frame. A warm haze there is why the diorama read as a model on a
@@ -1446,7 +1590,17 @@ const WPAL_BASE = {
   // Real grass varies in HUE far more than in VALUE. The ramp is now the spec's own family,
   // #4e7a2c -> #6a9838 -> #7fae4a, a ~15-point delta end to end; the variety that used to
   // come from the value gap now comes from the hue jitter and the dry mask below.
-  gDark: [0.1010, 0.1900, 0.0760], gMid: [0.1500, 0.2900, 0.0780], gLit: [0.1930, 0.3830, 0.0760],
+  // WORLD-FIX6 §11. The sward measured RGB(165,182,115) — a pale yellow-mint — against SPEC
+  // §3's #7fae4a (127,174,74). Red and blue both come down (a meadow is not a pastel), green
+  // holds, and with §3's key raised 46% the RENDER lands back on the spec family instead of
+  // the albedo having been pre-brightened to survive a flat light.
+  // Second pass, measured against the spec hex rather than against the render: #7fae4a is
+  // (0.212, 0.418, 0.069) in linear and its G/R is 1.37, while the first cut of this fix
+  // rendered lit grass at G/R 1.08 — I had taken red and green down together and the meadow
+  // came out olive rather than grass. Green goes back up ~15%, red and blue stay down. This is
+  // also where §6's missing highlight range comes from: the sward is 60% of the frame, so a
+  // meadow that renders one stop under spec caps the whole play area's p95.
+  gDark: [0.0790, 0.2160, 0.0555], gMid: [0.1150, 0.3340, 0.0570], gLit: [0.1460, 0.4520, 0.0555],
   dry0: [0.1700, 0.1500, 0.0560], dry1: [0.3300, 0.3000, 0.0980], bare: [0.1000, 0.0790, 0.0500],
   dirt0: [0.1620, 0.1130, 0.0640], dirt1: [0.3300, 0.2500, 0.1480],
   rockA: [0.0290, 0.0295, 0.0300], rockB: [0.1980, 0.1950, 0.1840],
@@ -1461,24 +1615,37 @@ const WPAL_BASE = {
   // because it is a correction to that map's own key/ambient balance.
   rockComp: [1.190, 0.995, 0.690],
   // Key-chromaticity compensation for the SWARD (see TERRAIN_ALBEDO). Per map.
-  grassComp: [0.940, 1.000, 1.105],
+  // WORLD-FIX6 §11: the blue lift comes down with the albedo — at 1.105 it was half of why
+  // the meadow read mint. §3's cooler, thinner fill now supplies the shade-side blue instead,
+  // where it belongs, rather than the lit sward's albedo carrying it everywhere.
+  grassComp: [0.960, 1.000, 1.020],
   // WORLD-FIX4 §1b. Tufts were the loudest mark in the hero frame: flat unshadowed cards at
   // a soldier's screen size and HIGHER luminance than a lit helmet. Pulled ~32% down and
   // tinted onto the base grass family, so ground cover adds TEXTURE to the sward instead of
   // competing with the army for the eye.
-  blade: [68, 90, 52], bladeW: [40, 16, -1], tuftN: 1, tuftFloor: 1,
+  // WORLD-FIX6 §11. Measured on _wardfx.png: tuft pixels mean lum 54.7 against a terrain mean
+  // of 173.5 — a 3.2:1 gap at 45% area coverage, which is why every wide meadow frame read as
+  // a green field peppered with dark confetti. Round 4 pulled these down to stop tufts
+  // out-reading the army and overshot by a stop and a half. Raised to land near lum 125-135:
+  // a sunlit tuft is a LITTLE darker than the sward, never a scorch mark on it.
+  blade: [126, 148, 76], bladeW: [40, 16, -1], tuftN: 1, tuftFloor: 1,
   treeMix: [0.42, 0.72], treeN: 1,
   // r3: paintCanopy already bakes a 5:1 top-to-underside AO ramp, so the gradient was never
   // the problem — the ABSOLUTE value was. Canopy tops measured V31 against a V56 meadow, i.e.
   // dark olive potatoes dumped on hot lime, the exact inverse of the reference, where a
   // sunlit canopy top is the brightest green in the frame. `lit` is the top-facing end of
   // that ramp and now reaches roughly #9cb84e; `deep` is the cool interior it falls to.
-  oakD: [0.0300, 0.0560, 0.0170], oakL: [0.2900, 0.4100, 0.0750],
-  busD: [0.0290, 0.0520, 0.0165], busL: [0.2350, 0.3400, 0.0660],
-  ashD: [0.0400, 0.0700, 0.0230], ashL: [0.3300, 0.4450, 0.0900],
+  // WORLD-FIX6 §10b. Every canopy in overview.png measured one albedo (~#9dc25f) with no hue
+  // variation BETWEEN instances — a cloned lime asset. The species now sit at genuinely
+  // different points on the yellow-green/blue-green axis (oak mid, ash yellow, bush blue,
+  // pine bluest) and every `lit` end loses some red, so a crown reads as leaves under a warm
+  // key instead of as acid plastic. Per-instance jitter widens from here (see varyF).
+  oakD: [0.0300, 0.0560, 0.0205], oakL: [0.2380, 0.3880, 0.1080],
+  busD: [0.0270, 0.0510, 0.0215], busL: [0.1900, 0.3180, 0.1120],
+  ashD: [0.0400, 0.0700, 0.0250], ashL: [0.2960, 0.4300, 0.1120],
   // conifers used to sit at roughly half the oak's albedo, which rendered them as
   // near-black holes at any distance. Still the darkest foliage on the map, but readable.
-  pinD: [0.0260, 0.0460, 0.0250], pinL: [0.1850, 0.2780, 0.0800],
+  pinD: [0.0250, 0.0450, 0.0290], pinL: [0.1480, 0.2680, 0.1120],
   weather: null,
 };
 const WPAL = Object.assign({}, WPAL_BASE, MAP.palette || {});
@@ -1522,7 +1689,10 @@ const wr = (a, b) => a + (b - a) * wrng();
 // crest lowered on the sun side, which is a layout change, not a lighting one.
 // The light also has to move much further out: at this elevation SUN_R 132 put the shadow
 // camera's eye below the cliff crests, so the rim clipped through its own near plane.
-const SUN_EL = 23 * Math.PI / 180, SUN_R = 300;
+// WORLD-FIX6 §6. Per map, because 23 degrees is the VALE's floor and not every map's: the
+// constraint above is the cliff ring's own shadow reaching across the basin, and the
+// Barrowmoor's brief ("a burial moor at last light") is the one map that WANTS that rake.
+const SUN_EL = (WPAL.sunEl || 23) * Math.PI / 180, SUN_R = 300;
 const sun = new THREE.DirectionalLight(WPAL.sun, WPAL.sunI);
 // Azimuth from the lower-left of the game camera (SPEC §3). Swinging it further round to
 // -x does make shadows rake more laterally, but it also lights the meadow flat-on and the
@@ -1986,7 +2156,12 @@ function tuftTex() {
     // back down, because the fix overshot into the opposite failure — a tuft brighter than a
     // lit helmet destroys figure/ground in the one frame the game is sold on. A sunlit tuft
     // is a little lighter than the sward, not the brightest thing on the meadow.
-    const lum = 0.47 + Math.pow(wrng(), 0.9) * 0.32;
+    // WORLD-FIX6 §11. r3 lifted the floor, r4 pulled the ceiling, and the pair landed a whole
+    // stop and a half BELOW the sward: tufts measured lum 54.7 against terrain 173.5 at 45%
+    // coverage, so a lush meadow read as a green field peppered with dark confetti. The window
+    // moves up and NARROWS — a clump of grass is tonally continuous with the grass around it,
+    // and the variety a tuft needs is in its silhouette, not in a 1.7-stop value scatter.
+    const lum = 0.64 + Math.pow(wrng(), 0.9) * 0.26;
     const warm = wrng() < 0.14 ? 1 : 0;                     // a few bleached / seeding blades
     const TB = WPAL.blade, TW = WPAL.bladeW;
     g.fillStyle = 'rgb(' + Math.round((TB[0] + warm * TW[0]) * lum) + ',' + Math.round((TB[1] + warm * TW[1]) * lum) + ',' + Math.round((TB[2] + warm * TW[2]) * lum) + ')';
@@ -2038,8 +2213,19 @@ function graniteMat(o) {
     sh.fragmentShader = 'uniform vec3 uSunDirR;\nvarying vec3 vRP;\nvarying vec3 vRN;\nvarying float vRPh;\nvarying float vRSc;\nfloat vRelief;\nfloat vDfs;\n' + NOISE_GLSL +
       sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       {
-        vec3 aw = abs(vRN); aw = pow(aw, vec3(3.5)); aw /= (aw.x + aw.y + aw.z + 1e-4);
-        vec2 pA = vRP.zy, pB = vRP.xz, pC = vRP.xy;
+        // WORLD-FIX6 §1c. THE WOOD-GRAIN END-RINGS, found. overview3's boulder blocks came
+        // back with concentric end-grain rings and hard black bands — sliced logs, not stone.
+        // Two causes, both here. (i) pow 3.5 leaves a box-ish face taking a MEASURABLE share
+        // of the two projections whose UV origin sits INSIDE the mesh, and a fract() band of a
+        // coordinate whose origin is inside the solid draws closed contours around it — rings.
+        // pow 4.0 (normalised) drives those shares toward zero so the dominant face wins
+        // outright. (ii) every instance shared one field origin, so adjacent boulders shared
+        // one ring CENTRE and the repetition read as a manufactured pattern. iO is a
+        // per-instance offset derived from the instance's own translation hash (vRPh), so no
+        // two neighbours can sample the same lobe of any octave below.
+        vec3 aw = abs(vRN); aw = pow(aw, vec3(4.0)); aw /= (aw.x + aw.y + aw.z + 1e-4);
+        vec3 iO = vec3(fract(vRPh*5.13), fract(vRPh*11.71), fract(vRPh*3.31)) * 37.0;
+        vec2 pA = vRP.zy + iO.xy, pB = vRP.xz + iO.yz, pC = vRP.xy + iO.zx;
         // FLORA §4a. Every granite frequency below was fixed in WORLD units, so an 8u crag
         // got two bedding courses and a 1u scatter boulder got a fifth of one — i.e. the
         // boulders were rendering a flat slice of a texture built for a cliff, which is
@@ -2051,9 +2237,15 @@ function graniteMat(o) {
         float d1 = fbm2(pA*0.520*dfs)*aw.x + fbm2(pB*0.520*dfs)*aw.y + fbm2(pC*0.520*dfs)*aw.z;
         float d2 = fbm2(pA*1.850*dfs)*aw.x + fbm2(pB*1.850*dfs)*aw.y + fbm2(pC*1.850*dfs)*aw.z;
         float d3 = vn2 (pA*5.400*dfs)*aw.x + vn2 (pB*5.400*dfs)*aw.y + vn2 (pC*5.400*dfs)*aw.z;
-        float warp = (w0-0.5)*1.85 + (d1-0.5)*0.62 + (d2-0.5)*0.22 + sin(vRPh)*0.35;
+        // WORLD-FIX6 §1a §1c. The warp ran at 1.85 — more than a whole band width — which is
+        // what turned horizontal bedding into closed arcs on anything box-shaped. Under one
+        // third of a band now, so the strata read as STRATA. Bedding stays a LUMA step: three
+        // discrete plateaus quantised out of the band, at delta L well under 0.10 apiece, so a
+        // cliff wall carries readable courses instead of a smeary low-frequency gradient.
+        float warp = (w0-0.5)*0.72 + (d1-0.5)*0.28 + (d2-0.5)*0.12 + sin(vRPh)*0.35;
         float bnd = fract(vRP.y*(0.340 + 0.240*w0)*dfs + warp);
         float bs  = smoothstep(0.14,0.42,bnd)*smoothstep(0.96,0.62,bnd);
+        bs = mix(bs, floor(bs*3.0 + 0.5)/3.0, 0.62);
         float joint = clamp(smoothstep(0.060,0.0,bnd) + smoothstep(0.940,1.0,bnd), 0.0, 1.0);
         float k = (0.66 + 0.58*bs) * (1.0 - 0.34*joint)
                 * (0.76 + 0.48*d1) * (0.84 + 0.32*d2) * (0.90 + 0.22*d3);
@@ -2083,10 +2275,34 @@ function graniteMat(o) {
         // Both now ride dfs, so a boulder gets staining INSIDE it the way a crag does, and
         // the cool weight comes down because a rock's lichen-and-shade staining should
         // never be able to rotate the whole mass off the spec hue.
+        // WORLD-FIX6 §1a. Both layers were PLANAR (pB and pC, whatever the face normal), so on
+        // a face whose dominant axis was the projection's missing one they degenerate to a 1-D
+        // function — a chroma sine across the surface, i.e. the candy stripes. Triplanar now,
+        // with the same weights the value octaves use, and at roughly half the amplitude: a
+        // stain may tell you where water ran down a rock, it may not decide what colour the
+        // rock is. The hue clamp below is the backstop that guarantees it cannot.
+        float stW = fbm2(pA*0.42*dfs+31.0)*aw.x + fbm2(pB*0.42*dfs+31.0)*aw.y + fbm2(pC*0.42*dfs+31.0)*aw.z;
+        float stC = fbm2(pA*0.30*dfs+13.0)*aw.x + fbm2(pB*0.30*dfs+13.0)*aw.y + fbm2(pC*0.30*dfs+13.0)*aw.z;
         diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*` + v3s(WPAL.rockWarm) + `,
-                               smoothstep(0.50,0.84, fbm2(pB*0.42*dfs+31.0))*0.31);
+                               smoothstep(0.50,0.84, stW)*0.17);
         diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb*` + v3s(WPAL.rockCool) + `,
-                               smoothstep(0.52,0.86, fbm2(pC*0.115*dfs*2.6+13.0))*0.34);
+                               smoothstep(0.52,0.86, stC)*0.14);
+        // ══ WORLD-FIX6 §1a §9 — STRUCTURE IS LUMA, HUE IS ONE SOURCE ════════════════════════
+        // Round 6 measured, inside ONE square metre of battle.png, a flat olive-green boulder
+        // (#a8c97e, the same hue family as the grass — it read as a cabbage), a blush
+        // pink-lavender one (#d8bfae) and a slate blue one; and cliffs running mauve-pink with
+        // ice-blue bands on map 4, black/white zebra on map 2, mauve-and-teal candy stripes on
+        // map 3. Rounds 4 and 5 each diagnosed one contributor correctly and each added a
+        // CHROMA layer to fix it — two moss mixes, two directional stains, a per-map
+        // compensation — and the sum of five independent hue authorities is a rock family that
+        // can land anywhere. So the authority is collapsed to one: everything above contributed
+        // VALUE, and 88% of the chroma is now discarded and replaced by the map's single
+        // 'granite' triple (SPEC §3's #8d8578, rotated <= +/-8 degrees per map, S <= 0.18).
+        // Rock cannot leave the yellow-grey band on any map by construction, not by tuning.
+        {
+          float _sl = dot(diffuseColor.rgb, vec3(0.2126,0.7152,0.0722));
+          diffuseColor.rgb = mix(_sl * ` + v3s(nrmLum(WPAL.granite)) + `, diffuseColor.rgb, 0.12);
+        }
         // moss weighted to up-facing normals, same colour as the cliff's
         // WORLD-FIX5 §5f. THE TEAL, found. Both moss mixes lerped toward an ABSOLUTE linear
         // colour, and a granite facet's albedo runs an order of magnitude darker than that
@@ -2098,7 +2314,12 @@ function graniteMat(o) {
         // value, which is both what lichen does and what keeps the granite reading as granite.
         float _al = dot(diffuseColor.rgb, vec3(0.2126,0.7152,0.0722));
         float mo = smoothstep(0.58,0.95, vRN.y) * smoothstep(0.40,0.76, fbm2(vRP.xz*0.150+55.0));
-        diffuseColor.rgb = mix(diffuseColor.rgb, ` + v3s(nrmLum(WPAL.moss)) + `*(_al*0.92), mo*0.40);
+        // WORLD-FIX6 §9. 0.40 + 0.34 on the shade flank could reach 60% moss on one facet, and
+        // that is the lime-green "cabbage" boulder the panel measured at #a8c97e — a rock the
+        // same hue family as the grass beside it. Lichen is a PATINA: it may tint, it may not
+        // repaint. Halved, and it now runs after the §1a hue clamp so it is the only chroma
+        // allowed to depart from the granite base at all.
+        diffuseColor.rgb = mix(diffuseColor.rgb, ` + v3s(nrmLum(WPAL.moss)) + `*(_al*0.92), mo*0.20);
         // FLORA §4d. Moss ALSO grows on the shaded flank. A granite mass carrying moss only
         // on its caps reads as a rock with paint on top; the north face is where moss
         // actually holds. Weighted by how far the plane turns from the key and clipped off
@@ -2114,7 +2335,7 @@ function graniteMat(o) {
         float mos = smoothstep(0.12,-0.50, dot(normalize(vRN), uSunDirR))
                   * smoothstep(-0.30, 0.30, vRN.y)
                   * smoothstep(0.42, 0.82, fbm2(vRP.xz*0.210*dfs + 91.0));
-        diffuseColor.rgb = mix(diffuseColor.rgb, ` + v3s(nrmLum(LIN_MOSS_B)) + `*(_al*0.88), mos*0.34);
+        diffuseColor.rgb = mix(diffuseColor.rgb, ` + v3s(nrmLum(LIN_MOSS_B)) + `*(_al*0.88), mos*0.16);
         // WORLD-FIX5 §5c. THE ACTUAL CAUSE of "flat teal-and-mauve slabs floating on lit
         // grass", and it is not a normal, a shadow or a cull. Summing this rig's own light
         // at a horizontal surface gives irradiance in the ratio R 1.00 : G 0.87 : B 0.92 —
@@ -2154,8 +2375,13 @@ function graniteMat(o) {
       // lit result on small instances and carried a +38% blue bias, which is the whole of
       // "flat teal slab". Scaled back in proportion to the albedo lift and pulled to a
       // near-neutral cool so it can only ever read as skylight on stone.
-      gl_FragColor.rgb = max(gl_FragColor.rgb, diffuseColor.rgb * vec3(0.148, 0.158, 0.180)
-                                                + vec3(0.0030, 0.0038, 0.0046));
+      // WORLD-FIX6 §8. Measured on overview4.png: the tan boulder's unlit facets came back
+      // RGB(28,26,24) and the embedded rim blocks read as flat near-black faces — with §3's
+      // ambient now cut to a third to buy the sun/shade ratio, a 0.148 floor is no longer a
+      // floor at all. Raised to the 0.30 the finding asks for and kept albedo-proportional, so
+      // a shaded prop keeps its hue and every strata band comes into the shade with it.
+      gl_FragColor.rgb = max(gl_FragColor.rgb, diffuseColor.rgb * vec3(0.300, 0.322, 0.372)
+                                                + vec3(0.0042, 0.0053, 0.0066));
       // WORLD-FIX5 §5e + §8. THE SHADE-SIDE GRADE, granite edition — the same construction
       // INTEGRATE §1 put on the terrain, for the same measured reason. A rock plane turned
       // off the key is lit by this rig's ambient alone, and that ambient is deliberately fat
@@ -2341,7 +2567,13 @@ function swayMat(o, amp, freq, key, leaf) {
         // into the underside of foliage, and the hemisphere term alone never delivered it
         gl_FragColor.rgb += ${lin3(WPAL.hemiGnd, 1)} * _alb * max(0.0, -_N.y) * 2.0;
         // rim: a close conifer now gets a lit edge instead of reading as a silhouette hole
-        gl_FragColor.rgb += ${lin3(WPAL.sun, 1)} * pow(1.0 - max(0.0, dot(_N, -_V)), 2.5) * 0.11;
+        // WORLD-FIX6 §10d. The rim was view-only, so it fired equally on every edge of every
+        // crown and could not do the job the finding asks of it — "separate canopy from canopy
+        // in the dense clusters". Weighted by the SUN now: the sunward rim of a crown lights up
+        // ~5x harder than its shaded rim, which is the edge that has to cut against the crown
+        // standing behind it.
+        gl_FragColor.rgb += ${lin3(WPAL.sun, 1)} * pow(1.0 - max(0.0, dot(_N, -_V)), 2.5)
+                          * (0.075 + 0.44 * max(0.0, dot(_N, uSunDir)));
       }
       // FLORA §2f. Ambient floor, same construction as the tufts (§1) and the granite (§4f):
       // a MAX against an albedo-proportional value, so it is a shadow-only lift that cannot
@@ -2492,14 +2724,18 @@ function lobeG(r, sq, seed) {
   for (let i = 0; i < P.count; i++) {
     const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
     // hash keyed on the (welded) position, so shared vertices always agree
-    const hs = (h2i(Math.round(x * 512) * 3 + si, Math.round(y * 512) * 7 - Math.round(z * 512) * 5) - 0.5) * 0.50;
-    const lump = (fbmz(x * 1.7 + seed, z * 1.7 + y * 1.25 + seed, 2) - 0.5) * 0.46;
+    // WORLD-FIX6 §10c. "Displace outer canopy verts along their normals by noise so the OUTLINE
+    // is lobed rather than polygonal" — the machinery was here and running at half the amplitude
+    // it needed: round 6 still measured "a convex flat-shaded polyhedron" per lobe. All three
+    // terms up ~25%, with the sharpest rise on `notch`, which is the only one that CUTS the rim.
+    const hs = (h2i(Math.round(x * 512) * 3 + si, Math.round(y * 512) * 7 - Math.round(z * 512) * 5) - 0.5) * 0.62;
+    const lump = (fbmz(x * 1.7 + seed, z * 1.7 + y * 1.25 + seed, 2) - 0.5) * 0.56;
     // WORLD-FIX4 §8. Both terms above are SMOOTH, so the outer ring stayed a continuous
     // rounded curve however far it was pushed — every lobe was a marshmallow with an
     // unbroken outline. `notch` is a high-frequency bite taken out of the silhouette
     // (never added to it), so the rim of the canopy gains actual concavities and the
     // neighbouring lobes stop welding into one plush mass.
-    const notch = -0.42 * Math.pow(clamp(fbmz(x * 5.3 + seed * 2.7, z * 5.3 + y * 4.1 + seed, 2) * 1.9 - 0.62, 0, 1), 0.8);
+    const notch = -0.56 * Math.pow(clamp(fbmz(x * 5.3 + seed * 2.7, z * 5.3 + y * 4.1 + seed, 2) * 1.9 - 0.62, 0, 1), 0.8);
     // FLORA §2c. Each lobe was radially symmetric about its own centre, so a cluster of them
     // could only ever add up to a bigger ball. `pull` drags one flank of every lobe in along
     // a per-lobe bearing — the lobe becomes a leaf MASS with a light side and a starved side,
@@ -2640,7 +2876,15 @@ function facet(g, seed, amt, nb) {
   }
   return o;
 }
-function paintCanopy(g, cy, rad, deep, lit, warm, lobeK) {
+// WORLD-FIX6 §10a. `ctr`/`cR`/`ofs` are the crown's centroid, its radius and this lobe's own
+// placement inside it. Without them paintCanopy could only ever model each LOBE — every lobe
+// got its own 0.11..1.00 ramp about its own centre, which is why round 6 measured "a convex
+// flat-shaded polyhedron of a single albedo with a total value spread of ~25 levels": the
+// gradients were all there and all of them were local, so the CROWN had no structure at all.
+// With them the ramp also asks where the vertex sits in the whole crown — buried in the
+// interior, or out on the sunlit skin — and whether it faces the ground. Three readable value
+// zones per canopy (sun-lit cap, mid, occluded underside) instead of one plush ball per lobe.
+function paintCanopy(g, cy, rad, deep, lit, warm, lobeK, ctr, cR, ofs) {
   // WORLD-FIX4 §8. Overlapping lobes differed by a few value points, so a canopy read as one
   // plush object rather than as a cluster. `lobeK` is a per-lobe AO term the tree builders
   // hand in — lobes buried under the crown come back much darker — and the shade ramp itself
@@ -2650,7 +2894,21 @@ function paintCanopy(g, cy, rad, deep, lit, warm, lobeK) {
     const mot = fbmz(x * 2.6 + cy * 3.1, z * 2.6 + y * 1.9, 3);
     const mot2 = fbmz(x * 7.4 + 11, z * 7.4 + y * 5.5, 2);
     const up = clamp((y / rad) * 0.5 + 0.5, 0, 1);
-    const shade = (0.11 + 0.89 * Math.pow(up, 1.30)) * LK;
+    let shade = (0.11 + 0.89 * Math.pow(up, 1.30)) * LK;
+    if (ctr) {
+      // distance from the crown's own centroid, 0 at the core and 1 out on the skin
+      const dx = x + ofs[0] - ctr[0], dy = y + ofs[1] - ctr[1], dz = z + ofs[2] - ctr[2];
+      const d = clamp(Math.hypot(dx, dy, dz) / cR, 0, 1);
+      // ...and where it sits vertically in the crown. This is the term the per-lobe ramp above
+      // structurally cannot supply, and on a conifer it is the whole read: a whorl is 2.55u tall
+      // against a 2.95u radius, so `up` above spans only 0.46..0.93 and every ring rendered at
+      // one value — seven flat rings with hard seams, which is round 6's "literal stacked cones
+      // with visible ring seams". A crown-wide top-to-bottom ramp is what makes a canopy read as
+      // lit from the sky, and it lands ACROSS the seams instead of restarting at each one.
+      const vy = clamp((dy / cR) * 0.5 + 0.5, 0, 1);
+      // the finding's number: interior and underside verts darken by ~45% together
+      shade *= (0.60 + 0.40 * d) * (0.72 + 0.28 * clamp(ny * 0.5 + 0.5, 0, 1)) * (0.62 + 0.52 * vy);
+    }
     const sunF = clamp(x * -0.34 + y * 0.30 + z * 0.22, 0, 1);
     const k = clamp(mot * 0.58 + mot2 * 0.18 + up * 0.30, 0, 1);
     c.setRGB(
@@ -2663,6 +2921,17 @@ function paintCanopy(g, cy, rad, deep, lit, warm, lobeK) {
 // lowest point of the crown is only knowable from the table — this returns it, and the
 // builders lengthen the trunk whenever the crown would otherwise hang below its top.
 const crownFloor = cy => cy.reduce((m, e) => Math.min(m, e[1] - e[3] * e[4] - e[3] * 0.12), 1e9);
+// WORLD-FIX6 §10a. Crown centroid (radius-weighted, so the mass leads) plus the radius that
+// encloses every lobe. Handed to paintCanopy so its shade ramp can ask where a vertex sits in
+// the WHOLE crown — the term that turns a cluster of gradient balls into one lit canopy.
+const crownAO = (cy) => {
+  let sx = 0, sy = 0, sz = 0, w = 0;
+  for (const e of cy) { const k = e[3] * e[3]; sx += e[0] * k; sy += e[1] * k; sz += e[2] * k; w += k; }
+  const c = [sx / w, sy / w, sz / w];
+  let r = 1e-4;
+  for (const e of cy) r = Math.max(r, Math.hypot(e[0] - c[0], e[1] - c[1], e[2] - c[2]) + e[3]);
+  return [c, r];
+};
 function treeOak(seed) {
   // Two of the eight lobes are gone and the rest are pulled in: the crown used to be a
   // solid unbroken dome with no sky through it anywhere. Fewer, smaller, further-apart
@@ -2682,12 +2951,16 @@ function treeOak(seed) {
     const bg = paintBark(trunkG(br, 0.09, 2.3, 5, 0.5), 2.3);
     parts.push({ g: bg, m: trs(Math.cos(a) * 0.25, h * 0.62, Math.sin(a) * 0.25, a, 1, 1, 1, 0.55 * Math.cos(a) + 0.4, 0.55 * Math.sin(a)) });
   }
+  const [cC, cR] = crownAO(cy);
   for (const [x, y, z, r, sq, lk] of cy)
     // FLORA §2e. facet() has sat unused by every canopy since it was written, and its own
     // comment names it "the single biggest quality lever on the foliage": a smooth-shaded
     // 42-vertex icosahedron can only render as a gradient ball, which is the marshmallow.
     // Flat normals + a per-triangle tint turn the same geometry into a painterly leaf mass.
-    parts.push({ g: facet(paintCanopy(lobeG(r, sq, seed + x * 3 + z), y, r, OD, OL, 1, lk), seed + x * 3 + z, 0.30, 0.45), m: trs(x, y, z, seed + x), w: () => 1, leaf: 1 });
+    // WORLD-FIX6 §10a: facet amount up 0.30 -> 0.42 as well — round 6 measured a 25-level
+    // total value spread across a whole canopy, and the per-triangle tint is the cheapest
+    // place to buy back the plate-to-plate variety a leaf mass has.
+    parts.push({ g: facet(paintCanopy(lobeG(r, sq, seed + x * 3 + z), y, r, OD, OL, 1, lk, cC, cR, [x, y, z]), seed + x * 3 + z, 0.42, 0.45), m: trs(x, y, z, seed + x), w: () => 1, leaf: 1 });
   return baseBleed(mergeParts(parts), 0.10, 0.45);
 }
 function treeAsh(seed) {
@@ -2697,21 +2970,29 @@ function treeAsh(seed) {
               [-0.95, 10.05, -1.05, 1.06, 0.92, 1.12]];
   const h = Math.max(8.0, crownFloor(cy) + 0.30), parts = [];
   parts.push({ g: paintBark(trunkG(0.34, 0.16, h, 6, 0.16), h) });
+  const [cC, cR] = crownAO(cy);
   for (const [x, y, z, r, sq, lk] of cy)
-    parts.push({ g: facet(paintCanopy(lobeG(r, sq, seed + x * 5 + z), y, r, AD, AL, 1, lk), seed + x * 5 + z, 0.30, 0.45), m: trs(x, y, z, seed + z), w: () => 1, leaf: 1 });
+    parts.push({ g: facet(paintCanopy(lobeG(r, sq, seed + x * 5 + z), y, r, AD, AL, 1, lk, cC, cR, [x, y, z]), seed + x * 5 + z, 0.42, 0.45), m: trs(x, y, z, seed + z), w: () => 1, leaf: 1 });
   return baseBleed(mergeParts(parts), 0.09, 0.45);
 }
 function treePine(seed) {
   const parts = [];
   parts.push({ g: paintBark(trunkG(0.34, 0.16, 9.4, 6, 0.06), 9.4) });
   const PD = WPAL.pinD, PL = WPAL.pinL;
+  // WORLD-FIX6 §10a. "The pines are literal stacked cones with visible ring seams" — each
+  // whorl carried its own local ramp about its own axis, so the seven of them added up to a
+  // striped cone. The crown table gives paintCanopy the whole spire's centroid instead, so the
+  // stack darkens toward the trunk and toward the ground and the seams stop being the read.
+  const pcy = [];
+  for (let i = 0; i < 7; i++) pcy.push([0, 1.85 + i * 1.24, 0, 2.95 - i * 0.335, 1, 1]);
+  const [cC, cR] = crownAO(pcy);
   for (let i = 0; i < 7; i++) {
     const y = 1.85 + i * 1.24, r = 2.95 - i * 0.335;
     const cg = coneRingG(r, 2.55, seed * 3.7 + i * 11.3);
     // FLORA §2e. The conifer gets the same treatment as the broadleaves — without it a
     // whorl is a smooth-shaded fan and a stand of pines stays the one part of the wood that
     // still reads as moulded plastic beside faceted oaks.
-    parts.push({ g: facet(paintCanopy(cg, y, r, PD, PL, 0.5), seed * 3.7 + i * 11.3, 0.26, 0.45), m: trs(0, y, 0, i * 1.37 + seed * 2.1),
+    parts.push({ g: facet(paintCanopy(cg, y, r, PD, PL, 0.5, 1, cC, cR, [0, y, 0]), seed * 3.7 + i * 11.3, 0.38, 0.45), m: trs(0, y, 0, i * 1.37 + seed * 2.1),
                  w: (x, yy) => clamp((y + yy - 3) / 8, 0, 1) * 0.7, leaf: 1 });
   }
   return baseBleed(mergeParts(parts), 0.08, 0.45);
@@ -2720,9 +3001,16 @@ function bushG(seed) {
   const parts = [];
   const BD = WPAL.busD, BL = WPAL.busL;
   // low sprawling mound, not a boulder: small lobes on a tight spread, well squashed
+  const bcy = [];
+  for (let i = 0; i < 6; i++) { const a = i * 1.63 + seed, r = 0.40 + (i % 3) * 0.16;
+    bcy.push([Math.cos(a) * 0.36, r * 0.56, Math.sin(a) * 0.36, r, 0.60, 1]); }
+  const [cC, cR] = crownAO(bcy);
   for (let i = 0; i < 6; i++) {
     const a = i * 1.63 + seed, r = 0.40 + (i % 3) * 0.16;
-    parts.push({ g: facet(paintCanopy(lobeG(r, 0.60, seed + i * 2.7), r, r, BD, BL, 0.8), seed + i * 2.7, 0.28, 0.45),
+    // WORLD-FIX6 §10a: the crown term is what separates a bush from a boulder in silhouette —
+    // round 5 called a 3u bush a boulder, and a mound with an occluded underside is a mound.
+    parts.push({ g: facet(paintCanopy(lobeG(r, 0.60, seed + i * 2.7), r, r, BD, BL, 0.8, 1, cC, cR,
+      [Math.cos(a) * 0.36, r * 0.56, Math.sin(a) * 0.36]), seed + i * 2.7, 0.38, 0.45),
       m: trs(Math.cos(a) * 0.36, r * 0.56, Math.sin(a) * 0.36, a), w: () => 1, leaf: 1 });
   }
   return baseBleed(mergeParts(parts), 0.18, 0.42);
@@ -2822,19 +3110,37 @@ const SNOW_GLSL = WPAL.snow > 0 ? `
       // modulation of the snow's own albedo, never of whether snow is there at all.
       float dune = fbm2(wxz*0.072 + 91.0);           // ~14u dunes: the readable shapes
       float rip  = fbm2(wxz*0.235 + 131.0);          // ~4.3u drift ridges
+      // WORLD-FIX6 §2.3 §4. THE MISSING SURFACE. Two more octaves at the scales the finding
+      // names: ~2.8u sastrugi (the wind-carved ridges that give a snowfield its form at
+      // gameplay zoom) and a ~1.3u wind ripple. Without them the field had exactly one
+      // frequency of information in it and cast shadows were the only thing telling you the
+      // ground was not a sheet of paper. These also drive the drift RELIEF in the normal pass.
+      float sas  = fbm2(wxz*0.360 + 217.0);
+      float wrp  = vn2 (wxz*0.780 + 313.0);
       float snw = lie * drift * (0.86 + 0.14*dune) * ${WPAL.snow};
-      snw *= 1.0 - 0.86*tRoad;                       // wheels and boots keep the road bare
+      // WORLD-FIX6 §2.4 §7. 0.86 left 14% snow lying ON the lane, which at the old albedo was
+      // enough to erase it (measured: road L 0.76 against field L 0.78). Traffic scrapes a road
+      // essentially clean — and the lane on a TD map is not allowed to be ambiguous.
+      snw *= 1.0 - 0.97*tRoad;
       // WORLD-FIX5 §10: and the lip is longer still — a 0.04..0.74 ramp on a mask this
       // steep still resolved to a hard fringe wherever drift was climbing fast.
       snw = smoothstep(0.02, 0.62, snw);             // and the edge is a long soft dune lip
       // A low-frequency dune warp gives the surface form. Amplitudes are small and the
       // result is clamped bright: a snowfield has almost no value range, and the near-black
       // pixels the old micro-noise produced were the whole reason it read as lichen.
-      vec3 sc = ${v3s(WPAL.snowC)} * (0.955 + 0.115*dune) * (0.975 + 0.055*rip);
+      // WORLD-FIX6 §2.3 §4. The body ran 0.955..1.070 of snowC and was then CLAMPED to
+      // 0.80..1.14 — a 34-point window on an albedo already near paper white, which is the
+      // arithmetic definition of "a blown white plane". The comment above it argued that a
+      // snowfield has almost no value range; a snowfield in raking light has an enormous one,
+      // because its value range IS its drift form. Roughly three times the swing now, driven by
+      // the dune/sastrugi/ripple stack, so the field carries the 20-30 levels §4 asks for.
+      float form = 0.60 + 0.44*dune + 0.28*sas + 0.14*wrp;
+      vec3 sc = ${v3s(WPAL.snowC)} * form;
       // troughs pick up the sky and go blue; crests stay white. This is the only hue move.
-      sc = mix(sc, sc*vec3(0.86,0.92,1.08), smoothstep(0.62,0.24, dune*0.7 + rip*0.3));
-      sc = clamp(sc, ${v3s(WPAL.snowC)}*0.80, ${v3s(WPAL.snowC)}*1.14);
+      sc = mix(sc, sc*vec3(0.88,0.93,1.07), smoothstep(0.66,0.20, dune*0.6 + sas*0.4));
+      sc = clamp(sc, ${v3s(WPAL.snowC)}*0.50, ${v3s(WPAL.snowC)}*1.14);
       alb = mix(alb, sc, clamp(snw, 0.0, 1.0));
+      tSnow = clamp(snw, 0.0, 1.0);
       // crystalline sparkle: sparse, near field only, and now riding a scale coarse enough
       // to resolve as glints rather than dissolving into the aliasing it was meant to hide.
       alb += vec3(0.070,0.076,0.088)*smoothstep(0.955,0.999, vn2(wxz*2.05+71.0))*snw*dDet;
@@ -2920,7 +3226,7 @@ const LAVA_GLSL = WPAL.lava ? `
     }
 ` : '';
 const TERRAIN_ALBEDO = `
-  float tRock = 0.0, tRoad = 0.0, dDet = 1.0;
+  float tRock = 0.0, tRoad = 0.0, dDet = 1.0, tSnow = 0.0;
   {
     vec2 wxz = vWP.xz;
     float nL = fbm2(wxz*0.0185 + 61.0);      // ~55u regions
@@ -2959,8 +3265,13 @@ const TERRAIN_ALBEDO = `
     float gk = clamp((0.30*nP + 0.32*nL + 0.29*nM + 0.09*nS*fNear
                       + 0.09*nS*(1.0-fNear)*0.5 - 0.478)*1.92 + 0.5, 0.0, 1.0);
     vec3 grass = gk < 0.5 ? mix(gDark, gMid, gk*2.0) : mix(gMid, gLit, (gk-0.5)*2.0);
-    grass *= mix(1.0, 0.970 + 0.060*nF, dDet*fNear);       // +/-3%, near field only
-    grass *= mix(1.0, 0.980 + 0.040*nG, dDet*fNear);
+    // WORLD-FIX6 §12a. hfK scales every fine octave on the ground. Map 4 measured the
+    // HIGHEST high-frequency energy of any map (HF 7.23) AND the lowest chroma (sat 27.9) at
+    // once, which is the signature of a low-saturation surface carrying a value speckle — a
+    // camouflage print. On a map whose whole identity is a bone-pale moor at dusk the fine
+    // octaves have to come off; on the Vale they are the tooth of the sward and hfK is 1.
+    grass *= mix(1.0, 1.0 + (0.060*nF - 0.030)*${WPAL.hfK.toFixed(3)}, dDet*fNear);
+    grass *= mix(1.0, 1.0 + (0.040*nG - 0.020)*${WPAL.hfK.toFixed(3)}, dDet*fNear);
     // HUE variance instead of value variance: a slow ~24u mask swings the sward between a
     // cool blue-green and a warm yellow-green. This is where a meadow's variety actually
     // lives, and it survives at overview zoom where a value speckle only ever aliases.
@@ -2997,7 +3308,10 @@ const TERRAIN_ALBEDO = `
     dry *= vec3(0.900, 1.000, 1.220);
     // WORLD-FIX4 §4c. Softer shoulders and ~18-22% coverage (was a harder ~28%): the point
     // of a dry patch is that you cannot find its edge.
-    float dryM = smoothstep(0.412,0.648, nD*0.78 + nB*0.22)
+    // WORLD-FIX6 §12a. The shoulders widen with 1/hfK: on the moor the scald mask was arriving
+    // as a hard-edged mint splatter over navy turf, and the fix for a splatter is a mask you
+    // cannot find the edge of. The 0.412..0.648 window is the Vale's and is unchanged there.
+    float dryM = smoothstep(0.530 - ${(0.118 / WPAL.hfK).toFixed(4)}, 0.530 + ${(0.118 / WPAL.hfK).toFixed(4)}, nD*0.78 + nB*0.22)
                * (0.80 + 0.20*nM) * (0.70 + 0.50*smoothstep(-3.0, 15.0, vWP.y));
     vec3 soil = mix(grass, dry, clamp(dryM, 0.0, 1.0));
     // bare earth showing through in the thinnest spots
@@ -3009,7 +3323,12 @@ const TERRAIN_ALBEDO = `
     // no tonal SHAPES, which is what makes it read as wallpaper at overview zoom. Shallower
     // than it was — at 0.84+0.32 it was adding a fifth value octave to a surface whose whole
     // problem was value noise.
-    soil *= (0.84 + 0.32*fbm2(wxz*0.0135 + 207.0)) * (0.93 + 0.14*fbm2(wxz*0.034 + 613.0));
+    // WORLD-FIX6 §12b. macroK raises the LOW-frequency value masks. The moor's brief is
+    // "mist, wisps and RISES", and a surface with no macro form has no rises to put mist in:
+    // the two masks below (a ~74u and a ~29u field) are what read as darker wet bog hollows and
+    // paler dry humps, and at gain 1 they were being drowned by the fine octaves above.
+    soil *= mix(1.0, 0.84 + 0.32*fbm2(wxz*0.0135 + 207.0), ${WPAL.macroK.toFixed(3)})
+          * mix(1.0, 0.93 + 0.14*fbm2(wxz*0.034 + 613.0), ${WPAL.macroK.toFixed(3)});
 
     // ── worn dirt road: dark packed centre, cut ruts, earth verge ──
     // d = lateral distance normalised by the half width, so the centre/rut/verge bands
@@ -3029,12 +3348,18 @@ const TERRAIN_ALBEDO = `
     // Ruts now run at 0.14 half-width and 34% depth (SPEC's "subtle" is about WIDTH, not
     // about being invisible), the profile steps packed centre -> mid -> worn shoulder, and
     // the gravel is distance-independent.
-    float rut  = smoothstep(0.145,0.0, abs(dN-0.34)) + smoothstep(0.145,0.0, abs(dN+0.34-0.0));
+    // WORLD-FIX6 §7. "The road has zero longitudinal detail" — the ruts were there, at 0.145
+    // half-width and 34% depth, and at overview framing that pair is ~3 px of 8% contrast.
+    // Widened to 0.20, deepened to 46% (below), and a SECOND outboard pair added at 0.72 dN
+    // where a cart's outer wheel actually tracks, so the lane carries two ruts you can follow
+    // with your eye down the whole spline instead of a soft ramp with a whisper in it.
+    float rut  = smoothstep(0.200,0.0, abs(dN-0.34)) + smoothstep(0.200,0.0, abs(dN+0.34));
+    rut += 0.62*(smoothstep(0.150,0.0, abs(dN-0.72)) + smoothstep(0.150,0.0, abs(dN+0.72)));
     rut = clamp(rut, 0.0, 1.0) * (0.72 + 0.42*vn2(vec2(vRD.y*0.9, lat*3.1)));  // ruts break up
     float crown= smoothstep(0.95,0.10, lat);             // packed crown between them
     // three-band profile: packed centre #6d5740 -> mid #7d6547 -> worn shoulder #93826d
     dirt *= mix(0.70, 1.0, smoothstep(0.10,0.62,dN)) * mix(1.0, 1.14, smoothstep(0.78,1.35,dN));
-    dirt *= 1.0 - 0.34*rut;
+    dirt *= 1.0 - 0.46*rut;
     dirt *= 1.0 + 0.10*crown;
     dirt *= 0.88 + 0.26*fbm2(wxz*0.40 + 41.0);          // slow patchiness
     dirt *= 0.88 + 0.26*vn2(vec2(vRD.y*6.4, 3.7));      // longitudinal wheel-wear streaks
@@ -3049,12 +3374,19 @@ const TERRAIN_ALBEDO = `
     // into the road — the old mix ran toward dry*1.00 and put a bright cream rim on the
     // outer edge of the road, which is the one band of the whole map that should read
     // dirtiest. Boots and wheels grind the shoulder down, they do not bleach it.
-    soil = mix(soil, mix(soil*0.74, dry*0.82, 0.58), smoothstep(0.02,0.66,vRD.x));
+    // WORLD-FIX6 §7. THE "BLUE-GRAY HALO" ALONG BOTH ROAD EDGES, which round 6 read as an
+    // alpha fringe from a premultiply mismatch on a road decal texture. There is no road decal
+    // and no texture — the road is painted in this shader by tRoad — so the fringe is this
+    // band: a NEUTRAL 0.74 multiply on the sward, which under §3's cool skylight resolves
+    // blue-grey and rims the whole road in mildew. A trampled verge is DUST: it loses value and
+    // gains warmth together, which is what the tint below now guarantees it does.
+    soil = mix(soil, mix(soil*0.80, dry*0.86, 0.58) * vec3(1.075,1.005,0.860),
+               smoothstep(0.02,0.66,vRD.x));
     vec3 alb = mix(soil, dirt, tRoad);
 
     // ── layered granite, TRIPLANAR (an xz-only projection smears on vertical cliff faces) ──
     if (tRock > 0.004) {
-      vec3 aw = abs(vWN); aw = pow(aw, vec3(3.5)); aw /= (aw.x + aw.y + aw.z + 1e-4);
+      vec3 aw = abs(vWN); aw = pow(aw, vec3(4.0)); aw /= (aw.x + aw.y + aw.z + 1e-4);
       vec2 pA = vWP.zy, pB = vWP.xz, pC = vWP.xy;
       float w0 = fbm2(pA*0.050+21.0)*aw.x + fbm2(pB*0.050+21.0)*aw.y + fbm2(pC*0.050+21.0)*aw.z;
       float d1 = fbm2(pA*0.520)*aw.x + fbm2(pB*0.520)*aw.y + fbm2(pC*0.520)*aw.z;
@@ -3064,28 +3396,51 @@ const TERRAIN_ALBEDO = `
       // rock rather than contour lines where the heightfield goes smooth
       // Keep the warp UNDER about one band width. Beyond that the courses stop reading
       // as horizontal bedding and turn into marbled camouflage veins.
-      float warp = (w0-0.5)*1.85 + (d1-0.5)*0.62 + (d2-0.5)*0.22;
+      // ══ WORLD-FIX6 §1 — THE CLIFF WALL, which is the largest material in 100% of frames ═══
+      // Round 6, verbatim: "a smeary mauve/teal VERTICAL BARCODE with visible bilinear pixel
+      // mush and zero strata edges". Every word of that is diagnostic and all of it lands here.
+      //   · THE BARCODE was the two staining layers below. Both were PLANAR — pB (xz) and pC
+      //     (xy) — applied regardless of the face normal, so on the back wall (a near-vertical
+      //     face of near-constant z) fbm2(pB*0.42) degenerates to a function of x alone: a
+      //     low-frequency chroma SINE running vertically down the wall, exactly as measured.
+      //     They are triplanar now and at well under half the amplitude.
+      //   · ZERO STRATA EDGES was the 1.85 warp — over twenty band widths of lateral smear at
+      //     this band spacing, which marbles bedding into camouflage veins. Cut to 0.62, and
+      //     the courses are now a discrete LUMA step function (three plateaus, delta L <= 0.10
+      //     apiece) so they survive as EDGES at overview distance instead of averaging to mush.
+      //   · THE MAUVE/TEAL itself was five independent chroma authorities stacked on one
+      //     surface (rockA/rockB pairs, two stains, moss, rockComp). Collapsed: the whole
+      //     structure below is a SCALAR, and the map's single 'granite' triple supplies the hue.
+      float warp = (w0-0.5)*0.62 + (d1-0.5)*0.24 + (d2-0.5)*0.10;
       // bed SPACING varies by region too, or the whole rim reads as one corduroy sheet
       float bnd = fract(vWP.y*(0.086 + 0.062*w0) + warp);
       float bs  = smoothstep(0.14,0.42,bnd)*smoothstep(0.96,0.62,bnd);
+      bs = mix(bs, floor(bs*3.0 + 0.5)/3.0, 0.70);         // three discrete courses
       float joint = clamp(smoothstep(0.060,0.0,bnd) + smoothstep(0.940,1.0,bnd), 0.0, 1.0);
       float bn2 = fract(vWP.y*0.470 + warp*2.6 + (d3-0.5)*0.55);
       float bs2 = smoothstep(0.16,0.50,bn2)*smoothstep(0.96,0.58,bn2);
-      vec3 rA = ` + v3s(WPAL.rockA) + `;              // shaded / weathered course
-      vec3 rB = ` + v3s(WPAL.rockB) + `;              // exposed granite
-      vec3 rock = mix(rA, rB, 0.20 + 0.80*bs);
-      rock *= 0.84 + 0.32*bs2;                                          // fine bedding
-      rock *= 1.0 - 0.34*joint;                                         // dark bedding planes
-      rock *= 0.50 + 1.00*w0;                                           // buttress-scale masses
-      rock *= 0.62 + 0.78*d1;
-      rock *= 0.76 + 0.46*d2;
-      rock *= 0.86 + 0.30*d3;
+      // The dark course keeps its per-map value ratio to the exposed one; only its HUE is gone.
+      float rLo = dot(` + v3s(WPAL.rockA) + `, vec3(0.2126,0.7152,0.0722));
+      float rHi = dot(` + v3s(WPAL.rockB) + `, vec3(0.2126,0.7152,0.0722));
+      float rv = mix(rLo, rHi, 0.20 + 0.80*bs) / max(rHi, 1e-4);
+      rv *= 0.84 + 0.32*bs2;                                            // fine bedding
+      rv *= 1.0 - 0.34*joint;                                           // dark bedding planes
+      rv *= 0.50 + 1.00*w0;                                             // buttress-scale masses
+      rv *= 0.62 + 0.78*d1;
+      rv *= 0.76 + 0.46*d2;
+      rv *= 0.86 + 0.30*d3;
+      vec3 rock = ` + v3s(WPAL.granite) + ` * rv * 1.34;
       rock += vec3(0.040,0.036,0.028)*smoothstep(0.72,0.97, d3);       // mica glints
-      // rust / lichen staining in the gullies keeps the grey from going dead concrete
-      rock = mix(rock, rock*` + v3s(WPAL.rockWarm) + `, smoothstep(0.50,0.84, fbm2(pB*0.42+31.0))*0.44);
-      rock = mix(rock, rock*` + v3s(WPAL.rockCool) + `, smoothstep(0.52,0.86, fbm2(pC*0.115+13.0))*0.36);
+      // rust / lichen staining in the gullies keeps the grey from going dead concrete — but it
+      // is triplanar, so it can never degenerate into a stripe on a vertical face again.
+      float stW = fbm2(pA*0.42+31.0)*aw.x + fbm2(pB*0.42+31.0)*aw.y + fbm2(pC*0.42+31.0)*aw.z;
+      float stC = fbm2(pA*0.30+13.0)*aw.x + fbm2(pB*0.30+13.0)*aw.y + fbm2(pC*0.30+13.0)*aw.z;
+      rock = mix(rock, rock*` + v3s(WPAL.rockWarm) + `, smoothstep(0.50,0.84, stW)*0.19);
+      rock = mix(rock, rock*` + v3s(WPAL.rockCool) + `, smoothstep(0.52,0.86, stC)*0.15);
+      // moss, normalised to the fragment's own luminance (same reasoning as graniteMat §5f):
+      // lichen changes the hue of the stone it grows on, it does not repaint its value.
       float moss = smoothstep(0.30,0.82, vWN.y) * smoothstep(0.34,0.68, fbm2(wxz*0.150+55.0));
-      rock = mix(rock, ` + v3s(WPAL.moss) + `, moss*0.90);
+      rock = mix(rock, ` + v3s(nrmLum(WPAL.moss)) + `*dot(rock, vec3(0.2126,0.7152,0.0722))*0.94, moss*0.46);
       alb = mix(alb, rock, tRock);
     }
     // scree / dust apron where the slope steepens but rock hasn't taken over
@@ -3134,8 +3489,24 @@ terrainMat.onBeforeCompile = (sh) => {
       // triplanar granite comes INTO the shadow with it) and GATED ON tRock, so the meadow's
       // shadow ratios — which round 4 measured and signed off — are not touched at all.
       .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+      // ══ WORLD-FIX6 §1 §5d — THE MAUVE-AND-ICE-BLUE BARCODE, actually found ═════════════════
+      // Round 6 filed the cliff wall as "a smeary mauve/teal VERTICAL BARCODE" and §5d filed the
+      // spawn-gate faces as "flat untextured beige polygons, zero strata, zero AO". Both are
+      // THIS LINE, and the §1a hue-clamp work above could never have fixed either, because the
+      // fault is downstream of the albedo entirely.
+      // FLORA §6 built this floor to stop a cast shadow on the old near-black rockA reading as
+      // a punched hole — a real problem, correctly diagnosed. But the multiplier it used is
+      // vec3(0.74,0.97,1.10), i.e. roughly 0.94 of the albedo's own luminance. A max() against
+      // 94% of albedo is not a shadow floor, it is an UNLIT PASS: every cliff fragment in the
+      // frame renders at flat albedo regardless of N.L, which is exactly why the wall has no
+      // strata modelling and the gate faces are flat cardboard with a polygon-hard shadow edge.
+      // And because the multiplier is chromatic — R down 26%, B up 10% — it rotates warm granite
+      // to MAUVE wherever it wins, while the courses bright enough to beat it stay tan. A cool
+      // floor alternating with a warm lit result down a bedded wall IS the barcode, band for band.
+      // So: a real floor at 30% (the same number §8 asks for on the props), near-neutral, so it
+      // can lift the dark side without either flattening the light or repainting the rock.
       gl_FragColor.rgb = max(gl_FragColor.rgb,
-        (diffuseColor.rgb * vec3(0.74,0.97,1.10) + vec3(0.0146,0.0198,0.0246)) * tRock);
+        (diffuseColor.rgb * vec3(0.290,0.305,0.335) + vec3(0.0072,0.0084,0.0102)) * tRock);
       // INTEGRATE §1. THE SHADOW-SIDE GROUND GRADE. Measured on shots\\ui.png after the art
       // strike: the SUNLIT road reads R-B +27.0 and the sunlit meadow +10.2, but the same
       // two surfaces inside the valley's cast shadow read -9.1 and -12.2 — the road crosses
@@ -3151,7 +3522,7 @@ terrainMat.onBeforeCompile = (sh) => {
       // diffuse, which is scale-free (it needs no threshold tuned against a tone curve) and
       // already carries the shadow-map mask. Gated on (1-tRock) so the granite's signed-off
       // shadow ratios do not move, and on uSW so Frostfell and Ember keep their own shade.
-      if (uSW > 0.0) {
+      {
         float dL = dot(reflectedLight.directDiffuse,   vec3(0.2126,0.7152,0.0722));
         float iL = dot(reflectedLight.indirectDiffuse, vec3(0.2126,0.7152,0.0722));
         float sunF = dL / (dL + iL + 1e-5);
@@ -3162,10 +3533,18 @@ terrainMat.onBeforeCompile = (sh) => {
         // warmed the LIT surfaces too (sunlit road R-B +27.0 -> +39.6, sunlit sward hue
         // 88.6 -> 81.8 deg). These stops straddle the real gap, so lit ground is untouched
         // by construction and the r4-signed-off golden-hour highlights do not move.
-        float sw = (1.0 - smoothstep(0.125, 0.235, sunF)) * (1.0 - tRock) * uSW;
+        // WORLD-FIX6 §3. The two halves are separated. shf is how much direct sun the fragment
+        // lost, and it drives the CHROMA LOSS on every map (a shadow always loses chroma —
+        // Frostfell's cobalt drift shade needs this more than the Vale does). The warm ROTATION
+        // stays gated on uSW, because pushing a shadow back toward the key's own hue is a
+        // correction to the Vale's golden hour specifically, and it is the term §3 caught
+        // cancelling the skylight in the sward when it ran at full strength on both jobs at once.
+        float shf = (1.0 - smoothstep(0.125, 0.235, sunF)) * (1.0 - tRock);
         vec3 c = gl_FragColor.rgb;
         float l = dot(c, vec3(0.2126,0.7152,0.0722));
-        gl_FragColor.rgb = mix(c, mix(c, vec3(l), 0.34) * vec3(1.26,1.00,0.76), sw);
+        c = mix(c, vec3(l), shf * ` + (WPAL.shdDS != null ? WPAL.shdDS : 0.24).toFixed(3) + `);
+        if (uSW > 0.0) c = mix(c, c * ` + v3s(WPAL.shdRot || [1.18, 1.0, 0.84]) + `, shf * uSW);
+        gl_FragColor.rgb = c;
       }`)
       // derivative bump: gives grass/dirt/rock real surface relief that catches the low sun
       .replace('#include <normal_fragment_maps>', `
@@ -3180,14 +3559,37 @@ terrainMat.onBeforeCompile = (sh) => {
         // read by a 23-degree key, turns flat ground into a hard lit/unlit stipple — the
         // lower the sun, the more relief each unit of normal perturbation buys. Halved to
         // suit the new light angle; the meadow keeps its tooth without the mottle.
-        float wF = (fk*(1.0-tRoad)*2.10 + tRoad*0.55) * mix(0.45, 1.0, dDet);   // fine relief
+        // WORLD-FIX6 §12a. THE MINT-ON-NAVY CAMOUFLAGE, and it was never in the albedo. The
+        // comment above already names the mechanism — "the lower the sun, the more relief each
+        // unit of normal perturbation buys" — and §6 has just put the Barrowmoor's sun at 15
+        // degrees, where a 2.10-weight bump on a sub-metre noise field turns flat turf into a
+        // hard lit/unlit stipple: pale mint flecks over unlit navy, at exactly the frequency and
+        // exactly the chroma clash round 6 measured (HF highest of any map, sat lowest). The
+        // fine relief now rides the map's own hfK, which is the same knob that thins the
+        // albedo's fine octaves — one authority for "how much sub-metre detail does this ground
+        // have". The Vale runs hfK 1 and its shader is unchanged.
+        float wF = (fk*(1.0-tRoad)*2.10*${WPAL.hfK.toFixed(3)} + tRoad*0.55) * mix(0.45, 1.0, dDet);
         float wC = fk*(0.75 + tRoad*0.95);                      // coarse ground undulation
         vec2 e = vec2(0.26, 0.0), E = vec2(1.7, 0.0);
         float f0 = fbm2(q*1.85) + 0.55*vn2(q*5.20) + 0.30*vn2(q*13.0);
         float fx = fbm2((q+e.xy)*1.85) + 0.55*vn2((q+e.xy)*5.20) + 0.30*vn2((q+e.xy)*13.0);
         float fz = fbm2((q+e.yx)*1.85) + 0.55*vn2((q+e.yx)*5.20) + 0.30*vn2((q+e.yx)*13.0);
         float c0 = fbm2(q*0.30 + 66.0), cx = fbm2((q+E.xy)*0.30 + 66.0), cz = fbm2((q+E.yx)*0.30 + 66.0);
-        vec2 grad = vec2(fx-f0, fz-f0)*wF + vec2(cx-c0, cz-c0)*wC;
+        vec2 grad = vec2(fx-f0, fz-f0)*wF + vec2(cx-c0, cz-c0)*wC;` + (WPAL.snowN ? `
+        // WORLD-FIX6 §2.3 §4 §5c. DRIFT AND SASTRUGI RELIEF. The finding asks for "a
+        // low-frequency drift/sastrugi normal at 2-3 world-unit wavelength" and this is it: the
+        // gradient of the same two fields the snow albedo is built from, so the shading and the
+        // colour agree about where the drifts are. It runs at a MUCH longer wavelength than the
+        // meadow's fine relief above (0.34 and 1.10 against 1.85/5.20/13.0) — snow smooths a
+        // surface, it does not roughen it, and a high-frequency bump on snow would only give
+        // back the blue/white stipple round 3 spent a whole pass removing.
+        if (tSnow > 0.004) {
+          vec2 sE = vec2(0.85, 0.0);
+          float s0 = fbm2(q*0.34 + 91.0) + 0.52*fbm2(q*1.10 + 217.0);
+          float sx = fbm2((q+sE.xy)*0.34 + 91.0) + 0.52*fbm2((q+sE.xy)*1.10 + 217.0);
+          float sz = fbm2((q+sE.yx)*0.34 + 91.0) + 0.52*fbm2((q+sE.yx)*1.10 + 217.0);
+          grad = mix(grad, vec2(sx-s0, sz-s0) * ${WPAL.snowN.toFixed(3)}, tSnow*0.88);
+        }` : '') + `
         vec3 wn = normalize(vWN - vec3(grad.x, 0.0, grad.y));
         normal = normalize((viewMatrix*vec4(wn,0.0)).xyz);
       }`);
@@ -3572,7 +3974,14 @@ World.build = function () {
                shake: shingleTex('#2b1f14', 'rgba(126,92,58,L)') };
   const texMat = (map, o) => new THREE.MeshStandardMaterial(Object.assign({ map, vertexColors: true, roughness: 0.9, metalness: 0 }, o));
   // foliage varies in luminance AND hue (yellow-green ↔ blue-green) so a wood never reads flat
-  const varyF = () => { const l = wr(0.52, 1.08), y = wr(-0.15, 0.15); return [l * (1 + y * 1.6), l, l * (1 - y * 1.0)]; };
+  // WORLD-FIX6 §10b. "No hue variation between instances — the forest reads as one cloned
+  // asset." The hue jitter was +/-15% on a lever that only ever swung red against blue, so a
+  // stand varied in VALUE (0.52..1.08, a full stop — which is what made some trees read as
+  // holes) and barely at all in colour. The value band narrows to 0.72..1.10 and the hue band
+  // roughly doubles and now runs the yellow-green / blue-green axis the finding names: red and
+  // blue move TOGETHER against green, so a crown goes olive or teal rather than pink or cyan.
+  const varyF = () => { const l = wr(0.72, 1.10), y = wr(-0.26, 0.26);
+    return [l * (1 + y * 1.05), l * (1 - y * 0.16), l * (1 - y * 0.92)]; };
 
   // ── 7. cliff crags + boulders (silhouette variation on the rim) ─────────────
   // Three registers so the rim reads as an escarpment rather than a boulder field:
@@ -3770,21 +4179,42 @@ World.build = function () {
       const TF = WPAL.tuftFloor;
       sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>',
         `#include <opaque_fragment>
+        // WORLD-FIX6 §8. Round 6 counted ~200 PURE-BLACK chevrons across the shadowed meadow
+        // at 6x — "a swarm of dead flies". The floor was already here and it was doing its job
+        // arithmetically; the problem was what it was a fraction OF. A rosette card rakes away
+        // from a 23-degree key, so a shadowed tuft is lit by ambient alone, and §3 has just cut
+        // that ambient to a third — a 0.62 multiply of a deliberately dark blade green landed
+        // at RGB 30 or under. The floor rises with the finding's own number ("floor the shadow
+        // multiplier at 0.30" — of the LIT result, which is what 0.86 of albedo comes to here),
+        // and the additive term goes up with it so a tuft in shade keeps its hue.
         gl_FragColor.rgb = max(gl_FragColor.rgb,
-                               diffuseColor.rgb * vec3(0.62, 0.70, 0.80) + vec3(` +
-        (0.0090 * TF).toFixed(4) + ', ' + (0.0165 * TF).toFixed(4) + ', ' + (0.0110 * TF).toFixed(4) + `));`);
+                               diffuseColor.rgb * vec3(0.86, 0.94, 1.02) + vec3(` +
+        (0.0165 * TF).toFixed(4) + ', ' + (0.0260 * TF).toFixed(4) + ', ' + (0.0185 * TF).toFixed(4) + `));`);
     };
     // Clumped, not uniform: an even sprinkle at this density reads as screen noise.
     // Each patch shares a tint + scale bias so the meadow gets legible tonal shapes.
     const list = [], TK = WPAL.tuftK;
     const PATCHES = Math.round(300 * Q.density * WPAL.tuftN);
     const push = (x, z, sB, tint) => {
+      // WORLD-FIX6 §11 (last clause): density cut in the 4-unit band flanking the road. The
+      // horde is what the lane is for; ground clutter crowding it competes with the read.
       const dens = Math.min(sstep(1.15, 0.93, ringU(x, z)),
-                            sstep(1.70, 3.20, Math.abs(bi(SDG, x, z))),
+                            sstep(3.60, 6.00, Math.abs(bi(SDG, x, z))),
                             sstep(1.05, 0.68, slopeAt(x, z)));
       if (dens < 0.02 || wrng() > dens) return;
-      const s = sB * wr(0.72, 1.30) * (0.58 + 0.42 * dens);
-      list.push({ m: trs(x, bi(HG, x, z) - 0.06, z, wr(0, 6.283), s, s * wr(0.70, 1.36), s), c: tint });
+      // WORLD-FIX6 §11. SCALE CHAOS. The stack was sB(0.72..1.55) x 0.72..1.30 x (0.58..1.00)
+      // with an independent 0.70..1.36 on Y — a 6.7x spread within one depth band, which is why
+      // tufts in the same crop ran 60 px to 200 px and several stood taller than a soldier.
+      // Clamped to the 0.85..1.15 of one base size the finding asks for.
+      const s = sB * wr(0.94, 1.12) * (0.86 + 0.14 * dens);
+      // ...and SUNK. The rosette's bottom edge visibly hung above the terrain at three separate
+      // places in the zoom crop; 0.06 was less than the height error a 1.3x-scaled card
+      // introduces on any gradient at all. 0.17 buries the base on every instance.
+      list.push({ m: trs(x, bi(HG, x, z) - 0.17, z, wr(0, 6.283), s, s * wr(0.94, 1.12), s), c: tint });
+      // §8 (second clause): contact AO. "No scatter prop has contact AO anywhere in the
+      // battery" — the boulders and trees have stamped since FLORA, the tufts never did, so
+      // full-brightness sward ran right up to every razor-flat card base.
+      G.stampAO(x, z, s * 0.62, 0.34);
     };
     for (let p = 0; p < PATCHES; p++) {
       const a = wr(0, 6.283), u = wr(0.05, 1.02), c0 = seP(a, u);
@@ -3792,12 +4222,14 @@ World.build = function () {
       // sprinkled over the meadow rather than as ground cover. Kept close to the terrain's
       // own value so the clutter adds texture, not noise.
       const dryish = wrng() < 0.13, dark = !dryish && wrng() < 0.40;
-      const sB = wr(0.72, 1.55), rad = wr(2.4, 7.0);
+      const sB = wr(1.02, 1.24), rad = wr(2.4, 7.0);       // §11: one base size, tight jitter
       // tints carry the same blue lift the sward's albedo got (§1a), or the clutter stays
       // chartreuse on a meadow that no longer is.
-      const tint = dryish ? [wr(0.84, 1.04) * TK[0], wr(0.80, 0.96) * TK[1], wr(0.60, 0.84) * TK[2]]
-                 : dark   ? [wr(0.60, 0.76) * TK[0], wr(0.68, 0.84) * TK[1], wr(0.66, 0.96) * TK[2]]
-                          : [wr(0.64, 0.86) * TK[0], wr(0.74, 0.96) * TK[1], wr(0.78, 1.18) * TK[2]];
+      // §11: the tint bands come UP with the blade albedo and narrow with it — the "dark" band
+      // was the one producing the pure-black chevrons §8 counted across the shadowed meadow.
+      const tint = dryish ? [wr(0.90, 1.06) * TK[0], wr(0.86, 0.98) * TK[1], wr(0.66, 0.86) * TK[2]]
+                 : dark   ? [wr(0.78, 0.90) * TK[0], wr(0.82, 0.94) * TK[1], wr(0.78, 1.00) * TK[2]]
+                          : [wr(0.82, 0.98) * TK[0], wr(0.88, 1.02) * TK[1], wr(0.86, 1.16) * TK[2]];
       const n = 3 + Math.round(wr(0, 5));
       for (let i = 0; i < n; i++) push(c0[0] + wr(-rad, rad), c0[1] + wr(-rad, rad), sB, tint);
     }
@@ -3815,9 +4247,9 @@ World.build = function () {
       const j = clamp(Math.round(dd / RT.len * PATH_N), 0, PATH_N);
       const p = RT.pos[j], t = RT.tan[j], off = sd * wr(4.6, 8.6);
       const dryish = wrng() < 0.34;
-      push(p.x - t.z * off, p.z + t.x * off, wr(0.72, 1.42),
-        dryish ? [wr(0.82, 1.02) * TK[0], wr(0.78, 0.94) * TK[1], wr(0.58, 0.84) * TK[2]]
-               : [wr(0.58, 0.82) * TK[0], wr(0.66, 0.90) * TK[1], wr(0.72, 1.12) * TK[2]]);
+      push(p.x - t.z * off, p.z + t.x * off, wr(1.00, 1.22),
+        dryish ? [wr(0.88, 1.04) * TK[0], wr(0.84, 0.96) * TK[1], wr(0.64, 0.86) * TK[2]]
+               : [wr(0.80, 0.96) * TK[0], wr(0.86, 1.00) * TK[1], wr(0.84, 1.14) * TK[2]]);
     }
     iMesh(tuftG, tuftM, list, false, 'TUFTS');
   }
@@ -11591,6 +12023,10 @@ function exitPlace() {
   if (!G.place) return;
   G.place = null;
   UI.place(null);
+  // HOTFIX (user report): placeTower's own UI.sync ran while the hammer was still in hand,
+  // hiding the wave-call button — and before wave 1 nothing else ever re-syncs (the manual
+  // first wave has no kills/coins to trigger one). Re-sync now that the hammer is down.
+  UI.sync();
 }
 function commitPlace(keep) {
   const p = G.place;
