@@ -232,11 +232,55 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    margin-top:2px; }
 #wavePrev .wpG .wgC.hi b, #wavePrev .wpG .wgC.hi s{ color:#8f2d20; }
 #wavePrev .wpG .wgC.hi u{ background:linear-gradient(90deg,#8a2b1c,#c24a2c); }
+/* SPEC6 §A1 — THE CURSED WAVE. Only ever written on a Barrowmoor cursed wave, so every other
+   road in the game pays nothing for it. It is deliberately the ONE green row on a parchment
+   card whose every other accent is ember or iron: the moor's colour is the necromancer's
+   green, and the card has to say "this wave is a different rule" before the sentence is read.
+   TWO ROWS, not one: the first cut put sigil + tag + warning + fire clause on a single 322px
+   line and the WARNING — the only part that carries the mechanic — was the part that ellipsed
+   away ("CURSED THE … FIRE BURNS THE CORPSE"). The threat now owns the full first line and the
+   answer sits under it in a dimmer ember, which is also the order the player needs them in. */
+#wavePrev .wpCz{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; margin-top:6px;
+   padding-top:5px; border-top:1px solid rgba(112,80,34,.32); font-size:10px; letter-spacing:.15em;
+   text-transform:uppercase; color:#6b5527; }
+/* LONGHAND, deliberately. The `background:` SHORTHAND resets background-image to none, and an
+   `#wavePrev .wpCz i` selector outranks the `.dg-curse` class that carries the sigil — which is
+   exactly how the omen row's star has been invisible on every shipped dispatch card (fixed in
+   the same idiom below). Never use the shorthand on an element whose picture comes from a
+   utility class. */
+#wavePrev .wpCz i{ width:13px; height:13px; flex:0 0 auto;
+   background-position:50% 50%; background-size:100% 100%; background-repeat:no-repeat; }
+#wavePrev .wpCz b{ font-weight:400; color:#2f6b3c; letter-spacing:.09em; flex:0 0 auto; }
+#wavePrev .wpCz span{ color:#43310f; flex:1 1 auto; min-width:0; overflow:hidden;
+   text-overflow:ellipsis; white-space:nowrap; }
+#wavePrev .wpCz s{ text-decoration:none; flex:1 0 100%; color:#8f4a20; opacity:.9;
+   padding-left:19px; letter-spacing:.09em; }
+/* SPEC6 §E — THE HEXBINDER ROW. Same two-line component as the curse row above (threat on
+   line one, answer under it), and deliberately the same shape: both are "this wave plays by a
+   different rule", and a player who has learned to read one has learned to read the other.
+   What separates them is the TAG COLOUR and the sigil — the curse is a bone-green skull, the
+   hex a dark-jade chain, which is the green-black the chains and the silence glyph carry in
+   world space. The longhand background rule is not optional here: see the note above
+   `.wpCz i`. */
+#wavePrev .wpHx{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; margin-top:6px;
+   padding-top:5px; border-top:1px solid rgba(112,80,34,.32); font-size:10px; letter-spacing:.15em;
+   text-transform:uppercase; color:#6b5527; }
+#wavePrev .wpHx i{ width:13px; height:13px; flex:0 0 auto;
+   background-position:50% 50%; background-size:100% 100%; background-repeat:no-repeat; }
+#wavePrev .wpHx b{ font-weight:400; color:#1f5347; letter-spacing:.09em; flex:0 0 auto; }
+#wavePrev .wpHx span{ color:#43310f; flex:1 1 auto; min-width:0; overflow:hidden;
+   text-overflow:ellipsis; white-space:nowrap; }
+#wavePrev .wpHx s{ text-decoration:none; flex:1 0 100%; color:#6a5a34; opacity:.92;
+   padding-left:19px; letter-spacing:.09em; }
 /* the omen the NEXT muster will offer (SPEC3 §D read-out on the dispatch) */
 #wavePrev .wpOm{ display:flex; align-items:center; gap:6px; margin-top:6px; padding-top:5px;
    border-top:1px solid rgba(112,80,34,.32); font-size:10px; letter-spacing:.15em;
    text-transform:uppercase; color:#6b5527; }
-#wavePrev .wpOm i{ width:13px; height:13px; flex:0 0 auto; background:50% 50%/100% 100% no-repeat; }
+/* SPEC6 §A1 note: this was `background:50% 50%/100% 100% no-repeat` — a shorthand, which resets
+   background-image to none, and this ID-carrying selector outranks `.dg-omen`. The omen star has
+   therefore never drawn on the dispatch card in any shipped frame. Longhand restores it. */
+#wavePrev .wpOm i{ width:13px; height:13px; flex:0 0 auto;
+   background-position:50% 50%; background-size:100% 100%; background-repeat:no-repeat; }
 #wavePrev .wpOm b{ font-weight:400; color:#8f2d20; letter-spacing:.09em; }
 #wavePrev .wpOm b.boon{ color:#25497f; }
 #wavePrev .wpN{ font-size:14px; color:#43310f; font-variant-numeric:tabular-nums; white-space:nowrap; }
@@ -583,7 +627,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    already use. No new art was needed; it was already drawn and being hidden. */
 #buildMenu.min{ display:flex; align-items:center; gap:11px; padding:5px 13px 6px;
    border-width:8px; border-image-width:8px; border-radius:7px; }
-#buildMenu.min::before{ content:'Build'; flex:0 0 auto; font-size:10px; letter-spacing:.26em; text-transform:uppercase;
+/* v6 INTEGRATE: the label was the string literal 'Build' in this rule, which is the one
+   player-facing word in the game that never went through L() — the minimised build bar read
+   BUILD in French while every card under it read ARCHERS / BALISTE / TRÉBUCHET. It now takes
+   the localised word off the panel's own data attribute (SECTION: UI writes it beside the
+   .min toggle), so the rule carries no copy. */
+#buildMenu.min::before{ content:attr(data-min); flex:0 0 auto; font-size:10px; letter-spacing:.26em; text-transform:uppercase;
    color:var(--gold-l); text-shadow:0 1px 0 #000; opacity:.9; }
 #buildMenu.min .pHead{ display:none; }
 #buildMenu.min .cards{ display:flex; gap:6px; align-items:stretch; overflow:visible; }
@@ -867,6 +916,28 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .sg-thin{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13.4' fill='%231e4179' stroke='%230d2246' stroke-width='1.6'/><circle cx='16' cy='16' r='10.6' fill='none' stroke='%2390b6e6' stroke-width='.9' opacity='.5'/><g fill='none' stroke='%23ffe7ab' stroke-width='2.9' stroke-linecap='round' stroke-linejoin='round'><path d='M16 6.4v10.2'/><path d='M10.9 12.2L16 17.4l5.1-5.2'/></g><rect x='8.6' y='21.2' width='14.8' height='3' rx='1.5' fill='%23ffe7ab'/></svg>"); }
 /* a small portent rune for the dispatch's omen line */
 .dg-omen{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.2l3 6.6 6.8.8-5 4.8 1.3 6.8L12 17.6 5.9 21.2l1.3-6.8-5-4.8 6.8-.8z' fill='none' stroke='%236b5527' stroke-width='1.8' stroke-linejoin='round'/></svg>"); }
+/* SPEC6 §A1 — the skull sigil of a cursed wave. REDRAWN FOR THIRTEEN PIXELS, which is the
+   size it is actually shipped at (`#wavePrev .wpCz i`) and the size the first cut was never
+   checked at: five separate marks — a domed outline, two small sockets, a nasal, and three
+   1.4px tooth strokes — land on 13 device pixels as a green smudge with two dots in it, and
+   at that point it is not a skull, it is punctuation. The lesson is the laurel sprig's and
+   the deed crests' both, written down twice already: at glyph size you get FOUR MARKS, so
+   spend them.
+   Those four are: a wide low cranium (wide, because a tall one is a shield), two SOCKETS at
+   nearly a third of the skull's width (the one feature that is unmistakably a skull and
+   nothing else), a bar of jaw, and the notch between the jaw and the cranium that reads as
+   the cheekbone. Everything else is gone — the nasal triangle, the tooth ticks, the rounded
+   corners on the mandible. Stroke up to 2.0 so the outline survives the same resample.
+   Still green: on this map green is what raises the dead. */
+.dg-curse{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.4c-5 0-8.4 3.4-8.4 7.7 0 2.4 1.1 4.5 2.9 5.9h11c1.8-1.4 2.9-3.5 2.9-5.9 0-4.3-3.4-7.7-8.4-7.7z' fill='none' stroke='%232f6b3c' stroke-width='2'/><ellipse cx='8.5' cy='10.4' rx='2.7' ry='2.9' fill='%232f6b3c'/><ellipse cx='15.5' cy='10.4' rx='2.7' ry='2.9' fill='%232f6b3c'/><rect x='7.4' y='17.6' width='9.2' height='4' rx='1.2' fill='%232f6b3c'/></svg>"); }
+/* SPEC6 §E — the hex sigil: two chain links with a bar struck through them, in the same
+   thin-stroke 24-grid line idiom as the omen star and the curse skull beside it. DARK JADE,
+   because that is the colour of the rune chains in world space and the card has to teach the
+   same one thing the board does. It is deliberately a stop darker and a stop cooler than the
+   curse skull's #2f6b3c: on the Barrowmoor both rows can appear on the same card, and two
+   greens at the same value would be one row read twice. The SHAPES carry the rest — a skull
+   is not a chain. */
+.dg-hex{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%231f5347' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='2.9' y='8.4' width='8.4' height='7.2' rx='3.6'/><rect x='12.7' y='8.4' width='8.4' height='7.2' rx='3.6'/><path d='M4.6 20.4L19.4 3.6'/></g></svg>"); }
 /* the war standard: the muster's own mark, so it never reads as the wave chip's swords */
 .ic-must, .mIc.ic-must{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M9.6 4.2l1.6-2.4 1.6 2.4z' fill='%23e8b64c'/><rect x='10.5' y='3.6' width='1.9' height='26' rx='.9' fill='%234a3113'/><path d='M12.4 5.4h15.2l-4 5.6 4 5.6H12.4z' fill='%233468b0' stroke='%23e8b64c' stroke-width='1.4' stroke-linejoin='round'/><path d='M12.4 5.4h15.2l-4 5.6 4 5.6H12.4z' fill='none' stroke='%23bcd8ff' stroke-width='.7' opacity='.35' transform='translate(0,1.6) scale(1,.86)'/><path d='M18.4 8.2l1.6 2.4h-3.2z' fill='%23ffe7ab'/><path d='M4.6 29.4h14.8' stroke='%236d4a10' stroke-width='2.2' stroke-linecap='round'/></svg>"); }
 /* FIX2-UI §4b · FIX3-UI §1/§3 — the flyout's prose. `small-caps` went the same way it went
@@ -1075,6 +1146,192 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 /* the run you are IN is the daily: the chip says so rather than inviting you to start it again */
 #dailyWar.on{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.55),
    inset 0 1px 0 rgba(255,228,178,.16); }
+
+/* ── THE WAR COUNCIL (SPEC6 §B) ────────────────────────────────────── */
+/* The laurel is the meta currency and it needs ONE glyph everywhere it appears — the foot
+   chip, the balance plate, every node price, the victory line — or the player has to learn
+   the same symbol four times. A Roman victory wreath: two arcs of leaves, open at the top.
+   It is drawn OPEN because a closed ring at 15px collapses into an indistinct blob, and the
+   gap is what tells it apart from the round gold coin the HUD already uses. */
+/* CUT 3 — a SPRIG, not a wreath. Two cuts were spent trying to make an open wreath legible
+   at 17-19px and both failed the same way: eight leaves round a 24-unit circle leave ~4px of
+   gold per leaf, they fuse with the stem arcs, and what survives is a horseshoe (cut 1) or a
+   chevron (cut 2). A currency glyph that can be mistaken for another shape is not finished.
+   A single laurel sprig — one diagonal stem, five leaves alternating off it, one at the tip —
+   gives each leaf twice the length in the same box and reads as a leafed branch at every size
+   it is used at (15px in a node price, 38px on the balance plate). It is also the older
+   symbol: laurels are what you are given, and they are given as a bough. */
+.lau{ flex:0 0 auto; width:19px; height:19px; display:inline-block; vertical-align:-4px;
+  background:50% 50%/100% 100% no-repeat;
+  background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4.8 20.6C8.4 16.4 13.4 10.4 18.8 4.6' fill='none' stroke='%23a8761f' stroke-width='1.6' stroke-linecap='round'/><g fill='%23e8b64c' stroke='%238a5f14' stroke-width='.35'><ellipse cx='7' cy='14.6' rx='3.4' ry='1.7' transform='rotate(22 7 14.6)'/><ellipse cx='12.6' cy='8.6' rx='3.4' ry='1.7' transform='rotate(22 12.6 8.6)'/><ellipse cx='11.4' cy='16.4' rx='3.4' ry='1.7' transform='rotate(22 11.4 16.4)'/><ellipse cx='17' cy='10.4' rx='3.4' ry='1.7' transform='rotate(22 17 10.4)'/><ellipse cx='18.6' cy='4.6' rx='2.8' ry='1.35' transform='rotate(-48 18.6 4.6)'/></g></svg>");
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.55)) drop-shadow(0 0 5px rgba(232,182,76,.4)); }
+.lau.big{ width:38px; height:38px; vertical-align:-9px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)) drop-shadow(0 0 12px rgba(232,182,76,.5)); }
+
+/* the chip on the chooser's foot rail — the door to the council and the balance in one */
+#btnCouncil{ display:flex; align-items:center; gap:10px; padding:7px 15px 8px 11px; border-radius:6px;
+  text-align:left; transition:filter .15s, transform .15s; }
+#btnCouncil:hover{ filter:brightness(1.22); transform:translateY(-2px); }
+#btnCouncil:active{ transform:translateY(0) scale(.99); }
+#btnCouncil .cwB{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+#btnCouncil .cwT{ font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:#e2d4b4;
+  text-shadow:0 1px 0 #000; }
+#btnCouncil .cwS{ font-size:10.5px; letter-spacing:.09em; font-variant-caps:small-caps; color:#a2947a;
+  font-variant-numeric:tabular-nums; }
+/* a balance worth spending says so — the count goes gold, the plate gets a rim */
+#btnCouncil.rich .cwS{ color:#f2cf74; }
+#btnCouncil.rich{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.5),
+  inset 0 1px 0 rgba(255,228,178,.16); }
+#btnCouncil .lau{ width:25px; height:25px; }
+
+#council{ background-image:
+   radial-gradient(ellipse 58% 46% at 50% 46%, rgba(10,8,6,.66), rgba(10,8,6,.28) 52%, rgba(10,8,6,0) 76%),
+   linear-gradient(180deg, rgba(6,5,3,0) 54%, rgba(6,4,2,.44) 80%, rgba(4,3,1,.90) 100%); }
+#cKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#b4a37c; opacity:.9;
+  text-shadow:0 1px 4px #000; }
+#cT{ margin:4px 0 0; font-size:min(6.6vw,36px); line-height:1; letter-spacing:.14em; font-weight:400; color:#f2cf74;
+  text-shadow:0 1px 0 #fff6da, 1px 2px 0 #5d3d0c, 0 4px 0 #2e1e05, 0 8px 16px rgba(0,0,0,.85), 0 0 44px rgba(232,182,76,.3); }
+#cRule{ width:min(52vw,430px); margin:9px auto 0; }
+/* the balance is the first thing read and the last thing checked, so it sits above the tree
+   in its own register: a big number, a quiet noun, and the ledger it was derived from */
+#cBal{ margin-top:13px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+#cBal .cBn{ display:flex; align-items:center; gap:9px; }
+#cBal .cBn b{ font-size:31px; line-height:1; color:#f2cf74; font-variant-numeric:tabular-nums;
+  text-shadow:0 1px 0 #5d3d0c, 0 3px 10px rgba(0,0,0,.8), 0 0 24px rgba(232,182,76,.35); }
+#cBal .cBn em{ font-style:normal; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:#c2b491; }
+#cBal .cBs{ font-size:11px; letter-spacing:.14em; font-variant-caps:small-caps; color:#b6a488;
+  font-variant-numeric:tabular-nums; text-shadow:0 1px 4px #000, 0 0 8px rgba(0,0,0,.8); }
+
+/* three parchment strips, one per branch. Parchment (not iron) because the tree is a WRIT —
+   a thing the council signs — and the chooser behind it is already all iron plate. */
+#cTree{ display:flex; gap:14px; margin-top:16px; align-items:stretch; justify-content:center; }
+.cBr{ position:relative; width:236px; padding:11px 11px 13px; border-radius:6px; text-align:left;
+  background-image:var(--grain),
+    radial-gradient(ellipse 120% 100% at 50% 40%, rgba(0,0,0,0) 44%, rgba(122,88,42,.30) 80%, rgba(96,66,28,.55) 100%),
+    radial-gradient(130% 110% at 50% 0%, rgba(255,250,232,.38), rgba(255,250,232,0) 56%),
+    linear-gradient(176deg,#e0cc9d 0%,#cfb684 54%,#ae9560 100%);
+  background-size:200px 200px,100% 100%,100% 100%,100% 100%;
+  box-shadow:0 9px 22px rgba(0,0,0,.62), inset 0 0 22px rgba(112,80,34,.42), inset 0 1px 0 rgba(255,250,232,.42);
+  border:1px solid rgba(78,52,18,.55); color:#33260f; }
+.cBH{ position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding-bottom:8px;
+  border-bottom:1px solid rgba(78,52,18,.34); }
+.cBH::after{ content:''; position:absolute; left:50%; bottom:-4.5px; width:8px; height:8px;
+  margin-left:-4px; transform:rotate(45deg);
+  background:linear-gradient(135deg,#f2d99e,#c99a37 52%,#8a5f14);
+  box-shadow:0 0 0 1px rgba(78,52,18,.45), 0 1px 2px rgba(60,40,12,.32); }
+.cBH .cBN{ font-size:14.5px; letter-spacing:.13em; text-transform:uppercase; color:#41300f;
+  text-shadow:0 1px 0 rgba(255,250,232,.5); }
+.cBH .cBD{ flex:0 0 100%; font-size:11px; line-height:1.32; letter-spacing:.04em;
+  font-variant-caps:small-caps; color:#6b5227; min-height:2.6em; }
+/* one seal per branch, stamped in the same iron the HUD is cut from */
+.cBI{ flex:0 0 auto; width:26px; height:26px; background:50% 50%/100% 100% no-repeat; }
+.b-q .cBI{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5.4 9.4h13.2c.9 0 1.6.8 1.4 1.7l-1.3 8.2a1.6 1.6 0 0 1-1.6 1.3H6.9a1.6 1.6 0 0 1-1.6-1.3L4 11.1c-.2-.9.5-1.7 1.4-1.7z' fill='none' stroke='%234a3712' stroke-width='1.7'/><path d='M8.6 9.4V7.2A3.4 3.4 0 0 1 12 3.8a3.4 3.4 0 0 1 3.4 3.4v2.2' fill='none' stroke='%234a3712' stroke-width='1.6'/><circle cx='12' cy='15' r='2.4' fill='%234a3712'/></svg>"); }
+.b-d .cBI{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.6l2.2 2.6v9.2h-4.4V5.2z' fill='none' stroke='%234a3712' stroke-width='1.7' stroke-linejoin='round'/><path d='M7.4 15.4h9.2' stroke='%234a3712' stroke-width='1.8' stroke-linecap='round'/><path d='M12 15.4v5.8' stroke='%234a3712' stroke-width='1.8' stroke-linecap='round'/><path d='M9.6 21.2h4.8' stroke='%234a3712' stroke-width='1.6' stroke-linecap='round'/></svg>"); }
+.b-e .cBI{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 20l7.4-7.4' stroke='%234a3712' stroke-width='2' stroke-linecap='round'/><path d='M13.2 11.6l4-4a3.8 3.8 0 0 0-5-5l2.4 2.4-2 2-2.4-2.4a3.8 3.8 0 0 0 5 5z' fill='none' stroke='%234a3712' stroke-width='1.6' stroke-linejoin='round'/><circle cx='5.4' cy='18.6' r='1.5' fill='%234a3712'/></svg>"); }
+
+/* a tier node. The four states are told by VALUE first (granted is the only lit plate) and
+   only then by colour, so the tree still reads with the hue stripped out. */
+.cN{ position:relative; display:block; width:100%; margin-top:16px; padding:7px 9px 8px; border-radius:5px;
+  text-align:left; font-family:var(--serif); color:#33260f;
+  background:linear-gradient(178deg,rgba(255,250,232,.30),rgba(120,88,40,.12));
+  border:1px solid rgba(78,52,18,.42);
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.42), 0 2px 5px rgba(60,40,12,.24);
+  transition:filter .14s, transform .14s; }
+/* the chain between tiers: a link drawn in the gap above every node (the first hangs off the
+   branch seal itself), struck gold once the node it feeds has been granted */
+.cN::before{ content:''; position:absolute; left:50%; top:-14px; width:3px; height:12px; margin-left:-1.5px;
+  border-radius:2px; background:rgba(78,52,18,.34); }
+.cN.on::before{ background:linear-gradient(180deg,#e8b64c,#ad7a1e);
+  box-shadow:0 0 7px rgba(232,182,76,.55); }
+.cNr{ position:absolute; top:6px; right:8px; font-size:10px; letter-spacing:.14em; color:#8a7038; }
+.cNe{ display:block; padding-right:26px; font-size:12px; line-height:1.28; letter-spacing:.04em; color:#3d2c0d; }
+.cNc{ display:flex; align-items:center; gap:5px; margin-top:5px; font-size:11.5px;
+  letter-spacing:.1em; color:#6b5227; font-variant-numeric:tabular-nums; }
+.cNc .lau{ width:17px; height:17px; filter:drop-shadow(0 1px 1px rgba(60,40,12,.5)); }
+.cNc u{ text-decoration:none; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:#3a2708;
+  padding:2px 8px 3px; border-radius:3px;
+  background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.6); }
+/* GRANTED — the only node with a struck-gold rim and a lit field */
+.cN.on{ background:linear-gradient(178deg,rgba(255,236,186,.62),rgba(214,168,74,.26));
+  border-color:rgba(173,122,30,.85);
+  box-shadow:inset 0 1px 0 rgba(255,252,238,.7), 0 0 0 1px rgba(232,182,76,.4), 0 3px 9px rgba(60,40,12,.3); }
+/* THE NEXT ONE — the only node that is a live control, so it is the only one that moves,
+   the only one with a struck rim standing OUTSIDE its border, and the only one whose price
+   is written in gold. Three signals, because on a parchment field a single one is a nuance. */
+.cN.nxt{ cursor:pointer; border-color:rgba(120,84,26,.8);
+  background:linear-gradient(178deg,rgba(255,250,232,.46),rgba(150,112,44,.14));
+  box-shadow:inset 0 1px 0 rgba(255,252,238,.62), 0 0 0 2px rgba(232,182,76,.5),
+             0 4px 11px rgba(60,40,12,.3); }
+.cN.nxt .cNc{ color:#7a4f0b; font-weight:600; }
+.cN.nxt:hover{ filter:brightness(1.07); transform:translateY(-2px); }
+.cN.nxt:active{ transform:translateY(0) scale(.99); }
+/* affordable but not paid for, and chained behind a lower tier: both quiet, differently */
+.cN.poor{ cursor:default; filter:none; transform:none; opacity:.78; }
+.cN.poor .cNc{ color:#8f4f2c; }
+.cN.lk{ cursor:default; opacity:.5; background:linear-gradient(178deg,rgba(150,118,64,.16),rgba(90,66,28,.16)); }
+.cN.lk .cNe{ color:#5c4a26; }
+
+#cHint{ margin-top:14px; max-width:min(76vw,700px); text-align:center; font-size:11.5px; line-height:1.4;
+  letter-spacing:.08em; font-variant-caps:small-caps; color:#b6a488;
+  text-shadow:0 1px 4px #000, 0 0 10px rgba(0,0,0,.85); }
+#cFoot{ margin-top:16px; display:flex; gap:12px; align-items:center; }
+#btnCBack, #btnCRespec{ border-radius:6px; padding:10px 24px; font-size:13px; letter-spacing:.18em;
+  text-transform:uppercase; color:#e2d4b4;
+  background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
+  box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12); transition:filter .14s; }
+#btnCBack:hover, #btnCRespec:not(:disabled):hover{ filter:brightness(1.24); }
+#btnCRespec:disabled{ opacity:.42; cursor:default; }
+
+/* SPEC6 §B — what a run put in the council's purse, on the victory plate under the stars */
+#endLaurel{ display:flex; align-items:center; justify-content:center; gap:7px; margin-top:7px;
+  font-size:12.5px; letter-spacing:.16em; text-transform:uppercase; color:#f2cf74;
+  text-shadow:0 1px 0 #000; }
+
+@media (max-width:900px){
+  #cTree{ gap:9px; }
+  .cBr{ width:33%; min-width:0; padding:9px 8px 11px; }
+  .cBH .cBN{ font-size:12.5px; letter-spacing:.09em; }
+  .cNe{ font-size:11px; }
+}
+/* PHONE. Three parchment strips side by side need 740px; stacked at full height they need
+   1050. Neither fits a 390×844 rail, so the branch is RE-LAID rather than merely shrunk: the
+   flavour line comes off (it is flavour — the effect lines carry every number), the seal and
+   the name share one row, and each node becomes a single horizontal band — numeral, effect,
+   price — instead of a stacked card. That is ~200px a branch, and the tree is the same
+   bounded scroller `#mapCards` already uses on this screen so nothing can be unreachable. */
+@media (max-width:760px){
+  #council{ justify-content:flex-start; padding-top:calc(14px + env(safe-area-inset-top)); }
+  #cT{ font-size:min(8vw,30px); }
+  #cRule{ width:min(72vw,340px); margin-top:7px; }
+  #cBal{ margin-top:9px; }
+  #cBal .cBn b{ font-size:26px; }
+  #cBal .cBn em{ font-size:10px; letter-spacing:.16em; }
+  #cBal .cBs{ font-size:9.5px; }
+  .lau.big{ width:30px; height:30px; vertical-align:-7px; }
+  #cTree{ flex-direction:column; align-items:center; gap:8px; margin-top:11px; width:100%;
+          max-height:calc(100vh - 268px); overflow-y:auto; }
+  .cBr{ width:100%; padding:8px 9px 10px; }
+  .cBH{ flex-wrap:nowrap; gap:7px; padding-bottom:6px; }
+  .cBH .cBN{ font-size:12.5px; letter-spacing:.1em; }
+  .cBH .cBD{ display:none; }
+  .cBI{ width:21px; height:21px; }
+  .cN{ display:flex; align-items:center; gap:9px; margin-top:9px; padding:6px 8px 7px; }
+  .cN::before{ top:-8px; height:7px; }
+  .cNr{ position:static; order:-1; flex:0 0 21px; text-align:center; font-size:10px; }
+  .cNe{ flex:1 1 auto; min-width:0; padding-right:0; font-size:11px; line-height:1.22; }
+  .cNc{ flex:0 0 auto; margin-top:0; }
+  .cNc .lau{ width:15px; height:15px; }
+  .cNc u{ font-size:8.5px; letter-spacing:.14em; padding:2px 6px 3px; }
+  #cHint{ margin-top:9px; font-size:10px; letter-spacing:.05em; }
+  #cFoot{ margin-top:10px; flex-wrap:wrap; justify-content:center; row-gap:8px; }
+  #btnCBack, #btnCRespec{ padding:9px 17px; font-size:11.5px; letter-spacing:.13em; }
+  /* the chooser's foot rail carries a third control now — it wraps rather than clips */
+  #btnCouncil{ padding:6px 12px 7px 9px; gap:8px; }
+  #btnCouncil .lau{ width:21px; height:21px; }
+  #btnCouncil .cwT{ font-size:10px; letter-spacing:.16em; }
+  #btnCouncil .cwS{ font-size:9px; letter-spacing:.04em; }
+}
 
 /* ── victory stars + next-map call to action ───────────────────────── */
 #endStars{ display:flex; justify-content:center; gap:9px; margin:13px 0 2px; }
@@ -1447,6 +1704,13 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      instead of 220. Nothing is hidden: the full sentence is still the card's own tooltip. */
   #omenRow{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; align-items:stretch; }
   #omenRow .omHead{ grid-column:1 / -1; }
+  /* v6 INTEGRATE — the THREE-ACROSS grid above is for the three offer CARDS. The rail's other
+     state is a single `.omBan` banner (the omen already riding the wave), and as an unqualified
+     grid item it was landing in COLUMN ONE: 118px of a 390px rail, inside which the name wrapped
+     to two lines and the "OMEN" label printed straight through the second one — measured on
+     battle4_m as the glyph soup "WAORMDEN", with the omen's sentence pushed out of the box
+     entirely. It spans the rail, same idiom as .omHead one line up. */
+  #omenRow .omBan{ grid-column:1 / -1; }
   #omenRow .omC{ flex-direction:column; align-items:center; text-align:center; gap:3px;
      min-height:96px; padding:4px 3px 5px; border-width:6px; border-image-width:6px; }
   #omenRow .omSig{ width:22px; height:22px; }
@@ -1640,3 +1904,207 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #endStats td:last-child{ font-size:15px; }
 }
 /* ══ END SECTION: UI-CSS ══ */
+
+/* ══ SPEC6 §C — THE CHRONICLE OF DEEDS ════════════════════════════════════════
+   The War Council's twin, one door along the same rail — so it is the same PARCHMENT the
+   council's writ is drawn on, not iron. (Cut 1 put iron tiles straight on the diorama and
+   28 dark plates over a lit valley read as a debug list; a chronicle is a written thing.)
+   A crest is told by METAL, never by opacity: unwon is the device struck into the sheet in
+   dead ink, won is gold leaf on a lit plate with the date it was taken. That way a page of
+   unwon deeds still reads as a chronicle waiting to be written rather than a greyed menu.
+   The four devices are per-REGISTER, not per-deed: 28 bespoke glyphs at 24px would be 28
+   illegible ones (the laurel sprig's three cuts recorded exactly that), and the register is
+   what the eye groups by anyway. */
+#deeds{ background-image:
+   radial-gradient(ellipse 62% 50% at 50% 42%, rgba(10,8,6,.72), rgba(10,8,6,.32) 54%, rgba(10,8,6,0) 80%),
+   linear-gradient(180deg, rgba(6,5,3,.30) 0%, rgba(6,5,3,0) 34%, rgba(6,4,2,.44) 78%, rgba(4,3,1,.90) 100%); }
+#ddKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#b4a37c; opacity:.9;
+  text-shadow:0 1px 5px #000, 0 0 10px rgba(0,0,0,.85); }
+#ddT{ margin:3px 0 0; font-size:min(6.2vw,32px); line-height:1; letter-spacing:.15em; font-weight:400; color:#f2cf74;
+  text-shadow:0 2px 0 #3a2a10, 0 0 22px rgba(232,182,76,.28), 0 2px 14px rgba(0,0,0,.8); }
+#ddRule{ width:min(46vw,400px); margin:6px auto 0; }
+#ddBal{ display:flex; align-items:center; gap:9px; margin:7px 0 0; justify-content:center; }
+.ddBn{ display:flex; align-items:center; gap:8px; }
+.ddBn b{ font-size:23px; color:#f2cf74; font-variant-numeric:tabular-nums; text-shadow:0 2px 0 #3a2a10, 0 1px 6px #000; }
+.ddBn em{ font-style:normal; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:#c2b491;
+  text-shadow:0 1px 4px #000; }
+.ddBs{ display:none; }                       /* the same sentence is the footer hint */
+
+/* the sheet. One parchment surface for the whole chronicle, in .cBr's gradient stack. */
+#ddGrid{ display:flex; flex-direction:column; gap:10px; margin-top:10px; text-align:left;
+  width:min(96vw,1250px); max-height:min(68vh,690px); overflow-y:auto;
+  padding:13px 15px 15px; border-radius:7px;
+  background-image:var(--grain),
+    radial-gradient(ellipse 116% 100% at 50% 38%, rgba(0,0,0,0) 46%, rgba(122,88,42,.28) 82%, rgba(96,66,28,.52) 100%),
+    radial-gradient(130% 110% at 50% 0%, rgba(255,250,232,.34), rgba(255,250,232,0) 54%),
+    linear-gradient(176deg,#e0cc9d 0%,#cfb684 56%,#ae9560 100%);
+  background-size:200px 200px,100% 100%,100% 100%,100% 100%;
+  background-attachment:local,scroll,scroll,scroll;
+  box-shadow:0 10px 26px rgba(0,0,0,.66), inset 0 0 26px rgba(112,80,34,.40), inset 0 1px 0 rgba(255,250,232,.42);
+  border:1px solid rgba(78,52,18,.55); color:#33260f;
+  scrollbar-width:thin; scrollbar-color:#8a6c33 rgba(120,88,40,.18); }
+#ddGrid::-webkit-scrollbar{ width:8px; }
+#ddGrid::-webkit-scrollbar-thumb{ background:#8a6c33; border-radius:4px; }
+.ddSH{ display:flex; align-items:center; gap:8px; padding-bottom:5px;
+  border-bottom:1px solid rgba(78,52,18,.38); margin-bottom:8px; }
+.ddSH span{ font-size:12px; letter-spacing:.26em; text-transform:uppercase; color:#41300f;
+  text-shadow:0 1px 0 rgba(255,250,232,.5); }
+.ddSH u{ margin-left:auto; text-decoration:none; font-size:11px; letter-spacing:.12em; color:#7a5f2a;
+  font-variant-numeric:tabular-nums; }
+.ddSI{ width:17px; height:17px; flex:0 0 auto; background:50% 50%/100% 100% no-repeat; }
+.ddRow{ display:grid; grid-template-columns:repeat(auto-fill, minmax(163px, 1fr)); gap:6px; }
+
+/* a crest. Unwon: the device struck into the sheet, a faint recess, ink type.
+   Won: a lit plate with a gold rim, gold leaf on the device, and the date under it. */
+.ddC{ position:relative; display:grid; grid-template-columns:24px 1fr; grid-auto-rows:min-content;
+  gap:1px 7px; padding:5px 7px 6px; border-radius:5px; font-family:var(--serif); color:#33260f;
+  background:linear-gradient(178deg,rgba(255,250,232,.22),rgba(120,88,40,.10));
+  border:1px solid rgba(78,52,18,.34);
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.34), 0 1px 3px rgba(60,40,12,.18); }
+.ddC.on{ background:linear-gradient(178deg,rgba(255,236,186,.66),rgba(214,168,74,.28));
+  border-color:rgba(173,122,30,.85);
+  box-shadow:inset 0 1px 0 rgba(255,252,238,.7), 0 0 0 1px rgba(232,182,76,.42), 0 3px 9px rgba(60,40,12,.30); }
+.ddC .ddI{ grid-row:1 / span 3; align-self:start; margin-top:2px; }
+.ddN{ font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:#5d4718; line-height:1.14;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  text-shadow:0 1px 0 rgba(255,250,232,.42); }
+.ddC.on .ddN{ color:#3d2c0d; }
+/* LANGUAGE-PROOF: three lines, whatever the tongue. French runs a quarter longer than
+   English and a four-line description pushed the last register off the sheet. The whole
+   sentence is still in the crest's tooltip, so nothing is lost — only bounded. */
+.ddD{ font-size:10px; line-height:1.22; letter-spacing:.01em; font-variant-caps:small-caps; color:#7a6231;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.ddC.on .ddD{ color:#5e4818; }
+.ddF{ margin-top:2px; font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:#8a7444;
+  font-variant-numeric:tabular-nums; }
+.ddC.on .ddF{ color:#3a2708; padding:1px 6px 2px; border-radius:3px; justify-self:start;
+  font-size:8.5px; letter-spacing:.06em; white-space:nowrap;
+  background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.6); }
+.ddP{ grid-column:2; display:block; height:3px; border-radius:2px; margin-top:3px;
+  background:rgba(78,52,18,.22); box-shadow:inset 0 0 0 1px rgba(78,52,18,.28); overflow:hidden; }
+.ddP u{ display:block; height:100%; background:linear-gradient(90deg,#a3761a,#e8b64c); }
+#ddHint{ margin-top:7px; font-size:11px; letter-spacing:.13em; font-variant-caps:small-caps; color:#b6a488;
+  text-shadow:0 1px 4px #000, 0 0 8px rgba(0,0,0,.8); }
+#ddFoot{ margin-top:10px; display:flex; gap:12px; align-items:center; justify-content:center; }
+#btnDDBack{ border-radius:6px; padding:10px 24px; font-size:13px; letter-spacing:.18em;
+  text-transform:uppercase; color:#e6d7b4; }
+#btnDDBack:hover{ filter:brightness(1.24); }
+
+/* the Deeds chip on the chooser rail — btnCouncil's twin, same plate, same two-line body */
+#btnDeeds{ display:flex; align-items:center; gap:10px; padding:7px 15px 8px 11px; border-radius:6px;
+  text-align:left; transition:filter .15s, transform .15s; }
+#btnDeeds:hover{ filter:brightness(1.22); transform:translateY(-2px); }
+#btnDeeds:active{ transform:translateY(0) scale(.99); }
+#btnDeeds .ddI{ width:23px; height:23px; }
+#btnDeeds .cwB{ display:flex; flex-direction:column; gap:1px; min-width:0; }
+#btnDeeds .cwT{ font-size:11.5px; letter-spacing:.2em; text-transform:uppercase; color:#e2d4b4;
+  text-shadow:0 1px 0 #000; }
+#btnDeeds .cwS{ font-size:10.5px; letter-spacing:.09em; font-variant-caps:small-caps; color:#a2947a;
+  font-variant-numeric:tabular-nums; }
+#btnDeeds.rich .cwS{ color:#f2cf74; }
+#btnDeeds.rich{ box-shadow:0 6px 18px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.5),
+  inset 0 1px 0 rgba(255,228,178,.16); }
+/* on the DARK rail the chip's device has to be iron, not ink — same path, third metal */
+#btnDeeds .ddI.c-feat{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 3.2l2.5 5.3 5.7.8-4.1 4.1 1 5.8L12 16.4 6.9 19.2l1-5.8L3.8 9.3l5.7-.8z' fill='none' stroke='%23a2947a' stroke-width='1.8' stroke-linejoin='round'/></svg>"); }
+
+/* ── the four register devices ─────────────────────────────────────────────────
+   Struck ink when unwon, gold leaf (fill + dark keyline, the laurel's own recipe) once won.
+   Same path in both states: a crest must not change SHAPE when it is taken. */
+.ddI{ width:22px; height:22px; flex:0 0 auto; display:inline-block; background:50% 50%/100% 100% no-repeat; }
+.ddI.on{ filter:drop-shadow(0 1px 1px rgba(90,62,18,.45)); }
+/* CAMPAIGN — a road between two milestones, the map chart's own vocabulary */
+.ddI.c-camp{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23907447' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 21c0-5.6 2.4-8.2 5.5-10.4C15.1 8.4 17.5 6 17.5 3'/><path d='M3.6 19.6h5.8M14.6 4.4h5.8'/></g></svg>"); }
+.ddI.c-camp.on{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23a3761a' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 21c0-5.6 2.4-8.2 5.5-10.4C15.1 8.4 17.5 6 17.5 3'/><path d='M3.6 19.6h5.8M14.6 4.4h5.8'/></g><g fill='none' stroke='%23f0cf7e' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M6.5 21c0-5.6 2.4-8.2 5.5-10.4C15.1 8.4 17.5 6 17.5 3'/><path d='M3.6 19.6h5.8M14.6 4.4h5.8'/></g></svg>"); }
+/* DOCTRINE — a torch: the school you chose to fight with */
+.ddI.c-doct{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23907447' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2.6c2.5 2.6 3.7 4.6 3.7 6.6a3.7 3.7 0 0 1-7.4 0c0-2 1.2-4 3.7-6.6z'/><path d='M9.4 12.6h5.2l-.7 2.4H10z'/><path d='M11 15.4v5.8M13 15.4v5.8'/></g></svg>"); }
+.ddI.c-doct.on{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2.6c2.5 2.6 3.7 4.6 3.7 6.6a3.7 3.7 0 0 1-7.4 0c0-2 1.2-4 3.7-6.6z' fill='%23e8b64c' stroke='%238a5f14' stroke-width='1.1'/><g fill='none' stroke='%238a5f14' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M9.4 12.6h5.2l-.7 2.4H10z'/><path d='M11 15.4v5.8M13 15.4v5.8'/></g></svg>"); }
+/* FEATS — a mullet star */
+.ddI.c-feat{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 3.2l2.5 5.3 5.7.8-4.1 4.1 1 5.8L12 16.4 6.9 19.2l1-5.8L3.8 9.3l5.7-.8z' fill='none' stroke='%23907447' stroke-width='1.7' stroke-linejoin='round'/></svg>"); }
+.ddI.c-feat.on{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 3.2l2.5 5.3 5.7.8-4.1 4.1 1 5.8L12 16.4 6.9 19.2l1-5.8L3.8 9.3l5.7-.8z' fill='%23e8b64c' stroke='%238a5f14' stroke-width='1.1' stroke-linejoin='round'/></svg>"); }
+/* COLLECTION — a horned skull: the bestiary's own mark */
+.ddI.c-coll{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%23907447' stroke-width='1.7' stroke-linejoin='round'><path d='M12 3.4c-4 0-6.8 2.8-6.8 6.4 0 2.2.9 3.8 2.2 4.8v2c0 .9.7 1.6 1.6 1.6h6c.9 0 1.6-.7 1.6-1.6v-2c1.3-1 2.2-2.6 2.2-4.8 0-3.6-2.8-6.4-6.8-6.4z'/><path d='M5.6 8.2C3.9 7.4 2.9 6 2.8 4.2M18.4 8.2c1.7-.8 2.7-2.2 2.8-4'/><circle cx='9.4' cy='10.4' r='1.5' fill='%23907447'/><circle cx='14.6' cy='10.4' r='1.5' fill='%23907447'/></g></svg>"); }
+.ddI.c-coll.on{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 3.4c-4 0-6.8 2.8-6.8 6.4 0 2.2.9 3.8 2.2 4.8v2c0 .9.7 1.6 1.6 1.6h6c.9 0 1.6-.7 1.6-1.6v-2c1.3-1 2.2-2.6 2.2-4.8 0-3.6-2.8-6.4-6.8-6.4z' fill='%23e8b64c' stroke='%238a5f14' stroke-width='1.1'/><g fill='none' stroke='%238a5f14' stroke-width='1.6' stroke-linecap='round'><path d='M5.6 8.2C3.9 7.4 2.9 6 2.8 4.2M18.4 8.2c1.7-.8 2.7-2.2 2.8-4'/></g><circle cx='9.4' cy='10.4' r='1.6' fill='%238a5f14'/><circle cx='14.6' cy='10.4' r='1.6' fill='%238a5f14'/></svg>"); }
+.ddSI.c-camp{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6.5 21c0-5.6 2.4-8.2 5.5-10.4C15.1 8.4 17.5 6 17.5 3' fill='none' stroke='%234a3712' stroke-width='2.1' stroke-linecap='round'/></svg>"); }
+.ddSI.c-doct{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%234a3712' stroke-width='2.1' stroke-linejoin='round'><path d='M12 2.6c2.5 2.6 3.7 4.6 3.7 6.6a3.7 3.7 0 0 1-7.4 0c0-2 1.2-4 3.7-6.6z'/><path d='M11 13v8M13 13v8'/></g></svg>"); }
+.ddSI.c-feat{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 3.2l2.5 5.3 5.7.8-4.1 4.1 1 5.8L12 16.4 6.9 19.2l1-5.8L3.8 9.3l5.7-.8z' fill='none' stroke='%234a3712' stroke-width='2.1' stroke-linejoin='round'/></svg>"); }
+.ddSI.c-coll{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%234a3712' stroke-width='2.1' stroke-linejoin='round'><path d='M12 3.6c-4 0-6.8 2.8-6.8 6.4 0 3.6 2.8 6.4 6.8 6.4s6.8-2.8 6.8-6.4c0-3.6-2.8-6.4-6.8-6.4z'/><path d='M10 19.6v-2M14 19.6v-2'/></g></svg>"); }
+
+/* ══ the unlock toast — iron, because it lands over the battle and not over parchment ══ */
+#deedToast{ position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); z-index:60;
+  display:flex; align-items:center; gap:12px; padding:9px 16px 10px 12px; border-radius:7px;
+  pointer-events:none; transform:translateX(-50%);
+  box-shadow:0 10px 30px rgba(0,0,0,.66), inset 0 0 0 1px rgba(232,182,76,.5),
+             inset 0 1px 0 rgba(255,228,178,.16); }
+/* The crest arrives in a STRUCK MEDALLION rather than loose on the plate. A deed is a thing
+   the chronicle stamps, and the toast is the only place the player ever sees a crest away
+   from the parchment it lives on — without a rim it reads as a notification icon, which is
+   the one register this game does not speak. `background-origin:content-box` is load-bearing:
+   `.ddI` sizes its picture at 100%/100%, so without it the padding would scale the device
+   with the medallion and the ring would sit on the glyph rather than around it. */
+#deedToast .ddI{ width:28px; height:28px; padding:7px; box-sizing:content-box;
+  border-radius:50%; background-origin:content-box; background-clip:border-box;
+  background-color:rgba(232,182,76,.09);
+  box-shadow:inset 0 0 0 1px rgba(232,182,76,.42), inset 0 1px 0 rgba(255,236,186,.20),
+             0 0 14px rgba(232,182,76,.16); }
+/* the rule under the name: an iron banner's own hairline, struck gold and stopped short of
+   both ends so it reads as a device rather than as a table border */
+#deedToast .dtN{ position:relative; padding-bottom:4px; }
+#deedToast .dtN::after{ content:''; position:absolute; left:0; right:14%; bottom:0; height:1px;
+  background:linear-gradient(90deg, rgba(232,182,76,.62), rgba(232,182,76,.06)); }
+#deedToast .dtB{ display:flex; flex-direction:column; gap:1px; text-align:left; min-width:0; }
+#deedToast .dtK{ font-size:9.5px; letter-spacing:.34em; text-transform:uppercase; color:#b4a37c; }
+#deedToast .dtN{ font-size:14px; letter-spacing:.12em; text-transform:uppercase; color:#f2cf74;
+  text-shadow:0 1px 0 #2a1d08; }
+#deedToast .dtD{ font-size:10.5px; letter-spacing:.03em; color:#a2947a; }
+#deedToast .dtL{ display:flex; align-items:center; gap:5px; margin-left:6px; padding-left:12px;
+  border-left:1px solid rgba(160,138,96,.34); font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:#e8b64c; white-space:nowrap; }
+#deedToast .lau{ width:17px; height:17px; filter:drop-shadow(0 0 6px rgba(232,182,76,.45)); }
+/* THE LAUREL IS THE POINT OF THE TOAST — the deed is the reason, the laurel is the reward,
+   and the reward was set in the same 10.5px grey the description above it uses. It gets the
+   plate's only lit type. */
+#deedToast .dtL{ font-size:11.5px; color:#f2cf74; text-shadow:0 1px 0 #2a1d08; }
+
+/* ══ SPEC6 §D3d — the MODE CHIPS on a map card ════════════════════════════════
+   Three small iron tabs under the card's foot. A locked chip is SHOWN, not hidden: a player
+   has to be able to see that a mode exists before they have earned it, or the campaign win
+   that opens it reads as an arbitrary reward rather than as a door. */
+.mCard .mMode{ display:flex; gap:5px; margin-top:7px; flex-wrap:wrap; }
+.mCard .mMc{ pointer-events:auto; cursor:pointer; padding:3px 9px 4px; border-radius:4px;
+  font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:#c4b391;
+  background:linear-gradient(180deg, rgba(60,50,36,.9), rgba(34,28,20,.94));
+  box-shadow:inset 0 0 0 1px rgba(122,106,76,.4), inset 0 1px 0 rgba(226,206,166,.08);
+  transition:filter .13s, transform .13s; }
+.mCard .mMc:hover{ filter:brightness(1.3); transform:translateY(-1px); }
+.mCard .mMc.m-horde{ color:#e0a877; }
+.mCard .mMc.lk{ color:#6f6656; cursor:default; box-shadow:inset 0 0 0 1px rgba(96,84,62,.34); }
+.mCard .mMc.lk:hover{ filter:none; transform:none; }
+.mCard .mE.mH i{ color:#e0a877; font-size:11px; font-style:normal; }
+
+@media (max-width:760px){
+  #deeds{ justify-content:flex-start; padding-top:calc(12px + env(safe-area-inset-top)); }
+  #ddGrid{ width:100%; max-height:none; padding:10px 11px 12px; }
+  .ddRow{ grid-template-columns:1fr 1fr; gap:6px; }
+  .ddC{ grid-template-columns:22px 1fr; gap:1px 7px; padding:6px 7px; }
+  .ddI{ width:20px; height:20px; }
+  .ddN{ font-size:10px; letter-spacing:.05em; }
+  .ddD{ font-size:9.5px; }
+  .ddF{ font-size:8.5px; letter-spacing:.08em; }
+  #ddT{ letter-spacing:.1em; }
+  /* The chooser rail now carries FOUR controls (Back, Council, Deeds, seed). At 375px it
+     wraps, and a 4-row rail pushes the seed tag onto the last pixel of the viewport —
+     measured in a real 375px viewport, not off the -Mobile PNG, which cannot be trusted for
+     horizontal extent (the council stage recorded why). Both chips are trimmed so Council and
+     Deeds share one row and the rail is three rows again. */
+  #mapsFoot{ gap:8px; }
+  #btnCouncil, #btnDeeds{ padding:6px 9px 7px 7px; gap:6px; }
+  #btnCouncil .lau{ width:19px; height:19px; }
+  #btnDeeds{ padding:6px 9px 7px 7px; gap:6px; }
+  #btnDeeds .ddI{ width:17px; height:17px; }
+  #btnDeeds .cwT{ font-size:10px; letter-spacing:.16em; }
+  #btnDeeds .cwS{ font-size:9px; letter-spacing:.04em; }
+  #deedToast{ left:8px; right:8px; transform:none !important; bottom:calc(84px + env(safe-area-inset-bottom)); }
+  #deedToast .dtN{ font-size:12px; }
+  .mCard .mMc{ font-size:9px; padding:3px 7px; letter-spacing:.1em; }
+}

@@ -159,7 +159,39 @@
          boot — the chooser is the last screen before a run starts, so it belongs here. -->
     <div id="dailyRow"></div>
     <div id="mapCards"></div>
-    <div id="mapsFoot"><button id="btnBack" class="frm" data-l="maps.back">← Back</button><span id="mapsSeed" class="seedTag"></span></div>
+    <div id="mapsFoot"><button id="btnBack" class="frm" data-l="maps.back">← Back</button><!--
+      SPEC6 §B: the War Council chip. It is the door to the council AND the laurel balance —
+      built by laurelChip() so the number is always the derived one, never a cached copy. -->
+      <button id="btnCouncil" class="iron frm"></button><!--
+      SPEC6 §C: the Deeds chip, in the council chip's idiom — the two are a pair, and both
+      are a door AND a read-out. Built by deedChip(). -->
+      <button id="btnDeeds" class="iron frm"></button><span id="mapsSeed" class="seedTag"></span></div>
+  </div>
+
+  <!-- SPEC6 §B — THE WAR COUNCIL. A parchment writ off the chooser: three branches, three
+       tiers, free respec. Nothing here can touch a run in progress; it writes the record and
+       SIM copies it into force at the next run start. -->
+  <div id="council" class="overlay hidden">
+    <div id="cKick" data-l="cn.kick">Between the wars</div>
+    <h2 id="cT" data-l="cn.title">THE WAR COUNCIL</h2>
+    <div id="cRule" class="rule"></div>
+    <div id="cBal"></div>
+    <div id="cTree"></div>
+    <div id="cHint"></div>
+    <div id="cFoot"><button id="btnCBack" class="frm" data-l="cn.back">← Back</button><button id="btnCRespec" class="frm"></button></div>
+  </div>
+
+  <!-- SPEC6 §C — THE CHRONICLE OF DEEDS. A parchment grid off the chooser: four registers,
+       twenty-eight crests, iron while unwon and gold once taken. Exactly one way in
+       (btnDeeds) and one way out (btnDDBack), the same contract #council keeps. -->
+  <div id="deeds" class="overlay hidden">
+    <div id="ddKick" data-l="dd.kick">The chronicle</div>
+    <h2 id="ddT" data-l="dd.title">DEEDS</h2>
+    <div id="ddRule" class="rule"></div>
+    <div id="ddBal"></div>
+    <div id="ddGrid"></div>
+    <div id="ddHint"></div>
+    <div id="ddFoot"><button id="btnDDBack" class="frm" data-l="dd.back">← Back</button></div>
   </div>
 
   <div id="end" class="overlay hidden">
@@ -169,6 +201,9 @@
       <div class="rule"></div>
       <div id="endStars" class="hidden"></div>
       <div id="endStarL" class="hidden"></div>
+      <!-- SPEC6 §B: what this run put in the War Council's purse. Hidden on a run that
+           earned nothing, so a replay of a road already three-starred says nothing. -->
+      <div id="endLaurel" class="hidden"></div>
       <div id="medals"></div>
       <div id="endStats"></div>
       <button id="btnNext" class="bigBtn frm hidden"></button>
@@ -177,6 +212,9 @@
       <button id="btnRestart" class="bigBtn frm" data-l="end.replay">Play Again</button>
     </div>
   </div>
+  <!-- SPEC6 §C — the unlock toast. Positioned and faded by UI.toastFrame off the RENDER
+       clock; it carries no CSS transition, so nothing here can mutate after a shot render. -->
+  <div id="deedToast" class="iron frm hidden"></div>
   <div id="stats" class="hidden"></div>
 </div>
 <!-- ══ END SECTION: UI-HTML ══ -->

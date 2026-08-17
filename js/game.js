@@ -22,7 +22,15 @@ const SHOT = P.get('shot');                       // deterministic screenshot pr
 // SPEC5 §B3: `_herald` is pinned to map 2 because it is the only road in the game with two
 // spawn gates — the Ember Wastes' fork is a BRANCH off one mouth, and a herald has nothing
 // to herald there.
-const SHOT_MAPS = { overview2: 2, battle2: 2, overview3: 3, battle3: 3, _snow: 2, _ash: 3, _herald: 2 };
+// SPEC6 §A2 — the Barrowmoor's frames. `_risen` moves to map 4 with the map: it was authored
+// on the Vale with the engine force-flipped because no undead road existed yet, and its whole
+// subject (a cursed wave mid-rise) is now something this campaign actually contains.
+const SHOT_MAPS = { overview2: 2, battle2: 2, overview3: 3, battle3: 3, _snow: 2, _ash: 3, _herald: 2,
+  overview4: 4, battle4: 4, _dusk: 4, _risen: 4,
+  // SPEC6 §E — the hex rig runs on FROSTFELL, because the junction camp it exists to punish
+  // is Frostfell's own optimal play. It builds `M2_CAMP`, which is the `junction2` matrix row
+  // verbatim, so the frame and the number are the same eight towers.
+  _hex: 2 };
 
 // ══ SCHOOLS §0 — A/B PROBES FOR THE CRITIC PANEL ══════════════════════════════════════════
 // Three findings in the round-4 VFX set ("the schools share one hue band", "emissive VFX do
@@ -294,6 +302,120 @@ en: {
   'daily.best': 'best · wave {0}',
   'daily.held': 'held · {0} stars',
   'daily.new': 'not yet fought',
+  // ── THE WAR COUNCIL (SPEC6 §B) ───────────────────────────────────────────────────
+  // Iron-and-parchment register throughout, and the tree is written as ORDERS a council
+  // issues, not as a shop: you do not "buy +15 gold", you grant the Quartermaster his writ.
+  // Every effect line is a plain number, because a meta tree that hides its arithmetic
+  // behind flavour is a tree nobody can plan around.
+  'cn.kick': 'Between the wars',
+  'cn.title': 'THE WAR COUNCIL',
+  'cn.back': '← Back',
+  'cn.chip': 'War Council',
+  'cn.chipN': '{0} laurels',
+  'cn.chipN1': '{0} laurel',
+  'cn.chipT': 'The War Council — spend laurels on standing orders that hold on every road.',
+  'cn.have': 'laurels at hand',
+  'cn.have1': 'laurel at hand',
+  'cn.ledger': '{0} won · {1} pledged',
+  'cn.granted': 'Granted',
+  'cn.respec': 'Rescind all orders',
+  'cn.respecT': 'Return every pledged laurel. Free, and as often as you like.',
+  'cn.earn': 'Laurels are won by stars, first victories, endless records, daily wars and deeds.',
+  'cn.none': 'No laurels yet. Hold a road and the council will convene.',
+  'cn.tOn': 'Granted — {0}',
+  'cn.tLk': 'Grant tier {0} first',
+  'cn.tBuy': '{0} — {1} laurels',
+  'cn.tPoor': '{0} more laurels needed',
+  'cn.q': 'Quartermaster',
+  'cn.q.d': 'The purse is fuller before the first standard goes up.',
+  'cn.q.1': '+15 starting gold',
+  'cn.q.2': '+30 starting gold',
+  'cn.q.3': '+50 starting gold',
+  'cn.d': 'Drillmaster',
+  'cn.d.d': 'Knights and militia are drilled harder, and fall slower.',
+  'cn.d.1': 'Knights & militia +8% health',
+  'cn.d.2': 'Knights & militia +16% health',
+  'cn.d.3': 'Knights & militia +25% health',
+  'cn.e': 'Engineer',
+  'cn.e.d': 'Nothing raised on this road is ever wholly wasted.',
+  'cn.e.1': 'Dismantle refunds 72%',
+  'cn.e.2': 'Dismantle refunds 78%',
+  'cn.e.3': 'Dismantle refunds 85% · traps −10%',
+  'end.laurels': 'Laurels won: +{0}',
+  // ══ DEEDS (SPEC6 §C) ═══════════════════════════════════════════════════════════
+  // Twenty-eight deeds in four registers. The NAME is a title of honour (what a herald
+  // would call you); the LINE under it is the plain condition, because a deed whose
+  // requirement has to be guessed at is a deed nobody plays toward. Every one is worth one
+  // laurel, which is why the screen sits one click from the War Council and says so.
+  'dd.kick': 'The chronicle',
+  'dd.title': 'DEEDS',
+  'dd.back': '← Back',
+  'dd.chip': 'Deeds',
+  'dd.chipN': '{0} of {1} won',
+  'dd.chipT': 'The chronicle of deeds — every one won is a laurel for the War Council.',
+  'dd.hint': 'Every deed won is worth one laurel.',
+  'dd.locked': 'Not yet won',
+  'dd.won': 'Won {0}',
+  'dd.prog': '{0} / {1}',
+  'dd.tipOn': '{0} — won {1}',
+  'dd.tipOff': '{0}',
+  'dd.toast': 'DEED WON',
+  'dd.toastL': '+1 laurel',
+  'dd.cat.camp': 'Campaign',
+  'dd.cat.doct': 'Doctrine',
+  'dd.cat.feat': 'Feats',
+  'dd.cat.coll': 'Collection',
+  'd.m1.n': 'The Vale Held',        'd.m1.d': 'Hold The Vale to the last wave.',
+  'd.m2.n': 'The Pass Held',        'd.m2.d': 'Hold Frostfell Pass to the last wave.',
+  'd.m3.n': 'The Wastes Held',      'd.m3.d': 'Hold the Ember Wastes to the last wave.',
+  'd.m4.n': 'The Moor Held',        'd.m4.d': 'Hold the Barrowmoor to the last wave.',
+  'd.s1.n': 'Vale Unbroken',        'd.s1.d': 'Take three stars on The Vale.',
+  'd.s2.n': 'Pass Unbroken',        'd.s2.d': 'Take three stars on Frostfell Pass.',
+  'd.s3.n': 'Wastes Unbroken',      'd.s3.d': 'Take three stars on the Ember Wastes.',
+  'd.s4.n': 'Moor Unbroken',        'd.s4.d': 'Take three stars on the Barrowmoor.',
+  'd.warden.n': 'Warden of the Realm', 'd.warden.d': 'Hold all four roads.',
+  'd.pyre.n': 'Pyre-Tender',        'd.pyre.d': 'Burn 100 corpses with fire.',
+  'd.storm.n': 'Stormcaller',       'd.storm.d': 'Kill 500 with the storm school.',
+  'd.steel.n': 'Master-at-Arms',    'd.steel.d': 'Kill 300 with knights and militia.',
+  'd.trap.n': 'Trapwright',         'd.trap.d': 'Kill 150 with road traps.',
+  'd.sky.n': 'Skyward',             'd.sky.d': 'Bring down 100 wyverns.',
+  'd.hand.n': 'Hand of Heaven',     'd.hand.d': 'Kill 75 with hero powers.',
+  'd.flawless.n': 'Untouched',      'd.flawless.d': 'Win a road with the garrison whole.',
+  'd.muster.n': 'Full Muster',      'd.muster.d': 'Field 14 standards at once.',
+  'd.watch.n': 'The Long Watch',    'd.watch.d': 'Hold to endless wave 20.',
+  'd.wind.n': 'Second Wind',        'd.wind.d': 'Win after falling under 5 lives.',
+  'd.omen.n': 'Omen Gambler',       'd.omen.d': 'Win having taken a challenge omen every muster.',
+  'd.ashes.n': 'Ashes to Ashes',    'd.ashes.d': 'Hold the Barrow King\u2019s finale with nothing risen.',
+  'd.daily.n': 'Daily Devotee',     'd.daily.d': 'Win five daily wars.',
+  'd.thousand.n': 'The Thousand Broken', 'd.thousand.d': 'Break a wave of a thousand.',
+  'd.tide.n': 'The Tide Turned',    'd.tide.d': 'Survive all eight waves of a Horde.',
+  'd.bestiary.n': 'Bestiarist',     'd.bestiary.d': 'Slay every kind in the roster.',
+  'd.champ.n': 'Champion Hunter',   'd.champ.d': 'Cut down 25 champions.',
+  'd.twice.n': 'Twice-Slain',       'd.twice.d': 'Put 200 Risen down a second time.',
+  'd.chain.n': 'Chainbreaker',      'd.chain.d': 'Break 10 Hexbinders.',
+  // ══ QoL §D2 — the first muster is the player's to call ═════════════════════════
+  'bw.first': '\u2694 Begin the Battle',
+  'bw.firstT': 'The horde waits. Build in peace, then sound the horn.',
+  // ══ HORDE MODE (SPEC6 §D3d) ════════════════════════════════════════════════════
+  'mode.camp': 'Campaign',
+  'mode.endl': 'Endless',
+  'mode.horde': 'Horde',
+  'mode.hordeT': 'Eight waves, every one a flood. A fat purse, thin bounties, and no respite.',
+  'mode.hordeLk': 'Hold this road first',
+  'mode.campT': 'The road as it was written.',
+  'mode.endlT': 'The campaign, then hold the line as long as you can.',
+  'maps.hordeR': 'Horde · W{0}',
+  'maps.hordeW': 'Horde · held',
+  'horde.kick': 'THE HORDE',
+  'hw.1': 'The First Tide',
+  'hw.2': 'The Swell',
+  'hw.3': 'Running Dogs',
+  'hw.4': 'The Press',
+  'hw.5': 'Black Water',
+  'hw.6': 'The Breakers',
+  'hw.7': 'The Undertow',
+  'hw.8': 'THE THOUSAND',
+  'horde.finale': 'THE THOUSAND',
   // ── maps ─────────────────────────────────────────────────────────────────────────
   'map.1.name': 'The Vale',
   'map.1.blurb': 'A green valley road. Hold it and the realm holds.',
@@ -304,6 +426,11 @@ en: {
   'map.3.name': 'Ember Wastes',
   'map.3.blurb': 'The road forks. Half the horde takes the canyon — cover both or be flanked.',
   'map.3.finale': 'THE EMBER TWINS',
+  // SPEC6 §A2 — the fourth road. The blurb is the doctrine brief: this is the map where the
+  // fire school stops being one option among four and becomes the answer to the map's rule.
+  'map.4.name': 'The Barrowmoor',
+  'map.4.blurb': 'The moor keeps its dead poorly. Bring fire.',
+  'map.4.finale': 'THE BARROW KING',
   // ── the roster ───────────────────────────────────────────────────────────────────
   'e.grunt': 'Levy', 'e.runner': 'Skirmishers', 'e.brute': 'Brutes', 'e.boss': 'The Warlord',
   'e.shield': 'The Shieldwall', 'e.hound': 'War Hounds', 'e.marauder': 'Marauders',
@@ -315,6 +442,26 @@ en: {
   'e.wyvern': 'Wyverns', 'e.gravemold': 'Gravemolds', 'e.moldling': 'Moldlings',
   'e.necromancer': 'Necromancers', 'e.skeleton': 'Risen Bones', 'e.wardedone': 'The Warded',
   'e.cutpurse': 'Cutpurses',
+  // SPEC6 §A — the Barrowmoor's finale. The def is authored here so the RISEN engine has a
+  // king to test against; the map that FIELDS him is the Barrowmoor stage's own work.
+  'e.barrowking': 'The Barrow King',
+  // SPEC6 §E — the anti-deathball. Named in the plural like every other mini-boss species,
+  // because a wave may field two.
+  'e.hexbinder': 'Hexbinders',
+  // SPEC6 §E — the hex warning, in the cursed-wave line's own three beats: the mark, what it
+  // does, and the answer. It is on the card BEFORE the countdown runs out because its
+  // counterplay is a BUILD decision (spread the muster, keep a barracks, lay a trap) and a
+  // build decision cannot be improvised once the pulse has landed.
+  'hex.tag': 'Hexbinder',
+  'hex.line': 'towers fall silent',
+  'hex.spread': 'Spread the muster — knights, traps and powers hold',
+  'hex.unit': 'Every 7s, every tower within 9u is silenced for 3.5s. Knights, militia, road traps and hero powers are untouched — and upgrading or selling a silenced tower still works.',
+  // SPEC6 §A1 — THE RISEN. The dispatch has to say the rule before the wave walks out of the
+  // crypt-mouth, because the counterplay (bring fire) is bought at the muster, not improvised.
+  'curse.tag': 'Cursed',
+  'curse.line': 'the fallen will rise',
+  'curse.fire': 'Fire burns the corpse',
+  'curse.unit': 'Every body that falls stands again 2.5s later at 45% strength — unless the killing blow was fire.',
   // SPEC5 §B2 — the Long Night. The lull is a FALSE ending, so its copy has to read like one
   // and then be answered by the surge banner.
   'wave.lull': 'The horns fall silent…',
@@ -349,6 +496,12 @@ en: {
     3: ['Ash on the Wind', 'The Cinder Levy', 'Raiders', 'Running the Wastes', 'Skirmish Line',
         'Wraiths off the Ash', 'Fork in the Road', 'The Ironclad Line', 'Twin Giants', 'The Ram Rolls',
         'Everything at Once', 'The Ogre March', 'The Great Burning', 'The Ember Twins'],
+    // SPEC6 §A2 — sixteen, and three of them (5, 9, 13) are named for the curse so the title
+    // and the skull sigil on the dispatch card say the same thing before the gate opens.
+    4: ['Ill Ground', 'The Levy of the Moor', 'Bone Pickers', 'The Chapel Fork',
+        'THE FALLEN RISE', 'Wraiths off the Turf', 'Mould in the Mounds', 'Chanting at the Stones',
+        'The Second Cursing', 'The Warded Dead', 'Grave Thieves', 'Wings over the Gallows',
+        'THE LONG NIGHT', 'The Ogre Cairn', 'All the Moor Keeps', 'The Barrow King'],
   },
 },
 fr: {
@@ -564,6 +717,117 @@ fr: {
   'daily.best': 'record · vague {0}',
   'daily.held': 'tenue · {0} étoiles',
   'daily.new': 'pas encore livrée',
+  // ── LE CONSEIL DE GUERRE (SPEC6 §B) ──────────────────────────────────────────────
+  // Same register in French: a council ISSUES des ordres. «Laurier» carries the Roman
+  // victory-wreath sense the English word does, so the currency needs no gloss. The chip
+  // sub-line and the branch names are held short — the foot rail and the branch heads are
+  // both fixed-width boxes and French runs ~15% long.
+  'cn.kick': 'Entre les guerres',
+  'cn.title': 'LE CONSEIL DE GUERRE',
+  'cn.back': '← Retour',
+  'cn.chip': 'Conseil de guerre',
+  'cn.chipN': '{0} lauriers',
+  'cn.chipN1': '{0} laurier',
+  'cn.chipT': 'Le Conseil de guerre — dépensez vos lauriers en ordres permanents, valables sur toutes les routes.',
+  'cn.have': 'lauriers en main',
+  'cn.have1': 'laurier en main',
+  'cn.ledger': '{0} gagnés · {1} engagés',
+  'cn.granted': 'Accordé',
+  'cn.respec': 'Révoquer les ordres',
+  'cn.respecT': 'Rend chaque laurier engagé. Gratuit, et aussi souvent que vous voulez.',
+  'cn.earn': 'Les lauriers se gagnent aux étoiles, aux premières victoires, aux records sans fin, aux guerres du jour et aux hauts faits.',
+  'cn.none': 'Aucun laurier. Tenez une route et le conseil siégera.',
+  'cn.tOn': 'Accordé — {0}',
+  'cn.tLk': 'Accordez d’abord le rang {0}',
+  'cn.tBuy': '{0} — {1} lauriers',
+  'cn.tPoor': 'Il manque {0} lauriers',
+  'cn.q': 'Intendant',
+  'cn.q.d': 'La bourse est plus pleine avant que la première bannière ne se lève.',
+  'cn.q.1': '+15 d’or au départ',
+  'cn.q.2': '+30 d’or au départ',
+  'cn.q.3': '+50 d’or au départ',
+  'cn.d': 'Maître d’armes',
+  'cn.d.d': 'Chevaliers et milice sont mieux entraînés, et tombent moins vite.',
+  'cn.d.1': 'Chevaliers et milice +8% de vie',
+  'cn.d.2': 'Chevaliers et milice +16% de vie',
+  'cn.d.3': 'Chevaliers et milice +25% de vie',
+  'cn.e': 'Ingénieur',
+  'cn.e.d': 'Rien de ce qui est bâti sur cette route n’est tout à fait perdu.',
+  'cn.e.1': 'Raser rend 72%',
+  'cn.e.2': 'Raser rend 78%',
+  'cn.e.3': 'Raser rend 85% · pièges −10%',
+  'end.laurels': 'Lauriers gagnés : +{0}',
+  // ══ HAUTS FAITS (SPEC6 §C) — même contrat qu'en anglais : un titre, puis la condition
+  // en clair. Les noms sont des titres de héraut, pas des étiquettes de menu.
+  'dd.kick': 'La chronique',
+  'dd.title': 'HAUTS FAITS',
+  'dd.back': '← Retour',
+  'dd.chip': 'Hauts faits',
+  'dd.chipN': '{0} sur {1} gagnés',
+  'dd.chipT': 'La chronique des hauts faits — chacun vaut un laurier au Conseil de guerre.',
+  'dd.hint': 'Chaque haut fait gagné vaut un laurier.',
+  'dd.locked': 'Pas encore gagné',
+  'dd.won': 'Gagné {0}',
+  'dd.prog': '{0} / {1}',
+  'dd.tipOn': '{0} — gagné le {1}',
+  'dd.tipOff': '{0}',
+  'dd.toast': 'HAUT FAIT',
+  'dd.toastL': '+1 laurier',
+  'dd.cat.camp': 'Campagne',
+  'dd.cat.doct': 'Doctrine',
+  'dd.cat.feat': 'Exploits',
+  'dd.cat.coll': 'Collection',
+  'd.m1.n': 'Le Val tenu',          'd.m1.d': 'Tenir Le Val jusqu\u2019au bout.',
+  'd.m2.n': 'Le Col tenu',          'd.m2.d': 'Tenir Le Col Gelé jusqu\u2019au bout.',
+  'd.m3.n': 'Les Cendres tenues',   'd.m3.d': 'Tenir Les Cendres jusqu\u2019au bout.',
+  'd.m4.n': 'La Lande tenue',       'd.m4.d': 'Tenir La Lande jusqu\u2019au bout.',
+  'd.s1.n': 'Val sans faille',      'd.s1.d': 'Prendre trois étoiles au Val.',
+  'd.s2.n': 'Col sans faille',      'd.s2.d': 'Prendre trois étoiles au Col Gelé.',
+  'd.s3.n': 'Cendres sans faille',  'd.s3.d': 'Prendre trois étoiles aux Cendres.',
+  'd.s4.n': 'Lande sans faille',    'd.s4.d': 'Prendre trois étoiles à La Lande.',
+  'd.warden.n': 'Gardien du Royaume', 'd.warden.d': 'Tenir les quatre routes.',
+  'd.pyre.n': 'Gardien du bûcher',  'd.pyre.d': 'Brûler 100 cadavres par le feu.',
+  'd.storm.n': 'Appel de l\u2019orage', 'd.storm.d': 'Tuer 500 par la foudre.',
+  'd.steel.n': 'Maître d\u2019armes', 'd.steel.d': 'Tuer 300 par chevaliers et milice.',
+  'd.trap.n': 'Maître des pièges',  'd.trap.d': 'Tuer 150 par les pièges.',
+  'd.sky.n': 'Vers le ciel',        'd.sky.d': 'Abattre 100 vouivres.',
+  'd.hand.n': 'Main du ciel',       'd.hand.d': 'Tuer 75 par les pouvoirs du héros.',
+  'd.flawless.n': 'Intouché',       'd.flawless.d': 'Gagner sans perdre un seul homme.',
+  'd.muster.n': 'Ost complet',      'd.muster.d': 'Dresser 14 étendards à la fois.',
+  'd.watch.n': 'La longue veille',  'd.watch.d': 'Tenir jusqu\u2019à la vague sans fin 20.',
+  'd.wind.n': 'Second souffle',     'd.wind.d': 'Gagner après être tombé sous 5 vies.',
+  'd.omen.n': 'Joueur de présages', 'd.omen.d': 'Un présage de défi à chaque ost, et gagner.',
+  'd.ashes.n': 'Cendres aux cendres', 'd.ashes.d': 'Tenir la finale sans qu\u2019un relevé se dresse.',
+  'd.daily.n': 'Fidèle du jour',    'd.daily.d': 'Gagner cinq guerres du jour.',
+  'd.thousand.n': 'Les mille brisés', 'd.thousand.d': 'Briser une vague de mille.',
+  'd.tide.n': 'La marée renversée', 'd.tide.d': 'Survivre aux huit vagues d\u2019une Horde.',
+  'd.bestiary.n': 'Bestiairiste',   'd.bestiary.d': 'Tuer chaque espèce du bestiaire.',
+  'd.champ.n': 'Chasseur de champions', 'd.champ.d': 'Abattre 25 champions.',
+  'd.twice.n': 'Deux fois tués',    'd.twice.d': 'Coucher 200 relevés une seconde fois.',
+  'd.chain.n': 'Briseur de chaînes', 'd.chain.d': 'Briser 10 Envoûteurs.',
+  // ══ Confort §D2 — le premier ost est au joueur de l'appeler ════════════════════
+  'bw.first': '\u2694 Commencer la bataille',
+  'bw.firstT': 'La horde attend. Bâtissez en paix, puis sonnez du cor.',
+  // ══ LA HORDE (SPEC6 §D3d) ══════════════════════════════════════════════════════
+  'mode.camp': 'Campagne',
+  'mode.endl': 'Sans fin',
+  'mode.horde': 'La Horde',
+  'mode.hordeT': 'Huit vagues, toutes des marées. Bourse pleine, primes maigres, aucun répit.',
+  'mode.hordeLk': 'Tenez d\u2019abord cette route',
+  'mode.campT': 'La route telle qu\u2019elle fut écrite.',
+  'mode.endlT': 'La campagne, puis tenir la ligne aussi longtemps que possible.',
+  'maps.hordeR': 'Horde · V{0}',
+  'maps.hordeW': 'Horde · tenue',
+  'horde.kick': 'LA HORDE',
+  'hw.1': 'La première marée',
+  'hw.2': 'La houle',
+  'hw.3': 'Les chiens lâchés',
+  'hw.4': 'La poussée',
+  'hw.5': 'Eaux noires',
+  'hw.6': 'Les brisants',
+  'hw.7': 'Le ressac',
+  'hw.8': 'LES MILLE',
+  'horde.finale': 'LES MILLE',
   'map.1.name': 'Le Val',
   'map.1.blurb': 'Une route de val vert. Tenez-la et le royaume tient.',
   'map.1.finale': 'LE SEIGNEUR DE GUERRE',
@@ -577,6 +841,9 @@ fr: {
   'map.3.name': 'Les Cendres',
   'map.3.blurb': 'La route se fend. Moitié par le canyon — couvrez les deux ou soyez pris de flanc.',
   'map.3.finale': 'LES JUMEAUX DE BRAISE',
+  'map.4.name': 'La Lande des Tertres',
+  'map.4.blurb': 'La lande garde mal ses morts. Apportez le feu.',
+  'map.4.finale': 'LE ROI DES TERTRES',
   'e.grunt': 'La levée', 'e.runner': 'Tirailleurs', 'e.brute': 'Brutes',
   'e.boss': 'Le Seigneur de guerre', 'e.shield': 'Le mur d’écus', 'e.hound': 'Chiens de guerre',
   'e.marauder': 'Maraudeurs', 'e.ogre': 'L’ogre', 'e.matriarch': 'La Matriarche de givre',
@@ -587,6 +854,16 @@ fr: {
   'e.wyvern': 'Vouivres', 'e.gravemold': 'Moisissures de tombe', 'e.moldling': 'Spores',
   'e.necromancer': 'Nécromanciens', 'e.skeleton': 'Ossements levés', 'e.wardedone': 'Les Runés',
   'e.cutpurse': 'Coupe-bourses',
+  'e.barrowking': 'Le Roi des Tertres',
+  'e.hexbinder': 'Les Envoûteurs',
+  'hex.tag': 'Envoûteur',
+  'hex.line': 'les tours se taisent',
+  'hex.spread': 'Dispersez le ban — chevaliers, pièges et pouvoirs tiennent',
+  'hex.unit': 'Toutes les 7 s, chaque tour à moins de 9 u est réduite au silence pendant 3,5 s. Chevaliers, milice, pièges de route et pouvoirs de héros ne sont pas touchés — et une tour muette peut toujours être améliorée ou vendue.',
+  'curse.tag': 'Maudite',
+  'curse.line': 'les tombés se relèveront',
+  'curse.fire': 'Le feu brûle les corps',
+  'curse.unit': 'Chaque corps tombé se relève 2,5 s plus tard à 45% de sa force — sauf si le coup fatal était de feu.',
   'wave.lull': 'Les cors se taisent…',
   'wave.lullS': 'Ce n’est pas fini. Tenez la ligne.',
   'wave.surge': 'LA LONGUE NUIT',
@@ -611,6 +888,10 @@ fr: {
     3: ['Cendre au vent', 'La levée de cendre', 'Pillards', 'Course des landes', 'Ligne d’escarmouche',
         'Spectres de la cendre', 'La route se fend', 'La ligne bardée', 'Géants jumeaux', 'Le bélier roule',
         'Tout à la fois', 'La marche des ogres', 'Le grand brasier', 'Les Jumeaux de braise'],
+    4: ['Terre mauvaise', 'La levée de la lande', 'Pilleurs d’os', 'La fourche de la chapelle',
+        'LES MORTS SE LÈVENT', 'Spectres de la tourbe', 'Moisissure des tertres', 'Chants aux pierres levées',
+        'La seconde malédiction', 'Les morts gardés', 'Voleurs de tombes', 'Des ailes sur le gibet',
+        'LA LONGUE NUIT', 'Le cairn de l’ogre', 'Tout ce que la lande garde', 'Le Roi des Tertres'],
   },
 },
 };
@@ -684,14 +965,76 @@ const DAILY = ((P.get('daily') || '').replace(/\D/g, '') || '');
 const isTouch = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) < 900;
 const tier = P.get('tier') || (SHOT ? 'ultra' : (isTouch ? 'mobile' : 'high'));
 const Q = { // quality knobs — sections read these. HOOK: builders may add knobs.
-  mobile: { px: 1.5, shadow: 1024, bloom: false, segs: 96,  density: 0.55 },
-  high:   { px: 2,   shadow: 2048, bloom: true,  segs: 160, density: 1 },
-  ultra:  { px: 2,   shadow: 4096, bloom: true,  segs: 224, density: 1 },
+  // SPEC6 §D3c — the DENSITY knobs. `denseOn` is the alive count at which the render side
+  // starts shedding load and `denseOff` the count it stops again (hysteresis, so a field
+  // hovering on the line does not strobe); `shadCut` is how far from the lens a unit's
+  // contact patch survives while dense; `dpr` is the pixel-ratio notch it steps down to;
+  // `peak` is the head count wave 8 of a HORDE is sized to. Every one of them is read on
+  // the RENDER side only — nothing here can move a sim tick.
+  mobile: { px: 1.5, shadow: 1024, bloom: false, segs: 96,  density: 0.55,
+            denseOn: 260, denseOff: 170, shadCut: 46, dpr: 0.72, peak: 400 },
+  high:   { px: 2,   shadow: 2048, bloom: true,  segs: 160, density: 1,
+            denseOn: 400, denseOff: 270, shadCut: 62, dpr: 0.78, peak: 1000 },
+  ultra:  { px: 2,   shadow: 4096, bloom: true,  segs: 224, density: 1,
+            denseOn: 400, denseOff: 270, shadCut: 62, dpr: 0.80, peak: 1000 },
 }[tier];
+// ══ GAME MODE (SPEC6 §D3d) ═══════════════════════════════════════════════════════
+// Three ways to walk the same road. `campaign` is the shipped game and is what every
+// baseline matrix row and every shipped preset runs — the parameter has to be ASKED for.
+// `endless` is the old `&endless=1` pinned from the chooser's mode chip; `horde` is §D3d's
+// eight-wave flood, which swaps the map's wave table wholesale in SECTION: SIM.
+const MODE = (() => {
+  const m = (P.get('mode') || '').toLowerCase();
+  return m === 'horde' ? 'horde' : m === 'endless' ? 'endless' : 'campaign';
+})();
+const HORDE = MODE === 'horde';
+// §D3a — the BENCH. `&horde=N` puts N synthetic bodies on the road in one breath so a real
+// device can be measured at a head count no wave table reaches. It is a measurement rig,
+// not a mode: it takes no rng draw of its own (see G.spawnAt) and is refused at 0.
+const HORDE_BENCH = Math.max(0, Math.min(2400, parseInt(P.get('horde') || '', 10) || 0));
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const G = { THREE, rng, srng, runSeed, tier, Q, TPS, TICK, L, LANG, LANG_KEY,
-  TODAY, DAILY, DAILY_MAP, DAILY_SEED };   // shared namespace between sections
+  TODAY, DAILY, DAILY_MAP, DAILY_SEED, MODE, HORDE, HORDE_BENCH };   // shared namespace between sections
+
+// ══ WAR COUNCIL — talent grades (SPEC6 §B) ═══════════════════════════════════════
+// `TAL` is the talent grade IN FORCE FOR THIS RUN — {q,d,e}, each 0..3. It is declared here,
+// in CORE, because SIM (purse, knights, traps) and UI (the council screen) both read it and
+// neither owns it. It is NOT the saved record: the record lives in the progress store and is
+// copied in at RUN START by G.applyTalents() (SECTION: SIM), so a player who respecs between
+// runs never changes the run they are inside.
+//
+// ALL-ZERO IS THE BASELINE THE BALANCE MATRIX MEASURES. Every multiplier below is exactly 1
+// (or the shipped literal) at grade 0, so a run with no talents computes byte-for-byte what
+// r11 measured — that is what keeps the matrix rows bit-identical. Under the harness the
+// grades stay zero unless `&talents=q2,d1,e3` says otherwise.
+const TAL = { q: 0, d: 0, e: 0 };
+G.TAL = TAL;
+const TAL_GOLD = [0, 15, 30, 50];        // Quartermaster — gold added to the starting purse
+const TAL_HP   = [1, 1.08, 1.16, 1.25];  // Drillmaster  — knight & militia health multiplier
+const TAL_SELL = [0.70, 0.72, 0.78, 0.85];// Engineer     — dismantle refund (0 = the shipped 70%)
+const TAL_COST = [2, 4, 7];              // laurels per TIER (cumulative down a branch: 2/6/13)
+const TAL_BRANCH = ['q', 'd', 'e'];
+G.TAL_GOLD = TAL_GOLD; G.TAL_HP = TAL_HP; G.TAL_SELL = TAL_SELL;
+G.TAL_COST = TAL_COST; G.TAL_BRANCH = TAL_BRANCH;
+G.talGold = () => TAL_GOLD[TAL.q];
+G.talHp   = () => TAL_HP[TAL.d];
+G.talSell = () => TAL_SELL[TAL.e];
+G.talTrap = () => (TAL.e >= 3 ? 0.9 : 1);   // tier-3 Engineer also cheapens road traps
+// `&talents=q2,d1,e3` — the harness override. It is the ONLY source of talents in SHOT mode
+// (a screenshot must never depend on what this machine happens to have unlocked), and it
+// outranks the store in live play too, so a talent build can be handed over as a link.
+const TAL_OVR = (() => {
+  const s = P.get('talents');
+  if (!s) return null;
+  const o = { q: 0, d: 0, e: 0 };
+  for (const t of s.split(',')) {
+    const m = /^\s*([qde])\s*([0-3])\s*$/.exec(t);
+    if (m) o[m[1]] = +m[2];
+  }
+  return o;
+})();
+G.TAL_OVR = TAL_OVR;
 // ── MAPS: the campaign is data-driven (SPEC2 §E). Map 1 is the shipped Vale. This table
 // carries everything a map is EXCEPT its wave list, which SECTION: SIM owns and attaches
 // (`MAP.waves`); SECTION: PATH builds the road spline from `wps`. `&map=` selects.
@@ -861,6 +1204,120 @@ const MAPS = [
       pinD: [0.0243, 0.0253, 0.0289], pinL: [0.0780, 0.0791, 0.0894],
       weather: { col: [1.30, 0.92, 0.70], fall: 1.15, dx: -2.6, dz: 1.1, size: 1.25, alpha: 0.95, floor: 0.52 },
     } },
+  // ── 4. THE BARROWMOOR (SPEC6 §A2) — the undead map, tier LEGEND ──────────────
+  // The road comes out of a crypt mouth on the east rim, winds WEST between the barrows,
+  // and FORKS around the ruined chapel yard before rejoining for the run to the keep. The
+  // fork is map 3's mechanic exactly (seeded 50/50 at build, `branch` tag, measured rejoin) —
+  // what is different is the ground inside it: the chapel ruin, its yard wall and the grave
+  // plots around it are `G.obstacles`, so the island a Frostfell/Ember player would camp is
+  // largely UNBUILDABLE here. The buildable ground is the verges between the dead.
+  //
+  // `risen: true` + `cursedWaves` turn on the engine the RISEN stage built (§A1); nothing
+  // else is needed.
+  //
+  // WHY THE FINALE IS NOT IN `cursedWaves`, against §A1's "(plus the finale)": because on a
+  // cursed wave the BARROW KING'S OWN POWER IS DEAD CODE, and the telemetry says so. A cursed
+  // corpse stands up 2.5 s after it falls, wherever it fell; the King walks at 0.72, slower
+  // than anything else on the road, so he is always behind the fighting and every body inside
+  // his 12 u radius has long since risen by itself. Measured with W16 cursed: 24 pulses,
+  // `unburnedInRange=0` on every single one, `rose=0`, total. Measured with W16 NOT cursed:
+  // 34 pulses, 31 raised, and **453 corpse-sightings denied by fire** in the intended4 row
+  // against 0 in pyroless4, which raised 105. The two mechanics say the same sentence, so the
+  // finale hands it to the one whose sentence has a counterplay: the King IS the curse on his
+  // own wave, fire is what takes it off him, and "Ashes to Ashes — finale with zero risen"
+  // (§C) becomes a deed a player can actually earn.
+  //
+  // `dusk: 0.35` holds the Long Night grading rig at a permanent last-light
+  // 35% (see nightAmount) and W13 — a cursed wave AND this map's Long Night — takes it to 1.
+  // `moor: true` is what WORLD reads to scatter barrows, gravestones, standing stones and
+  // the gallows tree.
+  { id: 4, name: L('map.4.name'), blurb: L('map.4.blurb'),
+    interwave: 13, hpRamp: 0.09, waves: null, finale: L('map.4.finale'),
+    risen: true, cursedWaves: [5, 9, 13], dusk: 0.35, moor: true,
+    houses: [[-72, 24, 0.5], [-60, 28, 2.3], [-80, 32, -0.3], [-66, 36, 1.1]],
+    routes: [
+      { wps: [[96, -26], [80, -30], [64, -22], [50, -30], [38, -22], [26, -14], [16, -6],
+              [6, 4], [-8, 10], [-22, 8], [-34, 0], [-46, -4], [-60, 0], [-74, 8], [-86, 12], [-97, 8]] },
+      // the south arm of the chapel fork: it leaves the road at the lych-gate (16,-6) and
+      // comes back onto it at the yard's west corner (-34,0). Deliberately the LONGER arm —
+      // half a wave arriving late and alone is the same lesson the Ember Wastes teach, told
+      // here with the chapel ruin standing where the covering battery wants to be.
+      { from: { route: 0, tag: 1 }, to: 0,
+        wps: [[16, -6], [6, -14], [-8, -18], [-22, -14], [-31, -6], [-34, 0]] },
+    ],
+    palette: {
+      // A burial moor at last light. The whole map is built on ONE separation: bone-pale,
+      // desaturated ground under a cold violet dusk, with the only warmth in the low horizon
+      // band and the torches. That is what lets a crimson tabard and a bone-green Risen both
+      // read against it — and it is why nothing here is allowed to be saturated except them.
+      // The key is LOW and weak (this is the hour after the sun has left the valley floor);
+      // the ambient carries the picture, exactly like Ember's, but violet-cool rather than
+      // slate, and the fill is the strongest of the four maps because a moor at dusk is lit
+      // by the sky, not by the sun.
+      // MEASURED, not guessed. The first cut ran sunI 5.60 against hemiI 2.55 and a blue haze,
+      // and the frame came back a flat blue-grey tundra: the permanent dusk multiplies the key
+      // by 0.727 and the ambient by 0.944, so a rig balanced for daylight loses its key and
+      // KEEPS its fill, which is the definition of a flat picture. The key is therefore
+      // authored PRE-dusk (8.80 x 0.727 = 6.4, in the Vale's band) and the ambient is the
+      // thinnest of the four maps, not the fattest. The haze is peat rather than slate for the
+      // same reason: at dusk the fog band is pulled to two thirds of its daylight distance, so
+      // the haze colour IS most of the map's colour, and a blue one turns the moor into snow.
+      sun: 0xffc59a, sunI: 7.70, hemiSky: 0x7d8ebc, hemiGnd: 0x6b6250, hemiI: 2.75,
+      fill: 0x9db2dc, fillI: 0.94, haze: 0x93897c, bg: 0xa89c8c, envI: 0.58,
+      // dusk shade is COOL. The warm shadow grade is the Vale's alone (INTEGRATE §1).
+      shdWarm: 0.0,
+      hazeV: [0.235, 0.225, 0.220],
+      // Indigo overhead falling to a sullen rose-amber band on the horizon — the last of the
+      // light, and the only saturated hue in the sky.
+      skyZen: [0.052, 0.078, 0.185], skyMid: [0.150, 0.190, 0.315], skyHi: [0.360, 0.360, 0.450],
+      skyHor: [0.760, 0.520, 0.430], skyLow: [0.290, 0.320, 0.400], sunGlow: [1.0, 0.74, 0.52],
+      ibl: ['#243a72', '#4f5f92', '#7d86a4', '#d0a894', '#8f92a6', '#4e5160'],
+      disc: ['rgba(255,226,198,1)', 'rgba(255,180,150,.50)', 'rgba(220,150,130,0)'],
+      bgGrad: ['#3f4a70', '#5c6688', '#8189a0', '#b9a9a4', '#8a8ea2', '#565a6c'],
+      // GROUND — bone-pale moor grass. Barely green at all: a pale straw-grey with the
+      // faintest olive in the lit end, and a ~19-point value span so the turf still models
+      // under a weak key instead of going to one sheet of paper.
+      // "Bone-pale" is a STRAW, not a grey: the first cut authored it neutral and the dusk
+      // grade's blue ambient turned every neutral surface in frame the same blue. Red leads
+      // green leads blue by a clear margin now, so the turf stays bone under a cold sky.
+      // The TURF is a grey-green (moor grass is not straw), and the DRY PATCHES are the bone.
+      // Authoring both pale was the second cut's mistake: it made the lit half of the map read
+      // as beach sand, because nothing on the ground had any hue left to separate turf from
+      // scald. The value ladder now runs turf 0.10 -> 0.27, scald 0.22 -> 0.37.
+      gDark: [0.0950, 0.1080, 0.0780], gMid: [0.1620, 0.1810, 0.1280], gLit: [0.2480, 0.2700, 0.1820],
+      dry0: [0.2050, 0.1940, 0.1470], dry1: [0.3260, 0.3060, 0.2400], bare: [0.1520, 0.1400, 0.1080],
+      // ROAD — wet peat, well under the turf in value so the road is the DARK shape on this
+      // map (the inverse of Ember, where it had to be the bright one). A pale ground needs a
+      // dark road or the horde has nothing to walk on.
+      dirt0: [0.0900, 0.0810, 0.0700], dirt1: [0.2050, 0.1880, 0.1620],
+      // ROCK — lichened grey granite, cool, and lighter than the turf so the standing stones
+      // and the rim read as objects rather than as more moor.
+      rockA: [0.0560, 0.0590, 0.0630], rockB: [0.2560, 0.2610, 0.2650],
+      rockWarm: [1.08, 1.02, 0.94], rockCool: [0.86, 0.94, 1.14],
+      moss: [0.0560, 0.0720, 0.0520], scree: [0.1680, 0.1700, 0.1740],
+      lowG: [0.74, 0.80, 0.88], lowRiv: [0.118, 0.130, 0.152],
+      ridge: [[0.052, 0.058, 0.074], [0.068, 0.076, 0.094], [0.084, 0.092, 0.112]],
+      rockK: [0.96, 0.99, 1.08],
+      // The ground clutter was the loudest thing in the first cut of `_dusk`: bright saturated
+      // green tufts scattered over a bone field, i.e. the one element still rendering as the
+      // Vale. Pulled onto the turf's own straw and thinned further (a moor is cropped by
+      // weather and sheep, not a meadow).
+      tuftK: [1.02, 0.92, 0.68], tuftFloor: 0.40,
+      blade: [152, 144, 108], bladeW: [30, 18, 2], tuftN: 0.40,
+      // TREES — a moor is not a wood. Thin, and what stands is dead: near-black cool timber
+      // that reads as silhouette, weighted hard toward the bare-ash form.
+      treeMix: [0.12, 0.86], treeN: 0.45,
+      // Darker than the second cut by a third: under a warm key a 0.118 canopy came back TAN,
+      // and a tan canopy on a moor is an autumn wood. These read as wet black timber.
+      oakD: [0.0250, 0.0255, 0.0290], oakL: [0.0780, 0.0790, 0.0850],
+      busD: [0.0270, 0.0285, 0.0290], busL: [0.0760, 0.0790, 0.0790],
+      ashD: [0.0285, 0.0295, 0.0335], ashL: [0.0900, 0.0910, 0.0985],
+      pinD: [0.0230, 0.0245, 0.0270], pinL: [0.0640, 0.0670, 0.0720],
+      // WEATHER — not a fall but a DRIFT. Ground mist and ghost-green wisps: barely any
+      // descent (fall 0.30 against snow's 3.1), a slow lateral crawl, and a big soft tile.
+      // The green is the map's signature and the one colour on it that is allowed to glow.
+      weather: { col: [0.72, 1.34, 0.96], fall: 0.30, dx: -0.60, dz: 0.26, size: 2.60, alpha: 0.66, floor: 0.50 },
+    } },
 ];
 const MAP = MAPS[clamp((parseInt(P.get('map') || '') || SHOT_MAPS[SHOT] || 1) - 1, 0, MAPS.length - 1)];
 G.MAPS = MAPS; G.MAP = MAP;
@@ -945,8 +1402,8 @@ const WPAL_BASE = {
   // a soldier's screen size and HIGHER luminance than a lit helmet. Pulled ~32% down and
   // tinted onto the base grass family, so ground cover adds TEXTURE to the sward instead of
   // competing with the army for the eye.
-  blade: [68, 90, 52], bladeW: [40, 16, -1], tuftN: 1,
-  treeMix: [0.42, 0.72],
+  blade: [68, 90, 52], bladeW: [40, 16, -1], tuftN: 1, tuftFloor: 1,
+  treeMix: [0.42, 0.72], treeN: 1,
   // r3: paintCanopy already bakes a 5:1 top-to-underside AO ramp, so the gradient was never
   // the problem — the ABSOLUTE value was. Canopy tops measured V31 against a V56 meadow, i.e.
   // dark olive potatoes dumped on hot lime, the exact inverse of the reference, where a
@@ -2922,7 +3379,11 @@ World.build = function () {
   // stays reads as scattered standards, not a canopy roof over the composition.
   const CORE_X = 30, CORE_Z = 20;
   const inCore = (x, z) => Math.abs(x) < CORE_X && Math.abs(z) < CORE_Z;
-  const CLUSTERS = Math.round(46 * Q.density);
+  // SPEC6 §A2: `treeN` is the per-map woodland density. WPAL_BASE carries 1, so maps 1-3 run
+  // the identical cluster count and therefore the identical `_ws` draw sequence — the Vale is
+  // still the Vale. The Barrowmoor runs it thin, because a moor is OPEN ground: a burial moor
+  // with a Vale-density wood on it is a forest with graves in it, which is a different place.
+  const CLUSTERS = Math.round(46 * Q.density * WPAL.treeN);
   for (let ci = 0; ci < CLUSTERS; ci++) {
     let cx = 0, cz = 0, ok = false;
     const fringeOnly = wrng() < 0.55;
@@ -3013,10 +3474,18 @@ World.build = function () {
       // what reads as ink flicked across the meadow. The lift is a MAX against an
       // albedo-proportional floor, which by construction touches nothing that is already
       // lit: a sunlit tuft sits far above the floor and keeps §1b's ceiling exactly.
+      // SPEC6 §A2: the ADDITIVE half of that floor is green-biased, and on a map graded to
+      // permanent dusk it is the dominant term on every shadowed tuft — which is why the
+      // Barrowmoor's first cut had bright green clutter scattered over a bone-pale moor. It is
+      // now scaled by the map's own `tuftFloor`. Maps 1-3 carry the WPAL_BASE value 1, and
+      // 0.0090 x 1 formats to the identical literal, so their shader is byte-for-byte the one
+      // FLORA §1 shipped.
+      const TF = WPAL.tuftFloor;
       sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>',
         `#include <opaque_fragment>
         gl_FragColor.rgb = max(gl_FragColor.rgb,
-                               diffuseColor.rgb * vec3(0.62, 0.70, 0.80) + vec3(0.0090, 0.0165, 0.0110));`);
+                               diffuseColor.rgb * vec3(0.62, 0.70, 0.80) + vec3(` +
+        (0.0090 * TF).toFixed(4) + ', ' + (0.0165 * TF).toFixed(4) + ', ' + (0.0110 * TF).toFixed(4) + `));`);
     };
     // Clumped, not uniform: an even sprinkle at this density reads as screen noise.
     // Each patch shares a tint + scale bias so the meadow gets legible tonal shapes.
@@ -3089,6 +3558,238 @@ World.build = function () {
       }
     }
     iMesh(fenceG, texMat(TX.wood, { roughness: 0.75 }), list, true, 'FENCES');
+  }
+
+  // ── 10b. THE BARROWMOOR's dead (SPEC6 §A2) ──────────────────────────────────
+  // Everything in this block is guarded on `MAP.moor`, so the other three roads consume the
+  // `_ws` scatter stream exactly as they did — the Vale is still bit-for-bit the Vale.
+  //
+  // The map's tactical idea lives HERE and not in the wave table: barrow mounds, grave
+  // plots, standing stones, the gallows and the chapel ruin all register footprints in
+  // `G.obstacles`, so buildable ground on this map is the verges BETWEEN the dead. The
+  // chapel sits in the middle of the fork's lens on purpose — that island is exactly where a
+  // Frostfell or Ember player learns to camp, and on the moor most of it is a graveyard.
+  //
+  // Draw-call budget: three instanced buckets (barrows, graves, menhirs) plus two merged
+  // meshes (all the moor's stone, all its timber) = FIVE calls for the whole dressing, which
+  // is what keeps this map's busiest frame at 151 against the 170 budget.
+  if (MAP.moor) {
+    const _wv3 = new THREE.Vector3();
+    const stoneMat = texMat(TX.stone, { roughness: 0.94 });
+    const woodMat = texMat(TX.wood, { roughness: 0.80 });
+    // Barrow turf is read OFF the map's own grass ramp — never invented — and then darkened.
+    // It is held on the sward's hue ratio (G/R ≈ 1.05), not a greener one: an earlier cut ran
+    // G/R at 1.30 and the mounds came back as saturated green blobs, the only saturated thing
+    // in a deliberately desaturated frame, and on this map that colour belongs to the wisps.
+    const TG = WPAL.gMid;
+    const turf = [TG[0] * 0.60, TG[1] * 0.66, TG[2] * 0.62];
+    // THE MOUND IS A BOULDER, TURFED AND HALF BURIED. The first cut used a smooth sphere cap
+    // with a flat albedo, and it rendered as a giant pale-green egg — the one object in frame
+    // with no facets and no procedural detail, in a diorama built entirely out of both. This
+    // is the same irregular icosphere the field boulders use (so it lumps and facets like
+    // everything else on the map), repainted as turf and sunk to 55% so only its crown shows.
+    // paintFlat() is NOT enough here and the second cut proved it: its jitter samples one
+    // noise octave over a unit sphere, so a mesh scaled to twelve metres came out as a dozen
+    // flat green facets — a low-poly pebble. This bakes what the terrain shader would have
+    // given it: two octaves of turf mottle at different world scales, a real up-facing term
+    // (the crown catches the sky, the flanks do not), and a hue drift so the mound is never
+    // one colour. Detail 3 because a barrow is fifteen times a boulder's size and carries
+    // its silhouette against the horizon.
+    const domeG = paint(rockGeo(3, 8.3, false), (c, x, y, z, ny) => {
+      const m1 = fbmz(x * 2.6 + 11, z * 2.6 + y * 1.9, 3);
+      const m2 = fbmz(x * 8.7 + 5, z * 8.7 + y * 5.6, 2);
+      const up = clamp(ny * 0.5 + 0.5, 0, 1);
+      const v = (0.56 + 0.72 * m1) * (0.84 + 0.30 * m2) * (0.50 + 0.66 * up);
+      c.setRGB(turf[0] * v * (0.92 + 0.20 * m2), turf[1] * v, turf[2] * v * (0.80 + 0.34 * m1));
+    });
+    const turfMat = propMat({ roughness: 0.97 });
+
+    // ── the barrows themselves: a turf dome with a stone doorway cut into its flank ──
+    // The doorway is what makes a mound read as a TOMB rather than as a hill: two jambs, a
+    // lintel, and a black slab of nothing behind them.
+    const mounds = [], jambs = [], moorStone = [], moorWood = [];
+    const doorParts = (x, y, z, ang, s) => {
+      const c = Math.cos(ang), sn = Math.sin(ang);
+      const at = (lx, ly, lz) => trs(x + lx * c + lz * sn, y + ly, z - lx * sn + lz * c, ang, s, s, s);
+      for (const sg of [-1, 1])
+        jambs.push({ g: paintStone(boxG(0.52, 2.05, 0.62), 0.86), m: at(sg * 0.92 * s, 1.0 * s, 0) });
+      jambs.push({ g: paintStone(boxG(2.65, 0.60, 0.78), 0.94), m: at(0, 2.28 * s, 0) });
+      // the mouth: a near-black plate set back under the lintel
+      jambs.push({ g: paintFlat(boxG(1.42, 1.95, 0.16), [0.010, 0.011, 0.013], 0.05), m: at(0, 0.98 * s, -0.42 * s) });
+    };
+    const BARROWS = [];
+    for (let i = 0; i < 26 && BARROWS.length < 13; i++) {
+      const a = wr(0, 6.283), u = wr(0.18, 0.92), p = seP(a, u);
+      const x = p[0], z = p[1];
+      // 11u off the centreline: a barrow standing ON the verge would wall the road in and
+      // (worse) push the horde's lane spread through it.
+      if (!freeAt(x, z, 6.5, 11.0) || ringU(x, z) > 0.95 || slopeAt(x, z) > 0.50) continue;
+      let clash = false;
+      for (const b of BARROWS) if ((x - b[0]) ** 2 + (z - b[1]) ** 2 < 26 * 26) clash = true;
+      if (clash) continue;
+      BARROWS.push([x, z]);
+      // `hh` is the FULL blob height; 55% of it is buried, so the mound that shows stands
+      // r*0.52..0.68 proud of the turf — a hill, not a lens.
+      const r = wr(4.6, 7.4), hh = r * wr(1.16, 1.50) * 0.82;
+      const gy = bi(HG, x, z);
+      mounds.push({ m: trs(x, gy - hh * 0.64, z, wr(0, 6.283), r / 1.1, hh, r / 1.1 * wr(0.82, 1.12)), c: vary(0.10) });
+      // the doorway faces the nearest road, which is what makes the mounds feel placed
+      const np = G.nearestPath(x, z);
+      G.pathPos(np.d, _wv3, 0, np.pid);
+      const face = Math.atan2(_wv3.x - x, _wv3.z - z);
+      doorParts(x, gy - 0.2, z, face, wr(0.92, 1.18));
+      // the revetment. Set stones round the foot, leaning outward with the mound's own
+      // slump and skipped where the doorway stands — a kerb that ran through the jambs
+      // would read as a fence, and the gap is what makes the entrance an entrance.
+      const kh = (n) => { const v = Math.sin(x * 12.9898 + z * 78.233 + n * 37.719) * 43758.5453;
+                          return v - Math.floor(v); };
+      const kv = (n, a, b) => a + (b - a) * kh(n);
+      const kn = 13 + ((kh(0) * 5) | 0), kr = r * 0.94;
+      for (let ki = 0; ki < kn; ki++) {
+        const ka = ki / kn * 6.283 + kv(ki * 7 + 1, -0.06, 0.06);
+        let dd = ka - face; while (dd > Math.PI) dd -= 6.283; while (dd < -Math.PI) dd += 6.283;
+        if (Math.abs(dd) < 0.42) continue;                   // the doorway keeps its gap
+        const kx = x + Math.sin(ka) * kr, kz = z + Math.cos(ka) * kr;
+        const ks = kv(ki * 7 + 2, 0.52, 0.92);
+        moorStone.push({ g: paintStone(rockGeo(1, 5.7 + ki, false), kv(ki * 7 + 3, 0.74, 0.98)),
+          m: trs(kx, bi(HG, kx, kz) - ks * 0.30, kz, ka + kv(ki * 7 + 4, -0.4, 0.4),
+                 ks * kv(ki * 7 + 5, 0.85, 1.25), ks * kv(ki * 7 + 6, 0.62, 0.98),
+                 ks * kv(ki * 7 + 7, 0.70, 1.05),
+                 kv(ki * 7 + 8, -0.22, 0.10), kv(ki * 7 + 9, -0.16, 0.16)) });
+      }
+      OBS.push({ x, z, r: r * 0.92 });
+      G.stampAO(x, z, r * 1.25, 1.0);
+    }
+    iMesh(domeG, turfMat, mounds, true, 'BARROWS');
+
+    // ── grave plots: leaning slabs in clusters, the way a churchyard actually fills ──
+    // Individually these are ankle-high and do NOT block building (a tower can stand among
+    // headstones); the PLOT registers one soft footprint so a keep does not grow through the
+    // middle of a dozen of them.
+    const graveL = [];
+    const slabG = baseBleed(paint(boxG(0.78, 1.30, 0.20), (c, x, y, z, ny) => {
+      const m1 = fbmz(x * 5.2 + 31, z * 5.2 + y * 3.6, 2);      // the colony
+      const m2 = fbmz(x * 17 + 3, y * 17 + 9, 2);               // the grain of the stone
+      const up = clamp(ny * 0.5 + 0.5, 0, 1);
+      const lich = clamp((m1 - 0.42) * 2.4, 0, 1) * (0.30 + 0.70 * up);
+      const damp = clamp(1 - (y + 0.65) * 1.5, 0, 1);           // ground wet up the foot
+      const v = (0.86 + 0.26 * m2) * (1 - 0.34 * damp);
+      c.setRGB(v * (1 - 0.22 * lich), v * (1 - 0.04 * lich), v * (1 - 0.30 * lich));
+    }), 0.30, 0.44);
+    for (let pI = 0; pI < 22; pI++) {
+      const a = wr(0, 6.283), u = wr(0.14, 0.94), p = seP(a, u);
+      const cx = p[0], cz = p[1];
+      if (!freeAt(cx, cz, 3.0, 8.2) || ringU(cx, cz) > 0.98) continue;
+      const n = 5 + Math.round(wr(0, 9)), rad = wr(2.6, 5.6), face = wr(0, 6.283);
+      let put = 0;
+      for (let i = 0; i < n; i++) {
+        const x = cx + wr(-rad, rad), z = cz + wr(-rad, rad);
+        if (!freeAt(x, z, 0.4, 6.4)) continue;
+        const s = wr(0.72, 1.35);
+        graveL.push({ m: trs(x, bi(HG, x, z) - 0.30 * s, z, face + wr(-0.30, 0.30),
+          s * wr(0.8, 1.25), s * wr(0.85, 1.45), s, wr(-0.28, 0.24), wr(-0.26, 0.26)), c: vary(0.16) });
+        G.stampAO(x, z, s * 0.8, 0.6);
+        put++;
+      }
+      if (put > 3) OBS.push({ x: cx, z: cz, r: rad * 0.62 });
+    }
+    iMesh(slabG, stoneMat, graveL, true, 'GRAVES');
+
+    // ── standing stones: menhirs, in one ring on the open moor plus a scatter ──────
+    // The geometry is the CRAG prism, not the boulder blob: a menhir is a split slab with
+    // flat faces and a broken crown, and the rounded rock scaled tall came out as a striped
+    // grey cone — a party hat, measured off the first cut of `_dusk`.
+    const menhirL = [];
+    const menhirG = baseBleed(cragGeo(5, 3, 44.9), 0.34, 0.40);
+    const addMenhir = (x, z, s) => {
+      // pad 4.0 (not 1.4): the first cut planted stones inside the hamlet by the keep.
+      if (!freeAt(x, z, 4.0, 7.4) || ringU(x, z) > 0.98) return false;
+      menhirL.push({ m: trs(x, bi(HG, x, z) - s * 0.40, z, wr(0, 6.283),
+        s * wr(0.86, 1.20), s * wr(2.0, 3.0), s * wr(0.42, 0.66), wr(-0.10, 0.10), wr(-0.12, 0.12)), c: vary(0.14) });
+      OBS.push({ x, z, r: 1.5 });
+      G.stampAO(x, z, s * 1.1, 0.9);
+      return true;
+    };
+    { // THE RING — nine stones out on the open moor south of the fork, well clear of the
+      // hamlet (where the first cut put it, standing menhirs in somebody's garden).
+      const rx = -40, rz = -26, rr = 9.5;
+      for (let i = 0; i < 9; i++) {
+        const a = i / 9 * 6.283 + 0.2;
+        addMenhir(rx + Math.cos(a) * rr, rz + Math.sin(a) * rr, wr(1.5, 2.1));
+      }
+    }
+    for (let i = 0; i < 22; i++) {
+      const a = wr(0, 6.283), u = wr(0.26, 0.98), p = seP(a, u);
+      addMenhir(p[0], p[1], wr(1.0, 1.9));
+    }
+    iMesh(menhirG, graniteMat({ roughness: 0.88 }), menhirL, true, 'MENHIRS');
+
+    // ── THE GALLOWS TREE ────────────────────────────────────────────────────────
+    // Hand-placed, on the outside of the road's last bend before the keep, so it stands
+    // against the sky in the overview frame instead of being lost in the middle of the map.
+    {
+      const gx = -58, gz = 16, gy = bi(HG, gx, gz);
+      moorWood.push({ g: paintWood(new THREE.CylinderGeometry(0.62, 1.05, 8.6, 9), 0.44), m: trs(gx, gy + 4.2, gz, 0, 1, 1, 1, 0.05, 0.04) });
+      // the arm: a dead limb that has been squared off and used
+      moorWood.push({ g: paintWood(boxG(7.2, 0.52, 0.52), 0.40), m: trs(gx + 2.4, gy + 8.0, gz, 0.34, 1, 1, 1, 0, -0.05) });
+      moorWood.push({ g: paintWood(boxG(2.6, 0.34, 0.34), 0.38), m: trs(gx + 1.0, gy + 6.9, gz + 0.4, 0.34, 1, 1, 1, 0, 0.72) });
+      for (const [ox, oz, dl] of [[4.3, 1.5, 2.3], [2.0, 0.7, 3.1], [5.4, 1.9, 1.7]]) {
+        moorWood.push({ g: paintWood(boxG(0.10, dl, 0.10), 0.30), m: trs(gx + ox, gy + 7.9 - dl / 2, gz + oz) });
+        moorWood.push({ g: paintWood(new THREE.TorusGeometry(0.30, 0.075, 5, 9), 0.30),
+          m: trs(gx + ox, gy + 7.9 - dl - 0.24, gz + oz, 0, 1, 1, 1, Math.PI / 2, 0) });
+      }
+      // a few dead branches so the silhouette is a TREE that was used, not a scaffold
+      for (const [a, ln, ri] of [[1.1, 3.4, 0.34], [3.9, 2.9, -0.26], [5.6, 2.4, 0.30]])
+        moorWood.push({ g: paintWood(boxG(0.26, ln, 0.26), 0.36),
+          m: trs(gx + Math.cos(a) * 0.9, gy + 6.4 + ln * 0.35, gz + Math.sin(a) * 0.9, a, 1, 1, 1, ri, -0.62) });
+      OBS.push({ x: gx, z: gz, r: 2.6 });
+      G.stampAO(gx, gz, 4.2, 1.0);
+    }
+
+    // ── THE RUINED CHAPEL YARD — the centre of the fork ─────────────────────────
+    // Three standing wall stubs, a broken window arch and a low yard wall. The whole
+    // composition registers as obstacles, which is the point: the island inside the fork is
+    // consecrated ground, and the battery that wants to cover both arms has to stand on the
+    // verges instead of on top of it.
+    {
+      const cx = -8, cz = -4, cy = bi(HG, cx, cz);
+      const wall = (lx, lz, w, h, d, ry, tint) =>
+        moorStone.push({ g: paintStone(boxG(w, h, d), tint), m: trs(cx + lx, cy + h / 2 - 0.25, cz + lz, ry) });
+      wall(0, -4.6, 11.0, 4.2, 0.95, 0, 0.92);                 // the long south wall, still up
+      wall(-5.2, -1.2, 0.95, 5.6, 6.0, 0, 0.88);               // the west gable, tallest piece
+      wall(5.2, -2.6, 0.95, 2.4, 3.0, 0, 0.90);                // the east wall, mostly fallen
+      wall(2.0, 1.4, 3.4, 1.1, 0.9, 0.35, 0.84);               // a course of tumbled blocks
+      // The window arch in the west gable. That wall runs along Z (it is 0.95 thick in x and
+      // 6.0 deep in z), so the arch is drawn in the Y-Z plane and each voussoir is turned
+      // about X until its own +y points radially out of the arch centre — rx = a - PI/2.
+      for (let i = 0; i <= 9; i++) {
+        const a = Math.PI * (0.04 + i / 9 * 0.92);
+        moorStone.push({ g: paintStone(boxG(1.08, 0.70, 0.62), 1.02),
+          m: trs(cx - 5.2, cy + 3.35 + Math.sin(a) * 1.55, cz - 1.2 - Math.cos(a) * 1.55,
+                 0, 1, 1, 1, a - Math.PI / 2, 0) });
+      }
+      // the yard wall: a broken ring of low drystone, with the gaps a ruin has
+      for (let i = 0; i < 34; i++) {
+        const a = i / 34 * 6.283;
+        if (((i * 7) % 11) < 3) continue;                       // the gaps
+        const rr = 10.4 + Math.sin(a * 3.1) * 0.8;
+        moorStone.push({ g: paintStone(boxG(2.1, wr(0.75, 1.55), 0.72), wr(0.80, 0.98)),
+          m: trs(cx + Math.cos(a) * rr, cy + 0.25, cz + Math.sin(a) * rr, -a + Math.PI / 2, 1, 1, 1, 0, wr(-0.06, 0.06)) });
+      }
+      OBS.push({ x: cx, z: cz, r: 8.6 });
+      for (let i = 0; i < 8; i++) {                             // the yard wall's own footprint
+        const a = i / 8 * 6.283;
+        OBS.push({ x: cx + Math.cos(a) * 10.4, z: cz + Math.sin(a) * 10.4, r: 1.6 });
+      }
+      G.stampAO(cx, cz, 12.0, 1.0);
+    }
+    const mkMoor = (parts, mat, uvs, name) => {
+      if (!parts.length) return;
+      const m = new THREE.Mesh(mergeParts(parts, uvs), mat);
+      m.castShadow = true; m.receiveShadow = true; m.name = name; World.group.add(m);
+    };
+    mkMoor(jambs.concat(moorStone), stoneMat, 2.2, 'MOOR_STONE');
+    mkMoor(moorWood, woodMat, 1.1, 'MOOR_TIMBER');
   }
 
   // ── 11. village near the keep gate ──────────────────────────────────────────
@@ -3285,7 +3986,48 @@ const DAY = {
 const _nFogNear = scene.fog.near, _nFogFar = scene.fog.far;
 let _nCur = 0, _nFrom = 0, _nTgt = 0, _nT0 = -1e9;
 const _sm = k => k * k * (3 - 2 * k);
+// SPEC6 §A2 — PERMANENT DUSK. The Barrowmoor is a burial moor "at last light", and last
+// light is exactly what this rig already knows how to render: rather than a second grading
+// path (a second set of light lerps to keep in sync with the first, and a second thing for
+// a future fix to miss), the map def carries `dusk` and it becomes a FLOOR under the same
+// amount the Long Night drives. So the moor renders permanently at 35% night, its W13 Long
+// Night runs the identical curve from 0.35 up to full night, and every consumer of
+// G.nightAmt() — the torch promotion, the VFX grade, the moon rim — is already correct.
+// `_nCur` keeps its old meaning (the LONG NIGHT's own amount) so the roll-back branch below
+// is untouched; the floor is applied on the way out, in one place.
+const DUSK_FLOOR = clamp(MAP.dusk || 0, 0, 1);
+let _nOut = DUSK_FLOOR;
+// SPEC6 §A2 DRESSING — LAST LIGHT IS NOT A FRACTION OF MIDNIGHT, and the first cut of
+// `overview4` proved it: the moor came back a blue-grey tundra with white speckle on it,
+// i.e. a MOONLIT SNOWFIELD, on a map whose whole brief is "a burial moor at last light".
+// The cause is structural rather than a colour miss. The Long Night rig is a straight
+// two-point lerp DAY → NIGHT, so holding a map at 35% of it grades that map 35% of the way
+// to a moon: the key loses its warmth, the ambient goes slate, and the fog band — which at
+// dusk is pulled to two thirds of its daylight distance and is therefore MOST OF THE MAP'S
+// COLOUR — is dragged off the palette's authored peat toward #4e5a6d. Every one of those is
+// the same mistake made three times: dusk is not dim day and it is not weak night, it is its
+// own light, with the warmth pushed into a narrow low band and the cool taking the rest.
+//
+// So the ramp gains a WAYPOINT. On a dusk map the grade runs DAY → DUSK across [0, floor]
+// and DUSK → NIGHT across [floor, 1]; the Long Night still arrives at exactly the same
+// midnight it always did, it just gets there through the hour that is actually between them.
+// On maps 1-3 DUSK_FLOOR is 0, `DUSKC` is null and the second segment is the whole range —
+// literally `copy(DAY).lerp(NIGHT, a)`, the expression that shipped, so the Vale, the Pass
+// and the Wastes are bit-for-bit what the art strike measured.
+const DUSKC = DUSK_FLOOR > 0 ? {
+  // The key is the last of the sun and it goes ORANGE as it goes, never grey — a low sun is
+  // filtered through the whole atmosphere and that is the one thing a moon can never do.
+  sun: new THREE.Color(0xffc79c),
+  // Ambient is the SKY at this hour, so it is violet-blue and it is doing most of the work.
+  hemiSky: new THREE.Color(0x76829f), hemiGnd: new THREE.Color(0x6f6350),
+  fill: new THREE.Color(0x99a5c4),
+  // ...and the haze stays PEAT. This is the single most load-bearing colour on the map.
+  fog: new THREE.Color(0x8b7e70),
+} : null;
 function nightAmount() {
+  return _nOut = Math.max(DBG.day ? 0 : DUSK_FLOOR, nightRaw());
+}
+function nightRaw() {
   if (DBG.day) return _nCur = 0;                // SCHOOLS §0 — the A/B daylight capture
   const st = G.state, ng = G.night;
   // Night FALLS across the wave and is already down when the horns stop — it does not snap
@@ -3314,19 +4056,28 @@ let _nApplied = -1;
 function applyNight(a) {
   if (Math.abs(a - _nApplied) < 0.002) return;
   _nApplied = a;
-  sun.color.copy(DAY.sun).lerp(NIGHT.sun, a);
+  // `dk` walks the DAY → DUSK leg, `nk` the DUSK → NIGHT one. With no dusk floor `dk` is 0,
+  // `nk` is `a`, and `grade` collapses to the single lerp that shipped.
+  const dk = DUSKC ? Math.min(a, DUSK_FLOOR) / DUSK_FLOOR : 0;
+  const nk = DUSKC ? Math.max(0, a - DUSK_FLOOR) / (1 - DUSK_FLOOR) : a;
+  const grade = (out, key) => {
+    out.copy(DAY[key]);
+    if (DUSKC) out.lerp(DUSKC[key], dk);
+    return out.lerp(NIGHT[key], nk);
+  };
+  grade(sun.color, 'sun');
   sun.intensity = WPAL.sunI * (1 - 0.78 * a);
-  hemi.color.copy(DAY.hemiSky).lerp(NIGHT.hemiSky, a);
-  hemi.groundColor.copy(DAY.hemiGnd).lerp(NIGHT.hemiGnd, a);
+  grade(hemi.color, 'hemiSky');
+  grade(hemi.groundColor, 'hemiGnd');
   // VFX-FIX4 §4: ambient is no longer gutted — a blue-grey hemisphere held near strength is
   // the term that DESATURATES the meadow, and cutting it was half of why night came out as a
   // darker, greener day. Same for the fill.
   hemi.intensity = WPAL.hemiI * (1 - 0.16 * a);
-  fill.color.copy(DAY.fill).lerp(NIGHT.fill, a);
+  grade(fill.color, 'fill');
   fill.intensity = WPAL.fillI * (1 - 0.30 * a);
   moon.intensity = 0.80 * a;                    // the spec's cool rim/fill on the silhouettes
   U_SW.value = SW_BASE * (1 - a);               // INTEGRATE §1: no warm shade grade at night
-  scene.fog.color.copy(DAY.fog).lerp(NIGHT.fog, a);
+  grade(scene.fog.color, 'fog');
   // fog density: three's linear fog has no density, so the band is pulled in instead. Pulled
   // MUCH harder at night than it used to be — this is the remap. The near plane collapsing to
   // a fifth of its daylight distance is what puts a blue-grey floor under every channel of
@@ -3334,7 +4085,7 @@ function applyNight(a) {
   // saturation without a post pass.
   scene.fog.near = _nFogNear * (1 - 0.90 * a); scene.fog.far = _nFogFar * (1 - 0.74 * a);
   scene.environmentIntensity = WPAL.envI * (1 - 0.45 * a);
-  skyMat.uniforms.uNight.value = a;
+  skyMat.uniforms.uNight.value = nk;
   // exposure eased back (was 0.35): the units in the lower left of `_longnight.png` were
   // unreadable brown lumps whose only value separation was a red health bar. Night is a
   // CRUSHED-CONTRAST, low-saturation, blue-grey picture — not a dark one. Taking the frame
@@ -3348,7 +4099,7 @@ function applyNight(a) {
   }
   if (World.fireMat) World.fireMat.opacity = 1;
 }
-G.nightAmt = () => _nCur;
+G.nightAmt = () => _nOut;
 
 // render-only animation driver (deterministic in shot mode)
 scene.onBeforeRender = () => {
@@ -3474,13 +4225,30 @@ const KNIGHT_CAP = 64;
 // its `art` at this mesh — so the cap has to hold parent and offspring at once.
 // `skeleton` is sized for the raise (a necromancer holds 12 alive, and a wave can field
 // several), not for any wave table, because nothing ever spawns one directly.
-const ACAP = { grunt: 560, runner: 380, brute: 140, boss: 8,
-               shield: 200, hound: 260, marauder: 190, ogre: 14,
-               ironclad: 48, ashwraith: 260, frostrevenant: 140, warshaman: 64, ram: 8,
-               wyvern: 160, gravemold: 240, necromancer: 40, wardedone: 56,
-               cutpurse: 220, skeleton: 200 };
+// SPEC6 §D3b — RAISED FOR THE HORDE. A unit past its archetype's cap simulates INVISIBLY
+// (syncVisuals' `A.n >= A.cap` skip), which is the one failure mode a tower defence can
+// never ship: the player is asked to answer something that is not on screen. The campaign
+// never came near these numbers — the fattest campaign wave puts ~230 bodies of one kind on
+// the road — but HORDE MODE's wave 8 is sized to a thousand alive, so every archetype the
+// floods field is now sized for ITS share of that peak plus the Risen it can turn into
+// (a cursed body borrows its own species' mesh at 45% hp, so map 4 needs ~1.45x head room).
+// The combined budget is ~6.8k instances, which is ~730 KB of instance attributes and NOT
+// a draw call: `mesh.count` is written every frame from what is actually alive, so a device
+// that never sees a horde pays only the allocation. `Armies.over` is the standing proof
+// that nothing is ever skipped (printed in STATE and by `?stats=1`).
+const ACAP = { grunt: 1200, runner: 900, brute: 300, boss: 8,
+               shield: 420, hound: 700, marauder: 400, ogre: 40,
+               ironclad: 90, ashwraith: 520, frostrevenant: 260, warshaman: 96, ram: 16,
+               wyvern: 320, gravemold: 520, necromancer: 60, wardedone: 90,
+               cutpurse: 440, skeleton: 460,
+               // SPEC6 §E — a wave fields one or two, and the elite-swap slots never deal
+               // more than four. 32 is six times the worst case, which is what leaves room
+               // for the endless generator and the horde's wave-6 shift to keep fielding him.
+               hexbinder: 32 };
 let ENEMY_CAP = 0; for (const k in ACAP) ENEMY_CAP += ACAP[k];
-const BAR_CAP = 640;
+// §D3b — the health-bar pool follows the bodies: a wave of a thousand that could only
+// draw 640 bars would hide the wounded half of the field.
+const BAR_CAP = 1600;
 // ── FORMATION LATTICE ─────────────────────────────────────────────────────────
 // The horde used to draw its lateral offset from `(rng()+rng()-1)*2.35`, a triangular
 // distribution whose mass sits inside ±1.4u. On a road nearly 8u across that is a 2-3
@@ -3505,7 +4273,7 @@ const AM = {};                               // archetype key -> instanced recor
 let barMesh = null, barArr = null, KITM = null;   // KITM: boss-variant attachment meshes
 const WARD_CAP = 300;                        // SPEC3 §D ground rings under a warded wave
 let wardRing = null;
-const SHAD_CAP = 700;                        // ARMIES-FIX2 §1 contact-shadow decals
+const SHAD_CAP = 1600;                       // ARMIES-FIX2 §1 contact-shadow decals (§D3b: sized with ACAP)
 let shadDecal = null, SHAD_AZ = 0, SHAD_LEN = 1;
 // ARMIES-FIX3 §5 — champion dress (back standard + cloak + gold trim) and his ground pool
 let champKit = null, champPool = null;
@@ -4718,6 +5486,55 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
         trs(0, ySh - K(0.14), -K(0.02)), 0, null, null, null, 0.80);                       // hunched mantle
       for (const s of [-1, 1])
         A(boxA(K(0.044), K(0.030), K(0.026), [T.SHROUD]), trs(s * K(0.052), yCrn - K(0.166), K(0.130)), 7, hp, null, null, 0.16);
+    } else if (C.helm === 'antler') {
+      // THE HEXBINDER (SPEC6 §E). The war shaman gave up his antlers in ARMIES-FIX2 §4 because
+      // two cream cones on a dome read as the ironclad's shoulder spikes; the reason they work
+      // HERE is that this head has nothing else on it. No hood peak, no cowl, no mantle — a
+      // bare skull-mask strapped over a shaven crown, and a real BRANCHING rack growing off
+      // it. Branching is the point: every other tall outline in this game is a straight line
+      // (spear, totem, staff, ice shard, rune pillar) and a fork is a shape none of them can
+      // be mistaken for at 24 px.
+      dome(K(0.146), 1.02, T.SHROUD, yCrn - K(0.086), 0.66);
+      aventail(K(0.152), K(0.224), yCrn - K(0.140), K(0.300), T.SHROUD);
+      // the mask: a long BLADE of bone over the whole face, squarer and taller than the
+      // shaman's five-sided plate, with two narrow slots and no jaw.
+      A(plateGeo([[-K(0.112), K(0.190)], [K(0.112), K(0.190)], [K(0.126), -K(0.090)],
+                  [K(0.058), -K(0.238)], [-K(0.058), -K(0.238)], [-K(0.126), -K(0.090)]],
+                 K(0.030), T.BONE, T.BONE, T.BONE),
+        trs(0, yCrn - K(0.176), K(0.118)), 7, hp, null, null, 1.24);
+      for (const s of [-1, 1]) {                                            // the slots
+        A(boxA(K(0.048), K(0.022), K(0.026), [T.SHROUD]), trs(s * K(0.056), yCrn - K(0.150), K(0.140)), 7, hp, null, null, 0.08);
+        A(uvAll(new THREE.SphereGeometry(K(0.022), 5, 4), T.RUNE), trs(s * K(0.056), yCrn - K(0.150), K(0.148)), 7, hp, null, null, 0.30);
+      }
+      // THE RACK. Two beams sweeping up and back off the temples, each with three tines, and
+      // the tines alternate side to side so the pair never draws a symmetrical fan.
+      // MEASURED, then widened. The first cut swept the beams up and only slightly out
+      // (+0.30 across against +0.56 of rise) and at gameplay bearing the pair collapsed into
+      // ONE pale vertical stick — indistinguishable from the spear every levyman around him
+      // is carrying, which is the exact failure the shaman's antlers were deleted for in
+      // ARMIES-FIX2 §4. A rack only reads as a rack when it is WIDER THAN IT IS TALL: the
+      // beams now travel 0.62 across for 0.40 of rise, so the outline is a broad V with
+      // daylight through it from every bearing the camera can reach, and the tines fan
+      // outward from it rather than forward.
+      for (const s of [-1, 1]) {
+        const b0 = [s * K(0.140), yCrn - K(0.030), -K(0.010)], b1 = [s * K(0.620), yCrn + K(0.400), -K(0.150)];
+        { const [m, Ln] = spanM(b0, b1);
+          A(uvAll(new THREE.CylinderGeometry(K(0.024), K(0.052), Ln, 5), T.BONE), m, 7, hp, null, null, 1.30); }
+        for (let i = 0; i < 3; i++) {
+          const f = 0.26 + i * 0.30;
+          const r0 = [b0[0] + (b1[0] - b0[0]) * f, b0[1] + (b1[1] - b0[1]) * f, b0[2] + (b1[2] - b0[2]) * f];
+          const out = 0.120 + i * 0.070, up = 0.300 - i * 0.055;
+          const [m, Ln] = spanM(r0, [r0[0] + s * K(out), r0[1] + K(up), r0[2] - K(0.040 + i * 0.030)]);
+          A(uvAll(new THREE.CylinderGeometry(K(0.013), K(0.028), Ln, 4), T.BONE), m, 7, hp, null, null, 1.36);
+        }
+      }
+      // a chain-and-ring gorget: the first statement of the motif the whole body repeats
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * TAU;
+        A(uvAll(new THREE.TorusGeometry(K(0.040), K(0.013), 4, 7), T.IRON),
+          trs(Math.cos(a) * K(0.200) * B, ySh + K(0.020), Math.sin(a) * K(0.150) * B - K(0.010), a, 1, 1, 1, 1.57),
+          0, null, null, null, 0.62);
+      }
     } else if (C.helm === 'cowl') {
       // NECROMANCER (SPEC5 §A). The war shaman already owns "hooded and hunched", so the
       // separation has to be posture and LIGHT: this one stands bolt upright in a tall
@@ -5049,12 +5866,63 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
       A(plateGeo(pts, K(0.020), T.BLADE), trs(grip[0], grip[1] - K(0.04), grip[2], 0, 1, 1, 1, 2.66, 0.26), 6, shR, null, null, 1.06 * BT);
       A(boxA(K(0.088), K(0.030), K(0.038), [T.IRON]), trs(grip[0], grip[1] + K(0.030), grip[2], 0, 1, 1, 1, 0, 0.26), 6, shR, null, null, 1.00);
       A(uvAll(new THREE.CylinderGeometry(K(0.022), K(0.022), K(0.100), 6), T.LEATH), trs(grip[0], grip[1] + K(0.080), grip[2], 0, 1, 1, 1, 0, 0.26), 6, shR, null, null, 0.88);
+    } else if (C.weapon === 'grimoire') {
+      // THE HEXBINDER (SPEC6 §E). NOT a staff, and that is the whole design: the war shaman's
+      // totem and the necromancer's rod are the two verticals in this roster that end in
+      // light, and a third would teach the wrong priority kill. This one's hands are EMPTY and
+      // LIT (see `glow`), and what he carries is at the hip — a heavy book bound shut with
+      // iron, hanging off a chain. Nothing on him breaks the horde's skyline, so at gameplay
+      // zoom the tell is a tall robed figure with antlers and no pole, which is a read no
+      // other body in the game can produce.
+      const bc = [hndR[0] + K(0.075), hndR[1] - K(0.060), hndR[2] + K(0.055)];
+      const tilt = 0.34;
+      A(tbox(K(0.185), K(0.245), K(0.072), [T.WOOD], 0.94, 1.0),                 // the boards
+        trs(bc[0], bc[1], bc[2], 0, 1, 1, 1, 0, tilt), 6, shR, null, null, 0.86);
+      A(boxA(K(0.160), K(0.225), K(0.030), [T.BONE]),                            // the block of leaves
+        trs(bc[0] + K(0.030), bc[1], bc[2], 0, 1, 1, 1, 0, tilt), 6, shR, null, null, 1.06);
+      A(boxA(K(0.038), K(0.255), K(0.086), [T.IRON]),                            // the spine
+        trs(bc[0] - K(0.088), bc[1], bc[2], 0, 1, 1, 1, 0, tilt), 6, shR, null, null, 0.92);
+      for (const s of [-1, 1])                                                   // corner furniture
+        A(boxA(K(0.052), K(0.048), K(0.088), [T.IRON]),
+          trs(bc[0] + K(0.132), bc[1] + s * K(0.086), bc[2], 0, 1, 1, 1, 0, tilt), 6, shR, null, null, 0.98);
+      // THE HASP. A strap of iron across the fore-edge with a padlock on it: the book is shut
+      // and it is shut ON PURPOSE, which is the one piece of story this silhouette has room for.
+      A(boxA(K(0.045), K(0.055), K(0.104), [T.IRON]),
+        trs(bc[0] + K(0.128), bc[1], bc[2], 0, 1, 1, 1, 0, tilt), 6, shR, null, null, 1.02);
+      A(uvAll(new THREE.TorusGeometry(K(0.036), K(0.012), 4, 8), T.IRON),
+        trs(bc[0] + K(0.172), bc[1], bc[2], 0, 1, 1, 1, 1.57, tilt), 6, shR, null, null, 0.88);
+      // a rune plate let into the front board — the only lit thing on the object
+      A(boxA(K(0.070), K(0.070), K(0.014), [T.RUNE]),
+        trs(bc[0] + K(0.010), bc[1] + K(0.030), bc[2] - K(0.062), 0, 1, 1, 1, 0, tilt), 6, shR, null, null, 0.60);
+      // and the chain it hangs from, up to the belt
+      for (let i = 0; i < 5; i++) {
+        const f = i / 4;
+        A(uvAll(new THREE.TorusGeometry(K(0.026), K(0.010), 4, 6), T.IRON),
+          trs(bc[0] - K(0.060) - f * K(0.040), bc[1] + K(0.170) + f * K(0.150), bc[2] - f * K(0.030),
+              0, 1, 1, 1, i % 2 ? 1.57 : 0), 6, shR, null, null, 0.74);
+      }
     }
     // ── cape / back banner ──
     if (C.cape) {
       const cw = K(0.215) * B, c0 = ySh + K(0.03), c1 = yKne - K(0.04), ch = c0 - c1, cT = C.capeT === undefined ? T.CRIM : C.capeT;
       A(plateGeo([[-cw, 0], [cw, 0], [cw * 1.28, -ch * 0.50], [cw * 1.02, -ch], [-cw * 1.02, -ch], [-cw * 1.28, -ch * 0.50]], K(0.022), cT, cT),
         trs(0, c0, -K(0.165) * W, 0, 1, 1, 1, 0.13), 8, null, null, (x, y) => clamp((c0 - y) / ch, 0, 1), 0.82);
+    }
+    // SPEC6 §E — CHAIN MOTIFS. Two swags of iron slung across the chest, on the ROOT bone so
+    // they swing with the torso rather than with an arm. This is what ties the body to the
+    // mechanic: the thing that binds towers in chains is itself hung with them, and a player
+    // who has seen one silenced tower knows what this outline is doing on the road.
+    if (C.chains) {
+      for (let s = 0; s < 2; s++) {
+        const y0 = ySh - K(0.070) - s * K(0.155), dip = K(0.210 + s * 0.075), n = 7;
+        for (let i = 0; i < n; i++) {
+          const a = (i / (n - 1) - 0.5) * 2;
+          A(uvAll(new THREE.TorusGeometry(K(0.038), K(0.013), 4, 7), T.IRON),
+            trs(a * K(0.300) * B, y0 - (1 - a * a) * dip, K(0.140) * W - Math.abs(a) * K(0.075),
+                0, 1, 1, 1, i % 2 ? 1.57 : 0, a * 0.55),
+            0, null, null, null, 0.72);
+        }
+      }
     }
     // SPEC3 §B: ice grown THROUGH the armour — shards off both pauldrons and a crust down
     // the spine. Without them a pale knight is just a knight in the wrong palette.
@@ -5860,12 +6728,34 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   // aWard is (r, g, b, strength); strength is 0 for every unwarded unit, which compiles
   // away to a multiply by zero.
   const WARD_VS = `attribute vec4 aWard; varying vec4 vWard;`;
+  // ── SPEC6 §A1 DRESSING — THE DRAINED MATERIAL, and why it has to live HERE ──────
+  // Two passes tried to make a Risen look dead from the CPU side and both failed for the
+  // same arithmetic reason. `RISEN_TINT` multiplied the instance colour by a green; a
+  // multiply raises one channel and leaves the red-to-blue spread alone, so a crimson
+  // tabard stayed crimson. Collapsing the instance colour to its own luminance (see
+  // RISEN_M in syncVisuals) fixed the per-instance term and STILL left the tabard red —
+  // because the crimson is not in the instance colour at all. It is a texel: #a42a22,
+  // painted into the shared albedo atlas, and no per-instance factor can desaturate a
+  // value it is only allowed to multiply.
+  // So the drain runs where the texel actually exists — one `mix` on `outgoingLight`,
+  // after lighting, which takes cloth, leather, steel, shield boss and painted heraldry
+  // to the same bone-green at once. That is the whole point: a corpse is not a soldier
+  // wearing different colours, it is a soldier with the colour taken OUT of him.
+  //
+  // It costs no new attribute. `aWard.a` is a strength that has only ever been >= 0, so
+  // its SIGN is free: negative means "drain by |a|, and rim from .rgb at a fixed share".
+  // At a >= 0 `dr` is 0, `mix(x, y, 0.0)` is exactly `x`, and the added rim term is
+  // exactly the one that shipped — so every unit on maps 1-3, warded, championed or
+  // plain, renders the identical pixels the art strike measured.
   const WARD_FS = `
   {                                                  // Fresnel shell + scale-noise shimmer
     float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
     float shim = 0.70 + 0.30*sin(uT*3.4 + vWard.a*47.0 + vViewPosition.y*7.5)
                       * sin(vViewPosition.x*9.0 - uT*1.7);
-    outgoingLight += vWard.rgb * (pow(fr, 2.5) * 1.15 * shim * step(0.001, vWard.a));
+    float dr = max(0.0, -vWard.a);                   // SPEC6 §A1: negative strength = DRAINED
+    float dlum = dot(outgoingLight, vec3(0.2990, 0.5870, 0.1140));
+    outgoingLight = mix(outgoingLight, (dlum*0.78 + 0.085) * vec3(0.86, 1.22, 1.00), dr);
+    outgoingLight += vWard.rgb * (pow(fr, 2.5) * 1.15 * shim * (step(0.001, vWard.a) + dr*0.46));
   }
 `;
   // `pole` (ARMIES-FIX4 §7) is a per-ARCHETYPE compile-time switch, not a per-instance one:
@@ -6101,6 +6991,28 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               skin: T.BONE, hair: T.BONE, helm: 'skull', shield: 'none', weapon: 'sword',
               knee: false, gait: 1.96, jit: 0.13, aim: 0.90, bladeTint: 0.66, bar: 0.82,
               seg: tier === 'mobile' ? 5 : 7 },
+    // ══ SPEC6 §E: the twentieth silhouette ══════════════════════════════════════
+    // THE HEXBINDER. The hard problem here is not "make a sorcerer" — it is "make a sorcerer
+    // the player cannot confuse with the war shaman", because both are robed casters in the
+    // same crimson host and the shaman is the roster's OTHER priority kill. Three dials do
+    // it, and every one of them is a SILHOUETTE dial rather than a colour:
+    //   HEIGHT   1.98 against the shaman's 1.74 — he is the tallest man-shaped body on the
+    //            road short of an ironclad, and he stands UPRIGHT where the shaman hunches.
+    //   NO POLE  the shaman's read is a totem standing a head above the horde's skyline.
+    //            This one carries NOTHING above shoulder height (§E: "staff-less"); his hands
+    //            are free and lit, which is what makes the empty skyline over him the tell.
+    //   ANTLERS  the shaman LOST his antlers in ARMIES-FIX2 §4 precisely so one unit could
+    //            own them later. This is that unit: a real rack over a bone skull-mask, the
+    //            only branching outline in the game.
+    // The chains are the fourth read and the mechanic's own: swags of black iron across the
+    // chest and a grimoire padlocked shut at the hip. `glow` + T.RUNE puts the hex light in
+    // his palms, tinted to the same dark jade the pulse and the tower chains burn (EMITC).
+    hexbinder: { h: 1.98, bulk: 0.96, hose: T.SHROUD, shin: T.SHROUD, mail: T.SHROUD, arm: T.SHROUD,
+              hand: T.BONE, pauld: T.SHROUD, skirt: T.SHROUD, tabard: T.ROBE, tabW: 0.62, chest: -1,
+              face: T.BONE, skin: T.BONE, hair: T.SHROUD, helm: 'antler', shield: 'none',
+              weapon: 'grimoire', knee: false, gait: 1.10, jit: 0.05, aim: 1.24,
+              glow: true, glowT: T.RUNE, bar: 1.34, armTint: 0.86, chains: true,
+              cape: true, capeT: T.SHROUD, seg: tier === 'mobile' ? 6 : 9 },
   };
   // Which builder each archetype is cut from. Everything human comes out of buildSoldier;
   // the hound, the wraith and the ram are the three that cannot.
@@ -6108,7 +7020,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
                      : C.wyv ? buildWyvern(C) : C.mold ? buildMold(C) : buildSoldier(C);
   // Archetypes whose material carries the emissive sheet (ember eyes, banked coals). Any
   // other unit pays nothing: the map is only bound where it is actually used.
-  const EMIT = { boss: 2.6, ashwraith: 2.9, warshaman: 2.2, necromancer: 3.4, wardedone: 0.30 };
+  const EMIT = { boss: 2.6, ashwraith: 2.9, warshaman: 2.2, necromancer: 3.4, wardedone: 0.30,
+                 // SPEC6 §E — under the necromancer's 3.4 on purpose. The hex light is a
+                 // COLD one and the chanter's is the brightest thing on the moor; if the two
+                 // burned at the same strength the darker hue would not be enough to tell
+                 // them apart at gameplay zoom.
+                 hexbinder: 2.6 };
   // SPEC5 §A: the emissive COLOUR is per-archetype too. One glyph pattern is painted into
   // the sheet (T.RUNE) and tinted green here, so the necromancer's hands, his staff stone
   // and the warded one's whole carved body all burn the same colour without a second tile.
@@ -6117,7 +7034,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   // comes from the carving itself; green stays the exclusive signature of the thing that
   // raises the dead, which is what made one green light legible as a mechanic in the first
   // place. (`EMITC[key] || 0xffffff` in the material below is the neutral path.)
-  const EMITC = { necromancer: 0x62ff9e };
+  // SPEC6 §E — and the hexbinder takes the same sheet at a DARK JADE (#1fbe7f), which is the
+  // `HEX_G` the pulse rings and the tower chains burn in SECTION: VFX. Deliberately the same
+  // family as the chanter's mint and deliberately a long way down in value: the two are
+  // related powers (both are "the horde has a caster you must kill first") and must not be
+  // the same light. Value separates them; the antlers and the empty skyline do the rest.
+  const EMITC = { necromancer: 0x62ff9e, hexbinder: 0x1fbe7f };
   // UNITS §1 — RIM COLOURS. (r, g, b, strength) fed into the SAME aWard row the elemental
   // ward and the champion crown use, so a permanent silhouette rim costs one float4 per
   // instance and no extra draw. A warded wave and a champion both outrank it (see
@@ -6635,6 +7557,22 @@ const WARDC = { pierce: [1.10, 1.04, 0.90], crush: [0.98, 0.92, 0.84],
 // amber for pierce's gold, slate for crush's dust. Same wheel, enough contrast to find.
 const WARDS = { pierce: [1.00, 0.70, 0.18], crush: [0.50, 0.50, 0.56],
                 fire:   [1.00, 0.30, 0.05], storm: [0.58, 0.22, 1.00] };
+// ── SPEC6 §A1 DRESSING — THE DRAINED MATERIAL ────────────────────────────────
+// A Risen shipped as a flat per-instance MULTIPLY (`RISEN_TINT`), and the risen stage's own
+// handoff flagged the result honestly: it recoloured the crimson tabard and left a red
+// soldier reading as a red soldier standing under a green lamp. That is not a modelling
+// failure, it is an arithmetic one — a multiply CANNOT desaturate. Multiplying a saturated
+// crimson by a green raises the green channel and leaves the red-to-blue spread exactly
+// where it was, so the chroma survives every value you can pick.
+// What a three-second-old corpse needs is its CHROMA taken away, and the one operation that
+// does that is a collapse to luminance followed by a re-tint. Doing it here rather than in a
+// new shader path is deliberate: the instance colour already multiplies every material on
+// the body — cloth, leather, steel and the kit meshes, which read the same `_acol` — so one
+// lerp turns the WHOLE unit corpse-coloured instead of just the parts someone remembered.
+// 0.88 rather than 1.0 keeps a whisper of what the man was wearing, which is what makes a
+// risen levyman still legible as a levyman when he stands back up.
+const RISEN_M = [0.72, 1.14, 0.88];
+const RISEN_K = 0.88;
 const _YAX = new THREE.Vector3(0, 1, 0);
 const _v3s = new THREE.Vector3();
 let _lastTick = -1, _wardWas = false;
@@ -6695,6 +7633,18 @@ Armies.syncVisuals = (vtNow) => {
   for (const key in KITM) KITM[key].n = 0;
   let bn = 0, nw = 0, sn = 0, wardC = null;
   if (bannKit) bannKit.n = 0;
+  // SPEC6 §D3b — THE INVISIBLE-UNIT ORACLE. Every body the caps refuse is counted here and
+  // reported in STATE / `?stats=1`, so "did anything simulate off screen" is a number in a
+  // log rather than a thing someone has to notice. It must read 0 in every frame we ship.
+  Armies.over = 0;
+  // §D3c — DENSITY DEGRADATION. Past `denseOn` alive the contact patches stop being drawn
+  // for bodies further than `shadCut` from the lens: at that head count the far half of the
+  // field is a moving mass whose individual grounding nobody can resolve anyway, and the
+  // decal pass is the cheapest thing in frame to give up. Pure render — no sim state is read
+  // or written, and `G.dense` is computed in MAIN off the same alive count.
+  const dense = !!G.dense;
+  const shadQ = dense ? Q.shadCut * Q.shadCut : 0;
+  const cpx = G.camera ? G.camera.position.x : 0, cpz = G.camera ? G.camera.position.z : 0;
   // ARMIES-FIX2 §1/§2. One flat quad per body, rotated onto the sun's ground bearing and
   // scaled to the true shadow length. `fade` carries the death dissolve so a falling body
   // does not leave its shadow standing on the road.
@@ -6709,6 +7659,7 @@ Armies.syncVisuals = (vtNow) => {
   // ellipse thrown clear of the body, not a smear leaving its feet.
   const pushShadow = (x, y, z, h, w, fade, off, flat) => {
     if (sn >= SHAD_CAP || fade <= 0.20) return;
+    if (shadQ && (x - cpx) * (x - cpx) + (z - cpz) * (z - cpz) > shadQ) return;
     // contact radius: the body's own width, floored at the 0.55 u the critic specified so a
     // runner is grounded as firmly as an ogre. A flyer's blob is wider (it is a wingspan)
     // and `off` throws it the full altitude down-sun, which is the altitude cue.
@@ -6750,7 +7701,7 @@ Armies.syncVisuals = (vtNow) => {
     if (dd > 1.02) continue;
     // `art` lets a map finale borrow another archetype's mesh (SPEC2 §E boss variants)
     const A = AM[e.def.art || e.type];
-    if (!A || A.n >= A.cap) continue;
+    if (!A || A.n >= A.cap) { if (A) Armies.over++; continue; }
     if (e._cd === undefined) { e._cd = e._pd = e.d; e._pid = e.pathId; }
     else if (shift) {
       e._pd = e._cd; e._cd = e.d;
@@ -6824,6 +7775,12 @@ Armies.syncVisuals = (vtNow) => {
                      _acol.b + (W[2] * l - _acol.b) * k);
       }
     }
+    if (e.isRisen) {                               // SPEC6 §A1 — the body comes back DRAINED
+      const y = _acol.r * 0.30 + _acol.g * 0.59 + _acol.b * 0.11;
+      _acol.setRGB(_acol.r + (y * RISEN_M[0] - _acol.r) * RISEN_K,
+                   _acol.g + (y * RISEN_M[1] - _acol.g) * RISEN_K,
+                   _acol.b + (y * RISEN_M[2] - _acol.b) * RISEN_K);
+    }
     A.mesh.setColorAt(A.n, _acol);
     if (A.ward) {                                  // the Fresnel shell's per-instance row
       const wo = A.n * 4, wd = A.ward;
@@ -6853,6 +7810,22 @@ Armies.syncVisuals = (vtNow) => {
         // champion's own seed so two champions on the road never breathe in lockstep.
         wd[wo] = 1.00; wd[wo + 1] = 0.68; wd[wo + 2] = 0.26;
         wd[wo + 3] = 0.51 + 0.21 * Math.sin(at * 2.85 + h2 * 6.2831853);
+      } else if (e.isRisen && e.alive) {
+        // SPEC6 §A1 — THE SPECTRAL EDGE, and the second half of the drained read. Taking a
+        // body's chroma away makes it a GREY body, and a grey body at dusk on a bone-pale
+        // moor is camouflage — the exact trap the frost revenant's rim exists to answer on
+        // Frostfell. So the outline glows with light the moor cannot make: a pale mint
+        // fresnel on the silhouette, breathing on the unit's own phase so a wave of them
+        // shimmers rather than strobing. Rides the same already-uploaded float4 the ward
+        // shell and the champion crown use, so a whole cursed wave standing back up costs
+        // no draw call and no material. Ranked UNDER the ward and the champion for the
+        // reason those two are ranked in the first place: a per-wave mechanic and a
+        // one-body find must never be masked by a per-species decoration.
+        // NEGATIVE strength — see WARD_FS. The breath rides the rim COLOUR instead of the
+        // strength, because the strength is now carrying the drain amount.
+        const rb = 0.88 + 0.30 * Math.sin(at * 2.1 + h2 * 6.2831853);
+        wd[wo] = 0.30 * rb; wd[wo + 1] = 1.06 * rb; wd[wo + 2] = 0.62 * rb;
+        wd[wo + 3] = -0.90;
       } else if (A.rim && e.alive) {
         // UNITS §1 — THE COLD RIM. The frost revenant's whole read is "the cold one", and a
         // pale body under a warm key at this exposure is a GREY body: at gameplay zoom he
@@ -9210,6 +10183,39 @@ const ENEMY_DEFS = {
   // STEAL. The only unit in the game whose leak costs GOLD as well as lives (floored at 0),
   // which is what makes a fast pack worth answering rather than absorbing.
   cutpurse:{ hp: 22,  speed: 3.8,  bounty: 8,   dps: 3,  leak: 1,  scale: 0.86, steal: 35 },
+  // ══ SPEC6 §A — THE BARROW KING (map 4's finale, and the RISEN rule made flesh) ═══════
+  // Authored here, fielded by nobody yet: the Barrowmoor stage owns the map and its wave
+  // table (§A2), this stage owns the POWER. `raiseAll` is the general mechanic and not a
+  // one-off — any body that carries it raises every unburned corpse inside `rad` on a fixed
+  // `cd`, capped per pulse — so the King is data, exactly like every boss variant beside him.
+  // Numbers are §A2's: hp ~2300 pre-ramp, leak 20, resist pierce .24 storm .3, mscale 1.08.
+  // Bone-verdigris over the boss mesh, through the same `art`/`tint` borrow the other three
+  // finales use: no new mesh, no extra draw call.
+  barrowking:{ hp: 2300, speed: 0.72, bounty: 240, dps: 32, leak: 20, scale: 2.7, unblockable: true,
+             resist: { pierce: 0.24, storm: 0.3 },
+             art: 'boss', art_kit: 'matriarch', tint: [0.72, 1.28, 0.92], mscale: 1.08,
+             raiseAll: { cd: 9, rad: 12, cap: 10 } },
+  // ══ SPEC6 §E — THE HEXBINDER, the anti-deathball ══════════════════════════════
+  // Every other body on this list asks the player a question about SCHOOLS. This one asks a
+  // question about GEOMETRY, and it is the only unit in the game that does: on a multi-path
+  // map the optimal play was a single battery camped on the junction pinch, because one
+  // stack of towers covering every road is strictly better than two stacks covering one
+  // each. `hex` makes that stack a liability — every `cd` seconds every TOWER inside `rad`
+  // goes silent for `dur`, so a nine-tower pile goes dark together while a split build loses
+  // a slice and keeps shooting with the rest.
+  //
+  // What it does NOT touch is the whole design: knights and militia still fight, road traps
+  // still trigger, hero powers still cast, upgrades and sells still resolve. The hex is a
+  // hole in ONE layer of the defence, which is what makes "spread the muster, or answer him
+  // with the layers he cannot reach" a real choice rather than a stun the player waits out.
+  //
+  // resist pierce .2 / storm .2: the two schools an archer-and-spire junction stack is most
+  // likely to be made of, shaved just enough that focusing him is a decision and not a
+  // formality. He is `elite`, so his bar is up from the moment he walks out — a mini-boss
+  // whose counterplay is "kill this one first" has to be findable first.
+  hexbinder:{ hp: 720,  speed: 1.05, bounty: 45,  dps: 7,   leak: 3,  scale: 1.28, elite: true,
+             resist: { pierce: 0.2, storm: 0.2 },
+             hex: { cd: 7, rad: 9, dur: 3.5 } },
 };
 // The four schools, in the order every read-out lists them.
 const SCHOOLS = ['pierce', 'crush', 'fire', 'storm'];
@@ -9301,7 +10307,30 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     // endless templates already use for this species, and the ward is priced as ARRIVAL cost.
     [['brute', 11, 1.05, 0], ['shield', 14, 1.11, 4, 1, 'phalanx'], ['grunt', 78, 0.335, 2],
      ['wardedone', 2, 5.00, 7, 0]],
-    [['marauder', 18, 0.60, 0], ['ironclad', 3, 3.20, 6, 0], ['hound', 46, 0.15, 8, 0, 'stampede'], ['grunt', 76, 0.31, 3]],
+    // SPEC6 §E — FROSTFELL'S FIRST HEXBINDER (fixed appearance 1 of 2, and the map's whole
+    // argument arriving in person). This is the road the spec names: two gates converge on
+    // one wedge, so the optimal build has always been a single stack of towers on that wedge
+    // covering both mouths. From this wave that stack has a cost — every 7 s it goes dark
+    // together, while a build spread down the two approaches loses a slice and keeps firing.
+    // W9 and not W7 (the spec's floor): the ram is on W7 and the warded ones on W8, and a
+    // third consecutive "you must answer THIS one first" wave teaches nothing but fatigue.
+    // PAID OUT OF THE ARMOUR, NOT THE LEVY — a rule this stage had to learn the hard way,
+    // because the first cut broke the PURSE rather than the hit-point budget. A wave pays a
+    // defence in two currencies at once and they are not proportional: a levyman is 6 hit
+    // points per gold, a pavise 9, a brute 17, an ironclad 21. Buy a 720-point elite with
+    // sixty levy and the wave weighs the same and pays 120 gold LESS, which is exactly how
+    // the first cut sent magic3 from dying on wave 14 to dying on wave 9 with 44 gold in
+    // hand. Every hexbinder in this file is therefore bought from the fattest bodies in its
+    // own wave:
+    //   1 ironclad (380 hp / 18 g) + 6 marauders (156 / 24) + 26 hounds (182 / 26) = 718 hp
+    //   and 68 gold, against the hexbinder's 720 and 45. Both currencies inside 4%.
+    // Surviving groups keep their r9 spans: ironclads 2 x 4.80 = 9.6 s, marauders 12 x 0.90 =
+    // 10.8 s, hounds 20 x 0.345 = 6.9 s. The levy column is untouched.
+    // He is tagged to GATE 0 rather than left to the spawner's coin flip: a mini-boss whose
+    // whole purpose is a geometry lesson must arrive on the same road every run, or the row
+    // that measures him is measuring the seed.
+    [['marauder', 12, 0.90, 0], ['ironclad', 2, 4.80, 6, 0], ['hound', 20, 0.345, 8, 0, 'stampede'],
+     ['grunt', 76, 0.31, 3], ['hexbinder', 1, 0, 10, 0]],
     // W10 is Frostfell's LONG NIGHT (§B2) — twin gates, and then twin gates again.
     [['ogre', 3, 3.00, 0, 0], ['shield', 30, 0.60, 3, 1, 'phalanx'], ['runner', 96, 0.17, 6, 'swarm']],
     // Fixed appearance 3 of 3 — two chanters walking behind the biggest levy column on the
@@ -9312,8 +10341,17 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     // on a 5056-point wave; the brute interval opens 0.80 → 0.90 to hold the group's 14.4 s.
     [['brute', 16, 0.90, 0], ['hound', 74, 0.11, 5, 1, 'stampede'], ['grunt', 112, 0.25, 2],
      ['marauder', 19, 0.62, 13], ['necromancer', 2, 3.40, 8, 0]],
+    // SPEC6 §E — FIXED APPEARANCE 2 of 2, on the finale, and this is where the mechanic
+    // stops being a tax and becomes a decision: the Frost Matriarch walks out at delay 13,
+    // the hexbinder at delay 8, and a battery stacked on the wedge meets her with its
+    // best five seconds spent dark. Answer him first and she arrives into a live battery;
+    // answer her first and the wedge goes quiet under her.
+    // Bought from an OGRE (see W9's note on the two currencies): 860 hp and 40 gold against
+    // the hexbinder's 720 and 45, so the finale comes down 140 raw and pays 5 gold more. The
+    // pavise wall, the hound pack and the levy column — everything that makes this wave feel
+    // like a finale — are untouched, and the ogre that stays keeps the group's slot.
     [['matriarch', 1, 0, 13, 0], ['shield', 32, 0.52, 0, 1, 'phalanx'], ['hound', 54, 0.13, 6, 0, 'stampede'],
-     ['grunt', 102, 0.25, 2], ['ogre', 2, 4.00, 20, 1]],
+     ['grunt', 102, 0.25, 2], ['ogre', 1, 4.00, 20, 1], ['hexbinder', 1, 0, 8, 0]],
   ],
   // ══ 3. EMBER WASTES — 14 waves. Marauders and ogres are the featured pressure: the
   // skirmishers make a barracks a liability and the ogres make one a corpse, so the wastes
@@ -9338,7 +10376,18 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     // an answer either.
     [['ogre', 2, 4.00, 0], ['grunt', 80, 0.35, 2], ['ashwraith', 12, 0.55, 8], ['wyvern', 8, 1.10, 11]],
     [['marauder', 22, 0.55, 0], ['hound', 32, 0.19, 9, 'stampede'], ['grunt', 72, 0.33, 3]],
-    [['brute', 8, 1.00, 0], ['ironclad', 4, 2.40, 3], ['shield', 15, 0.90, 4, 'phalanx'], ['grunt', 82, 0.30, 2]],
+    // SPEC6 §E — THE WASTES' FIRST HEXBINDER (fixed appearance 1 of 2), at the spec's own
+    // floor for this road. Ember's camp is not a wedge but the ISLAND inside the fork — one
+    // battery on the strip between the two arms reaches the canyon and the loop at once,
+    // which is exactly the build `M3_BUILDS` is and exactly the build a 9 u silence eats
+    // whole. The lesson lands one wave after the ironclads, so the player has just been
+    // taught to concentrate fire and is now taught what concentration costs.
+    // Bought from the BRUTE line, which on this wave is the one trade that comes out exact in
+    // BOTH currencies at once (see map 2's W9 note): 5 brutes = 750 hp and 45 gold against the
+    // hexbinder's 720 and 45. -30 on a 4529-point wave (-0.7%) and not one coin of bounty
+    // moved. The brutes that remain keep the group's 8 s span (3 x 2.67).
+    [['brute', 3, 2.67, 0], ['ironclad', 4, 2.40, 3], ['shield', 15, 0.90, 4, 'phalanx'],
+     ['grunt', 82, 0.30, 2], ['hexbinder', 1, 0, 9]],
     // Fixed appearance 2 of 3 — molds in the ash. Priced on EFFECTIVE hit points, which for a
     // splitter is the parent plus everything it leaves behind: 3 × (90 + 2 × 25) = 420 against
     // the 46 runners × 9 = 414 they cost, +6 on a 4696-point wave. (This is the same 140-a-mold
@@ -9352,8 +10401,16 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     // 4778-point wave), the levy interval opening 0.30 → 0.39 to hold its 24 s. The wastes are
     // the map with the longest purse (14 waves, muster fees to 680), so a leak that takes GOLD
     // as well as a life is worth the most here and lands where a player has something to lose.
-    [['brute', 15, 0.88, 0], ['shield', 20, 0.76, 5, 'phalanx'], ['marauder', 18, 0.58, 11],
-     ['grunt', 62, 0.39, 2], ['cutpurse', 10, 0.50, 9, 'stampede']],
+    // SPEC6 §E — FIXED APPEARANCE 2 of 2. He walks in behind the thieves on purpose: a
+    // cutpurse raid is the one event on this road that a player answers by CONCENTRATING
+    // (they are fast, they are worth gold, and the reflex is to mass fire at the pinch),
+    // and the hexbinder arrives to charge him for having done it.
+    // The same exact trade as W8 and out of the same species: 5 brutes = 750 hp / 45 gold for
+    // 720 / 45. -30 on a 4782-point wave, no bounty moved, and the thieves, the pavise wall
+    // and the levy column all stand as they were. The brute line keeps its 13.2 s span
+    // (10 x 1.32).
+    [['brute', 10, 1.32, 0], ['shield', 20, 0.76, 5, 'phalanx'], ['marauder', 18, 0.58, 11],
+     ['grunt', 62, 0.39, 2], ['cutpurse', 10, 0.50, 9, 'stampede'], ['hexbinder', 1, 0, 13]],
     // W12 is the Ember Wastes' LONG NIGHT (§B2), two waves before the twins.
     [['ogre', 4, 3.20, 0], ['runner', 86, 0.19, 6, 'swarm'], ['hound', 46, 0.15, 11, 'stampede'], ['grunt', 80, 0.30, 2]],
     [['marauder', 30, 0.48, 0], ['brute', 16, 0.85, 6], ['shield', 23, 0.70, 11, 'phalanx'], ['grunt', 94, 0.28, 2]],
@@ -9362,7 +10419,190 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
     [['emberlord', 1, 0, 10], ['cinderqueen', 1, 0, 34], ['ogre', 3, 4.20, 4],
      ['marauder', 22, 0.54, 0], ['shield', 16, 0.90, 9, 'phalanx'], ['grunt', 92, 0.28, 2]],
   ],
+  // ══ 4. THE BARROWMOOR — 16 waves, tier LEGEND (SPEC6 §A2) ══════════════════
+  // One gate, so the 5th field is the FORMATION (the same convention as maps 1 and 3).
+  //
+  // BUDGETING THE CURSE. Waves 5, 9 and 13 are cursed (the map def's `cursedWaves`; the
+  // finale is the BARROW KING's instead — see the map def for the measurement that settled it):
+  // every NON-ELITE body that falls on them stands back up at 45% hp unless the killing blow
+  // was fire. A cursed group is therefore worth ~1.45x its raw hit points to a battery with
+  // no pyre in it, and ~1.00x to one that has. From W7 a seeded ~12% of units on the ORDINARY
+  // waves carry the curse individually, which is another ~+5.4% on every wave after six.
+  // So the raw column below runs deliberately UNDER the Ember Wastes' at the same relative
+  // depth — the difficulty this map adds is meant to come out of its rule, not out of head
+  // counts, and `hpRamp: 0.09` (the gentlest in the campaign) is the other half of that.
+  //
+  // Raw hit points per wave, and what a fire-less battery actually meets (r12, after the
+  // first cut measured intended4 winning 31/32 AND pyroless4 winning 32/32 — a LEGEND road
+  // that no doctrine was needed for, which is two failures in one number):
+  //   W1 360 · W2 624 · W3 894 · W4 1398 · W5 1614 (cursed -> 2340) · W6 2892 · W7 2746
+  //   W8 3970 · W9 3472 (cursed -> 5034) · W10 3882 · W11 4644 · W12 4310
+  //   W13 3022 (LONG NIGHT x1.6, cursed -> 7011) · W14 6836 · W15 8301
+  //   W16 10776 + whatever the King raises out of it (MEASURED: 105 bodies against a battery
+  //   with no fire in it, 31 against one with two pyres — the finale's weight is a DOCTRINE
+  //   variable, which is the entire argument of this map stated once, in the last wave)
+  //
+  // FORMATIONS, where the moor has a reason for them: wraiths come off the turf as a swarm,
+  // the mould stampedes out of the mounds, pavises advance between the barrows as a phalanx,
+  // and the thieves come through the graves in one burst.
+  4: [
+    // W1-4: an honest purse. Levy and hounds only — the player has to learn the fork and find
+    // the buildable verges before the moor asks him a question he needs an answer bought for.
+    [['grunt', 30, 0.75, 0]],
+    [['grunt', 52, 0.55, 0]],
+    [['grunt', 64, 0.42, 0], ['hound', 18, 0.26, 9, 'stampede']],
+    [['runner', 62, 0.26, 0, 'swarm'], ['grunt', 70, 0.38, 5]],
+    // W5 — THE FIRST CURSED WAVE, and the map's teaching moment. Deliberately the LIGHTEST
+    // fifth wave in the campaign in raw hit points: the lesson is "everything you kill gets
+    // back up", and a player learns that best on a wave he can afford to learn it on.
+    [['grunt', 100, 0.30, 0], ['runner', 46, 0.26, 8, 'swarm']],
+    // W6 — the bestiary opens. Ash wraiths ARE the moor's own dead walking, and they resist
+    // fire .85, which is the map's one honest joke: the school it demands is the school its
+    // ghosts ignore. A pyre line is bought for the CORPSES, not for the wraiths.
+    [['ashwraith', 18, 0.48, 0, 'swarm'], ['grunt', 96, 0.30, 3], ['shield', 12, 1.05, 8, 'phalanx']],
+    // W7 — FIXED APPEARANCE 1 of 3: the mould in the mounds. A splitter is priced on
+    // EFFECTIVE hit points (parent + both children = 140 each), the same arithmetic maps 1-3
+    // use. From this wave the individual curse is live, so everything below carries ~+5.4%.
+    [['gravemold', 6, 1.40, 0, 'stampede'], ['grunt', 100, 0.28, 3], ['marauder', 18, 0.62, 8],
+     ['hound', 34, 0.16, 12, 'stampede']],
+    // W8 — FIXED APPEARANCE 2 of 3: chanters at the standing stones. A necromancer on THIS
+    // map is worth far more than his 55 hit points, because the corpse registry he raises
+    // from is the same one the curse reads — and a pyre denies him exactly the bodies it
+    // denies the curse. One system, one counter, stated twice.
+    [['warshaman', 5, 2.10, 0], ['necromancer', 3, 2.40, 6], ['brute', 10, 0.98, 3],
+     ['grunt', 100, 0.26, 2], ['shield', 16, 0.92, 9, 'phalanx']],
+    // W9 — the second cursing, and the first one that is a real wave. 2754 raw becomes 3993
+    // against a battery with no fire in it; the same 2754 against one that has.
+    // CHAFF, deliberately. Every cursed wave in this table is levy, skirmishers and hounds
+    // rather than brutes, and that is the doctrine lever made structural: a pyre patch on the
+    // road kills a large SHARE of a chaff flood (which is what decides how many corpses burn),
+    // and almost none of a brute line (which dies to bolts, off the patch). Put the tanks on
+    // the ordinary waves and the bodies on the cursed ones, or "bring fire" is advice with no
+    // arithmetic behind it — measured: the first cut put brutes here and pyroless4 WON.
+    [['grunt', 126, 0.22, 0], ['runner', 84, 0.16, 6, 'swarm'], ['hound', 52, 0.13, 14, 'stampede'],
+     ['ashwraith', 14, 0.50, 10, 'swarm']],
+    // W10 — FIXED APPEARANCE 3 of 3: the warded dead behind a pavise wall. Sustained single
+    // target is the wrong answer twice over here, which is what the wave is for.
+    [['wardedone', 4, 3.60, 0], ['shield', 22, 0.72, 4, 'phalanx'], ['grunt', 110, 0.24, 2],
+     ['hound', 56, 0.12, 10, 'stampede']],
+    // W11 — grave thieves. A cutpurse leak costs GOLD as well as a life, and wave 11 of a
+    // sixteen-wave road is the deepest purse in the campaign, so it lands where it hurts.
+    [['marauder', 30, 0.42, 0], ['brute', 16, 0.80, 3], ['grunt', 100, 0.26, 2],
+     ['cutpurse', 12, 0.44, 8, 'stampede']],
+    // W12 — the flock over the gallows. Every map fields one from W6+; this is the moor's,
+    // and it arrives on the wave before the Long Night so the air answer has to already be
+    // standing when the light goes.
+    [['runner', 100, 0.16, 0, 'swarm'], ['wyvern', 14, 0.90, 5], ['ironclad', 4, 2.60, 8],
+     ['grunt', 105, 0.25, 3]],
+    // W13 — THE LONG NIGHT, and cursed. The map's dusk grading (held at 35% everywhere else)
+    // goes all the way to full night here, the horns fall silent, and a second host at 60%
+    // walks out of the dark — every body in BOTH halves of it cursed. Raw is held low on
+    // purpose: x1.6 for the surge and x1.45 for the curse is a 2.3x multiplier on whatever
+    // this row says.
+    [['grunt', 108, 0.24, 0], ['runner', 76, 0.16, 5, 'swarm'], ['hound', 46, 0.13, 8, 'stampede'],
+     ['ashwraith', 12, 0.52, 10, 'swarm']],
+    // W14 — the ogre cairn. Not cursed: after the Long Night the road needs one wave that is
+    // simply a wall, so the player can rebuild rather than out-run a multiplier.
+    // SPEC6 §E — and the MOOR'S ONE HEXBINDER, on the wave the spec calls "late". One, not
+    // two, and on W14 rather than on the finale, for a reason the telemetry is explicit
+    // about: this map's doctrine is a PYRE LINE, the pyre is a `fights()` tower, and a
+    // silence over the approach pyre denies the map its answer to its own rule. The same
+    // pulse is worth strictly more here than anywhere else in the campaign, so the moor pays
+    // for it ONCE and pays for it early enough that the player can still rebuild.
+    // BOUGHT FROM AN OGRE — 860 hp and 40 gold for a 720-hp, 45-gold body — so W14 comes down
+    // 6836 -> 6696 raw (-2.0%) and pays 5 gold more. The under-parity is deliberate and this
+    // is the ONLY place in the campaign a hexbinder is bought at a discount: on this road the
+    // PYRES are the doctrine, a pyre is a `fights()` tower, and a silence over the approach
+    // pyre denies the map its answer to its own rule. The pulse is worth strictly more here
+    // than anywhere else, so the moor pays for it once and pays for it early enough that the
+    // player can still rebuild. The cairn keeps its span (3 x 3.73 = 11.2 s); the marauder
+    // screen, the levy column and the pavise wall are untouched, and the cursed waves keep
+    // every body of their chaff — which is what keeps fire paying on this map.
+    [['ogre', 3, 3.73, 0], ['marauder', 30, 0.42, 6], ['grunt', 108, 0.24, 2],
+     ['shield', 24, 0.65, 10, 'phalanx'], ['hexbinder', 1, 0, 12]],
+    // W15 — all the moor keeps: every species it has shown, at once, and the last wave before
+    // the King. Not cursed, so the corpses this leaves are HIS.
+    [['ironclad', 5, 2.10, 0], ['gravemold', 7, 1.15, 5, 'stampede'], ['necromancer', 3, 2.10, 9],
+     ['wardedone', 3, 3.30, 12], ['grunt', 115, 0.22, 2], ['runner', 84, 0.16, 7, 'swarm'],
+     ['brute', 16, 0.72, 4]],
+    // W16 — THE BARROW KING, and the one wave on this road whose curse has a NAME. He comes
+    // out LAST (delay 14) deliberately: the host in front of him is the ammunition for his
+    // power, he walks slower than anything else on the road, and every unburned body he
+    // catches up to inside 12 u stands back up. A player who burned that host has taken the
+    // finale's teeth out before it arrived — 453 of his corpse-sightings were ash in the
+    // intended4 row against 0 in pyroless4. That is the "Ashes to Ashes" deed, and it is this
+    // whole map argued in one wave.
+    [['barrowking', 1, 0, 14], ['ogre', 3, 3.40, 4], ['shield', 28, 0.56, 0, 'phalanx'],
+     ['grunt', 118, 0.21, 2], ['brute', 14, 0.78, 6], ['ashwraith', 14, 0.50, 18, 'swarm']],
+  ],
 };
+// ══ HORDE MODE — THE WAVE TABLE (SPEC6 §D3d) ═════════════════════════════════
+// Eight waves, every one a flood, and the LAST WAVE IS THE BOSS — there is no finale body
+// on this table, because a thousand levy IS the finale. The table is generated rather than
+// authored because its only real parameter is the head count: §D3d asks for counts that
+// scale wave over wave to a tier-scaled peak (~1000 desktop, ~400 mobile), and a hand-typed
+// table would have to be re-typed for every tier.
+//
+// It is built to be indistinguishable from a campaign table downstream: the same
+// [type, count, interval, delay, pid, form] tuples, hung off MAP.waves, so waveDefs(), the
+// dispatch card, the horn cue, the elite-swap slots, champions, the Risen engine and the
+// endless generator all inherit it without a single branch. FINALE_W therefore reads 8 and
+// "survive all eight" is the ordinary victory condition.
+//
+// COMPOSITION: chaff first and chaff always, in swarm and stampede, because the mode's whole
+// promise is mass. Weight is added by ADMITTING heavier species to the mix from W4 rather
+// than by thickening the ramp — a flood that turns into a brute line stops being a flood.
+// The minis RIDE the floods (§D3d) rather than replacing them.
+const HORDE_W = 8;
+const HORDE_PEAK = Q.peak;                              // ~1000 desktop / ~400 mobile
+const HORDE_RAMP = [0.10, 0.16, 0.23, 0.33, 0.45, 0.60, 0.78, 1.00];
+// [type, share of the wave's head count, formation]. Shares sum to 1.00 per wave.
+const HORDE_MIX = [
+  [['grunt', .62, 'swarm'], ['runner', .38, 'swarm']],
+  [['grunt', .50, 'swarm'], ['runner', .30, 'swarm'], ['hound', .20, 'stampede']],
+  [['runner', .42, 'swarm'], ['hound', .34, 'stampede'], ['grunt', .24, 'swarm']],
+  [['grunt', .44, 'swarm'], ['runner', .24, 'swarm'], ['hound', .22, 'stampede'], ['shield', .10, 'phalanx']],
+  [['grunt', .38, 'swarm'], ['runner', .26, 'swarm'], ['ashwraith', .16, 'swarm'], ['marauder', .12, ''], ['shield', .08, 'phalanx']],
+  [['grunt', .34, 'swarm'], ['hound', .22, 'stampede'], ['runner', .20, 'swarm'], ['cutpurse', .12, 'stampede'], ['gravemold', .12, 'stampede']],
+  [['grunt', .32, 'swarm'], ['runner', .24, 'swarm'], ['ashwraith', .14, 'swarm'], ['shield', .12, 'phalanx'], ['hound', .10, 'stampede'], ['brute', .08, '']],
+  [['grunt', .34, 'swarm'], ['runner', .26, 'swarm'], ['hound', .16, 'stampede'], ['shield', .08, 'phalanx'], ['marauder', .08, ''], ['ashwraith', .08, 'swarm']],
+];
+// The minis. Absolute counts, not shares — a mini-boss is an EVENT inside the tide, and an
+// event that scales with the tier stops being one. The hexbinder is refused on The Vale
+// (SPEC6 §E says NEVER on the single-road easy map, and a mode chip does not repeal that).
+const HORDE_MINI = [null, null, null,
+  [['ogre', 2, 4.0, 8]],
+  [['ironclad', 3, 2.6, 10]],
+  [['warshaman', 4, 2.2, 7], ['hexbinder', 2, 6.0, 12]],
+  [['ram', 1, 0, 12], ['ogre', 3, 3.4, 6]],
+  [['ironclad', 4, 2.4, 8], ['ogre', 4, 3.2, 5], ['necromancer', 3, 2.4, 14]],
+];
+// The spawn SPAN is what makes the peak a peak: a thousand bodies dealt over 28 s on a road
+// that takes ~110 s to walk means almost all of them are alive at once, which is the number
+// §D3b sized the instance caps against. Widened slightly with the ramp so the early waves
+// still read as waves rather than as one breath.
+function hordeTable() {
+  const out = [];
+  for (let w = 0; w < HORDE_W; w++) {
+    const head = Math.max(6, Math.round(HORDE_PEAK * HORDE_RAMP[w]));
+    const span = 20 + 8 * HORDE_RAMP[w];
+    const g = [];
+    HORDE_MIX[w].forEach((m, gi) => {
+      const c = Math.max(1, Math.round(head * m[1]));
+      g.push([m[0], c, +(span / c).toFixed(4), +(gi * 1.4).toFixed(2), undefined, m[2] || undefined]);
+    });
+    for (const mn of (HORDE_MINI[w] || []))
+      if (!(mn[0] === 'hexbinder' && MAP.id === 1)) g.push(mn.slice());
+    out.push(g);
+  }
+  return out;
+}
+if (HORDE) {
+  MAP.waves = hordeTable();
+  MAP.finale = L('horde.finale');
+  if (SHOT) console.log('HORDETABLE peak=' + HORDE_PEAK + ' waves=' +
+    MAP.waves.map(w => w.reduce((a, g) => a + g[1], 0)).join('/'));
+}
 // The wave list belongs to the ACTIVE map (CORE's MAPS table owns everything else about
 // it). Later maps add their own table here and hang it off MAP.waves.
 MAP.waves = MAP.waves || WAVE_TABLES[MAP.id] || WAVE_TABLES[1];
@@ -9412,7 +10652,11 @@ const ENDLESS_MINI = [
   [['ram', 1, 0, 12], ['ogre', 2, 4.00, 6]],
   [['ironclad', 5, 2.40, 8]],
   [['ogre', 4, 3.40, 6]],
-  [['warshaman', 6, 2.40, 9], ['ironclad', 3, 3.00, 4]],
+  // SPEC6 §E — the caster wave gains the OTHER caster. Endless sits past the balance matrix's
+  // reach, which is the one place the hexbinder can be fielded at strength without moving a
+  // documented row: six chanters healing three ironclads while two hexbinders take the battery
+  // off the board in shifts is the rota's hardest composition, and it should be.
+  [['warshaman', 6, 2.40, 9], ['ironclad', 3, 3.00, 4], ['hexbinder', 2, 6.00, 12]],
 ];
 // Cached per endless index: a wave the player is fighting must not re-generate itself
 // under the dispatch card halfway through, and waveMix() is called every frame.
@@ -9490,7 +10734,11 @@ G.scoutParty = (n) => {
 // endless run cannot compound a purse into an unkillable carpet — the ramp climbs and the
 // income does not. Campaign waves multiply by the literal 1, so the balance matrix reads
 // bit-for-bit what it always read.
-const bountyMul = () => state.wave <= FINALE_W ? 1 : Math.max(0.30, 1 - 0.02 * (state.wave - FINALE_W));
+// SPEC6 §D3d — a HORDE pays 0.6 on every body: the purse opens at double and the tide is
+// what the battery is bought out of, so the bounty has to be thin or wave 4 buys wave 8.
+// The campaign expression is untouched and still multiplies by the literal 1.
+const bountyMul = () => HORDE ? 0.60
+  : state.wave <= FINALE_W ? 1 : Math.max(0.30, 1 - 0.02 * (state.wave - FINALE_W));
 G.bountyMul = bountyMul;
 // ══ AUTO-CALL (SPEC4 §A) ═════════════════════════════════════════════
 // A player preference, not a rule of the game: it is read from localStorage at boot and is
@@ -9517,9 +10765,17 @@ G.setAutoCall = (v) => {
 // by the victory plate's "Hold the line", or pinned at boot by `&endless=1` so the harness
 // and a bot smoke run can measure the generator without playing eleven waves by hand.
 const state = { phase: 'title', gold: 140, lives: 32, wave: 0, tick: 0, speed: 1, paused: false,
-  countdown: 0, kills: 0, selTower: -1, leaked: 0, invested: 0, muster: 6, omen: '',
-  endless: P.has('endless') };
+  countdown: 0, kills: 0, selTower: -1, leaked: 0, invested: 0, muster: HORDE ? 8 : 6, omen: '',
+  // SPEC6 §D3 — the high-water mark of bodies alive at one time. Sampled every 5 ticks
+  // (see tickSim), read by the 'Thousand Broken' deed and by the horde smoke's log line.
+  // It is a counter, never an input: nothing in the sim branches on it.
+  peak: 0,
+  endless: P.has('endless') || MODE === 'endless' };
 G.state = state;
+// The purse a road starts with before the War Council touches it (SPEC6 §B). Captured from
+// the literal above rather than repeated, so a balance pass that moves the starting gold
+// moves the talent's baseline with it.
+const GOLD0 = state.gold;
 // ══ MUSTER (SPEC3 §C) ════════════════════════════════════════════════
 // Six standards to start; each further slot is bought, and the price climbs steeply, so a
 // wide line costs real board presence. Fourteen is the ceiling — past that the map is a
@@ -9704,7 +10960,9 @@ function dealDamage(e, amount, element) {
   const dmg = amount * (1 - r) * (OMEN_FX.dmg[element] || 1);
   e.hp -= dmg;
   if (dmgBySchool[element] !== undefined) dmgBySchool[element] += dmg;
-  if (e.hp <= 0) killEnemy(e);
+  // SPEC6 §A1 — the killing blow's SCHOOL goes through with the kill. This is the only place
+  // in the game where hit points reach zero, so it is the only place that can know it.
+  if (e.hp <= 0) killEnemy(e, element);
   return dmg;
 }
 G.dealDamage = dealDamage;
@@ -9729,7 +10987,9 @@ function hitFX(e, x, y, z, el, size) {
 // +20% bounty, so the greedy line and the safe line are genuinely different lines.
 // The offer is drawn from the RUN SEED (srng), never from the sim stream: the draw must be
 // the same whether the player called the wave early or let the countdown run out.
-const OMEN_FROM = 5;                                   // first wave that carries an omen
+// SPEC6 §D3d — omens run from wave 2 in a HORDE: the mode is eight waves long, and an
+// omen that only appears on wave 5 would be offered three times in a whole run.
+const OMEN_FROM = HORDE ? 2 : 5;                       // first wave that carries an omen
 G.OMEN_FROM = OMEN_FROM;                               // UI reads it for the dispatch's omen line
 // Name and blurb come out of the string layer (SPEC4 §B); `kind` is the only field the sim
 // itself reads, so the table stays data even when its copy is in another language.
@@ -9897,6 +11157,15 @@ const SWAP_SLOTS = {
     // gravemold 9 = 1260 effective. The chanter option is the cheap one in hit points and the
     // expensive one in TIME, which is the whole point of him on a finale.
     { wave: 12, from: 'grunt',  to: [['grunt', 1, 1], ['necromancer', 0.03, 12], ['gravemold', 0.09, 9]] },
+    // ── SPEC6 §E, APPENDED (see the note on map 1's slots — a slot added at the END leaves
+    // every earlier slot resolving bit-identically, and adding an option INSIDE one would
+    // re-roll it). 16 brutes = 2400 hp. hexbinder 2 = 1440, priced well under raw parity
+    // because what a silence costs a defence is not hit points: it is the fraction of the
+    // battery that stops shooting, and on this map's wedge that fraction is most of it.
+    // ironclad 4 = 1520 is the honest-hit-points option beside it, so a seed that deals the
+    // hexbinder is dealing a DIFFERENT wave rather than a heavier one. The brute group keeps
+    // its 14.4 s span under either (2 x 7.2 · 4 x 3.42).
+    { wave: 11, from: 'brute',  to: [['brute', 1, 1], ['hexbinder', 0.125, 8.0], ['ironclad', 0.26, 3.8]] },
   ],
   3: [
     // 22 marauders = 572 hp. ashwraith 11 = 660 (and fire, the wastes' own school, is the
@@ -9915,6 +11184,29 @@ const SWAP_SLOTS = {
     { wave: 12, from: 'hound',    to: [['hound', 1, 1], ['wyvern', 0.14, 6.6]] },
     // 15 pavises = 825 hp. wardedone 4 = 960 · necromancer 3 = 165 raw plus the raising.
     { wave: 8,  from: 'shield',   to: [['shield', 1, 1], ['wardedone', 0.29, 3.2], ['necromancer', 0.20, 4.5]] },
+    // ── SPEC6 §E, APPENDED. 25 marauders = 650 hp against one hexbinder's 720 — the closest
+    // this species ever gets to raw parity, and it lands on the RAM's wave: the one unit no
+    // barracks can stand in front of, arriving while the fork island's battery is dark. The
+    // skirmisher screen keeps its 13 s span (1 x 26 is a single body, so the interval is
+    // inert; it is written to the group's own length for the next reader's sake).
+    { wave: 10, from: 'marauder', to: [['marauder', 1, 1], ['hexbinder', 0.04, 26]] },
+  ],
+  // ── SPEC6 §A2: the Barrowmoor's three swap slots. Two of them sit on CURSED or near-cursed
+  // waves on purpose — an elite swap that lands on a wave where the fallen rise is the one
+  // place in the campaign where "which elite did the seed deal me" changes the doctrine and
+  // not just the arithmetic. Every option is priced the way maps 1-3 price theirs: the head
+  // count is a RATIO of the group it replaces and the interval factor holds that group's span.
+  4: [
+    // W9 (cursed) — 52 runners = 468 hp. ashwraith 8 = 480 · cutpurse 21 = 462.
+    // The wraith option is the cruel one: fire .85 means the school this map is BUILT around
+    // barely touches it, so the seed that deals it is the seed that asks for a second answer.
+    { wave: 9,  from: 'runner', to: [['runner', 1, 1], ['ashwraith', 0.154, 6.5], ['cutpurse', 0.40, 2.5]] },
+    // W11 — 12 brutes = 1800 hp. ironclad 5 = 1900 · ram 1 = 1400 (a siege engine is priced
+    // under parity everywhere: what it costs a defence is TIME on the road, not hit points).
+    { wave: 11, from: 'brute',  to: [['brute', 1, 1], ['ironclad', 0.42, 2.4], ['ram', 0.09, 11]] },
+    // W14 — 18 pavises = 990 hp. ironclad 2 = 760 · warshaman 5 = 225, the healer priced far
+    // under parity because a chanter is a multiplier on the ogres standing beside him.
+    { wave: 14, from: 'shield', to: [['shield', 1, 1], ['ironclad', 0.14, 7.0], ['warshaman', 0.30, 3.3]] },
   ],
 };
 // Resolved ONCE per run, off the run seed — not per wave, so a slot cannot re-roll itself
@@ -9954,7 +11246,10 @@ if (SHOT) {
 // `champ` (a seeded name index, §B4), `isSplit` (a child that may not split again).
 const hpRampMul = () => 1 + (MAP.hpRamp || 0.14) * (Math.max(1, state.wave) - 1);
 function makeEnemy(type, pid, branch, lane, d, hpMul, opt) {
-  const def = ENEMY_DEFS[type], o = opt || {};
+  // SPEC6 §A1 — `o.def` is the ONE override: a Risen is its own species' body with its own
+  // numbers (45% hit points, 0.85 pace, bounty 1, leak 1), and the derived def is what
+  // carries them. Nothing else in the game ever passes it, so every other unit is untouched.
+  const o = opt || {}, def = o.def || ENEMY_DEFS[type];
   G.pathPos(d, _v3, lane, pid);
   let hp = def.hp * hpMul * OMEN_FX.hp, msc = def.mscale || 1;
   const champ = o.champ !== undefined && o.champ >= 0;
@@ -9974,6 +11269,16 @@ function makeEnemy(type, pid, branch, lane, d, hpMul, opt) {
     // §A ward charge (undefined on everything that has no runes, so nothing else pays for it)
     wardN: def.hitward ? def.hitward.hits : 0, wardT: -999, wardFX: -999,
     raiseT: def.raise ? def.raise.cd : 0,               // §A the necromancer's 6 s chant
+    // SPEC6 §A1 — the curse rides the UNIT (drawn at wave build, §A1), and a champion, an
+    // elite or a boss never carries it: those three never rise, so marking them would be a
+    // wisp over a body that is telling the player a lie.
+    cursed: !!o.cursed && !champ && !def.elite && def.art !== 'boss' && type !== 'boss',
+    isRisen: !!o.risen,
+    raiseAT: def.raiseAll ? def.raiseAll.cd : 0,        // §A the Barrow King's 9 s pulse
+    // SPEC6 §E — the Hexbinder's silence cadence. Seeded to the FULL cooldown, never to
+    // zero: a mini-boss whose first act on walking out of the gate is to blank the battery
+    // gives the player nothing to read, and the seven seconds are the warning.
+    hexT: def.hex ? def.hex.cd : 0,
     isSplit: !!o.isSplit, champ, cname: champ ? o.champ : -1, msc, rank: o.rank };
   G.enemies.push(e);
   return e;
@@ -10074,6 +11379,12 @@ const FORMS = ['column', 'swarm', 'phalanx', 'stampede', 'vanguard'];
 G.FORMS = FORMS;
 const fjit = (salt, n, gi, i) => srng(0xF0 + salt, n * 977 + gi * 131 + i);
 function pushGroup(out, n, gi, type, count, interval, delay, pid, form) {
+  // SPEC6 §A1 — the group's entries are contiguous from here to the end of `out`, which is
+  // what lets the curse be drawn per (wave, group, unit) below without threading three more
+  // arguments through five spawn shapes. The `break`s used to be `return`s; the switch is
+  // otherwise untouched, so every formation still produces exactly the queue it produced in
+  // r11 (the balance matrix is the proof).
+  const start = out.length;
   const at = (s) => state.tick + Math.round(Math.max(0, s) * TPS);
   switch (form) {
     case 'swarm':
@@ -10084,7 +11395,7 @@ function pushGroup(out, n, gi, type, count, interval, delay, pid, form) {
       for (let i = 0; i < count; i++)
         out.push({ tick: at(delay + (i + (fjit(1, n, gi, i) - 0.5) * 0.9) * interval), type, pid,
                    laneSet: (fjit(2, n, gi, i) * 2 - 1) * 3.2 });
-      return;
+      break;
     case 'phalanx': {
       const W = 3;                                      // three abreast
       for (let i = 0; i < count; i++)
@@ -10093,14 +11404,14 @@ function pushGroup(out, n, gi, type, count, interval, delay, pid, form) {
                    // the rank id IS the speed-sync flag: a rank walks at its slowest free
                    // member's pace (see tickSim), so a wall stays a wall through a slow patch
                    rank: n * 100000 + gi * 1000 + ((i / W) | 0) });
-      return;
+      break;
     }
     case 'stampede': {
       const B = 8, sil = Math.min(3, B * interval * 0.5), tight = Math.max(0.04, interval - sil / B);
       for (let i = 0; i < count; i++)
         out.push({ tick: at(delay + ((i / B) | 0) * (B * tight + sil) + (i % B) * tight), type, pid,
                    laneAdd: (fjit(3, n, gi, i) * 2 - 1) * 1.1 });
-      return;
+      break;
     }
     case 'vanguard': {
       const h = Math.ceil(count / 2), span = count * interval;
@@ -10109,11 +11420,12 @@ function pushGroup(out, n, gi, type, count, interval, delay, pid, form) {
         out.push({ tick: at(delay + (fast ? i * interval * 0.55 : span * 0.52 + (i - h) * interval * 0.62)),
                    type, pid, spd: fast ? 1.12 : 1, laneAdd: fast ? -0.9 : 0.9 });
       }
-      return;
+      break;
     }
     default:                                            // column — bit-identical to r9
       for (let i = 0; i < count; i++) out.push({ tick: at(delay + i * interval), type, pid });
   }
+  if (RISEN_ON) curseGroup(out, start, n, gi, type);    // SPEC6 §A1 — who walks out marked
 }
 // ══ CHAMPIONS (SPEC5 §B4) ════════════════════════════════════════════
 // From wave 7, exactly ONE unit of the wave is promoted — ×2.5 hit points, ×6 bounty, +15%
@@ -10145,7 +11457,11 @@ function promoteChampion(q, n) {
 // and then a second host at 60% size comes out of the same gates. The wave is not CLEARED
 // until that second host is dead, which is the whole trick: the plate that says "held"
 // never appears, and the countdown never starts.
-const LONG_NIGHT = { 1: 8, 2: 10, 3: 12 };
+// SPEC6 §A2 — the Barrowmoor's Long Night is W13, which is ALSO a cursed wave: the light
+// goes, the horns stop, and the second host that walks out of the dark is a host whose dead
+// get back up. It is the map's loudest beat and the one wave that pays for both counters at
+// once (fire for the corpses, mass for the surge).
+const LONG_NIGHT = { 1: 8, 2: 10, 3: 12, 4: 13 };
 const SURGE_W = LONG_NIGHT[MAP.id] || 0;
 G.isSurge = (n) => n > 0 && n === SURGE_W;
 const night = { wave: 0, part: 0, at: 0 };
@@ -10171,14 +11487,38 @@ function buildWave(n, part) {
       (delay || 0) * (part === 2 ? 0.5 : 1), pid, form);
   }
   if (part !== 2) promoteChampion(q, n);
+  // SPEC6 §A1 — what the moor marked, stated in the log. The champion is promoted above and
+  // is stripped of the curse in makeEnemy, so the count here is the queue's own book-keeping
+  // and the LIVE count (RISELOG killed=) is the one that has been through that filter.
+  if (SHOT && RISEN_ON) {
+    let ct = 0;
+    for (const e of q) if (e.cursed) ct++;
+    console.log('CURSELOG map=' + MAP.id + ' wave=' + n + ' part=' + part + ' seed=' + G.runSeed +
+      ' cursed=' + ct + '/' + q.length + ' cursedWave=' + (G.isCursedWave(n) ? 1 : 0) +
+      ' set=' + (part === 2 ? 'n/a' : G.curseProbe(n).slice(0, 24).join(',')));
+  }
   q.sort((a, b) => a.tick - b.tick);
   spawnQueue = part === 2 ? spawnQueue.concat(q) : q;
   return q.length;
 }
+// SPEC6 §D2 — true while the opening muster is suspended. Live play only: UI.startGame()
+// is the only thing that ever sets it, and the harness never walks through it.
+let waveHold = false;
+G.waveHeld = () => waveHold;
+G.holdFirstWave = () => { waveHold = true; };
 function startWave(n) {
+  waveHold = false;
   state.wave = n; state.phase = 'wave'; spawnQueue = [];
   commitOmen(n);                                        // SPEC3 §D — the omen is locked in here
   deadN = 0;                                            // SPEC5 §A — last wave's dead are carried off
+  // SPEC6 §A1 — and so is the moor's own registry. A corpse that survived the muster would
+  // let the next cursed wave open with a dozen already standing, and would hand the Barrow
+  // King a graveyard he never fought for. The counters reset with it: RISELOG is per wave.
+  corpseN = 0; riseStats.killed = riseStats.rose = riseStats.burned = 0;
+  hexStats.pulses = hexStats.silenced = 0;              // SPEC6 §E — HEXLOG is per wave too
+  // A silence must not survive the muster either: the wave that cast it is dead, and a
+  // tower still dark on the countdown would be a hex the player can neither see nor answer.
+  for (const tw of G.towersList) tw.hexT = 0;
   // `t0` is the tick the Long Night's first host set out on. WORLD's light rig reads it to
   // fall the light ACROSS the wave rather than snapping at the lull: the lull is a discrete
   // event, so anything that only starts there is still at zero on the frame the harness
@@ -10293,6 +11633,7 @@ G.startWave = startWave;
 // Free placement: (x,z) is anywhere G.canPlace() allows. `free` skips the purse AND the
 // validity gate — that is the shot harness / preset path only.
 function placeTower(x, z, type, level = 1, free = false) {
+  if (DEEDS_ON && G.deedMark) G.deedMark('muster', G.towersList.length + 1);
   const def = TOWER_DEFS[type];
   if (!free) {
     if (state.gold < def.cost || !canPlace(x, z).ok) return false;
@@ -10305,6 +11646,12 @@ function placeTower(x, z, type, level = 1, free = false) {
   // `mode` (SPEC3 §F) starts at the type's doctrine and is then the tower's own property —
   // cycled per tower, never re-read from the def.
   const tw = { uid: ++twid, type, level: 1, cdT: 0, invested: def.cost, x, z, y: padY(x, z), group: null,
+    // SPEC6 §E — `hexT` is the seconds of silence left on this tower. Zero on everything,
+    // always, until a Hexbinder's pulse writes it, and `fireTower()` is the only reader that
+    // can change behaviour from it. `hexAt` is the TICK the last pulse landed: nothing reads
+    // it yet, and it is here because §E's "cooldown ring greys" belongs to the Dressing stage
+    // and a ring that greys needs to know when the silence started, not only that it is on.
+    hexT: 0, hexAt: -999,
     mode: def.mode || 'first' };
   state.invested += def.cost;
   tw.group = Towers.build(tw);
@@ -10330,14 +11677,16 @@ function upgradeTower(tw, free = false) {
   scene.remove(tw.group); tw.group = Towers.build(tw);
   tw.group.position.set(tw.x, tw.y, tw.z);
   scene.add(tw.group);
-  if (tw.type === 'barracks') for (const kn of G.knights) if (kn.tower === tw) { kn.maxhp = 90 * (1 + 0.5 * (tw.level - 1)); kn.dps = 6 * (1 + 0.55 * (tw.level - 1)); }
+  if (tw.type === 'barracks') for (const kn of G.knights) if (kn.tower === tw) { kn.maxhp = 90 * (1 + 0.5 * (tw.level - 1)) * G.talHp(); kn.dps = 6 * (1 + 0.55 * (tw.level - 1)); }
   UI.sync(); Audio.play('build');
   return true;
 }
 G.upgradeTower = upgradeTower;
 // Selling frees the 3.8u spacing again, so repositioning is a real strategy (SPEC2 §A).
 function sellTower(tw) {
-  state.gold += Math.round(tw.invested * 0.7);
+  // SPEC6 §B — the Engineer branch raises the refund (70% base → 72/78/85%). G.talSell()
+  // returns the shipped 0.70 at grade 0, so a baseline run refunds exactly what it always did.
+  state.gold += Math.round(tw.invested * G.talSell());
   scene.remove(tw.group);
   G.towersList.splice(G.towersList.indexOf(tw), 1);
   G.knights = G.knights.filter(k => k.tower !== tw);
@@ -10361,9 +11710,10 @@ function spawnKnights(tw) {
   // rally = nearest point on ANY road: on a forked map a barracks beside the canyon must
   // stand on the canyon, not on route 0 by definition
   const np = G.nearestPath(tw.x, tw.z), bd = np.d, bp = np.pid;
+  const khp = 90 * G.talHp();                 // SPEC6 §B — Drillmaster
   for (let i = 0; i < 3; i++) {
     G.pathPos(bd, _v3, (i - 1) * 1.6, bp);
-    G.knights.push({ tower: tw, alive: true, hp: 90, maxhp: 90, dps: 6, x: _v3.x + (rng() - .5), z: _v3.z + (rng() - .5),
+    G.knights.push({ tower: tw, alive: true, hp: khp, maxhp: khp, dps: 6, x: _v3.x + (rng() - .5), z: _v3.z + (rng() - .5),
       hx: _v3.x, hz: _v3.z, target: -1, respawn: 0, face: 0, idleT: 0 });
   }
 }
@@ -10438,6 +11788,11 @@ function addPatch(tw, x, z) {
   VFX.firePatch(x, z, P.rad);
 }
 function fireTower(tw) {
+  // SPEC6 §E — the silence lives HERE and not only in the tick loop, because fireTower() is
+  // the public "everything a tower does when its cooldown expires" entry point (the harness
+  // calls G.fireTower directly, and so would any future ability that granted a free shot).
+  // One gate, one place, no way for a second caller to shoot through a hex.
+  if (tw.hexT > 0) return false;
   const def = TOWER_DEFS[tw.type];
   const range = def.range * (1 + 0.08 * (tw.level - 1)), rq = range * range, minq = (def.minRange || 0) ** 2;
   // TARGETING DOCTRINE (SPEC3 §F), per tower:
@@ -10561,10 +11916,11 @@ G.castPower = castPower;
 // consume the sim stream, or a run with a cast in it stops replaying from its seed.
 function rallyMilitia(x, z) {
   const P = POWERS.rally, t = vt();
+  const mhp = P.hp * G.talHp();               // SPEC6 §B — the Drillmaster drills militia too
   for (let i = 0; i < P.n; i++) {
     const a = i * 2.0943951 + 0.5236, hx = x + Math.cos(a) * 1.25, hz = z + Math.sin(a) * 1.25;
     G.knights.push({ tower: null, mil: true, expire: t + P.life, alive: true,
-      hp: P.hp, maxhp: P.hp, dps: P.dps, x: hx, z: hz, hx, hz,
+      hp: mhp, maxhp: mhp, dps: P.dps, x: hx, z: hz, hx, hz,
       target: -1, respawn: 0, face: 0, idleT: 0 });
   }
   VFX.rally(x, z, P.rad);
@@ -10604,7 +11960,7 @@ function tickPowers() {
       // mean a resist entry on every foe in the roster. Fire of Heaven burns — which is also
       // what makes an ash wraith (fire .85) the wrong thing to answer with it.
       const wasElite = e.def.elite;
-      dealDamage(e, P.dmg, 'fire');
+      DSRC = 'power'; dealDamage(e, P.dmg, 'fire'); DSRC = '';
       if (dressed < 4 && (wasElite || dd < rq * 0.5)) { dressed++; hitFX(e, e.px, 1.3, e.pz, 'fire', 1.0); }
     }
     // the burning ground it leaves is an ordinary patch: same list, same damage loop, same
@@ -10632,6 +11988,37 @@ const TRAP_DEFS = {
 G.TRAP_DEFS = TRAP_DEFS;
 const TRAPS_K = Object.keys(TRAP_DEFS);
 G.TRAPS_K = TRAPS_K;
+// SPEC6 §B — the Engineer's third tier takes 10% off every trap. `cost` is read from eight
+// places (purchase, refusal, the build rail, the placement writ, the bot's `trap:` op), so
+// the discount is applied to the DEF ITSELF at run start rather than threaded through all
+// eight. TRAP_BASE keeps the shipped prices so applyTalents() can always recompute from
+// scratch — it is idempotent, and a respec never compounds.
+const TRAP_BASE = {};
+for (const k in TRAP_DEFS) TRAP_BASE[k] = TRAP_DEFS[k].cost;
+// ══ WAR COUNCIL — run start (SPEC6 §B) ═══════════════════════════════════════════
+// The ONE place a talent grade becomes a number the sim can feel. Called by MAIN before the
+// shot harness runs and by UI.startGame() before a live run does, so the grades a run fights
+// with are frozen the moment it begins: a respec on the map-select screen changes the NEXT
+// road, never the one under way.
+//
+// Order of authority: `&talents=` (harness/deep link) → the council's saved record (live play
+// only) → nothing. Under SHOT with no override the grades are ZERO, which is what keeps every
+// preset and every baseline matrix row bit-identical.
+G.applyTalents = () => {
+  const src = TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
+  TAL.q = src ? (src.q | 0) : 0;
+  TAL.d = src ? (src.d | 0) : 0;
+  TAL.e = src ? (src.e | 0) : 0;
+  // SPEC6 §D3d — the horde opens the purse at double. The talent grant is added on top
+  // rather than doubled with it: the council's writ is a flat number, not a percentage.
+  state.gold = GOLD0 * (HORDE ? 2 : 1) + G.talGold();
+  const tm = G.talTrap();
+  for (const k in TRAP_DEFS) TRAP_DEFS[k].cost = Math.round(TRAP_BASE[k] * tm);
+  if (SHOT && (TAL.q || TAL.d || TAL.e))
+    console.log('TALENTLOG q=' + TAL.q + ' d=' + TAL.d + ' e=' + TAL.e +
+      ' gold=' + state.gold + ' hp=' + G.talHp().toFixed(2) + ' sell=' + G.talSell().toFixed(2) +
+      ' trap=' + TRAPS_K.map(k => TRAP_DEFS[k].cost).join('/'));
+};
 const TRAP_MAX = 4;
 G.TRAP_MAX = TRAP_MAX;
 G.traps = [];
@@ -10700,7 +12087,7 @@ function tickTraps() {
         if (dd > rq) continue;
         const f = 1 - 0.55 * Math.sqrt(dd) / D.rad;      // full weight at the barrel, half at the rim
         const wasElite = e.def.elite;
-        dealDamage(e, D.dmg * f, D.element);
+        DSRC = 'trap'; dealDamage(e, D.dmg * f, D.element); DSRC = '';
         if (!e.noSlow) { e.slowT = Math.max(e.slowT, 0.5); e.slowF = Math.min(e.slowF, 0.65); }
         if (dressed < 3 && (wasElite || dd < rq * 0.36)) { dressed++; hitFX(e, e.px, 1.2, e.pz, D.element, 0.9); }
       }
@@ -10735,13 +12122,13 @@ function tickTraps() {
       if (tr.sprung < 0) continue;                     // sprung on THIS tick: it bites next
       e.slowT = Math.max(e.slowT, 0.35);
       e.slowF = Math.min(e.slowF, D.slow);
-      if (D.dps) dealDamage(e, D.dps * TICK, D.element);
+      if (D.dps) { DSRC = 'trap'; dealDamage(e, D.dps * TICK, D.element); DSRC = ''; }
       // lit tar: everything standing in it burns at double the rate of the ground under it
       if (tr.lit) {
         let best = 0;
         for (const pa of G.patches)
           if ((e.px - pa.x) ** 2 + (e.pz - pa.z) ** 2 <= pa.r * pa.r) best = Math.max(best, pa.dps);
-        if (best > 0) dealDamage(e, best * D.ignite * TICK, 'fire');
+        if (best > 0) { DSRC = 'trap'; dealDamage(e, best * D.ignite * TICK, 'fire'); DSRC = ''; }
       }
     }
     if (touched && tr.sprung < 0) { tr.sprung = t; VFX.trapSpring(tr.x, tr.z, tr.k, tr.r); }
@@ -10756,8 +12143,15 @@ function tickSim() {
     omenTick();                                         // SPEC3 §D — three omens on the table
     heraldTick();                                       // SPEC5 §B3 — war-drums at the gates
     trickleTick();                                      // SPEC5 §B5 — endless scout parties
-    state.countdown -= TICK;
-    if (state.countdown <= 0) startWave(state.wave + 1);
+    // SPEC6 §D2 — THE FIRST MUSTER IS THE PLAYER'S TO CALL. In live play the run opens with
+    // the countdown SUSPENDED so the first battery can be sited in peace; the horn is the
+    // "Begin the Battle" button. From wave 2 on nothing changes, and the hold is never set
+    // under SHOT/bot (runShot stages its own prewave), so every preset and every matrix row
+    // keeps today's countdown behaviour exactly.
+    if (!waveHold) {
+      state.countdown -= TICK;
+      if (state.countdown <= 0) startWave(state.wave + 1);
+    }
     UI.syncCountdown();
   }
   if (state.phase !== 'wave' && state.phase !== 'prewave') return;
@@ -10914,6 +12308,21 @@ function tickSim() {
     if (HW && e.wardN < HW.hits && state.tick - e.wardT >= HW.recover * TPS) {
       e.wardN = HW.hits; e.wardFX = state.tick;         // HOOK: VFX — the runes re-light
     }
+    // SPEC6 §A1 — THE BARROW KING. Same shape as the chanter below it and for the same
+    // reason: a cadence counted in ticks is the only kind this game is allowed to have.
+    const RA = e.def.raiseAll;
+    if (RA) {
+      e.raiseAT -= TICK;
+      if (e.raiseAT <= 0) { e.raiseAT = RA.cd; kingPulse(e, RA); }
+    }
+    // SPEC6 §E — THE HEXBINDER. Identical shape again, and deliberately: every timed enemy
+    // power in this game is a counter decremented by TICK and re-armed to its own `cd`, so
+    // all of them resolve on the same tick in a headless capture as at x3 on a phone.
+    const HX = e.def.hex;
+    if (HX) {
+      e.hexT -= TICK;
+      if (e.hexT <= 0) { e.hexT = HX.cd; hexPulse(e, HX); }
+    }
     const R = e.def.raise;
     if (!R) continue;
     e.raiseT -= TICK;
@@ -10986,7 +12395,7 @@ function tickSim() {
       const dx = tgt.px - kn.x, dz = tgt.pz - kn.z, dist = Math.hypot(dx, dz);
       kn.face = Math.atan2(dx, dz);
       if (dist > 1.15) { kn.x += dx / dist * 3.2 * TICK; kn.z += dz / dist * 3.2 * TICK; }
-      else dealDamage(tgt, kn.dps * TICK, 'crush');    // knights swing steel: CRUSH (SPEC3 §A)
+      else { DSRC = 'steel'; dealDamage(tgt, kn.dps * TICK, 'crush'); DSRC = ''; }  // knights swing steel: CRUSH (SPEC3 §A)
       kn.idleT = 0;
     } else {
       const dx = kn.hx - kn.x, dz = kn.hz - kn.z, dist = Math.hypot(dx, dz);
@@ -11001,6 +12410,13 @@ function tickSim() {
     const def = TOWER_DEFS[tw.type];
     if (!fights(def)) continue;
     tw.cdT -= TICK;
+    // SPEC6 §E — a hexed tower is SILENT, not broken. Its reload keeps running (so the
+    // silence costs it the shots it would have taken and not a second reload on top), its
+    // upgrade and sell buttons keep working, and everything the player owns that is not a
+    // tower — knights, militia, traps, powers — is untouched. `hexT` is decremented here
+    // rather than in a pass of its own because this is the only loop that walks every
+    // tower every tick, and a second walk for one counter is a second walk.
+    if (tw.hexT > 0) { tw.hexT -= TICK; continue; }
     if (tw.cdT > 0) continue;
     fireTower(tw);
   }
@@ -11014,7 +12430,11 @@ function tickSim() {
       // Sappers (SPEC3 §D) smother burning ground as they cross it; a flyer (SPEC5 §A) is
       // 2.6 units above it and never crosses it at all.
       if (!e.alive || e.noSlow || e.def.fly) continue;
-      if ((e.px - pa.x) ** 2 + (e.pz - pa.z) ** 2 <= rq) dealDamage(e, pa.dps * TICK, 'fire');
+      if ((e.px - pa.x) ** 2 + (e.pz - pa.z) ** 2 <= rq) {
+        // burning ground belongs to whoever lit it: a smite's crater is the hero's, a pyre's
+        // patch is the tower's. Same list, two ledgers.
+        DSRC = pa.owner === 'smite' ? 'power' : ''; dealDamage(e, pa.dps * TICK, 'fire'); DSRC = '';
+      }
     }
   }
   // SPEC4 §C/§D — the two player systems tick with everything else, in a fixed place in the
@@ -11086,13 +12506,23 @@ function tickSim() {
       } else { p.x += dx / dist * step; p.y += dy / dist * step; p.z += dz / dist * step; }
     }
   }
+  riseTick();                                           // SPEC6 §A1 — what the moor owes, it pays
   // wave cleared?
   // SPEC5 §B2 — a Long Night wave is NOT cleared until its second host is dead: the flag
   // gates the whole plate/countdown/omen chain, which is what makes the lull a false ending
-  // rather than a pause.
+  // rather than a pause. SPEC6 §A1 adds the same rule for a corpse that is still counting:
+  // the field is not clear while something is still due to stand up in it.
   if (state.phase === 'wave' && !spawnQueue.length && !G.enemies.some(e => e.alive)
-      && !(night.wave === state.wave && night.part < 2)) {
+      && !(night.wave === state.wave && night.part < 2) && !risePending()) {
     if (SHOT) console.log('LIVESLOG wave=' + state.wave + ' lives=' + state.lives + ' leaked=' + state.leaked + ' gold=' + state.gold);
+    if (SHOT && RISEN_ON) console.log('RISELOG wave=' + state.wave + ' killed=' + riseStats.killed +
+      ' rose=' + riseStats.rose + ' burned=' + riseStats.burned +
+      ' cursedWave=' + (G.isCursedWave(state.wave) ? 1 : 0));
+    // SPEC6 §E — the wave summary the matrix reads: how many silence pulses this wave fired
+    // and how many tower-silencings the battery's SHAPE handed them. Printed only on the
+    // waves that actually fielded one, so no map pays a log line for a unit it never sees.
+    if (SHOT && hexStats.pulses) console.log('HEXLOG wave=' + state.wave + ' pulses=' + hexStats.pulses +
+      ' towersSilenced=' + hexStats.silenced + ' towers=' + G.towersList.length);
     // SPEC4 §E: past the finale a cleared wave is a RECORD, not a victory. The run only
     // ends when the vale does.
     if (state.wave > FINALE_W) UI.endlessBest(state.wave);
@@ -11109,29 +12539,304 @@ function tickSim() {
     UI.msg({ cleared: state.wave }); Audio.play('cleared'); UI.sync();
   }
   if (state.tick % 90 === 0) { G.enemies = G.enemies.filter(e => e.alive || vt() - e.deathT < 2); reapMilitia(); }
+  // SPEC6 §D3 — the high-water mark. Sampled rather than counted every tick because the
+  // interesting number is the shape of the tide, not its instantaneous value, and because
+  // this is the only place in the loop that would pay for a full pass it does not need.
+  if (state.tick % 5 === 0) {
+    let a = 0;
+    for (const e of G.enemies) if (e.alive) a++;
+    if (a > state.peak) state.peak = a;
+  }
 }
-// ══ SPEC5 §A — the recent-death ring ═════════════════════════════════
-// A necromancer animates what has just FALLEN, so the sim keeps a small ring of the last
-// corpses — a position on the road, not a body. Fixed size, oldest overwritten, zero
-// allocation in the hot path, and a raise CONSUMES its corpse so two chanters can never
-// animate the same one twice. Cleared at every wave start: the dead of the last wave have
-// been carried off, and a ring that survived the muster would let a necromancer open a
-// wave with a full dozen already standing.
+// ══ SPEC5 §A / SPEC6 §A1 — THE CORPSE REGISTRY ═══════════════════════
+// ONE registry, three readers. A corpse is a RECORD — where the body fell, when, whether it
+// was cursed, and whether fire took it — and the necromancer (§A), the Risen scheduler
+// (SPEC6 §A1) and the Barrow King's pulse all read the same records and the same `burned`
+// flag. That unification is the spec's own instruction and it is what makes the fire rule
+// one rule instead of three: a burned corpse rises for nobody.
+//
+// The necromancer's VIEW of it is unchanged and deliberately so. He animates what has just
+// FALLEN, out of a 24-deep ring whose slot arithmetic (including the aliasing when he has
+// consumed more bodies than the ring holds) is load-bearing on maps 1-3 — the balance matrix
+// is measured through it. So DEAD_RING still holds 24 slots and still pops LIFO; it simply
+// holds REFERENCES to the records now. The only behavioural change is the burned skip, and
+// nothing can ever be burned unless the Risen engine is on (see pushDead).
 const DEAD_CAP = 24, DEAD_RING = new Array(DEAD_CAP);
 let deadN = 0;
-function pushDead(e) {
-  DEAD_RING[deadN % DEAD_CAP] = { d: e.d, lane: e.lane, pathId: e.pathId, branch: e.branch };
-  deadN++;
+// The wider ring is the RISEN one: a flood can put two dozen bodies down inside the 2.5 s a
+// corpse waits to stand up, and a rise that got quietly overwritten would be a mechanic that
+// works in a preset and fails in a wave. Only filled when the engine is on, so maps 1-3 pay
+// nothing for it — not a slot, not a write.
+// SPEC6 §D3b — raised with ACAP. At 256 records a flood that put more than 256 bodies down
+// inside the 2.5 s rise window would silently overwrite the oldest pending rises; a HORDE
+// wave can do that in one breath. Campaign behaviour is unchanged (the fattest map-4 wave
+// pushes ~180 records, so `corpseFrom` never clipped and still never does).
+const CORPSE_CAP = 1024, CORPSES = new Array(CORPSE_CAP);
+let corpseN = 0;
+// SPEC6 §A1 telemetry: per wave, how many marked bodies fell, how many stood back up, and
+// how many were denied by fire. `killed` counts CURSED kills (the candidates); `burned`
+// counts every corpse fire took, cursed or not, because a burned body is also denied to the
+// necromancer and to the King.
+const riseStats = { killed: 0, rose: 0, burned: 0 };
+// SPEC6 §C — 'Ashes to Ashes' asks what RISELOG asks: how many stood up this wave. The
+// deed reads the finale's own counters at the victory plate, before the next muster
+// clears them, which is why the object is exported rather than copied.
+G.riseStats = riseStats;
+function pushDead(e, element) {
+  const c = { d: e.d, lane: e.lane, pathId: e.pathId, branch: e.branch,
+              // the two extras the Risen machinery needs and the necromancer ignores
+              x: e.px, z: e.pz, tick: state.tick, type: e.type,
+              cursed: !!e.cursed, risen: false,
+              // FIRE DENIES THE RISE (§A1). Gated on the engine: on maps 1-3 a fire kill has
+              // never denied a necromancer his corpse and must not start now — the matrix
+              // rows are bit-identical or this stage has failed.
+              burned: RISEN_ON && element === 'fire' };
+  DEAD_RING[deadN % DEAD_CAP] = c; deadN++;
+  if (RISEN_ON) {
+    CORPSES[corpseN % CORPSE_CAP] = c; corpseN++;
+    if (c.cursed) riseStats.killed++;
+    if (c.burned) {
+      riseStats.burned++;
+      // HOOK: VFX — the ash puff that REPLACES the wisp. This is the whole feedback loop for
+      // fire on this map: the player has to be able to see, at the corpse, that the body he
+      // just killed is not coming back. (Placeholder-grade; the Dressing stage polishes it.)
+      VFX.ash(e.px, G.groundY(e.px, e.pz), e.pz, (e.def.scale || 1));
+    }
+    // SPEC6 §C "Pyre-Tender" — the corpse ledger is the honest place to count a burn: it is
+    // the one branch in the file that knows fire denied a body to the moor.
+    if (DEEDS_ON && G.deedBump) G.deedBump('burn');
+  }
+  return c;
 }
-function takeDead() { return deadN > 0 ? DEAD_RING[--deadN % DEAD_CAP] : null; }
+// A burned corpse is CONSUMED by the skip rather than skipped over, so a chanter cannot
+// stand next to a pyre and re-test the same ash every six seconds. With nothing ever burned
+// (every map but the Barrowmoor) this is the r11 function line for line.
+function takeDead() {
+  while (deadN > 0) {
+    const c = DEAD_RING[--deadN % DEAD_CAP];
+    if (c && !c.burned) return c;
+  }
+  return null;
+}
+// ══ THE RISEN (SPEC6 §A1) ════════════════════════════════════════════
+// The Barrowmoor's identity: kill it twice, or burn it. The engine is authored here and the
+// MAP that uses it is the Barrowmoor stage's (`risen: true` + `cursedWaves: [5,9,13,16]` on
+// its def); until that map exists `&risen=1` (or the `_risen`/`_riseking` presets) turns the
+// engine on over the current road so it can be measured. Everything below is inert — not
+// merely harmless, but never executed — on a map that does not ask for it.
+const RISEN_MAP = !!MAP.risen;
+const RISEN_TEST = P.has('risen') || SHOT === '_risen' || SHOT === '_riseking';
+const RISEN_ON = RISEN_MAP || RISEN_TEST;
+G.risenOn = RISEN_ON;
+// The cursed-wave table belongs to the map. The test flag carries §A1's own W5/W9/W13/W16 so
+// the engine can be exercised against the shape the Barrowmoor will actually ship.
+const CURSED_WAVES = MAP.cursedWaves || (RISEN_TEST ? [5, 9, 13, 16] : []);
+G.isCursedWave = (n) => RISEN_ON && n > 0 && CURSED_WAVES.indexOf(n) >= 0;
+// Cursed INDIVIDUALS: from wave 7, ~12% of a non-cursed wave walks out marked. Drawn at wave
+// build off the RUN SEED (srng, keyed on wave/group/unit — the champion's own idiom), never
+// from rng(): the draw must be the same whether the player called the wave early or let the
+// countdown run, and it must vary per run so the moor is never twice the same fight.
+const CURSE_FROM = 7, CURSE_P = 0.12;
+const RISE_TICKS = Math.round(2.5 * TPS);               // §A1 — 2.5 s from the fall to the rise
+const RISEN_HP = 0.45, RISEN_SPD = 0.85;
+// Spectral bone-green, through the boss-variant `tint`/`art`-borrow path: a Risen is the
+// body it had in life, drained. No new mesh, no extra draw call, no second rig.
+// Measured off the first cut of shots\_risen.png: at b=0.94 the risen levy read TEAL against
+// the meadow — a cold blue-green that belongs to the storm school, not to the moor. Pulling
+// blue under the red lands it on bone-green (the necromancer's own hue, drained of his glow)
+// and keeps the crimson tabard readable underneath as a memory of what the body used to be.
+const RISEN_TINT = [0.74, 1.32, 0.82];
+const RISEN_DEFS = {};
+function risenDefOf(type) {
+  if (RISEN_DEFS[type]) return RISEN_DEFS[type];
+  const b = ENEMY_DEFS[type];
+  if (!b) return null;
+  const d = Object.assign({}, b);
+  d.hp = b.hp * RISEN_HP; d.speed = b.speed * RISEN_SPD;
+  d.bounty = 1; d.leak = 1;                             // §A1 — a second death is worth a coin
+  d.art = b.art || type; d.tint = RISEN_TINT; d.risen = true;
+  // A Risen brings its BODY back, not its trade. Splitting, raising, stealing, healing and
+  // stomping are all cut: a mold that split twice, a chanter that raised from beyond the
+  // grave or a thief that cut the purse a second time would each turn one clean rule into a
+  // cascade the player cannot read. (Elites and bosses never rise at all, so `stomp` and
+  // `hitward` are belt-and-braces.)
+  delete d.split; delete d.raise; delete d.steal; delete d.heal; delete d.stomp;
+  delete d.hitward; delete d.raiseAll;
+  return (RISEN_DEFS[type] = d);
+}
+// Marks one spawn group. Elites, bosses and champions are exempt everywhere (§A1) — the
+// champion is stripped in makeEnemy, because promoteChampion runs after this.
+function curseGroup(out, start, n, gi, type) {
+  const d = ENEMY_DEFS[type];
+  if (!d || d.elite || d.art === 'boss' || type === 'boss') return;
+  const whole = G.isCursedWave(n);
+  if (!whole && n < CURSE_FROM) return;
+  for (let i = start; i < out.length; i++)
+    if (whole || srng(0xC5E, n * 7919 + gi * 131 + (i - start)) < CURSE_P) out[i].cursed = true;
+}
+// The seeded draw, re-derived from the wave TABLE alone — no state, no queue, no sim. This
+// is the determinism proof §A1.7 asks for: two seeds print two different sets, one seed
+// prints the same set twice, and it is the same key space the live marking uses.
+G.curseProbe = (n) => {
+  const W = waveDefs(n) || [], out = [];
+  if (G.isCursedWave(n)) return ['ALL'];
+  if (n < CURSE_FROM) return out;
+  for (let gi = 0; gi < W.length; gi++) {
+    const g = W[gi], d = ENEMY_DEFS[g[0]];
+    if (!d || d.elite || d.art === 'boss' || g[0] === 'boss') continue;
+    for (let i = 0; i < g[1]; i++)
+      if (srng(0xC5E, n * 7919 + gi * 131 + i) < CURSE_P) out.push(gi + ':' + i);
+  }
+  return out;
+};
+// The rise itself. A corpse is raised ONCE (the flag is on the record, so the scheduler and
+// the King can never both take the same body) and the Risen is built through makeEnemy like
+// everything else that walks — same omen stamp, same ramp, same list.
+function raiseRisen(c, laneOff) {
+  const def = risenDefOf(c.type);
+  if (!def) { c.risen = true; return null; }
+  c.risen = true;
+  const e = makeEnemy(c.type, c.pathId, c.branch, c.lane + (laneOff || 0),
+    Math.max(0, c.d - 0.25), hpRampMul(), { def, risen: true });
+  riseStats.rose++;
+  // HOOK: VFX/AUDIO — the body coming back up where it fell, in the necromancer's own green
+  // so the moor speaks one language about the dead.
+  VFX.risen(e.px, G.groundY(e.px, e.pz), e.pz, (def.scale || 1) * 1.8);
+  Audio.play('raisew', e.px, e.pz, 0.55);
+  return e;
+}
+// Oldest live index in the ring. Anything older has been overwritten and is gone.
+const corpseFrom = () => Math.max(0, corpseN - CORPSE_CAP);
+G.corpseAt = (i) => CORPSES[((i % CORPSE_CAP) + CORPSE_CAP) % CORPSE_CAP];
+G.corpseSpan = () => [corpseFrom(), corpseN];
+// One pass per tick. Records are pushed in tick order, so the first corpse that is still too
+// young ends the scan — a cursed wave with three hundred bodies on the road costs a handful
+// of comparisons.
+function riseTick() {
+  if (!RISEN_ON) return;
+  const due = state.tick - RISE_TICKS, hi = corpseN;
+  for (let i = corpseFrom(); i < hi; i++) {
+    const c = CORPSES[i % CORPSE_CAP];
+    if (!c) continue;
+    if (c.tick > due) break;
+    if (c.risen || c.burned || !c.cursed) continue;
+    raiseRisen(c, 0);
+  }
+}
+// Is anything still owed a rise? The wave is NOT cleared while a corpse is mid-count: a
+// "held" plate followed two seconds later by a body standing up in an empty field is the
+// one bug this mechanic could ship that would read as a broken game rather than a rule.
+function risePending() {
+  if (!RISEN_ON) return false;
+  const hi = corpseN;
+  for (let i = corpseFrom(); i < hi; i++) {
+    const c = CORPSES[i % CORPSE_CAP];
+    if (c && c.cursed && !c.burned && !c.risen) return true;
+  }
+  return false;
+}
+// THE BARROW KING'S PULSE (§A1.4 / §A2). Every `cd` seconds while he walks, every unburned
+// corpse within `rad` stands up — his own kills, the chaff that died beside him, and the
+// bodies the player left behind him. Deterministic cadence (ticks, never wall clock), capped
+// per pulse so a mass grave cannot spike the frame, and it reads the SAME registry the fire
+// rule writes to: burn the moor's dead and the King's finale power is an empty gesture.
+function kingPulse(e, RA) {
+  const rq = RA.rad * RA.rad, hi = corpseN, lo = corpseFrom();
+  // Counted BEFORE the cap bites, because the honest number — how much of the graveyard he
+  // could have had — is what tells the balance pass whether the cap is doing anything, and
+  // what tells the Barrowmoor stage whether fire is actually denying him anything.
+  let cand = 0, burned = 0;
+  for (let i = lo; i < hi; i++) {
+    const c = CORPSES[i % CORPSE_CAP];
+    if (!c || c.risen) continue;
+    if ((c.x - e.px) ** 2 + (c.z - e.pz) ** 2 > rq) continue;
+    if (c.burned) burned++; else cand++;
+  }
+  let rose = 0;
+  for (let i = lo; i < hi && rose < RA.cap; i++) {
+    const c = CORPSES[i % CORPSE_CAP];
+    if (!c || c.risen || c.burned) continue;
+    if ((c.x - e.px) ** 2 + (c.z - e.pz) ** 2 > rq) continue;
+    if (raiseRisen(c, ((rose % 3) - 1) * 0.9)) rose++;
+  }
+  if (rose) {
+    // HOOK: VFX/AUDIO — the pulse the whole finale is about. `rad` and `rose` both go through
+    // so the ring is the sim's own reach and the bloom is the sim's own harvest.
+    VFX.kingRaise(e.px, G.groundY(e.px, e.pz), e.pz, RA.rad, rose);
+    VFX.raiseHand(e.px, G.groundY(e.px, e.pz), e.pz, (e.def.scale || 1) * 1.1);
+    Audio.play('raisew', e.px, e.pz, 1);
+    Audio.play('kingraise', e.px, e.pz, 1);
+  }
+  // v6 INTEGRATE: the r12 rows came back `unburnedInRange=0` on all 34 pulses of a real
+  // finale, which is either "fire denied him everything" or "he is nowhere near a corpse" —
+  // and the old line could not tell those apart. `at`/`near`/`reg` do: they are the King's
+  // own position, the distance to the nearest surviving record, and how many records the
+  // registry holds. SHOT-only, so the scan below costs live play nothing.
+  if (SHOT) {
+    let near = -1;
+    for (let i = lo; i < hi; i++) {
+      const c = CORPSES[i % CORPSE_CAP];
+      if (!c || c.risen) continue;
+      const q = Math.hypot(c.x - e.px, c.z - e.pz);
+      if (near < 0 || q < near) near = q;
+    }
+    console.log('RISELOG king=' + e.id + ' wave=' + state.wave + ' pulse tick=' + state.tick +
+      ' rose=' + rose + ' unburnedInRange=' + cand + ' deniedByFire=' + burned + ' cap=' + RA.cap +
+      ' at=' + e.px.toFixed(1) + ',' + e.pz.toFixed(1) + ' near=' + (near < 0 ? 'none' : near.toFixed(1)) +
+      ' reg=' + (hi - lo));
+  }
+}
+// SPEC6 §E telemetry: per wave, how many pulses went off and how many tower-silencings they
+// bought between them. A pulse over a nine-tower junction pile scores 9 and the same pulse
+// over a spread build scores 2 — which is the whole mechanic expressed as one integer, and
+// the number the `junction2`/`spread2` matrix rows exist to move.
+const hexStats = { pulses: 0, silenced: 0 };
+G.hexStats = hexStats;
+// THE HEX PULSE (§E). Every `cd` seconds while he walks, every TOWER THAT FIGHTS inside
+// `rad` is silenced for `dur`. Deterministic cadence (ticks, never wall clock) and no rng
+// draw anywhere in it, so a hexbinder on the road cannot shift the sim stream a balance run
+// is measuring.
+//
+// WHY ONLY `fights()` TOWERS. A barracks does not fire — its knights do, and §E's counterplay
+// web says in as many words that knights keep fighting through a hex. A warbanner does not
+// fire either; its aura is a rate multiplier on towers that are themselves already silenced,
+// so silencing it as well would be the same effect charged twice. Both therefore stay live,
+// and `hexT` is only ever written on a tower the tick loop will decrement it on.
+function hexPulse(e, HX) {
+  const rq = HX.rad * HX.rad;
+  let n = 0;
+  for (const tw of G.towersList) {
+    if (!fights(TOWER_DEFS[tw.type])) continue;
+    if ((tw.x - e.px) ** 2 + (tw.z - e.pz) ** 2 > rq) continue;
+    // MAX, not assignment: two hexbinders overlapping must not be able to CUT a silence
+    // short, and a second pulse landing on a tower with 3 s left leaves it with 3.5, not 6.5.
+    tw.hexT = Math.max(tw.hexT, HX.dur);
+    tw.hexAt = state.tick;
+    n++;
+    // HOOK: VFX — the rune chains going round the tower, held for the whole silence so the
+    // player can see WHICH towers are out at a glance rather than by watching for the shot
+    // that never comes.
+    VFX.hexBind(tw.x, tw.z, HX.dur);
+  }
+  hexStats.pulses++; hexStats.silenced += n;
+  // HOOK: VFX/AUDIO — the pulse itself, at the caster, so the answer ("kill that one") is
+  // legible from the effect. Fired even on a miss: a hexbinder walking through open ground
+  // still tolls, which is the warning the player gets before he reaches the battery.
+  VFX.hexPulse(e.px, G.groundY(e.px, e.pz), e.pz, HX.rad);
+  Audio.play('hexbell', e.px, e.pz, n ? 1 : 0.6);
+  if (SHOT) console.log('HEXLOG hex=' + e.id + ' wave=' + state.wave + ' pulse tick=' + state.tick +
+    ' silenced=' + n + ' rad=' + HX.rad + ' dur=' + HX.dur);
+}
 // SPLIT (§A). Deterministic on purpose: a fixed fan either side of the parent's own lane,
 // NO rng draw — a mold dying is a damage event, and pulling from the sim stream inside one
 // would shift every lane jitter downstream of whichever tick the player happened to kill it.
 function splitEnemy(e) {
   const S = e.def.split;
   for (let i = 0; i < S.n; i++) {
+    // SPEC6 §A1 — a cursed mold breeds cursed children: on the moor the rule is about the
+    // BODY, and a moldling is a body that fell in a cursed wave like any other.
     const c = makeEnemy(S.to, e.pathId, e.branch, e.lane + (i - (S.n - 1) / 2) * 1.6,
-      Math.max(0, e.d - 0.6), hpRampMul(), { isSplit: true });
+      Math.max(0, e.d - 0.6), hpRampMul(), { isSplit: true, cursed: e.cursed });
     c.spdM = e.spdM;                                     // children inherit their parent's omen pace
   }
   // HOOK: VFX/AUDIO — the burst that IS the split. Two beats, deliberately: killEnemy has
@@ -11140,7 +12845,31 @@ function splitEnemy(e) {
   VFX.splitPop(e.px, G.groundY(e.px, e.pz), e.pz);
   Audio.play('spore', e.px, e.pz);
 }
-function killEnemy(e) {
+// `element` is the school of the KILLING BLOW, plumbed from dealDamage (SPEC6 §A1): fire
+// burns the corpse and nothing else does. It is optional on purpose — a caller that kills a
+// unit some other way (there is none today) simply leaves the body unburned.
+// ══ DEEDS — ATTRIBUTION (SPEC6 §C) ═══════════════════════════════════════════
+// `DSRC` is the SOURCE of the blow currently in flight: the school is already plumbed
+// through dealDamage, but "who swung it" is not, and three deeds (Master-at-Arms,
+// Trapwright, Hand of Heaven) are about the hand rather than the school. Six call sites set
+// it and clear it; everything else leaves it '' and is attributed to the towers. It is a
+// pure read-out — nothing in the sim ever branches on it — and the counting is refused
+// wholesale under SHOT/bot, so a matrix row cannot be coloured by it.
+let DSRC = '';
+G.dsrc = (v) => { DSRC = v; };
+const DEEDS_ON = !SHOT;
+function deedKill(e, element) {
+  const B = G.deedBump;
+  if (!B) return;
+  B('kind', e.type);
+  if (element === 'storm') B('storm');
+  if (DSRC) B(DSRC);
+  if (e.type === 'wyvern') B('wyv');
+  if (e.champ) B('champ');
+  if (e.isRisen) B('risen');
+  if (e.type === 'hexbinder') B('hex');
+}
+function killEnemy(e, element) {
   if (!e.alive) return;
   // Bounty rides the omen: a challenge wave pays danger money (+20%), Thin Ranks pays less.
   // Gold stays an integer, but the FRACTION is banked rather than rounded away — +20% of a
@@ -11162,8 +12891,13 @@ function killEnemy(e) {
   // SPEC5 §A. Order matters: the corpse is registered BEFORE the split, so a necromancer
   // walking behind a gravemold can raise the mold as well as meet its children. Raised bones
   // are excluded — a chanter that fed on its own risen would never run out of them.
-  if (e.type !== 'skeleton') pushDead(e);
+  // SPEC6 §A1 — a Risen leaves no corpse: it never rises twice, and it is not a body a
+  // chanter or the King can call on either. It is the second death, and it is final.
+  if (e.type !== 'skeleton' && !e.isRisen) pushDead(e, element);
   if (e.def.split && !e.isSplit) splitEnemy(e);
+  // SPEC6 §C — the chronicle's only kill hook. Last in the function on purpose: everything
+  // above it is the game, and the deeds are a record of the game.
+  if (DEEDS_ON) deedKill(e, element);
 }
 function endGame(won) {
   state.phase = won ? 'won' : 'lost';
@@ -11186,6 +12920,25 @@ G.holdTheLine = () => {
   return true;
 };
 G.tickSim = tickSim;
+// ══ §D3a — THE BENCH ═════════════════════════════════════════════════════════
+// `&horde=N` puts N synthetic bodies on the road in one call so a real device can be
+// measured at a head count no wave table reaches. Every body goes through G.spawnAt, which
+// takes NO rng draw — so the bench cannot shift the sim stream a balance run is measuring,
+// and a preset may call it. Distribution is a golden-ratio walk down the road (an even
+// spread with no visible banding) across a mix that exercises the fat instanced meshes.
+const BENCH_MIX = ['grunt', 'grunt', 'grunt', 'runner', 'runner', 'hound',
+                   'shield', 'marauder', 'ashwraith', 'brute'];
+G.hordeBench = (n) => {
+  G.benched = n;
+  let made = 0;
+  for (let i = 0; i < n; i++) {
+    const d = G.pathLen * (0.05 + 0.88 * ((i * 0.6180339887498949) % 1));
+    if (G.spawnAt(BENCH_MIX[i % BENCH_MIX.length], d, ((i % 7) - 3) * 0.92)) made++;
+  }
+  console.log('HORDEBENCH asked=' + n + ' spawned=' + made + ' alive=' +
+    G.enemies.filter(e => e.alive).length);
+  return made;
+};
 // ══════════════════════ END SECTION: SIM ══════════════════════
 
 // ══════════════════════ SECTION: VFX (owner: VFX builder) ══════════════════════
@@ -12895,6 +14648,298 @@ VFX.raiseHand = (x, gy, z, h) => {
   E.r = 0.22; E.g = 0.98; E.b = 0.44; E.a = 0.34; E.life = 0.85; E.fade = 2; E.lead = 0.08; push(BB);
 };
 
+// ── THE RISEN (SPEC6 §A1): the body coming back, and the fire that stops it ──
+// Deliberately the necromancer's green rather than a new colour: on the Barrowmoor the same
+// power animates the chanter's bones, the cursed levy and the Barrow King's whole graveyard,
+// and three greens would read as three unrelated systems. What separates a RISE from a chant
+// is its SHAPE — this one comes up out of one spot, hard and fast, and takes the body with it.
+// THREE BEATS, IN ORDER, and the order is the whole point: the first cut fired everything on
+// one frame and the effect read as a green POP — an explosion, which is the shape of a thing
+// being destroyed, exactly backwards for a thing being assembled. A rise has a direction, and
+// direction needs time, so the beats are staged on `E.lead` (the emitter's own back-dating
+// field, which is deterministic and survives the headless catch-up):
+//   t+0.00  THE GROUND LETS GO — a ring opening on the turf and the soil turning over on it.
+//   t+0.03  THE SOUL COMES UP — one tall vertical wisp climbing the body's full height, plus
+//           the strands that follow it. This is the beat that says WHICH WAY, and it is a
+//           column and not a puff for that reason.
+//   t+0.075 THE BODY TAKES IT — a brief spectral flash at chest height, shaped to a torso
+//           (asp 1.6, not round), and gone in under half a second. The flash is what marks
+//           the instant the thing standing there stops being a corpse.
+// A NOTE ON `E.lead`, because it reads like a delay and is the opposite: `push` writes the
+// birth stamp as `vt - lead`, so a POSITIVE lead back-dates a particle (it is born already
+// aged — the field's catch-up idiom) and a NEGATIVE one postpones it. The beats below are
+// therefore negative, and they are SMALL: `_risen` captures three ticks (0.1 s) after the
+// rise, so a beat further out than that is a beat no shipped frame can ever show.
+VFX.risen = (x, gy, z, h) => {
+  eseed((x * 617 + z * 331) | 0, (G.vt() * 733) | 0);
+  // ── beat 1: the ground gives it up ──
+  eReset();
+  E.x = x; E.y = gy + 0.10; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 0.35; E.s1 = 2.6; E.r = 0.26; E.g = 1.24; E.b = 0.58;
+  E.a = 0.42; E.life = 0.60; E.fade = 2; E.lead = 0.06; push(BB);
+  eReset();                                                        // the turf it turns over
+  E.x = x; E.y = gy + 0.16; E.z = z; E.tile = T_DUST; E.mode = 1;
+  E.s0 = 0.35; E.s1 = 1.45; E.vy = 0.3; E.drag = 2.8;
+  E.r = 0.34; E.g = 0.32; E.b = 0.27; E.a = 0.13; E.life = 0.85; E.rot = er() * 6.28; push(BA);
+  // ── beat 2: the soul-wisp, straight up the body ──
+  // ONE tall billboard rather than a stack of small ones: a column read at gameplay zoom is
+  // a shape, and a shape survives being 40 px tall on a phone where a file of dots does not.
+  eReset();
+  E.x = x; E.y = gy + h * 0.14; E.z = z; E.tile = T_WISP;
+  E.vy = h * 0.62; E.drag = 1.05;
+  E.asp = 4.6; E.s0 = 0.34; E.s1 = 0.62;
+  E.r = 0.22; E.g = 1.32; E.b = 0.58; E.a = 0.44; E.life = 0.66; E.fade = 2; E.lead = -0.03; push(BB);
+  for (let i = 0, k = LOWQ ? 3 : 6; i < k; i++) {                  // the strands that follow it
+    eReset();
+    const an = er() * 6.2832, rr = 0.10 + er() * 0.34;
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.06 + er() * 0.20; E.z = z + Math.sin(an) * rr;
+    E.vx = Math.cos(an) * 0.22 + WX * 0.2; E.vz = Math.sin(an) * 0.22 + WZ * 0.2;
+    E.vy = 2.0 + er() * 1.5; E.drag = 1.7; E.grav = -0.25;
+    E.tile = T_WISP; E.asp = 2.5 + er() * 0.8;
+    E.s0 = 0.24 + er() * 0.20; E.s1 = 0.04 + er() * 0.10;
+    E.r = 0.32; E.g = 1.46; E.b = 0.64; E.a = 0.56; E.life = 0.85 + er() * 0.5; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 1.4; E.lead = -0.03 + er() * 0.10; push(BB);
+  }
+  // ── beat 3: the body takes it ──
+  eReset();                                                        // the spectral flash
+  E.x = x; E.y = gy + h * 0.52; E.z = z; E.tile = T_SOFT; E.mode = 3;
+  E.asp = 1.70; E.s0 = 0.62; E.s1 = 1.58;
+  E.r = 0.30; E.g = 1.24; E.b = 0.62; E.a = 0.52; E.life = 0.42; E.fade = 2; E.lead = -0.075; push(BB);
+  eReset();                                                        // the hard centre of it
+  E.x = x; E.y = gy + h * 0.52; E.z = z; E.tile = T_FLASH;
+  E.asp = 1.35; E.s0 = 0.26; E.s1 = 0.62;
+  E.r = 0.36; E.g = 1.40; E.b = 0.70; E.a = 0.44; E.life = 0.20; E.fade = 2;
+  E.rot = 0.35; E.lead = -0.075; push(BB);
+  eReset();                                                        // ...and the cold on it after
+  E.x = x; E.y = gy + h * 0.55; E.z = z; E.tile = T_SOFT;
+  E.s0 = 0.5; E.s1 = 2.2; E.vy = 0.6; E.drag = 1.5;
+  E.r = 0.22; E.g = 1.02; E.b = 0.46; E.a = 0.40; E.life = 0.70; E.fade = 2; E.lead = -0.08; push(BB);
+};
+// FIRE DENIES THE RISE (§A1). The counter-effect has to be as legible as the effect or the
+// player never learns the rule: where a corpse would have shown a green wisp for two and a
+// half seconds, a burned one throws ash and goes quiet. Grey and ORANGE-dying, so it can
+// never be mistaken for the green at a glance — that read is the whole mechanic.
+VFX.ash = (x, gy, z, s) => {
+  const S = s || 1;
+  eseed((x * 421 + z * 787) | 0, (G.vt() * 311) | 0);
+  // THE PUFF. Raised off placeholder grade by giving it the one thing it did not have: a
+  // BODY. Six thin sprites drifting apart is smoke; what a corpse collapsing into ash looks
+  // like is a single low grey bloom that opens fast and then hangs, with the flecks blowing
+  // off the top of it. So the bloom is drawn first, ground-aligned and wide, and the flecks
+  // are what the eye follows out of it.
+  eReset();
+  E.x = x; E.y = gy + 0.09; E.z = z; E.tile = T_SOOT; E.mode = 1;
+  E.s0 = 0.55 * S; E.s1 = 2.85 * S;
+  E.r = 0.30; E.g = 0.27; E.b = 0.25; E.a = 0.46; E.life = 1.15; E.fade = 2;
+  E.rot = er() * 6.28; push(BA);
+  if (!LOWQ) {                                                     // the scorch it leaves
+    eReset();
+    E.x = x; E.y = gy + 0.055; E.z = z; E.tile = T_SCORCH; E.mode = 1;
+    E.s0 = 1.5 * S; E.s1 = 1.85 * S;
+    E.r = 0.26; E.g = 0.23; E.b = 0.21; E.a = 0.40; E.life = 1.9; E.rot = er() * 6.28; push(BA);
+  }
+  for (let i = 0, k = LOWQ ? 3 : 6; i < k; i++) {
+    eReset();
+    const an = er() * 6.2832;
+    E.x = x + Math.cos(an) * 0.3 * S; E.y = gy + 0.25 + er() * 0.5 * S; E.z = z + Math.sin(an) * 0.3 * S;
+    E.vx = Math.cos(an) * (0.5 + er() * 0.9) + WX * 0.6; E.vz = Math.sin(an) * (0.5 + er() * 0.9) + WZ * 0.6;
+    E.vy = 0.7 + er() * 0.9; E.drag = 1.9; E.grav = -0.2;
+    E.tile = T_SOOT; E.mode = 1;
+    E.s0 = 0.35 * S + er() * 0.3; E.s1 = 1.5 * S + er() * 0.9;
+    E.r = 0.52; E.g = 0.48; E.b = 0.45; E.a = 0.30; E.life = 0.9 + er() * 0.6; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 0.7; push(BA);
+  }
+  // THE EMBER FLECKS. Doubled and given real ballistics — the counter-effect has to be as
+  // legible as the effect or the player never learns the rule, and at four flecks the ash
+  // was the quietest thing on the moor while the green was the loudest. They tumble UP and
+  // fall back (grav positive, not the wisp's negative float): a cinder is heavy, a soul is
+  // not, and that difference is doing as much of the read here as the colour is.
+  for (let i = 0, k = LOWQ ? 4 : 8; i < k; i++) {
+    eReset();
+    const an = er() * 6.2832, sp = 0.6 + er() * 1.5;
+    E.x = x + es1() * 0.3 * S; E.y = gy + 0.2 + er() * 0.4 * S; E.z = z + es1() * 0.3 * S;
+    E.vx = Math.cos(an) * sp; E.vz = Math.sin(an) * sp; E.vy = 1.9 + er() * 1.7;
+    E.drag = 1.8; E.grav = 3.1;
+    E.tile = T_EMBER; E.s0 = 0.15 + er() * 0.10; E.s1 = 0.02;
+    E.r = 1.95; E.g = 0.80; E.b = 0.26; E.a = 0.92; E.life = 0.55 + er() * 0.45; E.fade = 2;
+    E.lead = er() * 0.14; push(BB);
+  }
+  eReset();                                                        // the heat going out of it
+  E.x = x; E.y = gy + 0.30 * S; E.z = z; E.tile = T_FLASH;
+  E.s0 = 0.30 * S; E.s1 = 1.30 * S;
+  E.r = 1.70; E.g = 0.66; E.b = 0.22; E.a = 0.52; E.life = 0.26; E.fade = 2;
+  E.rot = er() * 6.28; push(BB);
+};
+
+// THE BARROW KING'S RAISE (SPEC6 §A2). `raiseHand` above is the necromancer's gesture and it
+// is sized for ONE body at his feet; the King empties a graveyard twelve units across, and a
+// power whose reach the player cannot see is a power he cannot play around. So the King gets
+// his own beat, and it says the two things the mechanic actually is:
+//   THE REACH — a necrotic ring driven out to the exact `rad` the sim used, on the ground, so
+//   "everything inside this circle is coming back" is a shape and not a surprise. Two hoops,
+//   the second slower and dimmer, which is how a pulse reads as travelling rather than as a
+//   disc appearing.
+//   THE COUNT — the moor stands up SIMULTANEOUSLY, so the King's own light has to be one
+//   event and not `n` of them: a single low necrotic bloom over him, scaled by how much of
+//   the graveyard he actually got. `raiseRisen` fires each body's own three beats underneath.
+// Deliberately NOT the hex's dark jade: this is the moor's raise-green at full chroma, the
+// same language the chanter and every cursed wisp on the map speak. §E's green is separated
+// from it by value and motion (dark, winding, on a standing object) — never by hue.
+VFX.kingRaise = (x, gy, z, rad, n) => {
+  const R = Math.max(4, rad || 12), k = clamp((n || 1) / 8, 0.35, 1.4);
+  eseed((x * 743 + z * 457) | 0, (G.vt() * 829) | 0);
+  eReset();                                                        // it leaves him
+  E.x = x; E.y = gy + 0.14; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 1.2; E.s1 = R * 0.72; E.r = 0.30; E.g = 1.26; E.b = 0.58;
+  E.a = 0.34; E.life = 0.62; E.fade = 2; push(BB);
+  for (let i = 0, m = LOWQ ? 10 : 16; i < m; i++) {                // ...and arrives at the rim
+    const an = i / m * 6.2832;
+    eReset();
+    E.x = x + Math.cos(an) * R; E.y = G.groundY(x + Math.cos(an) * R, z + Math.sin(an) * R) + 0.11;
+    E.z = z + Math.sin(an) * R; E.tile = T_RING; E.mode = 1;
+    E.s0 = 0.5; E.s1 = 1.9; E.r = 0.26; E.g = 1.10; E.b = 0.50;
+    E.a = 0.44; E.life = 0.80; E.fade = 2; E.rot = an; E.lead = -0.20; push(BB);
+  }
+  eReset();                                                        // the ground going sour
+  E.x = x; E.y = gy + 0.08; E.z = z; E.tile = T_SOFT; E.mode = 1;
+  E.s0 = R * 0.4; E.s1 = R * 1.5; E.r = 0.10; E.g = 0.54; E.b = 0.26;
+  E.a = 0.11 * k; E.life = 1.5; E.fade = 2; push(BB);
+  eReset();                                                        // the King's own bloom
+  E.x = x; E.y = gy + 2.2; E.z = z; E.tile = T_FLASH;
+  E.s0 = 0.9; E.s1 = 2.6 + 1.5 * k; E.r = 0.40; E.g = 1.58; E.b = 0.72;
+  E.a = 0.50; E.life = 0.50; E.fade = 2; E.rot = er() * 6.28; push(BB);
+  for (let i = 0, m = LOWQ ? 6 : 12; i < m; i++) {                 // souls dragged in off the moor
+    eReset();
+    const an = i / m * 6.2832 + er() * 0.4, rr = R * (0.35 + er() * 0.60);
+    E.x = x + Math.cos(an) * rr; E.y = gy + 0.10; E.z = z + Math.sin(an) * rr;
+    E.vx = -Math.cos(an) * 0.5; E.vz = -Math.sin(an) * 0.5;
+    E.vy = 2.6 + er() * 1.8; E.drag = 1.5; E.grav = -0.20;
+    E.tile = T_WISP; E.asp = 3.0 + er() * 1.1;
+    E.s0 = 0.22 + er() * 0.16; E.s1 = 0.05;
+    E.r = 0.34; E.g = 1.50; E.b = 0.68; E.a = 0.58; E.life = 0.95 + er() * 0.45; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 1.2; E.lead = er() * 0.22; push(BB);
+  }
+};
+
+// ── THE HEX (SPEC6 §E): the pulse that goes out, and the chains it leaves ────
+// Two halves, and they answer two different questions. The PULSE is at the caster and says
+// WHO — one expanding hoop out to the exact silence radius, so the player can see how much
+// of his battery the next one will take and where the man doing it is standing. The BIND is
+// at each tower and says WHICH — rune chains wrapped round the shaft, held for the whole
+// silence.
+//
+// COLOUR: GREEN-BLACK, which is §E's own word for it and is a real two-part material, not a
+// hue. The LINKS are near-black smoke in the alpha bucket; the GLYPHS on them are a cold
+// deep jade in the additive one. That is what separates a hex from the moor's raise-green,
+// which is the one collision this effect had to survive: the necromancer's light is a PALE
+// MINT that RISES out of the ground in soft wisps, and this is a DARK JADE that WINDS round
+// a standing object in hard little marks. Different value, different motion, different
+// shape — the read holds even on the one map that fields both.
+const HEX_G = [0.14, 0.78, 0.52];                                  // the jade the glyphs burn
+const HEX_K = [0.055, 0.085, 0.070];                               // the near-black of the iron
+VFX.hexPulse = (x, gy, z, rad) => {
+  const R = rad || 9;
+  eseed((x * 613 + z * 271) | 0, (G.vt() * 419) | 0);
+  eReset();                                                        // the hoop, out to the real radius
+  E.x = x; E.y = gy + 0.16; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 1.2; E.s1 = R * 2.0; E.r = HEX_G[0] * 1.5; E.g = HEX_G[1] * 1.5; E.b = HEX_G[2] * 1.5;
+  E.a = 0.50; E.life = 0.80; E.fade = 2; push(BB);
+  eReset();                                                        // a second, slower, behind it
+  E.x = x; E.y = gy + 0.14; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 0.8; E.s1 = R * 1.55; E.r = HEX_G[0]; E.g = HEX_G[1]; E.b = HEX_G[2];
+  E.a = 0.32; E.life = 1.05; E.fade = 2; E.lead = 0.16; push(BB);
+  eReset();                                                        // the hands that threw it
+  E.x = x; E.y = gy + 1.45; E.z = z; E.tile = T_FLASH;
+  E.s0 = 0.40; E.s1 = 2.10; E.r = HEX_G[0] * 2.2; E.g = HEX_G[1] * 1.7; E.b = HEX_G[2] * 2.0;
+  E.a = 0.66; E.life = 0.34; E.fade = 2; E.rot = er() * 6.28; E.lead = 0.03; push(BB);
+  for (let i = 0, k = LOWQ ? 4 : 8; i < k; i++) {                  // the dark going out under it
+    eReset();
+    const an = i / k * 6.2832 + er() * 0.4;
+    E.x = x; E.y = gy + 0.55 + er() * 0.5; E.z = z;
+    E.vx = Math.cos(an) * R * 0.55; E.vz = Math.sin(an) * R * 0.55; E.vy = 0.25;
+    E.drag = 1.8; E.tile = T_SMOKE; E.mode = 1;
+    E.s0 = 0.7; E.s1 = 2.6 + er() * 1.0;
+    E.r = HEX_K[0] * 4; E.g = HEX_K[1] * 4; E.b = HEX_K[2] * 4;
+    E.a = 0.24; E.life = 0.9 + er() * 0.5; E.rot = er() * 6.28; push(BA);
+  }
+  for (let i = 0, k = LOWQ ? 5 : 10; i < k; i++) {                 // glyphs thrown outward, low
+    eReset();
+    const an = i / k * 6.2832 + er() * 0.4, sp = R * (0.9 + er() * 0.5);
+    E.x = x; E.y = gy + 0.9 + er() * 0.7; E.z = z;
+    E.vx = Math.cos(an) * sp; E.vz = Math.sin(an) * sp; E.vy = 0.5 + er() * 0.7;
+    E.drag = 1.5; E.grav = -0.2; E.tile = er() < 0.45 ? T_GLINT : T_MOTE;
+    E.s0 = 0.20 + er() * 0.14; E.s1 = 0.04;
+    E.r = HEX_G[0] * 1.8; E.g = HEX_G[1] * 1.4; E.b = HEX_G[2] * 1.7;
+    E.a = 0.80; E.life = 0.75 + er() * 0.35; E.fade = 2;
+    E.rot = er() * 6.28; E.rotV = es1() * 3.2; E.lead = er() * 0.10; push(BB);
+  }
+};
+// The chains. `dur` is the SILENCE's own duration, so the effect is alive exactly as long as
+// the mechanic is — there is no separate clock to fall out of step with the sim, and a shot
+// captured at any point inside a hex shows the towers that are actually out.
+// (Placeholder-grade by intent: §E hands the rune-chain wrap to the Dressing stage. What is
+// load-bearing here is the READ — a dark ring on the pad, a cage of green-lit links winding
+// up the shaft, and one glyph hanging over the tower — not the modelling.)
+VFX.hexBind = (x, z, dur) => {
+  const gy = G.groundY(x, z), D = Math.max(0.5, dur || 3.5);
+  eseed((x * 887 + z * 373) | 0, (G.vt() * 557) | 0);
+  eReset();                                                        // the pad goes dark
+  E.x = x; E.y = gy + 0.12; E.z = z; E.tile = T_SMOKE; E.mode = 1;
+  E.s0 = 6.4; E.s1 = 5.0; E.r = HEX_K[0] * 5; E.g = HEX_K[1] * 5; E.b = HEX_K[2] * 5;
+  E.a = 0.34; E.life = D; E.rot = er() * 6.28; push(BA);
+  eReset();                                                        // ...and the ring on it lights
+  E.x = x; E.y = gy + 0.15; E.z = z; E.tile = T_RING; E.mode = 1;
+  E.s0 = 5.2; E.s1 = 4.0; E.r = HEX_G[0] * 1.3; E.g = HEX_G[1] * 1.3; E.b = HEX_G[2] * 1.3;
+  E.a = 0.46; E.life = D; E.fade = 2; push(BB);
+  // THE LINKS. A helix of iron round the shaft — the black body of each link in the alpha
+  // bucket with its glyph burning inside it in the additive one, at the same place and the
+  // same life, so the two draw as ONE object: a dark chain with green light in it.
+  // The helix radius and rise are sized against a REAL tower rather than against a diagram:
+  // the watchtower's platform sits near 5 u and its posts stand ~1.6 u off centre, so a
+  // 1.7 u helix climbing to 5.4 u actually wraps the timber instead of hanging inside it.
+  // A SHACKLE, NOT A HELIX — and this took three cuts to get right, so the reasoning is worth
+  // keeping. Cut 1 ran a tall spiral of T_GLINT four-point stars up the tower and read as
+  // SPARKLES: a magic twinkle, the opposite of "bound in iron". Cut 2 swapped them for big
+  // soft blobs and read as BOKEH — floating orbs in front of the timber, which is worse,
+  // because a soft round highlight is the one shape a photographic lens makes and nothing in
+  // a diorama ever should. What actually reads is a TIGHT LOW BAND at the tower's waist:
+  // small hard marks, close together, all at one height, so the eye closes them into a ring
+  // clamped around the structure instead of into weather in front of it. The tall part of
+  // the story is carried by the two elements that survived every cut — the ring on the pad
+  // and the struck-through glyph overhead — and the modelled chain is the Dressing stage's.
+  for (let i = 0, k = LOWQ ? 8 : 14; i < k; i++) {
+    const an = i / k * 6.2832;
+    const lx = x + Math.cos(an) * 1.92, ly = gy + 1.55 + Math.sin(an * 2) * 0.22,
+          lz = z + Math.sin(an) * 1.92, lf = D * (0.82 + er() * 0.18);
+    eReset();
+    E.x = lx; E.y = ly; E.z = lz; E.tile = T_CHUNK;
+    E.s0 = 0.40; E.s1 = 0.34;
+    E.r = HEX_K[0]; E.g = HEX_K[1]; E.b = HEX_K[2];
+    E.a = 0.95; E.life = lf; E.rot = an; E.lead = i * 0.008; push(BA);
+    eReset();
+    E.x = lx; E.y = ly; E.z = lz; E.tile = T_MOTE;
+    E.s0 = 0.26; E.s1 = 0.21;
+    E.r = HEX_G[0] * 1.6; E.g = HEX_G[1] * 1.3; E.b = HEX_G[2] * 1.5;
+    E.a = 0.70; E.life = lf; E.fade = 2; E.lead = i * 0.008; push(BB);
+  }
+  // THE SILENCE GLYPH, and it hangs CLEAR OF THE ROOF (9 u, well over the tallest tower in
+  // the game) for one reason: it is the only part of this effect a player reads at overview
+  // zoom, so it may never be occluded by the thing it is labelling.
+  eReset();
+  E.x = x; E.y = gy + 9.0; E.z = z; E.tile = T_SOFT;
+  E.s0 = 3.0; E.s1 = 2.4; E.r = HEX_G[0] * 1.2; E.g = HEX_G[1] * 1.2; E.b = HEX_G[2] * 1.2;
+  E.a = 0.60; E.life = D; E.fade = 2; push(BB);
+  eReset();                                                        // the broken link inside it
+  E.x = x; E.y = gy + 9.0; E.z = z; E.tile = T_RING; E.mode = 3;
+  E.s0 = 1.55; E.s1 = 1.30; E.r = HEX_G[0] * 2.6; E.g = HEX_G[1] * 2.0; E.b = HEX_G[2] * 2.4;
+  E.a = 0.85; E.life = D; E.fade = 2; push(BB);
+  eReset();                                                        // ...struck through
+  E.x = x; E.y = gy + 9.0; E.z = z; E.tile = T_FLASH; E.mode = 3;
+  E.s0 = 2.05; E.s1 = 1.72; E.asp = 0.14;
+  E.r = HEX_G[0] * 2.6; E.g = HEX_G[1] * 2.0; E.b = HEX_G[2] * 2.4;
+  E.a = 0.90; E.life = D; E.fade = 2; E.rot = 0.79; push(BB);
+};
+
 // ── CUTPURSE (§A): the purse going through the gate with him ─────────────────
 // The one leak in the game that costs something other than the vale, so it gets the one
 // leak effect that is not an alarm: the coins BOUNCE and then go the way the thief went.
@@ -13864,7 +15909,15 @@ function emitTick(tick, lead) {
   if (nAlive > 3) {
     eseed(tick, 0x51ed27);
     const back = lead * 2.0;                         // where the column was `lead` ago
-    let budget = PQ.dust;
+    // SPEC6 §D3c — DENSITY DEGRADATION, emitter side. Past `Q.denseOn` bodies alive the two
+    // road-dust budgets halve. It is the right thing to give up second (after the far contact
+    // patches and before anything on a body): at a thousand alive the road is already hidden
+    // under boots, so the plume that exists to say "a column walked here" is saying it to an
+    // eye that cannot see the road anyway. The DRAW is what thins — the deterministic emitter
+    // stream is untouched (`eseed` is keyed on the tick, not on the budget), and G.dense is
+    // false under SHOT by construction, so no shipped frame moves.
+    const DTHIN = G.dense ? 0.5 : 1;
+    let budget = Math.max(1, Math.round(PQ.dust * DTHIN));
     for (let b = 0; b < NBIN && budget > 0; b++) {
       const c = binN[b]; if (c < 4) continue;
       if (er() > Math.min(0.55, (c - 3) * 0.052)) continue;
@@ -13917,7 +15970,7 @@ function emitTick(tick, lead) {
       // VFX-FIX4 §5: the spec's trigger is "any road segment carrying >= 6 units", and the
       // bin was gated at seven. One body of slack is the difference between a marching column
       // raising haze and `closeup.png` shipping 160 pairs of boots over clean dry dirt again.
-      let rb = LOWQ ? 3 : 6;
+      let rb = Math.max(1, Math.round((LOWQ ? 3 : 6) * DTHIN));
       for (let b = 0; b < NBIN && rb > 0; b++) {
         const c = binN[b];
         if (c < 6) continue;
@@ -14483,6 +16536,56 @@ function emitTick(tick, lead) {
       }
     }
   }
+  // ── SPEC6 §A1 — THE CURSE, as two continuous wisps ──────────────────────────
+  // Both are pure dressing: they read the sim, they never write it, and (like every other
+  // continuous emitter here) they run once per SIM tick off the hash-seeded stream, so ×3
+  // speed, pause and the headless catch-up all produce the same picture at the same virtual
+  // time. Nothing below is even reached on a map the Risen engine is off for.
+  //   OVER THE MARKED — a small green wisp above a cursed body, so the player can pick the
+  //   ones that are coming back out of a hundred that are not, and shape his fire around it.
+  //   AT THE CORPSE — the 2.5 s count-down made visible: the ground where something is about
+  //   to stand up glows before it does. (A burned corpse never gets one; it got the ash.)
+  if (G.risenOn) {
+    eseed(tick, 0x5A17ED);
+    let bud = LOWQ ? 2 : 4;
+    for (let i = 0; i < EN.length && bud > 0; i++) {
+      const e = EN[i];
+      if (!e.alive || !e.cursed || e.isRisen) continue;
+      if ((tick + e.id * 7) % 9 !== 0) continue;        // per-unit stagger: a marked file breathes
+      bud--;
+      const gy = G.groundY(e.px, e.pz) + (e.def.alt ? e.def.alt * 1.2 : 0);
+      const h = (e.def.scale || 1) * 1.9;
+      eReset();
+      E.x = e.px + es1() * 0.16; E.y = gy + h; E.z = e.pz + es1() * 0.16;
+      E.vx = WX * 0.18; E.vz = WZ * 0.18; E.vy = 0.34 + er() * 0.22; E.drag = 1.1; E.grav = -0.12;
+      E.tile = T_WISP; E.asp = 1.9 + er() * 0.6;
+      E.s0 = 0.16 + er() * 0.10; E.s1 = 0.05 + er() * 0.06;
+      E.r = 0.28; E.g = 1.34; E.b = 0.58; E.a = 0.40; E.life = 0.55 + er() * 0.30; E.fade = 2;
+      E.rot = er() * 6.28; E.rotV = es1() * 0.9; push(BB);
+    }
+    const span = G.corpseSpan();
+    let cbud = LOWQ ? 2 : 4;
+    for (let i = span[0]; i < span[1] && cbud > 0; i++) {
+      const c = G.corpseAt(i);
+      if (!c || c.risen || c.burned || !c.cursed) continue;
+      if ((tick + i * 5) % 6 !== 0) continue;
+      cbud--;
+      const gy = G.groundY(c.x, c.z);
+      eReset();                                        // the ground about to give something up
+      E.x = c.x + es1() * 0.25; E.y = gy + 0.10 + er() * 0.25; E.z = c.z + es1() * 0.25;
+      E.vy = 0.9 + er() * 0.7; E.vx = WX * 0.2; E.vz = WZ * 0.2; E.drag = 1.5; E.grav = -0.2;
+      E.tile = T_WISP; E.asp = 2.2 + er() * 0.7;
+      E.s0 = 0.20 + er() * 0.14; E.s1 = 0.05 + er() * 0.08;
+      E.r = 0.26; E.g = 1.30; E.b = 0.56; E.a = 0.42; E.life = 0.65 + er() * 0.35; E.fade = 2;
+      E.rot = er() * 6.28; E.rotV = es1() * 1.0; push(BB);
+      if (er() < 0.5) {
+        eReset();                                      // and a low pool of it on the road
+        E.x = c.x; E.y = gy + 0.08; E.z = c.z; E.tile = T_SOFT; E.mode = 1;
+        E.s0 = 0.5; E.s1 = 1.3; E.r = 0.18; E.g = 0.92; E.b = 0.42;
+        E.a = 0.18; E.life = 0.7; E.fade = 2; push(BB);
+      }
+    }
+  }
   _lead = 0;
 }
 
@@ -14537,7 +16640,17 @@ const SNOWFALL = MAPID === 2;
 const MOTE_ALPHA = MAPID === 3 || SNOWFALL;          // ash soot / snow both blend, not add
 const MOTE_ASH = MAPID === 3;                        // ...but only ash carries the ember cue
 const MOTE_SUB = WEA ? 2 : 1;                        // sub-flakes per lattice cell
-const WTILE = MAPID === 2 ? T_SOFT : MAPID === 3 ? T_SOOT : T_MOTE;
+// SPEC6 §A2 — THE BARROWMOOR'S FIELD IS MIST, not a fall. It uses the same lattice and the
+// same one draw call as snow and ash; what changes is that it barely descends (`fall` 0.30
+// against snow's 3.1), it is held to a LAYER against the terrain under it rather than filling
+// the cell volume, and one mote in seven is drawn as a WISP — a small bright ghost-green
+// glint instead of a soft grey-green bank. Additive, because on a map graded to permanent
+// dusk the only thing allowed to glow is the map's own signature colour.
+const MOTE_MIST = MAPID === 4;
+const WTILE = MAPID === 2 || MOTE_MIST ? T_SOFT : MAPID === 3 ? T_SOOT : T_MOTE;
+// A mist bank is grey-green and nearly transparent; a wisp is the one saturated thing on the
+// moor. Both are additive tints over a dark ground, so neither can clip the frame to white.
+const MIST_C = [0.30, 0.41, 0.35], WISP_C = [0.40, 1.95, 1.02];
 // SCHOOLS §3 — 2.2 → 3.1. FIX4 cured "opaque white pills" by shrinking the flake to a 1–2 px
 // dot, and a 1–2 px dot with a hard edge is a DEAD PIXEL, which is the other half of the same
 // finding. A snowflake photographs as a STREAK because it is moving during the exposure, and
@@ -14568,8 +16681,19 @@ const ASH_C = [0.24, 0.20, 0.18], ASH_E = [2.20, 0.95, 0.30];
 // 3.1 × 3.1 = 9.6 px of drawn LENGTH, under the spec's 5 px height once the streak is laid
 // along a fall vector that is mostly vertical on screen — and the floor is what stops a far
 // flake resolving to a single stuck pixel, which is what the shrunk field looked like.
-const MOTE_PX = MAPID === 3 ? [3.5, 22] : SNOWFALL ? [1.30, 3.10] : [1.2, 19];
-const MOTE_SZ = MAPID === 3 ? 1.7 : 1;
+// Mist gets the widest screen band on the map: a bank IS a big soft shape, and the failure
+// mode a small one produces (a field of identical green dots) is exactly the "confetti" read
+// every other weather pass on this engine has had to cure.
+// DRESSING: the mist's screen ceiling comes down 64 -> 30. At 64 CSS px a bank three metres
+// off the lens drew a 60-pixel additive disc with a soft round edge — and a soft round
+// highlight is the one shape a photographic LENS makes and nothing standing in a diorama ever
+// should. Measured off the first cut of `_dusk`: four of them across the lower third of the
+// frame, which is BOKEH, the identical failure the hex-chain pass recorded and cured. 30 px
+// is still by a distance the widest band on any map (a bank IS a big soft shape) and it is
+// under the size at which the eye stops reading a quad as volume and starts reading it as
+// dirt on the sensor. The near-field dim below is the other half of the same fix.
+const MOTE_PX = MAPID === 3 ? [3.5, 22] : MOTE_MIST ? [9, 44] : SNOWFALL ? [1.30, 3.10] : [1.2, 19];
+const MOTE_SZ = MAPID === 3 ? 1.7 : MOTE_MIST ? 2.4 : 1;
 const EMBER_PX = 5.0;                                 // floor for the hot cinders (css px)
 const MH = new Float32Array(MX * MY * MZ * MOTE_SUB * 4);
 {
@@ -14629,7 +16753,8 @@ function stepMotes(t, n, B) {
     // atmospheric hint) and wrong for a snowfall, which is a FIELD and has to still be
     // falling at the back of the valley: in `battle2` the road behind the towers is 50–90 u
     // out and had no snow in it whatsoever. 44→96 u for weather maps only.
-    const a = (1 - sstep(R * 0.42, R, q)) * (W ? 1 - sstep(44, 96, qc) : 1 - sstep(34, 60, qc))
+    const a = (1 - sstep(R * 0.42, R, q))
+            * (W ? (MOTE_MIST ? 1 - sstep(82, 178, qc) : 1 - sstep(44, 96, qc)) : 1 - sstep(34, 60, qc))
             * zoom * tw * (W ? sstep(7, 24, qc) : 1);
     if (a < 0.03) continue;
     // Weather falls in the WORLD, not on the lens — so it does not fall on the HUD either.
@@ -14640,7 +16765,7 @@ function stepMotes(t, n, B) {
       if (_mp.x < -0.53 && _mp.y > 0.52) continue;
     }
     const big = MH[h + 2] > 0.80;
-    let s, av;
+    let s, av, wisp = false;
     if (W) {
       // WORLD-LOCKED, then clamped into MOTE_PX. This is the inverse of the pollen rule and
       // it is the whole fix: a screen-locked flake is the same disc at 8 u and at 50 u, so
@@ -14676,6 +16801,28 @@ function stepMotes(t, n, B) {
         const near = 1 - sstep(9, 17, qc), far = sstep(30, 52, qc);
         av = Math.min(0.38, av) * (1 - 0.70 * near) * (1 - 0.20 * far);
         if (near > 0.01) s *= 1 + 1.50 * near;                       // ...and out of focus
+      }
+      if (MOTE_MIST) {
+        // Ground mist is a LAYER. Without this the lattice fills its whole 45u-tall cell
+        // volume and the moor renders inside a green cube — the exact "dirty lens" failure
+        // the height gate above exists to prevent, in a different colour. Fade out above
+        // ~9u of the terrain directly under the mote, and fade IN from just below it so the
+        // bank still pours down into the hollows instead of stopping flat at the turf line.
+        const hgt = py - G.groundY(px, pz);
+        const gk = (1 - sstep(4.2, 11.0, hgt)) * sstep(-2.6, 0.5, hgt);
+        if (gk < 0.04) continue;
+        wisp = MH[h + 1] > 0.855;                                    // ~1 in 7
+        if (wisp) { s *= 0.30; av = Math.min(0.85, av * 3.4) * gk; }
+        else {
+          // NEAR-FIELD DIM, borrowed wholesale from what cured Frostfell's white capsules:
+          // the eye reads a large, bright, in-focus particle as being ON the camera. A bank
+          // this close is out of focus and nearly transparent, so it is dimmed 72% inside
+          // 10 u and blown up as it dims (bigger + fainter + softer IS what defocus looks
+          // like). Past 20 u nothing changes and the field the map was tuned on is intact.
+          const near = 1 - sstep(10, 20, qc);
+          av *= 1.10 * gk * (1 - 0.80 * near);
+          if (near > 0.01) s *= 1 + 0.55 * near;
+        }
       }
     } else {
       // Screen-locked size, so a pollen mote 3 m from the lens is not a dinner plate. A
@@ -14713,6 +16860,10 @@ function stepMotes(t, n, B) {
       aV[j] = fdx * ct - fdy * st2; aV[j + 1] = fdx * st2 + fdy * ct; aV[j + 2] = W.dz;
       aS[j2] = s; aS[j2 + 1] = s * WSTREAK;
       aA[j + 2] = 2;
+    } else if (MOTE_MIST && !wisp) {
+      aV[j] = 0; aV[j + 1] = 1; aV[j + 2] = 0;
+      aS[j2] = s * 1.55; aS[j2 + 1] = s * 0.34;             // a bank lies down
+      aA[j + 2] = 0;
     } else {
       aV[j] = 0; aV[j + 1] = 1; aV[j + 2] = 0;
       aS[j2] = s; aS[j2 + 1] = s;
@@ -14721,10 +16872,15 @@ function stepMotes(t, n, B) {
     // VFX-FIX4 §2: snow no longer takes the map's additive #a6b3cc — in the alpha bucket the
     // tint is a CEILING, and it is set under the lit snow ground so a flake can never be the
     // brightest pixel in the frame.
-    const WC = MOTE_ASH ? (emb ? ASH_E : ASH_C) : SNOWFALL ? SNOW_C : W ? W.col : null;
+    const WC = MOTE_ASH ? (emb ? ASH_E : ASH_C) : SNOWFALL ? SNOW_C
+             : MOTE_MIST ? (wisp ? WISP_C : MIST_C) : W ? W.col : null;
     aC[j4] = WC ? WC[0] : 1.60; aC[j4 + 1] = WC ? WC[1] : 1.38; aC[j4 + 2] = WC ? WC[2] : 0.94;
     aC[j4 + 3] = emb ? Math.min(1, av * 2.1) : av;
-    aA[j] = ph; aA[j + 1] = emb ? T_EMBER : WTILE;
+    // Mist banks stay near the screen horizon (+-20 deg) rather than spinning to any angle:
+    // a randomly rotated ellipse is a slash, and a slash reads as motion the mist does not
+    // have. Everything else keeps the full rotation it always had.
+    aA[j] = (MOTE_MIST && !wisp) ? (ph - 3.1416) * 0.11 : ph;
+    aA[j + 1] = emb ? T_EMBER : wisp ? T_MOTE : WTILE;
     n++;
   }
   return n;
@@ -14924,7 +17080,11 @@ const Audio = (() => {
     // fifty metres — you hear individuals, not the sum. `tink` sits on the same leash as the
     // element impacts it has to be distinguished FROM (a warded one under an archer wall
     // absorbs six blows in under a second), and `purse` is a once-per-leak story cue.
-    wing: .22, spore: .09, raisew: .8, tink: .085, purse: 1.2 };
+    wing: .22, spore: .09, raisew: .8, tink: .085, purse: 1.2,
+    // SPEC6 §E. A hexbinder pulses every 7 s and a wave fields at most two, so the cue is
+    // rare by construction — the gap only exists so two casters whose cadences happen to
+    // align do not phase two copies of the same bell into a flam.
+    hexbell: 1.2 };
   // Voice ceiling. A dense wave can ask for far more than it can usefully hear, so the
   // ambient layers get culled first — but story cues (horn, alarm, stingers, UI) must never
   // be dropped, so they raise `prio` for the duration of their scheduling call.
@@ -14939,7 +17099,10 @@ const Audio = (() => {
     // `surge` is the other half of that sentence and `purse` reports a loss the player has to
     // hear over the alarm it rides on — both are story, neither may be dropped by a dense
     // field. `wing`/`spore`/`raisew`/`tink` are texture and are culled like every other.
-    lull: 1, surge: 1, purse: 1 };
+    // SPEC6 §E — the hex toll is the ONLY warning that a third of the battery is about to
+    // stop shooting, and it fires in the middle of the densest part of a wave. Culling it is
+    // culling the mechanic's audio channel entirely.
+    lull: 1, surge: 1, purse: 1, hexbell: 1 };
   const MAPID = (G.MAP && G.MAP.id) || 1;                    // per-map ambience (SPEC2 §E)
   const room = n => prio || voices < VCAP - n;
   // private noise stream — see the header note about G.rng()
@@ -15375,6 +17538,23 @@ const Audio = (() => {
       tone(d, t + 0.02, 'sine', mf(48), 0, 0.032, 0.18, 0.58);      // C3 — the minor third
       bell(d, t + 0.30, mf(60), 0.024, 1.1);
     },
+    // HEXBELL (SPEC6 §E). A cracked bell struck once under a whisper. It has to be the
+    // opposite of every other "something happened" cue in the file: no attack transient worth
+    // the name, no bright partial, and a long decay — because what it announces is an ABSENCE
+    // (a third of the battery going quiet), and an absence is announced by something arriving
+    // slowly. The two detuned low bells beat against each other at ~1.4 Hz, which is what
+    // makes it read as cracked rather than as a temple gong; the whisper on top is `raisew`'s
+    // own breath moved up a register so the moor's two casters sound related without sounding
+    // the same. Nothing in it lives above 2 kHz, so it sits UNDER a wave that is already
+    // fighting instead of cutting through it like the war horn.
+    hexbell(d, t) {
+      bell(d, t, mf(31), 0.115, 3.4);                               // G1
+      bell(d, t + 0.012, mf(31) * 1.014, 0.085, 3.1);               // ...and its beat partner
+      bell(d, t + 0.09, mf(43), 0.055, 2.2);                        // G2, the crack's overtone
+      tone(d, t, 'sine', mf(19), 0, 0.070, 0.12, 1.9);              // the body of the strike
+      nz(d, t + 0.05, 0.040, 0.16, 0.85, 'bandpass', 610, 300, 3.4, true);   // the whisper
+      nz(d, t + 0.26, 0.028, 0.13, 0.70, 'bandpass', 840, 470, 4.0, true);
+    },
     // TINK. A blow landing on a rune and going nowhere. The whole point is that it must not
     // sound like DAMAGE: no body, no noise floor, no low end — a glass-hard partial pair that
     // stops dead. Next to `thud`/`crack`/`shrug` it is instantly the odd one out, which is
@@ -15411,6 +17591,40 @@ const Audio = (() => {
         nz(d, t0, 0.055, 0.006, 0.16, 'bandpass', f, f * 0.70, 5.5);
         tone(d, t0, 'sawtooth', f * 0.5, f * 0.42, 0.026, 0.008, 0.16);
       }
+    },
+    // SPEC6 §A2 — the Barrowmoor: crows off the gallows tree, and every so often a cracked
+    // bell in the chapel ruin that nobody is ringing. Rolled into ONE cue so the calm-phase
+    // emitter stays a single call per hit, exactly like `crow` and `bird`.
+    moor(d, t) {
+      const r0 = rnd();
+      if (r0 < 0.40) { SFX.crow(d, t); return; }
+      if (r0 < 0.66) {                                     // the wisps, humming
+        // Two sines a few cents apart beat at ~0.6 Hz; the third an octave up at a tenth
+        // of the level keeps it from reading as a hum in the mains. Long attack, longer
+        // decay: nothing on this map is allowed to START, it can only already be there.
+        const f = 138 * (rnd() < 0.5 ? 1 : 1.5);
+        tone(d, t, 'sine', f, 0, 0.030, 0.85, 2.6);
+        tone(d, t + 0.05, 'sine', f * 1.0043, 0, 0.026, 0.95, 2.4);
+        tone(d, t + 0.10, 'triangle', f * 2, 0, 0.0055, 1.1, 1.9);
+        nz(d, t, 0.013, 1.0, 2.2, 'bandpass', f * 4.2, f * 2.6, 6);
+        return;
+      }
+      const f = 116 * (rnd() < 0.5 ? 1 : 1.19);            // two bells, a tone apart, cracked
+      bell(d, t, f, 0.042, 5.4);
+      bell(d, t + 0.014, f * 2.03, 0.018, 3.2);
+    },
+    // SPEC6 §A2 — THE BARROW KING'S PULSE. `raisew` is a necromancer's whisper and it is
+    // sized for one body; the King empties a graveyard, so his own beat is a cracked bell
+    // struck UNDER the whisper (a tone below the moor's own chapel bell, so it is heard as
+    // the same instrument answering) with a slow swell of breath opening out of it.
+    kingraise(d, t) {
+      duck(0.30, 1.4);
+      bell(d, t, 87, 0.070, 6.2);
+      bell(d, t + 0.03, 130.5, 0.030, 4.4);
+      tone(d, t, 'sine', 43.5, 0, 0.085, 0.05, 2.4);
+      nz(d, t + 0.02, 0.055, 0.30, 1.5, 'bandpass', 520, 210, 1.6, true);
+      for (let i = 0; i < 3; i++)
+        tone(d, t + 0.16 + i * 0.11, 'sine', 522 * rr(0.98, 1.02), 0, 0.020, 0.10, 0.85);
     },
     bird(d, t) {                                           // ambience only, calm phases
       const f = rr(2400, 3600);
@@ -15714,9 +17928,13 @@ const Audio = (() => {
   // Per-map ambience (SPEC2 §E): the Vale hears songbirds over a soft valley draught;
   // Frostfell hears a colder, brighter wind and the odd crow; Ember Wastes hears almost
   // no wildlife at all — the fire bed above is its ambience.
-  const AMB = MAPID === 2 ? 'crow' : MAPID === 3 ? null : 'bird';
+  // SPEC6 §A2: the Barrowmoor hears crows and a distant bell over a low wind moving through
+  // the standing stones — the fattest, lowest draught of the four, because on this map the
+  // wind is the only thing that is supposed to sound alive.
+  const AMB = MAPID === 2 ? 'crow' : MAPID === 4 ? 'moor' : MAPID === 3 ? null : 'bird';
   const WIND = MAPID === 2 ? { g: 0.075, f: 780, b: 0.055, s: 0.030 }
              : MAPID === 3 ? { g: 0.052, f: 300, b: 0.040, s: 0.022 }
+             : MAPID === 4 ? { g: 0.086, f: 360, b: 0.062, s: 0.034 }
              : { g: 0.040, f: 480, b: 0.032, s: 0.026 };
 
   // ══ music ═════════════════════════════════════════════════════════════════════
@@ -16695,6 +18913,48 @@ function enemyIcon(type, px) {
     g.strokeStyle = '#8b7a44'; g.lineWidth = 1.8;
     g.beginPath(); g.moveTo(-4.0, 16.4); g.lineTo(-6.6, 12.4); g.stroke();
     for (const [cx, cy] of [[-3.2, 8.6], [-1.0, 7.2], [1.4, 8.2]]) { g.fillStyle = '#e6dcc2'; g.fillRect(cx, cy, 1.0, 3.0); }  // charms
+  } else if (type === 'hexbinder') {                                               // SPEC6 §E
+    // Everything the bust has to do is say "this is NOT the war shaman two cards over":
+    // upright where he hunches, black-green where he is brown, EMPTY-HANDED where he holds a
+    // pole, and a branching rack where he has a hood. Taller in the frame than any other
+    // man-shaped bust for the same reason the model is taller than any other man on the road.
+    const RB = '#25302c', DRB = '#131a17', JD = '#1fbe7f';
+    g.strokeStyle = '#101614'; g.lineWidth = 1.3; g.lineCap = 'round';             // the rack
+    for (const sx of [-1, 1]) {
+      g.strokeStyle = '#e6dcc2'; g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(sx * 2.8, 27.4); g.quadraticCurveTo(sx * 7.4, 31.4, sx * 6.0, 37.0); g.stroke();
+      g.lineWidth = 1.1;
+      g.beginPath(); g.moveTo(sx * 4.9, 29.8); g.lineTo(sx * 9.6, 31.4); g.stroke();
+      g.beginPath(); g.moveTo(sx * 6.6, 32.8); g.lineTo(sx * 10.6, 35.0); g.stroke();
+      g.beginPath(); g.moveTo(sx * 6.5, 35.2); g.lineTo(sx * 9.2, 38.4); g.stroke();
+    }
+    poly(g, [-6.4, 0.6, 6.0, 0.6, 4.2, 21.6, -5.0, 21.6], RB);                     // the column of robe
+    poly(g, [-6.4, 0.6, -0.6, 0.6, -1.2, 21.6, -5.0, 21.6], DRB);
+    poly(g, [-7.4, 19.0, 6.8, 19.0, 5.2, 24.2, -6.0, 24.2], DRB);                  // shoulders, square
+    g.strokeStyle = '#4a4a44'; g.lineWidth = 1.2;                                  // the chain swags
+    for (const [y0, dp] of [[20.2, 3.4], [17.4, 4.2]]) {
+      g.beginPath(); g.moveTo(-6.0, y0); g.quadraticCurveTo(0, y0 - dp, 5.6, y0); g.stroke();
+    }
+    g.fillStyle = '#5c5c54';
+    for (const [lx, ly] of [[-3.4, 18.4], [0, 17.2], [3.2, 18.4]]) { g.beginPath(); g.arc(lx, ly, 0.9, 0, 7); g.fill(); }
+    g.fillStyle = '#d8ccb6'; g.beginPath(); g.arc(0.2, 26.2, 3.5, 0, 7); g.fill();  // shaven crown
+    poly(g, [-2.9, 22.4, 2.9, 22.4, 2.5, 28.4, -2.5, 28.4], '#e6dcc2');            // the bone blade mask
+    g.fillStyle = '#0e1512'; g.fillRect(-1.9, 25.6, 1.5, 1.1); g.fillRect(0.6, 25.6, 1.5, 1.1);
+    g.fillStyle = JD; g.globalAlpha = .85;
+    g.fillRect(-1.9, 25.7, 1.5, .8); g.fillRect(0.6, 25.7, 1.5, .8);               // the light behind them
+    g.globalAlpha = 1;
+    // the grimoire, padlocked, at the hip — the whole silhouette above the shoulder is EMPTY
+    poly(g, [5.6, 7.0, 11.8, 7.8, 11.0, 14.4, 4.8, 13.6], '#4a3520', '#2c1f13', 0.7);
+    g.fillStyle = '#d8ccb6'; poly(g, [6.6, 7.9, 11.4, 8.5, 10.8, 13.6, 6.0, 13.0], '#d8ccb6');
+    g.strokeStyle = '#5c5c54'; g.lineWidth = 1.3;
+    g.beginPath(); g.moveTo(5.2, 10.4); g.lineTo(11.4, 11.2); g.stroke();
+    g.beginPath(); g.moveTo(4.4, 15.6); g.lineTo(6.0, 13.4); g.stroke();
+    g.fillStyle = JD; g.globalAlpha = .9;                                          // the hex in his palms
+    g.beginPath(); g.arc(-7.0, 12.0, 2.0, 0, 7); g.fill();
+    g.globalAlpha = .30; g.fillStyle = '#7cf0bd';
+    g.beginPath(); g.arc(-7.0, 12.0, 4.2, 0, 7); g.fill(); g.globalAlpha = 1;
+    g.strokeStyle = '#d8ccb6'; g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(-4.6, 16.8); g.lineTo(-7.0, 12.0); g.stroke();
   } else if (type === 'wyvern') {                                                  // SPEC5 §A
     // The only bust in the set with NO GROUND CONTACT: it is drawn clear of the baseline
     // with its shadow blob under it, because "this one is in the air" is the whole card.
@@ -16940,7 +19200,13 @@ for (const k of ['grunt', 'runner', 'brute', 'boss', 'shield', 'hound', 'maraude
   'warshaman', 'ram',
   // SPEC5 §A — the five newcomers plus the two bodies they PUT on the road
   'wyvern', 'gravemold', 'moldling', 'necromancer', 'skeleton', 'wardedone',
-  'cutpurse']) E_NAME[k] = L('e.' + k);
+  // SPEC6 §A — the Barrowmoor's finale. Named now so the card, the horn cue and the bust
+  // (which he borrows off the boss archetype like every other variant) are ready the day the
+  // Barrowmoor's wave table puts him on the road.
+  // SPEC6 §E — the Hexbinder. He is fielded from the day this stage lands (Frostfell W7+,
+  // Ember W8+, the Barrowmoor's back half), so the card names him from wave one.
+  'cutpurse', 'barrowking', 'hexbinder']) E_NAME[k] = L('e.' + k);
+G.E_NAME = E_NAME;                                        // read by the `_hex` rig's card assertion
 // headline priority: whatever the player most needs to have an answer ready for. The ram
 // outranks even an ogre (nothing can block it), and the shaman outranks the units it heals
 // — naming him on the card is half the teaching this roster does.
@@ -16948,7 +19214,11 @@ for (const k of ['grunt', 'runner', 'brute', 'boss', 'shield', 'hound', 'maraude
 // outranks any ground unit (a comp with no `air` tower simply cannot fight it), the warded
 // one sits with the ironclads, and the necromancer sits beside the shaman — both are
 // priority kills whose whole cost is paid in how long you leave them alone.
-const E_HEAD = ['matriarch', 'emberlord', 'cinderqueen', 'boss', 'ram', 'ogre', 'wardedone',
+// SPEC6 §E — the Hexbinder sits directly under the bosses and above the ram, which is the
+// highest any non-boss has ever been placed here: he is the only unit in the game whose
+// counterplay is a BUILD decision rather than a purchase, and a build cannot be changed
+// once the wave is on the road. If he is in the muster the card has to lead with him.
+const E_HEAD = ['barrowking', 'matriarch', 'emberlord', 'cinderqueen', 'boss', 'hexbinder', 'ram', 'ogre', 'wardedone',
   'ironclad', 'wyvern', 'necromancer', 'warshaman', 'brute', 'frostrevenant', 'shield',
   'gravemold', 'ashwraith', 'cutpurse', 'marauder', 'hound'];
 // Wave copy is per map — a 12- or 14-wave campaign that fell back to the Vale's ten titles
@@ -16956,7 +19226,9 @@ const E_HEAD = ['matriarch', 'emberlord', 'cinderqueen', 'boss', 'ram', 'ogre', 
 // so on the card, because a title is the only warning a player gets before the countdown
 // runs out — it names the THREAT, not the mood. SPEC4 §B moved the titles themselves into
 // the string layer (`w.<map>.<index>`); this is the per-wave accessor over it.
-const W_TITLE = (n1) => L('w.' + MAP.id + '.' + n1);      // n1 is ZERO-based, as the array was
+// SPEC6 §D3d — a HORDE names its own eight waves (the map's `w.<id>.<n>` keys describe a
+// campaign that is not being played). Same signature, same zero-based index.
+const W_TITLE = (n1) => HORDE ? L('hw.' + (n1 + 1)) : L('w.' + MAP.id + '.' + n1);      // n1 is ZERO-based, as the array was
 // SPEC4 §E: past the finale the titles come from the generator's own small set, so every
 // dispatch card in the game still gets a name and never prints a missing key.
 const waveTitle = (n) => n > G.FINALE_W ? G.endlessTitle(n) : W_TITLE(n - 1);
@@ -17056,13 +19328,17 @@ UI.msg = (ev, sub) => {
   // is still accepted (a preset or a future caller may want to say something literal).
   let head = '', wave = false;
   if (typeof ev === 'string') head = ev;
-  else if (ev && ev.cleared) { head = L('wave.held', ev.cleared); sub = sub || L('wave.quiet'); }
+  else if (ev && ev.cleared) { head = L('wave.held', ev.cleared); sub = sub || L('wave.quiet');
+    // SPEC6 §C "The Thousand Broken" — a thousand alive at once, SURVIVED. Judged on the
+    // clear rather than at the plate, because the deed is about the wave, not the run.
+    if (!SHOT && HORDE && tier !== 'mobile' && state.peak >= 1000) deedWin('thousand'); }
   // SPEC5 §A — a cutpurse through the gate says so on the breach banner: the vale lost lives
   // AND the purse lost coin, and a player who is not told will read the gold as a bug.
   else if (ev && ev.breach) { head = L('wave.breach'); sub = sub || (ev.steal ? L('wave.steal', ev.steal) : L('wave.hold')); }
   else if (ev && ev.wave) {
     const n = ev.wave, tot = waveMix(n).reduce((a, x) => a + x[1], 0);
     head = L('wave.n', n); wave = true;
+    G.deedOmen(n);                                      // §C "Omen Gambler" — one ledger line
     sub = sub || L('wave.sub', ev.finale ? MAP.finale : waveTitle(n), tot);
   }
   // SPEC5 §B2 — the Long Night's two beats. The lull is deliberately quiet copy (it has to
@@ -17136,6 +19412,8 @@ UI.sync = () => {
       h += '<div class="bar"><i style="width:' + clamp(100 - alive / Math.max(1, tot) * 100, 2, 100).toFixed(0) + '%"></i></div>';
     }
     h += gateLine(nx);                                  // SPEC5 §B3 — per-gate share of this wave
+    h += curseLine(nx);                                 // SPEC6 §A1 — the fallen will rise
+    h += hexLine(nx);                                   // SPEC6 §E — the towers will fall silent
     h += omenLine(nx, pre);
     wp.innerHTML = h;
     const row = wp.querySelector('.wpRow');
@@ -17302,8 +19580,40 @@ function omenLine(nx, pre) {
   }
   return txt ? '<div class="wpOm"><i class="dg-omen"></i><span>' + txt + '</span></div>' : '';
 }
+// SPEC6 §A1 — the cursed-wave sigil. The rule has to be on the card BEFORE the countdown
+// runs out, because its counterplay (a fire tower, a pyre patch, an ignited tar trap) is
+// bought at the muster and cannot be improvised once the moor is on the road. Three beats,
+// in the order the player needs them: the mark, what it means, and the answer.
+// (Minimal by design — the Dressing/UI stage owns the parchment treatment.)
+function curseLine(n) {
+  if (!G.isCursedWave(n)) return '';
+  return '<div class="wpCz" title="' + L('curse.unit') + '"><i class="dg-curse"></i>' +
+    '<b>' + L('curse.tag') + '</b><span>' + L('curse.line') + '</span>' +
+    '<s>' + L('curse.fire') + '</s></div>';
+}
+// SPEC6 §E — the hex warning, in the cursed line's own grammar and for the same reason: its
+// counterplay is bought and PLACED at the muster. Reads the wave the card is already showing
+// through waveDefs(), so the elite-swap slots and the endless generator light it up for free
+// the moment either of them deals a hexbinder.
+function hexLine(n) {
+  const w = n > 0 ? G.waveDefs(n) : null;
+  if (!w || !w.some(g => g[0] === 'hexbinder')) return '';
+  return '<div class="wpHx" title="' + L('hex.unit') + '"><i class="dg-hex"></i>' +
+    '<b>' + L('hex.tag') + '</b><span>' + L('hex.line') + '</span>' +
+    '<s>' + L('hex.spread') + '</s></div>';
+}
+UI.hexLine = hexLine;                                     // the `_hex` rig asserts on this
 UI.syncCountdown = () => {
   if (state.phase !== 'prewave') return;
+  // SPEC6 §D2 — while the opening muster is held there is no clock to print. The horn says
+  // what it does instead, and the dispatch card says why it is waiting.
+  if (G.waveHeld()) {
+    $('btnWave').innerHTML = L('bw.first');
+    $('btnWave').title = L('bw.firstT');
+    const s0 = $('wavePrev').querySelector('.wpS');
+    if (s0) s0.textContent = L('bw.firstT');
+    return;
+  }
   if (state.tick % 15 === 0) {
     $('btnWave').innerHTML = L('call.wave', state.wave + 1) +
       ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>';
@@ -17419,6 +19729,13 @@ const trapRows = (k) => {
 const TRAP_KEY = { caltrops: 'Z', tar: 'X', keg: 'C' };
 {
   const bm = $('buildMenu');
+  // v6 INTEGRATE — the MINIMISED bar's title. `#buildMenu.min::before` used to carry the
+  // string literal 'Build', which made it the one player-facing word in the game that never
+  // went through L(): the phone/compact bar read BUILD in French over cards that read
+  // ARCHERS / BALISTE / TRÉBUCHET. Generated content cannot call a function, so the CSS reads
+  // this attribute instead. Written ONCE, here, beside the same key the expanded head uses —
+  // LANG is fixed for the life of the page, so a per-frame write would say nothing new.
+  bm.dataset.min = L('bm.build');
   // SPEC3 §C: "Raise the Muster" lives on the build bar because it competes for the same
   // gold as the next tower — that is the decision. Placeholder styling; UI agent owns it.
   bm.innerHTML = '<div class="pHead"><div class="pT">' + L('bm.build') + '</div><div class="rule"></div>' +
@@ -17600,7 +19917,7 @@ UI.buildMenu = () => {
       '<div class="tBtns"><button class="tBtn up" id="mUp"' + (max || state.gold < upCost ? ' disabled' : '') + '>' +
         L(max ? 'tm.built' : 'tm.up') + (max ? '' : '<span class="s2">🪙 ' + upCost + '</span>') + '</button>' +
       '<button class="tBtn sell' + (sellArm ? ' arm' : '') + '" id="mSell">' + L(sellArm ? 'tm.confirm' : 'tm.sell') +
-        '<span class="s2 ref">🪙 +' + Math.round(tw.invested * 0.7) + '</span></button></div>';
+        '<span class="s2 ref">🪙 +' + Math.round(tw.invested * G.talSell()) + '</span></button></div>';
     tm.querySelector('.tpor').replaceWith(towerPortrait(tw.type, lv, 64, 64));
     fillResist(tm);
     tm.classList.remove('hidden');
@@ -17817,10 +20134,32 @@ let PROG = {};
 // `PROG_D[YYYYMMDD]` = what the daily war of that date came to. The file is versioned to 2
 // and a v1 record (stars only) still loads — a player mid-campaign does not lose it.
 let PROG_E = {}, PROG_D = {};
-function saveProg() { if (SHOT) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 2, stars: PROG, endless: PROG_E, daily: PROG_D })); } catch (e) { /* private mode */ } }
+// SPEC6 §B/§C add two more records in the SAME object and the same key, taking the file to
+// version 3. Both are additive, and a v1 (stars only) or v2 (stars/endless/daily) record
+// still loads — a player mid-campaign loses nothing.
+//   PROG_C = the WAR COUNCIL's talent record: {q,d,e}, each 0..3, what has been BOUGHT.
+//            It is not what the current run fights with — CORE's `TAL` is, and SIM copies
+//            this into it at run start.
+//   PROG_A = the DEEDS ledger: deed id → the date it was earned ('YYYYMMDD'). The Deeds
+//            stage (§C) owns the id vocabulary and the thresholds; this file owns the SLOT,
+//            its persistence and its laurel value. Grant one with G.deedGrant(id).
+//   PROG_S = the DEEDS' counter ledger (§C): burns, storm kills, trap kills, kinds slain.
+//            Everything a deed counts ACROSS runs and cannot derive from the records above.
+//   PROG_H = the HORDE record (§D3d): map id -> the furthest horde wave that road has been
+//            held to. 8 means it was held to the end, which is what pays its two laurels.
+// The file goes to version 4 and every older record still loads — a v1 record (stars only)
+// through a v3 one all open with the new fields empty.
+let PROG_C = { q: 0, d: 0, e: 0 }, PROG_A = {};
+const STAT0 = () => ({ burn: 0, storm: 0, steel: 0, trap: 0, power: 0, wyv: 0,
+                       champ: 0, risen: 0, hex: 0, kind: {} });
+let PROG_S = STAT0(), PROG_H = {};
+function saveProg() { if (SHOT) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 4, stars: PROG, endless: PROG_E, daily: PROG_D, council: PROG_C, deeds: PROG_A, stats: PROG_S, horde: PROG_H })); } catch (e) { /* private mode */ } }
 if (!SHOT) try {
   const o = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
-  if (o) { PROG = o.stars || o; PROG_E = o.endless || {}; PROG_D = o.daily || {}; }
+  if (o) { PROG = o.stars || o; PROG_E = o.endless || {}; PROG_D = o.daily || {};
+    PROG_A = o.deeds || {}; PROG_H = o.horde || {};
+    if (o.stats) { const d = STAT0(); for (const k in d) if (o.stats[k] !== undefined) d[k] = o.stats[k]; PROG_S = d; }
+    if (o.council) PROG_C = { q: o.council.q | 0, d: o.council.d | 0, e: o.council.e | 0 }; }
 } catch (e) { PROG = {}; }
 // The harness stages the whole record, so a preset can show the endless line and the
 // daily chip's "best" without this machine ever having played either.
@@ -17828,11 +20167,28 @@ UI.setProgress = (o, extra) => {
   PROG = Object.assign({}, o);
   PROG_E = Object.assign({}, (extra && extra.endless) || {});
   PROG_D = Object.assign({}, (extra && extra.daily) || {});
+  PROG_A = Object.assign({}, (extra && extra.deeds) || {});
+  PROG_H = Object.assign({}, (extra && extra.horde) || {});
+  PROG_S = Object.assign(STAT0(), (extra && extra.stats) || {});
+  const c = (extra && extra.council) || {};
+  PROG_C = { q: c.q | 0, d: c.d | 0, e: c.e | 0 };
+  laurelMark();
   saveProg(); if (!$('maps').classList.contains('hidden')) buildMapCards();
+  if (!$('council').classList.contains('hidden')) buildCouncil();
+  laurelChip();
 };
 const starsOf = id => PROG[id] | 0;
 const endlessOf = id => PROG_E[id] | 0;
 // Called by SIM on every cleared wave past the finale. Best-ever per road, never demoted.
+// SPEC6 §D3d — the HORDE record, in endlessBest's own idiom: best per road, never demoted.
+// 8 is a win; anything less is how far the tide got.
+const hordeOf = id => PROG_H[id] | 0;
+UI.hordeBest = (w) => {
+  if (w <= hordeOf(MAP.id)) return;
+  PROG_H[MAP.id] = w; saveProg();
+  if (SHOT) console.log('HORDELOG map=' + MAP.id + ' wave=' + w + ' peak=' + state.peak +
+    ' lives=' + state.lives + ' gold=' + state.gold);
+};
 UI.endlessBest = (w) => {
   if (w <= endlessOf(MAP.id)) return;
   PROG_E[MAP.id] = w; saveProg();
@@ -17851,6 +20207,298 @@ function dailyBest(won) {
 const unlocked = id => id === 1 || P.has('unlock') || starsOf(id - 1) >= 1;
 // SPEC2 §E: three stars for ≥90% of the garrison still standing, two for ≥50%, one for a win.
 const starsFor = lives => lives <= 0 ? 0 : lives >= LIVES0 * 0.9 ? 3 : lives >= LIVES0 * 0.5 ? 2 : 1;
+
+// ══ LAURELS — the meta currency (SPEC6 §B) ═════════════════════════════════════
+// A laurel is never STORED. It is DERIVED, every time it is asked for, from the records the
+// game already keeps — so there is no ledger to double-credit, nothing to lose if a save is
+// half-written, and a respec cannot leak a laurel into existence. The five sources:
+//   · a map's best stars (1/2/3), plus 2 for having ever held that road at all
+//   · endless: +1 per 5 waves of the best-ever run on each road
+//   · the daily war: +2 per day won
+//   · deeds (§C): +1 each — the loop that pays the achievements back into the council
+// The only thing that IS stored is what has been SPENT, and that is implied by the talent
+// grades: a branch at tier N has cost TAL_COST[0..N-1].
+function laurelsEarned() {
+  let n = 0;
+  for (const m of MAPS) {
+    const st = starsOf(m.id);
+    if (st > 0) n += st + 2;                       // stars, plus the first-victory bounty
+    n += Math.floor(endlessOf(m.id) / 5);          // every fifth wave held past the finale
+  }
+  for (const k in PROG_D) if (PROG_D[k] && PROG_D[k].won) n += 2;
+  // SPEC6 §D3d — a road whose HORDE has been broken pays two, once, exactly like a first
+  // campaign victory. A horde that ended short of wave 8 is a record, not a laurel.
+  for (const k in PROG_H) if ((PROG_H[k] | 0) >= 8) n += 2;   // 8 = a horde broken (HORDE_W_MAX)
+  n += G.deedCount();
+  return n;
+}
+const talSpent = () => G.TAL_BRANCH.reduce((s, b) => {
+  let t = 0;
+  for (let i = 0; i < (PROG_C[b] | 0); i++) t += G.TAL_COST[i];
+  return s + t;
+}, 0);
+const laurels = () => laurelsEarned() - talSpent();
+G.laurels = laurels; G.laurelsEarned = laurelsEarned; G.talSpent = talSpent;
+// What the council has BOUGHT, read by SIM's applyTalents() at run start. Live play only —
+// under SHOT applyTalents never asks (see its comment), so a screenshot cannot be coloured
+// by whatever this machine has unlocked.
+G.councilTalents = () => ({ q: PROG_C.q | 0, d: PROG_C.d | 0, e: PROG_C.e | 0 });
+// ── DEEDS slot (SPEC6 §C) — this file owns the store, the Deeds stage owns the meaning ──
+// Every unlocked deed is worth one laurel, which is the whole reason the ledger lives beside
+// the stars rather than in a table of its own. Grants are refused under SHOT/bot so the
+// harness never writes to the store and no preset can drift on a machine that has played.
+G.deedsRecord = () => PROG_A;
+G.deedCount = () => { let n = 0; for (const k in PROG_A) n++; return n; };
+G.deedHas = id => !!PROG_A[id];
+G.deedGrant = (id) => {
+  if (SHOT || !id || PROG_A[id]) return false;
+  PROG_A[id] = G.TODAY;
+  saveProg(); laurelChip();
+  return true;
+};
+// The victory plate reports what a RUN earned, so the count has to be marked when the run
+// begins — stars, an endless record, a daily win and any deed unlocked mid-run all land
+// between these two reads.
+let laurelsAtStart = 0;
+function laurelMark() { laurelsAtStart = laurelsEarned(); }
+
+// ══ DEEDS (SPEC6 §C) ═════════════════════════════════════════════════════════
+// Twenty-eight deeds in four registers, each worth exactly one laurel — the loop that pays
+// the chronicle back into the War Council. The design rule throughout: a deed is either
+// DERIVED from a record the game already keeps (stars, endless bests, daily wins) or it is
+// COUNTED in one ledger (PROG_S) written by one hook. Nothing is stored twice, so nothing
+// can disagree with itself.
+//
+// TRACKING IS LIVE-PLAY ONLY. `DEEDS_ON` in SECTION: SIM refuses every bump under SHOT/bot,
+// and G.deedGrant refuses the store as well — belt and braces, because a preset that quietly
+// wrote a deed would change `laurelsEarned()` and therefore the council frame.
+const HORDE_W_MAX = 8;                                  // §D3d — eight waves is a broken horde
+const DEED_CATS = ['camp', 'doct', 'feat', 'coll'];
+// [id, category]. ORDER IS THE SCREEN ORDER, so the grid reads as a chronicle rather than as
+// a hash. Names, one-line conditions and dates all come out of the string layer.
+const DEEDS = [
+  ['m1', 'camp'], ['m2', 'camp'], ['m3', 'camp'], ['m4', 'camp'],
+  ['s1', 'camp'], ['s2', 'camp'], ['s3', 'camp'], ['s4', 'camp'], ['warden', 'camp'],
+  ['pyre', 'doct'], ['storm', 'doct'], ['steel', 'doct'], ['trap', 'doct'],
+  ['sky', 'doct'], ['hand', 'doct'],
+  ['flawless', 'feat'], ['muster', 'feat'], ['watch', 'feat'], ['wind', 'feat'],
+  ['omen', 'feat'], ['ashes', 'feat'], ['daily', 'feat'], ['thousand', 'feat'], ['tide', 'feat'],
+  ['bestiary', 'coll'], ['champ', 'coll'], ['twice', 'coll'], ['chain', 'coll'],
+];
+G.DEEDS = DEEDS;
+// The COUNTED deeds: id -> [ledger key, threshold]. One table, so a bump only has to look at
+// the deeds keyed to the counter it just moved — a kill does not sweep twenty-eight tests.
+const DEED_N = {
+  pyre: ['burn', 100], storm: ['storm', 500], steel: ['steel', 300], trap: ['trap', 150],
+  sky: ['wyv', 100], hand: ['power', 75], champ: ['champ', 25], twice: ['risen', 200],
+  chain: ['hex', 10],
+};
+const DEED_BY_STAT = {};
+for (const id in DEED_N) (DEED_BY_STAT[DEED_N[id][0]] = DEED_BY_STAT[DEED_N[id][0]] || []).push(id);
+// The bestiary. A fixed roll rather than Object.keys(ENEMY_DEFS), because the table also
+// carries bodies nothing ever fields (and a future one would silently un-earn the deed for
+// everyone who had it). Twenty-five kinds: the whole roster plus the four map finales, which
+// is why "slay every kind" is a deed you can only finish by holding all four roads.
+const BESTIARY = ['grunt', 'runner', 'brute', 'shield', 'hound', 'marauder', 'ogre',
+  'ironclad', 'ashwraith', 'frostrevenant', 'warshaman', 'ram', 'wyvern', 'gravemold',
+  'moldling', 'necromancer', 'skeleton', 'wardedone', 'cutpurse', 'hexbinder',
+  'boss', 'matriarch', 'emberlord', 'cinderqueen', 'barrowking'];
+const kindsSlain = () => { let n = 0; for (const k of BESTIARY) if (PROG_S.kind[k]) n++; return n; };
+const dailyWins = () => { let n = 0; for (const k in PROG_D) if (PROG_D[k] && PROG_D[k].won) n++; return n; };
+const endlessTop = () => { let n = 0; for (const m of MAPS) n = Math.max(n, endlessOf(m.id)); return n; };
+// PROGRESS read-out for the screen: [have, need] for every deed that has a countable shape,
+// null for the ones that are a single event (a deed whose bar would only ever read 0/1 is a
+// bar that says nothing).
+function deedProg(id) {
+  if (DEED_N[id]) return [PROG_S[DEED_N[id][0]] | 0, DEED_N[id][1]];
+  if (id === 'bestiary') return [kindsSlain(), BESTIARY.length];
+  if (id === 'daily') return [dailyWins(), 5];
+  if (id === 'watch') return [endlessTop(), 20];
+  if (id === 'warden') return [MAPS.filter(m => starsOf(m.id) > 0).length, MAPS.length];
+  return null;
+}
+// The DERIVED deeds — everything that can be read straight off the campaign record. Swept
+// whenever the record could have moved (a run ends, the screen opens), never per kill.
+function deedDerived() {
+  const out = [];
+  for (const m of MAPS) {
+    if (starsOf(m.id) > 0) out.push('m' + m.id);
+    if (starsOf(m.id) >= 3) out.push('s' + m.id);
+  }
+  if (MAPS.every(m => starsOf(m.id) > 0)) out.push('warden');
+  if (endlessTop() >= 20) out.push('watch');
+  if (dailyWins() >= 5) out.push('daily');
+  if (kindsSlain() >= BESTIARY.length) out.push('bestiary');
+  for (const id in DEED_N) if ((PROG_S[DEED_N[id][0]] | 0) >= DEED_N[id][1]) out.push(id);
+  return out;
+}
+// ── the grant path ────────────────────────────────────────────────────────────
+// G.deedGrant (SPEC6 §B's block) owns the store and refuses a re-grant and every write under
+// SHOT. This adds the two things that are the DEEDS stage's own: the toast and the audible.
+function deedWin(id) {
+  if (SHOT || !id || !G.deedHas || G.deedHas(id)) return false;
+  if (!G.deedGrant(id)) return false;
+  deedToast(id);
+  Audio.play('banner');
+  if (!$('deeds').classList.contains('hidden')) buildDeeds();
+  return true;
+}
+G.deedWin = deedWin;
+// ── the counter ledger ────────────────────────────────────────────────────────
+// One entry point for every hook in SECTION: SIM. Writes to localStorage are DEBOUNCED —
+// a wave of a thousand would otherwise serialise the whole record a thousand times — and
+// flushed at every point where the page could go away (the plate, the chooser, pagehide).
+let statDirty = 0;
+function deedFlush() { if (statDirty) { statDirty = 0; saveProg(); } }
+G.deedFlush = deedFlush;
+G.deedBump = (key, val) => {
+  if (SHOT) return;
+  if (key === 'kind') {
+    if (PROG_S.kind[val]) { PROG_S.kind[val]++; return; }        // already collected: no sweep
+    PROG_S.kind[val] = 1; statDirty++;
+    if (kindsSlain() >= BESTIARY.length) deedWin('bestiary');
+    return;
+  }
+  if (PROG_S[key] === undefined) return;
+  PROG_S[key]++; statDirty++;
+  if (statDirty > 250) deedFlush();
+  for (const id of (DEED_BY_STAT[key] || []))
+    if (PROG_S[key] >= DEED_N[id][1]) deedWin(id);
+};
+// A MARK is a high-water event rather than a count: the muster deed asks "were fourteen
+// standards ever up at once", which no running total can answer.
+G.deedMark = (what, n) => {
+  if (SHOT) return;
+  if (what === 'muster' && n >= 14) deedWin('muster');
+};
+// ── the run's own deeds ───────────────────────────────────────────────────────
+// Six deeds are about a RUN and nothing else, so they are judged once, on the victory plate,
+// out of flags the run itself set. `runLow` and `omenAll` are reset by UI.startGame().
+let runLow = false, omenAll = true, omenTook = 0;
+G.deedRunReset = () => { runLow = false; omenAll = true; omenTook = 0; };
+// Called by UI.msg when a wave banner goes up: did the player take the CHALLENGE on offer?
+G.deedOmen = (n) => {
+  if (SHOT || n < G.OMEN_FROM) return;
+  const o = G.OMENS[state.omen];
+  if (o && o.kind === 'challenge') omenTook++; else omenAll = false;
+};
+function deedRunEnd(won) {
+  if (SHOT) return;
+  if (state.lives < 5) runLow = true;
+  if (won) {
+    if (HORDE) {
+      deedWin('tide');
+    } else {
+      if (state.lives >= LIVES0) deedWin('flawless');
+      if (runLow) deedWin('wind');
+      if (omenAll && omenTook >= 3) deedWin('omen');
+      // "Ashes to Ashes" — the Barrow King's finale with nothing standing back up. The
+      // counters are the wave's own (startWave clears them at the next muster), so this is
+      // the same number RISELOG prints, read one call earlier.
+      if (G.risenOn && MAP.risen && state.wave >= G.FINALE_W && G.riseStats && G.riseStats.rose === 0)
+        deedWin('ashes');
+    }
+  }
+  for (const id of deedDerived()) deedWin(id);
+  deedFlush();
+}
+G.deedRunEnd = deedRunEnd;
+// ── the toast (§C) ────────────────────────────────────────────────────────────
+// The iron-banner language, driven by UI.frame off the RENDER clock — no setTimeout, no CSS
+// animation that could mutate the DOM after a shot render. Under SHOT nothing can ever queue
+// one (deedWin refuses first), so the freeze contract is kept by construction.
+const toastQ = [];
+let toastAt = -1;
+function deedToast(id) { if (!SHOT) toastQ.push(id); }
+const TOAST_DUR = 4.4;
+UI.toastFrame = (rt) => {
+  const el = $('deedToast');
+  if (!el) return;
+  if (toastAt < 0) {
+    if (!toastQ.length) return;
+    const id = toastQ.shift();
+    toastAt = rt;
+    el.innerHTML = '<i class="ddI c-' + (DEEDS.find(d => d[0] === id) || [, 'feat'])[1] + ' on"></i>' +
+      '<span class="dtB"><span class="dtK">' + L('dd.toast') + '</span>' +
+      '<span class="dtN">' + L('d.' + id + '.n') + '</span>' +
+      '<span class="dtD">' + L('d.' + id + '.d') + '</span></span>' +
+      '<span class="dtL"><i class="lau"></i>' + L('dd.toastL') + '</span>';
+    el.classList.remove('hidden');
+    // ride ABOVE whatever bottom panel is standing, the same rule the wave-call button
+    // keeps: a banner laid over the build bar is a banner printed on a control.
+    el.style.bottom = (barH() + 30) + 'px';
+  }
+  const el2 = Math.max(0, rt - toastAt);
+  // in / hold / out, all as one closed form of the toast's own age
+  const a = el2 < 0.34 ? el2 / 0.34 : el2 > TOAST_DUR - 0.6 ? Math.max(0, (TOAST_DUR - el2) / 0.6) : 1;
+  el.style.opacity = a.toFixed(3);
+  el.style.transform = 'translateX(-50%) translateY(' + (26 * (1 - a)).toFixed(1) + 'px)';
+  if (el2 >= TOAST_DUR) { toastAt = -1; if (!toastQ.length) el.classList.add('hidden'); }
+};
+// ── the screen ────────────────────────────────────────────────────────────────
+// A parchment chronicle off the chooser: four registers, twenty-eight crests. Locked is an
+// IRON SILHOUETTE (the device is there, the metal is dead); won is a gold crest with the
+// date it was taken. Exactly one way in (btnDeeds) and one way out (btnDDBack), the same
+// contract #council keeps, so two overlays can never be up together.
+function buildDeeds() {
+  const rec = G.deedsRecord(), have = G.deedCount(), tot = DEEDS.length;
+  $('ddBal').innerHTML =
+    '<span class="ddBn"><i class="lau big"></i><em>' + L('dd.chipN', have, tot) + '</em></span>';
+  const host = $('ddGrid');
+  host.innerHTML = '';
+  for (const cat of DEED_CATS) {
+    const sec = document.createElement('div');
+    sec.className = 'ddSec s-' + cat;
+    let h = '<div class="ddSH"><i class="ddSI c-' + cat + '"></i><span>' + L('dd.cat.' + cat) + '</span>' +
+      '<u>' + DEEDS.filter(d => d[1] === cat && rec[d[0]]).length + '/' +
+      DEEDS.filter(d => d[1] === cat).length + '</u></div><div class="ddRow">';
+    for (const [id, c] of DEEDS) {
+      if (c !== cat) continue;
+      const on = !!rec[id], pr = deedProg(id);
+      const nm = L('d.' + id + '.n'), ds = L('d.' + id + '.d');
+      const foot = on ? L('dd.won', fmtDate(rec[id]))
+        : pr ? L('dd.prog', Math.min(pr[0], pr[1]), pr[1]) : L('dd.locked');
+      h += '<div class="ddC' + (on ? ' on' : '') + '" title="' +
+        esc(on ? L('dd.tipOn', ds, fmtDate(rec[id])) : L('dd.tipOff', ds)) + '">' +
+        '<i class="ddI c-' + cat + (on ? ' on' : '') + '"></i>' +
+        '<span class="ddN">' + nm + '</span>' +
+        '<span class="ddD">' + ds + '</span>' +
+        '<span class="ddF">' + foot + '</span>' +
+        (!on && pr ? '<span class="ddP"><u style="width:' +
+          Math.min(100, 100 * pr[0] / pr[1]).toFixed(1) + '%"></u></span>' : '') +
+        '</div>';
+    }
+    sec.innerHTML = h + '</div>';
+    host.appendChild(sec);
+  }
+  $('ddHint').textContent = L('dd.hint');
+}
+// 'YYYYMMDD' is the store's own shape (G.TODAY). Rendered with the page's separators rather
+// than a locale call, because a date on a parchment crest is a stamp, not a sentence.
+function fmtDate(v) {
+  const t = String(v || '');
+  return t.length === 8 ? t.slice(0, 4) + '\u00b7' + t.slice(4, 6) + '\u00b7' + t.slice(6, 8) : t;
+}
+UI.showDeeds = () => {
+  for (const id of deedDerived()) deedWin(id);      // catch up a record that moved elsewhere
+  deedFlush();
+  buildDeeds();
+  $('title').classList.add('hidden'); $('maps').classList.add('hidden');
+  $('council').classList.add('hidden'); $('end').classList.add('hidden');
+  $('deeds').classList.remove('hidden');
+};
+// The chip on the chooser's foot rail, in btnCouncil's idiom (the two are a pair).
+function deedChip() {
+  const b = $('btnDeeds');
+  if (!b) return;
+  const n = G.deedCount();
+  b.classList.toggle('rich', n > 0);
+  b.innerHTML = '<i class="ddI c-feat' + (n ? ' on' : '') + '"></i><span class="cwB">' +
+    '<span class="cwT">' + L('dd.chip') + '</span>' +
+    '<span class="cwS">' + L('dd.chipN', n, DEEDS.length) + '</span></span>';
+  b.title = L('dd.chipT');
+}
+
 
 // ── map chart: an engraved parchment plate, not a vector top-down ──────────────
 // A flat top-down of the mesh pasted over a lit 3D diorama reads as an editor minimap: it
@@ -18050,6 +20698,18 @@ function buildMapCards() {
       // SPEC4 §E — the endless record only appears on a road that HAS one, so a card the
       // player has never held past its finale reads exactly as it always did.
       (open && endlessOf(m.id) ? '<div class="mE"><i>∞</i>' + L('maps.endless', endlessOf(m.id)) + '</div>' : '') +
+      // SPEC6 §D3d — the horde record, in the endless line's own register.
+      (open && hordeOf(m.id) ? '<div class="mE mH"><i>◆</i>' +
+        (hordeOf(m.id) >= 8 ? L('maps.hordeW') : L('maps.hordeR', hordeOf(m.id))) + '</div>' : '') +
+      // SPEC6 §D3d — THE MODE CHIPS. Campaign is always open; Endless and Horde unlock with
+      // the road's first campaign victory (holding a line you have never held is not a mode,
+      // it is a shortcut). They are spans, not buttons: the card itself IS a button and a
+      // nested one is invalid markup — so the chips stop the click from reaching it instead.
+      (open ? '<div class="mMode">' + ['camp', 'endl', 'horde'].map(k => {
+        const lk = k !== 'camp' && !st;
+        return '<span class="mMc m-' + k + (lk ? ' lk' : '') + '" data-m="' + k + '" data-id="' + m.id +
+          '" title="' + esc(lk ? L('mode.hordeLk') : L('mode.' + k + 'T')) + '">' + L('mode.' + k) + '</span>';
+      }).join('') + '</div>' : '') +
       '</div>' +
       (open && m === nextM ? '<span class="rib">' + L(st ? 'maps.replay' : 'maps.cont') + '</span>' : '');
     b.querySelector('.mWrap').appendChild(MINI_CACHE[m.id] || (MINI_CACHE[m.id] = mapMini(m)));
@@ -18057,9 +20717,16 @@ function buildMapCards() {
       b.querySelector('.mWrap').appendChild(lk); }
     b.title = open ? L('maps.cardT', m.name, nw, st) : L('maps.lockT', m.name, prevN);
     if (open) b.onclick = () => chooseMap(m.id);
+    for (const c of b.querySelectorAll('.mMc')) c.onclick = (ev) => {
+      ev.stopPropagation(); ev.preventDefault();
+      if (c.classList.contains('lk')) { Audio.play('ui'); return; }
+      chooseMap(+c.dataset.id, c.dataset.m);
+    };
     host.appendChild(b);
   });
   buildDaily();
+  laurelChip();
+  deedChip();
 }
 // ── DAILY WAR chip (SPEC4 §E) ─────────────────────────────────────────────────
 // One road, one seed, the same hand for everybody who plays today. The stamp and the road
@@ -18089,25 +20756,130 @@ function buildDaily() {
     location.search = q.toString();
   };
 }
-function chooseMap(id) {
+// ══ THE WAR COUNCIL (SPEC6 §B) ═════════════════════════════════════════════════
+// A parchment writ pinned to the chooser: three branches, three tiers each, bought with
+// laurels and carried into every road you take afterwards. It is deliberately SMALL — nine
+// nodes and thirty-nine laurels to fill them — because a meta tree that outgrows the game
+// underneath it turns the campaign into a grind gate. Everything here is reversible: the
+// respec is free and total, so the tree is a decision you can keep making, not one you can
+// get wrong.
+//
+// NOTHING in this block touches a run in progress. It writes PROG_C and that is all; SIM's
+// applyTalents() copies it into CORE's `TAL` at the next run start.
+const CN_BR = ['q', 'd', 'e'];               // Quartermaster · Drillmaster · Engineer
+const CN_RN = ['I', 'II', 'III'];
+function councilState(b, t) {
+  const cur = PROG_C[b] | 0;
+  if (t <= cur) return 'on';                                   // granted
+  if (t > cur + 1) return 'lk';                                // chained behind a lower tier
+  return laurels() >= G.TAL_COST[t - 1] ? 'nxt' : 'nxt poor';  // the one that can be taken
+}
+function buildCouncil() {
+  const bal = laurels(), earned = laurelsEarned(), spent = talSpent();
+  $('cBal').innerHTML =
+    '<span class="cBn"><i class="lau big"></i><b>' + bal + '</b>' +
+      '<em>' + L(bal === 1 ? 'cn.have1' : 'cn.have') + '</em></span>' +
+    '<span class="cBs">' + L('cn.ledger', earned, spent) + '</span>';
+  const host = $('cTree');
+  host.innerHTML = '';
+  for (const b of CN_BR) {
+    const col = document.createElement('div');
+    col.className = 'cBr b-' + b;
+    let h = '<div class="cBH"><i class="cBI"></i><span class="cBN">' + L('cn.' + b) + '</span>' +
+      '<span class="cBD">' + L('cn.' + b + '.d') + '</span></div>';
+    for (let t = 1; t <= 3; t++) {
+      const st = councilState(b, t), cost = G.TAL_COST[t - 1], eff = L('cn.' + b + '.' + t);
+      const tip = st === 'on' ? L('cn.tOn', eff)
+        : st === 'lk' ? L('cn.tLk', CN_RN[t - 2])
+        : st === 'nxt' ? L('cn.tBuy', eff, cost)
+        : L('cn.tPoor', cost - bal);
+      h += '<button class="cN ' + st + '" data-b="' + b + '" data-t="' + t + '"' +
+        (st === 'nxt' ? '' : ' disabled') + ' title="' + esc(tip) + '">' +
+        '<span class="cNr">' + CN_RN[t - 1] + '</span>' +
+        '<span class="cNe">' + eff + '</span>' +
+        '<span class="cNc">' + (st === 'on' ? '<u>' + L('cn.granted') + '</u>'
+          : '<i class="lau"></i>' + cost) + '</span></button>';
+    }
+    col.innerHTML = h;
+    host.appendChild(col);
+  }
+  const rs = $('btnCRespec');
+  rs.textContent = L('cn.respec');
+  rs.title = L('cn.respecT');
+  rs.disabled = !spent;
+  $('cHint').textContent = L(earned ? 'cn.earn' : 'cn.none');
+  if (!SHOT) for (const b of host.querySelectorAll('.cN:not([disabled])'))
+    b.onclick = () => councilBuy(b.dataset.b, +b.dataset.t);
+}
+function councilBuy(b, t) {
+  if (SHOT) return;
+  if (t !== (PROG_C[b] | 0) + 1 || laurels() < G.TAL_COST[t - 1]) { Audio.play('ui'); return; }
+  PROG_C[b] = t; saveProg();
+  Audio.play('banner'); buildCouncil(); laurelChip();
+}
+function councilRespec() {
+  if (SHOT || !talSpent()) { Audio.play('ui'); return; }
+  PROG_C = { q: 0, d: 0, e: 0 }; saveProg();
+  Audio.play('coin'); buildCouncil(); laurelChip();
+}
+// The chip on the chooser's foot rail. It is the door to the council AND the balance
+// read-out — one control, because "how many laurels do I have" and "where do I spend them"
+// are the same question.
+function laurelChip() {
+  const b = $('btnCouncil');
+  if (!b) return;
+  const n = laurels();
+  b.classList.toggle('rich', n > 0);
+  b.innerHTML = '<i class="lau"></i><span class="cwB"><span class="cwT">' + L('cn.chip') + '</span>' +
+    '<span class="cwS">' + L(n === 1 ? 'cn.chipN1' : 'cn.chipN', n) + '</span></span>';
+  b.title = L('cn.chipT');
+}
+UI.showCouncil = () => {
+  buildCouncil();
+  $('title').classList.add('hidden'); $('maps').classList.add('hidden'); $('end').classList.add('hidden');
+  $('council').classList.remove('hidden');
+};
+function chooseMap(id, mode) {
   Audio.play('ui');
-  if (id === MAP.id) { $('maps').classList.add('hidden'); UI.startGame(); return; }
+  const md = mode === 'horde' ? 'horde' : mode === 'endl' ? 'endless' : 'campaign';
+  // SPEC6 §D3d — the MODE is resolved at load beside the map (the horde swaps the whole wave
+  // table in SECTION: SIM), so changing it is a reload exactly as changing the road is.
+  if (id === MAP.id && md === MODE) { $('maps').classList.add('hidden'); UI.startGame(); return; }
   // The world, the wave tables and the palette are all resolved from `&map=` at load, so a
   // different road is a reload. `auto` drops the player straight in rather than back to the title.
   const q = new URLSearchParams(location.search);
-  q.set('map', id); q.set('auto', '1'); q.delete('maps');
+  q.set('map', id); q.set('auto', '1'); q.delete('maps'); q.delete('endless');
+  if (md === 'campaign') q.delete('mode'); else q.set('mode', md);
   location.search = q.toString();
 }
-UI.showMaps = () => { buildMapCards(); $('title').classList.add('hidden'); $('end').classList.add('hidden'); $('maps').classList.remove('hidden'); };
+UI.showMaps = () => { deedFlush(); buildMapCards(); $('title').classList.add('hidden'); $('end').classList.add('hidden');
+  $('council').classList.add('hidden'); $('deeds').classList.add('hidden'); $('maps').classList.remove('hidden'); };
 // `gesture` is false on the deep-link path (`&auto=1`), where the page opened without a
 // user gesture: a WebAudio context created there is born suspended and stays that way, so
 // the score waits for the first touch instead of never sounding at all.
 UI.startGame = (gesture) => {
+  // SPEC6 §B — the council's writ takes force HERE and nowhere else, so the talents a run
+  // fights with are the ones that stood when it began. The laurel mark is taken at the same
+  // instant, so the victory plate can say what this run was worth.
+  G.applyTalents(); laurelMark(); G.deedRunReset();
   $('title').classList.add('hidden'); $('maps').classList.add('hidden');
+  $('council').classList.add('hidden'); $('deeds').classList.add('hidden');
   // whatever the player clicked to get here keeps focus otherwise, and a focused HUD button
   // outranks gold and lives on contrast the moment the overlay lifts
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  state.phase = 'prewave'; state.countdown = 14;
+  state.phase = 'prewave';
+  // SPEC6 §D2 — THE FIRST WAVE NEVER AUTO-STARTS. The countdown is suspended and the horn
+  // button reads "Begin the Battle" until the player sounds it; from wave 2 on nothing about
+  // the muster changes. The one exception is the auto-call option: a player who has asked not
+  // to press the button does not get asked to press this one either, and wave 1 then musters
+  // in the same 3 s every other wave does. No early-call bonus is paid for wave 1 — nothing
+  // is being skipped. The harness never walks through this function, so SHOT/bot keep today's
+  // countdown behaviour exactly and every preset and matrix row stays bit-identical.
+  if (G.autoCall()) state.countdown = 3;
+  else { state.countdown = 14; G.holdFirstWave(); }
+  if (P.has('dbg') && !SHOT) console.log('QOLLOG hold=' + (G.waveHeld() ? 1 : 0) +
+    ' countdown=' + state.countdown + ' auto=' + (G.autoCall() ? 1 : 0) +
+    ' mode=' + G.MODE + ' gold=' + state.gold + ' muster=' + state.muster);
   CAM.dist = 100; CAM.tx = -2; CAM.tz = 2;
   if (gesture === false) {
     const kick = () => Audio.music();
@@ -18168,17 +20940,31 @@ UI.showEnd = (won) => {
   const endl = state.endless && state.wave > G.FINALE_W;
   // SPEC2 §E: a win writes its stars into the campaign record, which is what opens the
   // next road. Best-ever is kept, so a scrappy re-run never demotes a clean one.
-  const st = won ? starsFor(state.lives) : 0, was = starsOf(MAP.id), best = Math.max(st, was);
-  if (st > was) { PROG[MAP.id] = st; saveProg(); }
-  dailyBest(won);
-  const nx = won ? MAPS.find(m => m.id === MAP.id + 1) : null;
+  const st = HORDE ? 0 : won ? starsFor(state.lives) : 0, was = starsOf(MAP.id), best = Math.max(st, was);
+  // SPEC6 §D3d — A HORDE IS NOT A CAMPAIGN. It writes its own record and never the stars:
+  // eight waves of flood must not open the next road, and the mode is unlocked BY the stars
+  // in the first place. The +2 laurels come off that record in laurelsEarned().
+  if (HORDE) UI.hordeBest(state.wave - (won ? 0 : 1));
+  else if (st > was) { PROG[MAP.id] = st; saveProg(); }
+  if (!HORDE) dailyBest(won);
+  // SPEC6 §C — the run's own deeds are judged here, before the laurel gain is read below, so
+  // a deed that came unstuck on the last wave is counted in the number the plate prints.
+  deedRunEnd(won);
+  // SPEC6 §B — what this run put in the council's purse. Read AFTER the stars and the daily
+  // are filed, against the mark taken at run start, so it covers every source at once: a new
+  // star, a first-ever victory, an endless record set mid-run, today's daily, and any deed
+  // (§C) that came unstuck along the way. A defeat can still earn — it just usually doesn't.
+  const lawGain = Math.max(0, laurelsEarned() - laurelsAtStart);
+  $('endLaurel').classList.toggle('hidden', lawGain <= 0);
+  if (lawGain > 0) $('endLaurel').innerHTML = '<i class="lau"></i>' + L('end.laurels', lawGain);
+  const nx = won && !HORDE ? MAPS.find(m => m.id === MAP.id + 1) : null;
   $('endTitle').textContent = L(won ? 'end.win' : endl ? 'end.endless' : MAP.id === 1 ? 'end.fallen' : 'end.lost');
   $('endTitle').style.color = won ? '#f0c96a' : '#d0563c';
   $('endSub').textContent = endl && !won ? L('end.endSub', Math.max(0, state.wave - 1 - G.FINALE_W))
     : L(won ? 'end.holds' : 'end.fall', MAP.name);
-  $('endStars').classList.toggle('hidden', !won);
-  $('endStarL').classList.toggle('hidden', !won);
-  if (won) {
+  $('endStars').classList.toggle('hidden', !won || HORDE);
+  $('endStarL').classList.toggle('hidden', !won || HORDE);
+  if (won && !HORDE) {
     $('endStars').innerHTML = [1, 2, 3].map(i => '<i class="' + (i <= st ? 'on' : '') + '"></i>').join('');
     // INTEGRATE: the top star is 90% of the garrison, not a clean sheet, so "not a banner
     // lost" was a lie on any 3-star run that leaked — and the plate says "Breached the gate:
@@ -18196,8 +20982,8 @@ UI.showEnd = (won) => {
   // SPEC4 §E — the second call. It is offered on a finale victory and nowhere else: a
   // defeat has no line left to hold, and a run already past the finale never wins again.
   const bh = $('btnHold');
-  bh.classList.toggle('hidden', !won);
-  if (won) {
+  bh.classList.toggle('hidden', !won || HORDE);   // a horde has no line left to hold
+  if (won && !HORDE) {
     bh.textContent = L('end.hold'); bh.title = L('end.holdT');
     bh.onclick = () => {
       if (!G.holdTheLine()) return;
@@ -18445,6 +21231,10 @@ UI.frame = (rt) => {
     // the harness UI.sync() has already written them once and this branch never runs, which
     // is what keeps the freeze contract (no DOM mutation after the final shot render).
     if (_pwT !== state.tick) { _pwT = state.tick; syncPowers(); }
+    // SPEC6 §C — the deed toast rides the render clock, not a timer. Live play only: nothing
+    // can ever be queued under SHOT, so this branch is dead there by construction.
+    UI.toastFrame(rt);
+    if (state.lives < 5 && state.phase === 'wave') runLow = true;
   }
   const t = G.vt();
   harvestFire(t);
@@ -18452,7 +21242,11 @@ UI.frame = (rt) => {
   layoutPlates();                                       // SPEC5 §B4 — champion nameplates
 };
 // ══ controls ═══════════════════════════════════════════════════════════════════
-$('btnWave').onclick = () => { if (state.phase === 'prewave') { state.gold += Math.ceil(state.countdown); startWave(state.wave + 1); } };
+// SPEC6 §D2 — the first horn pays NO early-call bonus: nothing is being skipped, because
+// nothing was counting down. Every later muster is unchanged.
+$('btnWave').onclick = () => { if (state.phase === 'prewave') {
+  if (!G.waveHeld()) state.gold += Math.ceil(state.countdown);
+  startWave(state.wave + 1); } };
 // SPEC4 §A — ×1 → ×2 → ×3. The frame loop already caps at 8 sim ticks per frame, so ×3
 // costs three ticks on a 30fps phone and stays inside the budget; the cap is what makes a
 // dropped frame a slow frame instead of a spiral.
@@ -18492,6 +21286,20 @@ $('btnReset').onclick = () => location.reload();
 // Play drops straight into that map (the shot harness and any deep link rely on this).
 $('btnPlay').onclick = () => { if (P.has('map')) UI.startGame(); else UI.showMaps(); };
 $('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); };
+// SPEC6 §B — the council opens off the chooser and returns to it, so it never becomes a
+// screen you can get stranded on: there is exactly one way in and one way out.
+$('btnCouncil').onclick = () => { Audio.play('ui'); UI.showCouncil(); };
+$('btnCBack').onclick = () => { $('council').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); };
+// SPEC6 §C — the chronicle, in the council's own in/out contract.
+$('btnDeeds').onclick = () => { Audio.play('ui'); UI.showDeeds(); };
+$('btnDDBack').onclick = () => { $('deeds').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); };
+// The counter ledger is debounced (a wave of a thousand must not serialise the record a
+// thousand times), so the page going away is the last place it can be honest.
+if (!SHOT) {
+  addEventListener('pagehide', deedFlush);
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') deedFlush(); });
+}
+$('btnCRespec').onclick = councilRespec;
 $('btnRestart').onclick = () => {
   if (state.phase !== 'won') { location.reload(); return; }
   const q = new URLSearchParams(location.search);      // a held road sends you back to the campaign
@@ -18716,6 +21524,31 @@ addEventListener('keydown', e => {
 const statsEl = $('stats');
 if (P.get('stats')) statsEl.classList.remove('hidden');
 let acc = 0, last = performance.now(), fpsT = 0, fpsN = 0;
+// ══ SPEC6 §D1 — BASE PACE ════════════════════════════════════════════════════
+// One wall-clock multiplier on the sim accumulator, at every speed setting. The sim is
+// TICK-BASED, so this changes nothing about what happens — the same ticks resolve in the
+// same order with the same rng stream — only how much wall time a tick is given. The ×1/×2/×3
+// labels are unchanged because they still mean exactly what they meant relative to each other.
+// The frame-step cap below is what makes it safe: at ×3 on a 30 fps phone a frame asks for
+// 0.0333 × 3 × 1.18 = 0.118 s = 3.54 ticks, against a cap of 8.
+// SHOT and the bot never reach this function — they run synchronous tickSim() loops inside
+// runShot() — so every preset and every matrix row is untouched.
+const BASE_RATE = 1.18;
+// ══ SPEC6 §D3c — DENSITY DEGRADATION ═════════════════════════════════════════
+// Past `Q.denseOn` bodies alive the render side sheds load and restores it when the field
+// clears (hysteresis on `Q.denseOff`, so a wave hovering on the line cannot strobe). Three
+// levers, in order of what the eye misses least: the contact patches beyond `Q.shadCut`
+// (ARMIES reads G.dense), the continuous emitters' per-tick budget (VFX reads it), and the
+// pixel ratio. Nothing here is sim state — G.dense is written from a COUNT of alive bodies
+// and read only by render code.
+G.dense = false;
+let _dprNow = -1;
+function densityStep(alive) {
+  const want = G.dense ? alive > Q.denseOff : alive > Q.denseOn;
+  if (want !== G.dense) G.dense = want;
+  const px = Math.min(devicePixelRatio, Q.px * (G.dense ? Q.dpr : 1));
+  if (Math.abs(px - _dprNow) > 0.01) { _dprNow = px; renderer.setPixelRatio(px); }
+}
 function render(rt) {
   renderer.info.reset();
   Armies.syncVisuals(vt());
@@ -18725,19 +21558,61 @@ function render(rt) {
   UI.frame(rt);   // HOOK: UI — count-up counters, projected damage floaters, title drift (self-freezes in SHOT mode)
   composer.render();
 }
+// §D1/§D2 live smoke: armed by `&dbg=1` only, fired once, three wall-clock seconds after
+// the first frame. Under SHOT this loop never runs at all.
+let _paceN = (P.has('dbg') && !SHOT) ? 0 : -1, _paceW = 0, _paceK = 0;
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.06, (now - last) / 1000); last = now;
+  // CLAMPED AT BOTH ENDS. The upper bound has always been there (a long stall must not be
+  // paid back as one enormous catch-up); the LOWER bound is new and was found by the §D1
+  // live smoke: rAF's timestamp and performance.now() can disagree by hundreds of
+  // milliseconds after a clock adjustment or a restored tab, and one negative dt drives the
+  // accumulator so far below zero that the sim visibly stalls until it climbs back.
+  const dt = clamp((now - last) / 1000, 0, 0.06); last = now;
   if (!state.paused && (state.phase === 'wave' || state.phase === 'prewave')) {
-    acc += dt * state.speed;
+    acc += dt * state.speed * BASE_RATE;               // SPEC6 §D1
     let steps = 0;
     while (acc >= TICK && steps++ < 8) { tickSim(); acc -= TICK; }
   }
+  // §D3c — one count per frame, off the list the render pass is about to walk anyway.
+  {
+    let al = 0;
+    for (const e of G.enemies) if (e.alive) al++;
+    densityStep(al);
+  }
   G.subT = acc / TICK;   // HOOK: ARMIES — sub-tick fraction so the 30 tps sim renders smooth at 60 fps
+  // The measurement is SIM SECONDS PER WALL SECOND, accumulated over 120 frames rather than
+  // sampled off a clock: a headless run under --virtual-time-budget fires rAF a handful of
+  // times against a virtual clock that has advanced twenty seconds, so anything measured
+  // against now() there is noise. `dt` is the exact quantity BASE_RATE multiplies, so
+  // ticks x TICK / sum(dt) IS the rate — and it reads 1.18 headless and in a real browser.
+  if (_paceN >= 0) {
+    _paceW += dt; _paceK++;
+    if (_paceK >= 20) {
+      console.log('PACELOG rate=' + BASE_RATE + ' ticks=' + state.tick +
+        ' simSec=' + (state.tick * TICK + acc).toFixed(3) + ' wallSec=' + _paceW.toFixed(3) +
+        ' measured=' + (_paceW > 0 ? ((state.tick * TICK + acc) / _paceW).toFixed(3) : 'n/a') +
+        ' hold=' + (G.waveHeld() ? 1 : 0) + ' countdown=' + state.countdown.toFixed(2) +
+        ' phase=' + state.phase + ' speed=' + state.speed +
+        ' alive=' + G.enemies.filter(e => e.alive).length +
+        ' dense=' + (G.dense ? 1 : 0) + ' over=' + (Armies.over | 0) +
+        ' dpr=' + _dprNow.toFixed(2));
+      _paceN = -1;
+    }
+  }
   render(now / 1000);
   if (statsEl && !statsEl.classList.contains('hidden')) {
     fpsN++; fpsT += dt;
-    if (fpsT >= 0.5) { statsEl.textContent = Math.round(fpsN / fpsT) + ' fps · ' + renderer.info.render.calls + ' calls · ' + renderer.info.render.triangles + ' tris'; fpsN = 0; fpsT = 0; }
+    if (fpsT >= 0.5) {
+      // §D3a/§D3b — the bench read-out. `alive` and `over` are the two numbers a horde run is
+      // actually measured on: `over` is how many bodies the instance caps refused to draw and
+      // MUST read 0. `dpr` says whether the degradation ladder is engaged.
+      const al = G.enemies.filter(e => e.alive).length;
+      statsEl.textContent = Math.round(fpsN / fpsT) + ' fps · ' + renderer.info.render.calls + ' calls · ' +
+        renderer.info.render.triangles + ' tris · ' + al + ' alive · over ' + (Armies.over | 0) +
+        (G.dense ? ' · dense dpr ' + _dprNow.toFixed(2) : '');
+      fpsN = 0; fpsT = 0;
+    }
   }
 }
 
@@ -19221,6 +22096,28 @@ const SHOT_PRESETS = {
   // window where the whole survivorship — 75 of them — is through the fork and inside the
   // battery's reach, which is the only moment this map's geometry is legible in one frame.
   battle3:  { t: 900, builds: 'm3b', cam: { pos: [-16, 42, 40], look: [26, 1, -26] } },
+  // ══ SPEC6 §A2 — THE BARROWMOOR ══════════════════════════════════════════════
+  overview4: { t: 2, builds: [], cam: { tgt: [-6, 4, -2], dist: 158 } },
+  // The moor's hero frame is the CHAPEL FORK with the barrows behind it — the one composition
+  // that carries this map's whole idea in a single picture: two arms of road around a ruined
+  // yard, turf mounds with stone doorways between them, and the light already gone.
+  // Hand-pointed for the same reason battle2/battle3 are (see their notes): the auto-framer
+  // aims at the median of the engaged horde, which on a forked road is the arm nobody is
+  // looking at. Timed for late in the cursed wave 9, so the frame carries risen bodies.
+  // Wave-anchored rather than clock-anchored (the `until` idiom `_longnight` and `_herald`
+  // use): a flat `t` on a sixteen-wave road lands wherever the battery's clear rate happens
+  // to put it, and the first cut measured 3 alive. `until: 9` is the SECOND CURSED WAVE, and
+  // 62 s into it the head of the column is through the fork and onto both arms while the
+  // tail is still coming out of the crypt mouth — the one moment this map's geometry and its
+  // rule are legible in the same frame.
+  battle4:  { t: 20, builds: 'm4b', until: 9, untilMax: 2600, untilAfter: 62,
+    cam: { pos: [-40, 38, 40], look: [4, 1, -10] } },
+  // The atmosphere frame: low over the moor, no fight, so the mist layer, the wisps, the
+  // permanent 35% dusk and the gallows silhouette are all judged on their own. Same purpose
+  // and same camera height as `_snow`/`_ash`, which is what makes the three comparable.
+  // t=80, not 120: the road is 219 u long and the levy walks it in 110 s, so a later frame
+  // prints THE GATE IS BREACHED over the atmosphere shot it exists to judge.
+  _dusk:    { t: 80, bare: true, builds: [], cam: { pos: [-8, 12, 2], look: [-38, 3.5, -24] } },
   // TOWERS asset-inspection rigs (not in the default suite; see tools\shots.ps1 -Shots)
   _arch1:  { t: 8, bare: true, builds: [[2, 20, 'archer', 1]],   cam: { pos: [13, 12, 32], look: [2, 4.5, 20] } },
   _arch3:  { t: 8, bare: true, builds: [[2, 20, 'archer', 3]],   cam: { pos: [13, 12, 32], look: [2, 5.5, 20] } },
@@ -19477,6 +22374,149 @@ const SHOT_PRESETS = {
       // on the road's near verge, and frameAt clears terrain but not canopy.
       frameAt(SHOT_PRESETS._raise.cam, cx / cn, cz / cn, 1.2, 19, Math.PI * 0.96);
     } },
+  // ══ SPEC6 §A1 rigs — THE RISEN ═════════════════════════════════════════════════════
+  // Both run with the engine forced on (`SHOT === '_risen'` flips RISEN_TEST), so the
+  // mechanic can be measured on the Vale months before the Barrowmoor's own road exists.
+  //
+  // `_risen` is the mechanic's whole sentence in one frame: bodies that have just fallen and
+  // are counting (ground wisps), bodies that have already stood back up (bone-green, 45%),
+  // and two that fire took — ash where the wisp would have been, and nothing coming.
+  // The kills are staged in two batches 40 ticks apart, so a single capture carries BOTH
+  // halves of the 2.5-second clock instead of whichever half the timing happened to land on.
+  // `bare` (added with the map): on the Vale this rig framed clear meadow, but on the moor the
+  // muster panel opened over the bottom third — exactly the beat the frame exists to show.
+  _risen:  { t: 20, builds: 'm4', bare: true, until: 5, untilMax: 1200, untilAfter: 4,
+    cam: { tgt: [0, 0, 0], dist: 30 },
+    fx: () => {
+      // §A1.7 — the determinism proof, printed before anything else touches the sim: the
+      // seeded cursed-individual set for the waves that carry one, re-derived from the wave
+      // table alone. Run at &seed=1 and &seed=2 and diff these lines.
+      for (let n = CURSE_FROM; n <= Math.min(G.FINALE_W, 12); n++) {
+        const S = G.curseProbe(n), whole = S[0] === 'ALL';
+        console.log('CURSEPROBE map=' + MAP.id + ' seed=' + G.runSeed + ' wave=' + n +
+          ' n=' + (whole ? 'ALL' : S.length) + ' set=' + (whole ? 'cursed wave' : S.slice(0, 18).join(',')));
+      }
+      const d = Math.max(roadD(4), G.pathLen * 0.40);     // mid-road meadow (see _split)
+      const early = [], late = [], burned = [];
+      for (let i = 0; i < 5; i++)                          // batch A — these will be UP by the shot
+        early.push(G.spawnAt('grunt', Math.max(6, d - i * 1.5), ((i % 3) - 1) * 1.7, undefined, { cursed: true }));
+      for (const g of early) G.dealDamage(g, 9999, 'pierce');
+      for (let i = 0; i < 40; i++) tickSim();
+      for (let i = 0; i < 4; i++)                          // batch B — still counting at the shot
+        late.push(G.spawnAt('grunt', Math.max(6, d - 7 - i * 1.5), ((i % 3) - 1) * 1.7 + 0.8, undefined, { cursed: true }));
+      for (let i = 0; i < 2; i++)                          // and the two the fire took
+        burned.push(G.spawnAt('grunt', Math.max(6, d - 3 - i * 1.5), 2.6, undefined, { cursed: true }));
+      for (const g of late) G.dealDamage(g, 9999, 'crush');
+      for (const g of burned) G.dealDamage(g, 9999, 'fire');
+      for (let i = 0; i < 38; i++) tickSim();              // batch A is 3 ticks past its rise
+      let up = 0, pend = 0, ash = 0, cur = 0, cx = 0, cz = 0, cn = 0;
+      for (const e of G.enemies) if (e.alive) { if (e.isRisen) { up++; cx += e.px; cz += e.pz; cn++; } else if (e.cursed) cur++; }
+      const span = G.corpseSpan();
+      for (let i = span[0]; i < span[1]; i++) {
+        const c = G.corpseAt(i);
+        if (!c) continue;
+        if (c.burned) ash++;
+        else if (c.cursed && !c.risen) { pend++; cx += c.x; cz += c.z; cn++; }
+      }
+      console.log('RISENSHOT wave=' + state.wave + ' cursedWave=' + (G.isCursedWave(state.wave) ? 1 : 0) +
+        ' risen=' + up + ' pending=' + pend + ' burned=' + ash + ' cursedAlive=' + cur);
+      if (!up || !pend || !ash) console.log('RISENWARN frame is missing a beat — risen=' + up +
+        ' pending=' + pend + ' burned=' + ash);
+      if (!cn) { cx = roadAhead(4); cz = _v3.z; cn = 1; }
+      // same bearing as _raise, and for the same reason: the default one stands the lens
+      // inside the conifer belt on the road's near verge.
+      frameAt(SHOT_PRESETS._risen.cam, cx / cn, cz / cn, 1.2, 20, Math.PI * 0.96);
+    } },
+  // The Barrow King's finale power (§A1.4): a graveyard around him, one pulse, and the moor
+  // standing up in a ring. Two of the bodies are burned FIRST — the frame has to show that
+  // his power has a hole in it exactly where the player put fire, which is the whole reason
+  // pyroless4 is a matrix row.
+  // `bare` for the same reason _bestiary and _death are bare: this is an INSPECTION rig for a
+  // mechanic, and the persistent build bar was covering the bottom third of the graveyard the
+  // rig exists to show.
+  _riseking:{ t: 250, builds: 'std', bare: true, cam: { tgt: [0, 0, 0], dist: 34 },
+    fx: () => {
+      const d = Math.max(roadD(6), G.pathLen * 0.42);
+      const k = G.spawnAt('barrowking', Math.max(10, d), 0);
+      const dead = [];
+      for (let i = 0; i < 14; i++)
+        dead.push(G.spawnAt('grunt', Math.max(5, d - 5 + (i % 5) * 1.9), ((i % 5) - 2) * 1.5));
+      for (let i = 0; i < 4; i++) tickSim();
+      dead.forEach((g, i) => { if (g && g.alive) G.dealDamage(g, 9999, i < 2 ? 'fire' : 'pierce'); });
+      k.raiseAT = TICK;                                    // the pulse lands on the next tick
+      for (let i = 0; i < 6; i++) tickSim();
+      let up = 0;
+      for (const e of G.enemies) if (e.alive && e.isRisen) up++;
+      console.log('KINGSHOT rose=' + up + ' of=' + dead.length + ' burned=2 alive=' + k.alive);
+      if (up < 1) console.log('KINGWARN the pulse raised nothing');
+      frameAt(SHOT_PRESETS._riseking.cam, k.px, k.pz, 2.4, 19, Math.PI * 0.96);
+    } },
+  // ══ SPEC6 §E rig — THE HEXBINDER ═══════════════════════════════════════════════════
+  // The mechanic's whole sentence in one frame, on the map and the build it was designed
+  // against: `M2_CAMP` — the eight-tower junction pile that IS Frostfell's degenerate optimum
+  // and is byte-for-byte the `junction2` matrix row — with a hexbinder standing in the middle
+  // of it and the pulse a quarter of a second old. Chains up the shafts, glyphs over the
+  // roofs, rings still opening on the ground, and not one of those towers able to shoot the
+  // man doing it.
+  //
+  // The stand is FOUND, not authored: the rig walks route 0 and picks the road distance whose
+  // 9 u circle covers the most fighting towers. That is the point the sim's own pulse is
+  // worst at, so the frame cannot flatter the mechanic by standing somewhere the wave never
+  // walks — and it survives any later edit to M2_CAMP or to the road.
+  // `bare` for the same reason `_risen` is bare: the build bar opens over the bottom third,
+  // which on this rig is where the chains are.
+  _hex:    { t: 3, builds: 'm2camp', bare: true, cam: { pos: [0, 0, 0], look: [0, 0, 0] },
+    fx: () => {
+      const HX = ENEMY_DEFS.hexbinder.hex, rq = HX.rad * HX.rad;
+      let at = G.pathLen * 0.5, best = -1;
+      for (let d0 = 8; d0 < G.pathLen - 12; d0 += 1.5) {
+        G.pathPos(d0, _v3, 0, 0);
+        let n = 0;
+        for (const tw of G.towersList)
+          if (TOWER_DEFS[tw.type].dmg || TOWER_DEFS[tw.type].patch)
+            if ((tw.x - _v3.x) ** 2 + (tw.z - _v3.z) ** 2 <= rq) n++;
+        if (n > best) { best = n; at = d0; }
+      }
+      const h = G.spawnAt('hexbinder', at, 0, 0);
+      // a screen of levy around him, staged with NO rng draw: a mini-boss alone on an empty
+      // road is a diagram, and what the player actually has to do is find him inside a wave.
+      for (let i = 0; i < 14; i++)
+        G.spawnAt(i % 5 ? 'grunt' : 'runner', Math.max(6, at - 9 + (i % 7) * 2.4), ((i % 5) - 2) * 1.6, 0);
+      h.hexT = TICK;                                       // the pulse lands on the next tick
+      for (let i = 0; i < 8; i++) tickSim();               // ...and is a quarter-second old at the shot
+      let dark = 0, lit = 0;
+      for (const tw of G.towersList) {
+        if (!(TOWER_DEFS[tw.type].dmg || TOWER_DEFS[tw.type].patch)) continue;
+        if (tw.hexT > 0) dark++; else lit++;
+      }
+      console.log('HEXSHOT map=' + MAP.id + ' at=' + at.toFixed(1) + ' silenced=' + dark +
+        ' stillFiring=' + lit + ' pulses=' + G.hexStats.pulses + ' alive=' + h.alive);
+      if (dark < 2) console.log('HEXWARN the frame shows fewer than two silenced towers — silenced=' + dark);
+      // THE CARD WIRING, asserted rather than eyeballed. A warning line that silently stops
+      // rendering is the failure mode a screenshot cannot catch (the wave it belongs to is
+      // eight minutes into a run), so the rig walks every wave on every road and prints which
+      // ones field a hexbinder and whether the dispatch would actually say so. `&lang=fr`
+      // re-runs the same assertion over the French strings.
+      // (a wave table is per-run, so this reports THIS road; run the rig with `&map=` to
+      // audit another one.)
+      const on = [];
+      for (let n = 1; n <= G.FINALE_W; n++)
+        if ((G.waveDefs(n) || []).some(g => g[0] === 'hexbinder'))
+          on.push(n + ':' + (UI.hexLine(n) ? 'card' : 'NOCARD'));
+      console.log('HEXCARD map=' + MAP.id + ' lang=' + LANG + ' name="' + (G.E_NAME.hexbinder || '') +
+        '" tag="' + L('hex.tag') + '" waves=' + (on.join(' ') || 'none'));
+      if (!on.length || on.some(s => s.indexOf('NOCARD') >= 0))
+        console.log('HEXWARN a hexbinder wave prints no dispatch line — ' + (on.join(' ') || 'no waves field one'));
+      // FRAMED ON THE CAMP, NOT ON THE CASTER. The first cut put the lens 21 u from the
+      // hexbinder and the frame came back as two tower legs: at that stand-off a watchtower
+      // is six metres of timber directly in front of the subject. What this rig has to show
+      // is a GROUP going dark together, so the look-at is the centroid of the towers that are
+      // actually silenced, pulled halfway back toward the caster so he is in shot, and the
+      // stand-off is far enough that the whole camp fits between the frame edges.
+      let cx = h.px, cz = h.pz, cn = 1;
+      for (const tw of G.towersList) if (tw.hexT > 0) { cx += tw.x; cz += tw.z; cn++; }
+      frameAt(SHOT_PRESETS._hex.cam, cx / cn, cz / cn, 3.2, 44, Math.PI * 0.62);
+    } },
   // The ward eating hits: staged in front of the standing archer line and ticked until the
   // runes are visibly part-spent (never to zero — a stripped ward has nothing to show).
   _wardhit:{ t: 250, builds: 'std', cam: { tgt: [0, 0, 0], dist: 26 },
@@ -19606,6 +22646,68 @@ const SHOT_PRESETS = {
     ui: () => { state.phase = 'title';
       UI.setProgress({ 1: 2 }, { endless: { 1: 23 }, daily: { 20260101: { map: 2, wave: 7, won: false, stars: 0 } } });
       UI.showMaps(); } },
+  // SPEC6 §B THE WAR COUNCIL. Staged mid-campaign, because every one of the tree's four
+  // states has to be on screen at once and a fresh record shows only two of them: the
+  // Quartermaster is GRANTED to tier II with tier III open, the Drillmaster is at tier I
+  // with tier II open, the Engineer is untouched (tier I open, II and III chained). The
+  // record is stitched from all four laurel sources so the ledger line is a real sum:
+  //   stars 3+2+1 = 6, three first victories = 6, endless 23 on the Vale = 4, one daily
+  //   won = 2, five deeds = 5  →  23 earned; q2 (2+4) + d1 (2) = 8 pledged; 15 at hand.
+  // The deed ids are opaque here on purpose — §C's stage owns that vocabulary; this frame
+  // only needs the COUNT to be right.
+  _council:{ t: 0, builds: [], cam: { tgt: [-2, 4, -18], dist: 158 },
+    ui: () => { state.phase = 'title';
+      UI.setProgress({ 1: 3, 2: 2, 3: 1 }, {
+        endless: { 1: 23 },
+        daily: { 20260101: { map: 2, wave: 12, won: true, stars: 2 } },
+        // §C's real id vocabulary now that it exists (m1/m2/m3 = three roads held,
+        // pyre = Pyre-Tender, storm = Stormcaller). Five deeds = five laurels, as before.
+        deeds: { m1: 20260101, m2: 20260101, m3: 20260101, pyre: 20260101, storm: 20260101 },
+        council: { q: 2, d: 1, e: 0 } });
+      UI.showCouncil(); } },
+  // SPEC6 §C — THE CHRONICLE. Staged with a mix that puts every state of a crest on screen
+  // at once: won-with-a-date, locked-with-progress, and locked-with-nothing. The counter
+  // ledger is staged too, so the progress bars under the doctrine crests are real fractions
+  // rather than four empty rails. Nine of twenty-eight taken — a real mid-campaign record.
+  _deeds:  { t: 0, builds: [], cam: { tgt: [-2, 4, -18], dist: 158 },
+    ui: () => { state.phase = 'title';
+      UI.setProgress({ 1: 3, 2: 2, 3: 1 }, {
+        endless: { 1: 23 },
+        daily: { 20260101: { map: 2, wave: 12, won: true, stars: 2 } },
+        horde: { 1: 8, 2: 5 },
+        deeds: { m1: 20251114, m2: 20251203, m3: 20251228, s1: 20251119,
+                 storm: 20251207, steel: 20251222, watch: 20260101, tide: 20251231,
+                 champ: 20251226 },
+        stats: { burn: 41, storm: 512, steel: 318, trap: 96, power: 52, wyv: 63,
+                 champ: 27, risen: 88, hex: 4,
+                 kind: { grunt: 1, runner: 1, brute: 1, shield: 1, hound: 1, marauder: 1,
+                         ogre: 1, ironclad: 1, ashwraith: 1, frostrevenant: 1, warshaman: 1,
+                         ram: 1, wyvern: 1, gravemold: 1, moldling: 1, boss: 1, matriarch: 1 } },
+        council: { q: 1, d: 0, e: 0 } });
+      UI.showDeeds(); } },
+  // SPEC6 §C — THE UNLOCK TOAST, over the battle it is actually seen over. Staged in `post`
+  // rather than granted, because a grant under SHOT is refused (and must be).
+  _deedtoast: { t: 300, builds: 'battle', cam: { pos: [16, 31, 26], look: [36, -1, -16] },
+    post: () => {
+      const el = $('deedToast'), id = 'pyre', cat = 'doct';
+      el.innerHTML = '<i class="ddI c-' + cat + ' on"></i>' +
+        '<span class="dtB"><span class="dtK">' + L('dd.toast') + '</span>' +
+        '<span class="dtN">' + L('d.' + id + '.n') + '</span>' +
+        '<span class="dtD">' + L('d.' + id + '.d') + '</span></span>' +
+        '<span class="dtL"><i class="lau"></i>' + L('dd.toastL') + '</span>';
+      el.classList.remove('hidden');
+      el.style.opacity = 1;
+      el.style.bottom = ($('buildMenu').offsetHeight + 30) + 'px';
+    } },
+  // SPEC6 §D3a/b — THE THOUSAND. The bench, framed: a tier-scaled flood on the road with the
+  // camera at overview so the whole tide is in shot. It is the standing proof that the raised
+  // instance caps hold — CAPWARN in this log is a failing frame, not a note.
+  _thousand: { t: 2, bare: true, builds: [], cam: { tgt: [-2, 4, -6], dist: 168 },
+    fx: () => {
+      if (!HORDE_BENCH) G.hordeBench(tier === 'mobile' ? 400 : 1000);
+      for (let i = 0; i < 40; i++) tickSim();          // let the column find its stride
+    },
+    post: () => { $('msg').style.opacity = 0; $('wavePrev').classList.add('hidden'); } },
   // SPEC4 §E: endless, played for real rather than staged. The kitchen-sink tier-3 line
   // holds the Vale's finale, takes "Hold the line", and the rig then ticks ON until the
   // counter reads three waves past the end — `until` instead of a hand-picked `t`, so a
@@ -19655,7 +22757,14 @@ const STD_BUILDS = [[32, -31, 'archer', 3], [16, -3, 'archer', 1], [50, 3, 'ball
 // knights on the road the column is walking down: they rally onto the spline ahead of the
 // horde, the horde stops on them, and what the lens sees at t=262 is an interlocked scrum
 // instead of an unopposed march. Balance presets keep using STD_BUILDS — this is a POSE.
-const BATTLE_BUILDS = STD_BUILDS.concat([[35, -12, 'barracks', 3], [28, -18, 'barracks', 3], [20, -12, 'barracks', 3]]);
+// v6 INTEGRATE: the comment above claimed all three sites were on ground G.canPlace() accepts
+// and one of them was not — the middle barracks stood at (28,-18), whose signed road distance
+// is 0.97 u, i.e. the tower and its palisade were IN the highway and the column walked through
+// the fence. Exactly the defect STD_BUILDS' own note describes fixing on three inherited plots,
+// re-introduced later by a hand-authored pose. Nudged 4.2 u to (25,-21) — the NEAREST site the
+// oracle accepts (road 4.92, ny 0.962) — so the three-barracks line across the bend, and the
+// scrum it produces, survive while the log goes quiet.
+const BATTLE_BUILDS = STD_BUILDS.concat([[35, -12, 'barracks', 3], [25, -21, 'barracks', 3], [20, -12, 'barracks', 3]]);
 // Mid-campaign compositions for the new maps. Every coordinate was authored against
 // `&scan=1` (see BUILDWARN) and sits on the wedge/verge each map's geometry hands you.
 // Frostfell: the wedge between the two approaches, so one battery answers both gates,
@@ -19672,8 +22781,44 @@ const M3_BUILDS = [[-28, -6, 'ballista', 3], [-20, -6, 'banner', 1], [-12, -6, '
 // preset gets its own composition (the balance matrix keeps using M2_BUILDS/M3_BUILDS), with
 // two extra L3 barracks standing where that map's camera is actually pointed: Frostfell's
 // lens looks east down the shared tail, Ember's looks south-east past the fork.
-const M2_BATTLE = M2_BUILDS.concat([[28, 0, 'barracks', 3], [36, 6, 'barracks', 3]]);
+// v6 INTEGRATE: the second extra barracks was authored at (36,6) — the coordinate M2_BUILDS
+// already spends on its storm spire, so the two towers were CO-LOCATED: one pad, one palisade
+// wrapped round a crystal, and `canPlace` refusing the site as "too close to a tower" in the
+// log. A duplicated coordinate is a copy-paste slip, not a pose. Moved 4.5 u east to (40,8)
+// (road 7.15, ny 0.997, 4.47 u clear of the spire), which keeps the barracks beside the spire
+// and further down the tail the lens is already looking at.
+const M2_BATTLE = M2_BUILDS.concat([[28, 0, 'barracks', 3], [40, 8, 'barracks', 3]]);
+// SPEC6 §E — THE JUNCTION CAMP. This is not a composition anyone would ship as a hero frame:
+// it is the DEGENERATE build the Hexbinder exists to answer, and it is here so the `_hex`
+// preset and the `junction2` matrix row are the same eight towers in the same eight places.
+// Every site is inside ~10 u of the pre-merge pinch at (16,-2) where Frostfell's two roads
+// become one, every one returned `{"ok":true}` from SCANP, and every one is inside its
+// weapon's reach of the road (4.3-7.7 u off the centreline). One battery, both gates — which
+// was the optimal play, and is now the thing a 9 u silence eats in one bite.
+const M2_CAMP = [[8, -2, 'archer', 3], [14, -8, 'archer', 3], [18, 4, 'barracks', 2],
+  [10, -10, 'ballista', 3], [8, -6, 'ballista', 2], [12, 6, 'archer', 2],
+  [16, -12, 'archer', 2], [22, 8, 'catapult', 1]];
 const M3_BATTLE = M3_BUILDS.concat([[28, -24, 'barracks', 3], [24, -18, 'barracks', 3]]);
+// The Barrowmoor. Authored against `&scan=1` like the other two, and deliberately NOT a
+// single junction battery: the chapel ruin and its yard wall own the middle of the fork
+// (SECTION: WORLD §10b registers the whole yard as obstacles), so this composition is what
+// the map's own geometry allows — a pyre-forward line covering the approach before the fork,
+// a pair on each arm, and the rearguard on the shared tail. The PYRE is not a flavour pick:
+// on this road fire is what stops the wave being fought twice.
+// Every coordinate below returned `{"ok":true}` from the SCANP read-out; four earlier
+// candidates came back "occupied" and were moved, which is the moor's obstacle field doing
+// exactly what §A2 asks it to.
+// A first cut of this list sat on ground that was buildable and USELESS: every site was
+// 9-10 u off the centreline (the obstacle field pushes you out there), and an archer's reach
+// is 10, so the battery covered a two-metre window of road and intended4 died on wave 2. The
+// sites below were re-derived by sampling both route polylines at ±6.5 u and keeping the ones
+// canPlace() accepts — every one is 4.5-7.3 u off the road, which is inside every weapon's
+// reach. Coverage is deliberately SPREAD: approach, fork mouth, one on each arm, and the
+// rearguard on the shared tail.
+const M4_BUILDS = [[34, -11, 'archer', 3], [26, -22, 'pyre', 2], [8, -7, 'ballista', 3],
+  [15, -14, 'archer', 2], [-14, 16, 'catapult', 1], [-14, -23, 'pyre', 1],
+  [-26, -3, 'barracks', 2], [-40, -9, 'storm', 2]];
+const M4_BATTLE = M4_BUILDS.concat([[17, 2, 'barracks', 3], [3, -22, 'barracks', 3]]);
 // ── bot harness v2 (SPEC2 §F) ─────────────────────────────────────────
 // `&plan=37,-31:archer,up:0` — ops run IN ORDER, each waiting until the purse can pay for
 // it out of real bounty income, so a plan is a build ORDER, not a cheat sheet. An op that
@@ -19784,8 +22929,10 @@ function runShot(name) {
       }
     }
     const builds = pre.builds === 'std' ? STD_BUILDS : pre.builds === 'battle' ? BATTLE_BUILDS
-      : pre.builds === 'm2' ? M2_BUILDS : pre.builds === 'm3' ? M3_BUILDS
-      : pre.builds === 'm2b' ? M2_BATTLE : pre.builds === 'm3b' ? M3_BATTLE : pre.builds;
+      : pre.builds === 'm2' ? M2_BUILDS : pre.builds === 'm3' ? M3_BUILDS : pre.builds === 'm4' ? M4_BUILDS
+      : pre.builds === 'm2camp' ? M2_CAMP
+      : pre.builds === 'm2b' ? M2_BATTLE : pre.builds === 'm3b' ? M3_BATTLE
+      : pre.builds === 'm4b' ? M4_BATTLE : pre.builds;
     // A staged composition is a POSE, not a purchase: widen the muster to fit it so the
     // BUILDWARN oracle below still judges the GROUND rather than reporting a full muster
     // eight times (SPEC3 §C). A `plan` preset stages nothing, so the bot still has to buy
@@ -19803,6 +22950,10 @@ function runShot(name) {
     state.phase = 'prewave'; state.countdown = 3;
     // SPEC4 §E: a preset may declare that its run does not stop at the finale.
     if (pre.endless) state.endless = true;
+    // SPEC6 §D3a — `&horde=N` under the harness: N synthetic bodies before the first tick, so
+    // a `_thousand` frame and an fps bench are the same rig. No rng draw (G.spawnAt), so a
+    // matrix row that does not pass the parameter is bit-identical to r11.
+    if (HORDE_BENCH > 0) G.hordeBench(HORDE_BENCH);
     const ops = pre.plan ? parsePlan(P.get('plan') || '') : null, placed = [];
     const tSec = P.has('t') ? parseFloat(P.get('t')) : pre.t;
     const ticks = Math.round(tSec * TPS);
@@ -19849,6 +23000,15 @@ function runShot(name) {
     glc.readPixels(glc.drawingBufferWidth >> 1, glc.drawingBufferHeight >> 1, 1, 1, glc.RGBA, glc.UNSIGNED_BYTE, pb);
     console.log('PROBE center=' + [...pb] + ' buf=' + glc.drawingBufferWidth + 'x' + glc.drawingBufferHeight + ' cam=' + camera.position.toArray().map(v => v.toFixed(1)));
     const alive = G.enemies.filter(e => e.alive).length;
+    // SPEC6 §D3b — THE INVISIBLE-UNIT ORACLE, and the reason it is its own line rather than a
+    // STATE field: STATE is printed verbatim by tools/balance.ps1 into the matrix table, so a
+    // new key there would change the text of every baseline row. This prints only when the
+    // caps actually refused a body, i.e. never in anything we ship.
+    if (Armies.over) console.log('CAPWARN over=' + Armies.over + ' alive=' + alive +
+      ' peak=' + state.peak + ' — units simulated OFF SCREEN');
+    if (HORDE || HORDE_BENCH || G.benched) console.log('HORDESTAT mode=' + MODE + ' bench=' + (G.benched || HORDE_BENCH) +
+      ' alive=' + alive + ' peak=' + state.peak + ' over=' + (Armies.over | 0) +
+      ' calls=' + renderer.info.render.calls + ' dense=' + (G.dense ? 1 : 0));
     console.log('STATE ' + JSON.stringify({ shot: name, tier, map: MAP.id, tick: state.tick, wave: state.wave, phase: state.phase,
       alive, knights: G.knights.filter(k => k.alive).length, towers: G.towersList.length, gold: state.gold,
       lives: state.lives, leaked: state.leaked, kills: state.kills, invested: state.invested,
@@ -19861,11 +23021,20 @@ function runShot(name) {
 // POLISH: QA hook. Everything lives in module scope, so a live playtest has no way to
 // inspect the game from the console or from an automated harness. Opt-in only.
 if (P.get('dbg')) window.G = G;
+// SPEC6 §B — the harness never walks through UI.startGame(), so the shot/bot path takes the
+// council's writ here. With no `&talents=` this is a no-op that re-states the shipped numbers
+// (purse 140, knight hp ×1, refund 70%, trap costs unchanged), which is what keeps every
+// preset and every baseline matrix row bit-identical.
+if (SHOT) G.applyTalents();
 if (SHOT) runShot(SHOT);
 else {
   // `&auto=1` (written by a map card) drops straight into the chosen road; `&maps=1`
   // ("Choose Your Road" on the victory plate) opens the chooser over the title backdrop.
   if (P.has('auto')) UI.startGame(false); else if (P.has('maps')) UI.showMaps();
+  // SPEC6 §D3a — the bench in LIVE play, which is the case it exists for: `?horde=900&stats=1`
+  // puts 900 bodies on the road of whatever device is holding the phone and the stats line
+  // reads back fps, draw calls, alive, `over` (must be 0) and whether the §D3c ladder engaged.
+  if (HORDE_BENCH > 0 && state.phase !== 'title') G.hordeBench(HORDE_BENCH);
   UI.sync(); requestAnimationFrame(frame);
 }
 // ══════════════════════ END SECTION: MAIN ══════════════════════
