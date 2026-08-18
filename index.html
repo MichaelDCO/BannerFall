@@ -20,6 +20,19 @@
 <script type="importmap">
 {"imports":{"three":"./js/vendor/three.module.js","three/addons/":"./js/vendor/addons/"}}
 </script>
+<!-- BOOTPIPE §3 — module graph warm-up. The browser cannot discover three.module.js or the
+     four addon modules until it has fetched and parsed game.js, and it cannot discover
+     game.js until it has parsed the whole of this document; these hints overlap all six
+     fetches with the HTML/CSS parse instead. The hrefs must be the EXACT specifiers the
+     module system will resolve to or the fetch is doubled, not shared — which is why the
+     vendor paths carry no cache stamp (the import map's values carry none) while game.js
+     carries the same ?v=__BUILD__ the <script> below does. -->
+<link rel="modulepreload" href="./js/vendor/three.module.js">
+<link rel="modulepreload" href="js/game.js?v=__BUILD__">
+<link rel="modulepreload" href="./js/vendor/addons/postprocessing/EffectComposer.js">
+<link rel="modulepreload" href="./js/vendor/addons/postprocessing/RenderPass.js">
+<link rel="modulepreload" href="./js/vendor/addons/postprocessing/UnrealBloomPass.js">
+<link rel="modulepreload" href="./js/vendor/addons/postprocessing/ShaderPass.js">
 </head>
 <body>
 <canvas id="gl"></canvas>
@@ -94,11 +107,25 @@
   <div id="settings" class="iron frm hidden">
     <div class="sT" data-l="set.title">Settings</div>
     <button id="btnMute"><span data-l="set.sound">Sound</span> <b id="muteV">On</b></button>
-    <button id="btnQual"><span data-l="set.qual">Quality</span> <b id="qualV">High</b></button>
+    <!-- v7-MENUCAM §1: Quality is a SUBMENU, not a click-cycle. The button latches #qualMenu
+         open in place (an accordion, so it needs no positioning of its own and works at 390px);
+         the four rows are built in SECTION: UI from the tier table so their descriptions cannot
+         go stale. The button keeps showing the tier IN USE. -->
+    <button id="btnQual" data-lt="qual.qualT" aria-expanded="false" aria-controls="qualMenu"><span data-l="set.qual">Quality</span> <b id="qualV">High</b></button>
+    <div id="qualMenu" class="hidden"></div>
+    <!-- v7-RESILIENCE §3 — the frame cap (GAME_SPEC_7 §C.5). A preference, so it toggles in
+         place like Sound and Auto-call; it caps DRAWS only and never a simulation tick. -->
+    <button id="btnFps" data-lt="set.fpsT"><span data-l="set.fps">Frame cap</span> <b id="fpsV">60 fps</b></button>
     <button id="btnAuto" data-lt="set.autoT"><span data-l="set.auto">Auto-call</span> <b id="autoV">Off</b></button>
     <button id="btnLang"><span data-l="set.lang">Language</span> <b id="langV">English</b></button>
     <button id="btnReset" data-l="set.reset">Restart Campaign</button>
   </div>
+  <!-- v7-RESILIENCE §2 — the context-loss veil (GAME_SPEC_7 §C.1). The GPU can take the canvas
+       away at any moment (iOS suspending a WKWebView, a driver reset, an Android activity
+       coming back from the background) and until this stage that was a black screen for good.
+       The veil goes up on `webglcontextlost`, the run is frozen under it, and it comes down when
+       the forge is relit. `hidden` at rest; nothing headless can reach it. -->
+  <div id="veil" class="hidden" role="status" aria-live="polite"><div class="vI"></div><div class="vT" data-l="gl.lost">The forge went cold — rekindling</div></div>
   <div id="msg"></div>
   <div id="floaters"></div>
   <button id="btnWave" class="frm" data-l="call.start">⚔ Start Wave</button>
@@ -107,7 +134,7 @@
        a single struck-iron disc now; the sheet itself is a framed plate that opens above it
        on hover or click, and it is collapsed by default in every shot preset because nothing
        opens it there. -->
-  <div id="hint"><button id="hintT" class="iron" data-lt="hint.legend" aria-expanded="false">?</button><div id="hintL" class="iron frm"><b><span data-l="hint.build">Build</span><kbd>1–7</kbd></b><b><span data-l="hint.place">Place</span><kbd data-l="key.click">Click</kbd></b><b><span data-l="hint.keep">Keep</span><kbd data-l="key.shift">Shift</kbd></b><b><span data-l="hint.cancel">Cancel</span><kbd data-l="key.esc">Esc</kbd></b><b><span data-l="hint.orders">Orders</span><kbd>T</kbd></b><b><span data-l="hint.omen">Omen</span><kbd>8–0</kbd></b><b><span data-l="hint.powers">Powers</span><kbd>Q W</kbd></b><b><span data-l="hint.traps">Traps</span><kbd>Z X C</kbd></b></div></div>
+  <div id="hint"><button id="hintT" class="iron" data-lt="hint.legend" aria-expanded="false">?</button><div id="hintL" class="iron frm"><b><span data-l="hint.build">Build</span><kbd>1–7</kbd></b><b><span data-l="hint.place">Place</span><kbd data-l="key.click">Click</kbd></b><b><span data-l="hint.keep">Keep</span><kbd data-l="key.shift">Shift</kbd></b><b><span data-l="hint.cancel">Cancel</span><kbd data-l="key.esc">Esc</kbd></b><b><span data-l="hint.orders">Orders</span><kbd>T</kbd></b><b><span data-l="hint.omen">Omen</span><kbd>8–0</kbd></b><b><span data-l="hint.powers">Powers</span><kbd>Q W</kbd></b><b><span data-l="hint.traps">Traps</span><kbd>Z X C</kbd></b><b><span data-l="hint.pan">Pan</span><kbd data-l="key.pan">↑↓←→ / WASD</kbd></b><b><span data-l="hint.turn">Turn</span><kbd data-l="key.turn">, . / RMB</kbd></b></div></div>
   <div id="placeBar" class="hidden"><div id="placeMsg" class="iron frmB ok"></div>
     <div id="placeBtns"><button id="placeOk" class="iron frm" data-lt="place.raise" title="Raise">✓</button><button id="placeNo" class="iron frm" data-lt="place.cancel" title="Cancel">✗</button></div></div>
   <div id="tutHint" class="parch frm hidden"></div>
@@ -148,7 +175,21 @@
       <p id="tagline" data-l="tag">Hold the vale · Break the horde</p>
       <svg class="flr r" viewBox="0 0 124 18"><use href="#flour"/></svg>
     </div>
+    <!-- v7-RESILIENCE §1 — the saved-run offer. It ships `hidden` and SECTION: UI's
+         resumeOffer() is the only thing that ever unhides it (live mode, snapshot present),
+         so every shot preset frames this plinth exactly as it did before it existed. When it
+         IS shown, #btnPlay is relabelled "New campaign" — see resumeOffer(). -->
+    <button id="btnResume" class="bigBtn frm hidden"><span data-l="resume">Resume the battle</span></button>
     <button id="btnPlay" class="bigBtn frm"><span data-l="play">Play</span></button>
+    <!-- BOOTPIPE §1 — the load bar. A REAL element, painted with the rest of the title screen
+         on the browser's first paint, and filled by the BOOT pipeline in SECTION: CORE as the
+         world is generated. It is `display:none` until SECTION: CORE puts `.booting` on
+         #title, which it only does when SHOT is unset — so every shot preset frames the
+         title exactly as it did before this existed. -->
+    <div id="boot" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+      <div id="bootTrack"><div id="bootFill"></div></div>
+      <div id="bootStage"></div>
+    </div>
     <div id="titleFoot">10 waves &nbsp;·&nbsp; 4 fortifications &nbsp;·&nbsp; one road</div>
   </div>
 

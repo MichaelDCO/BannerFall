@@ -10,6 +10,9 @@ modes. English and French.
 **Installable PWA**: works offline after first load, installs to the home screen on phones
 (fullscreen, landscape). Three.js 0.170.0 is vendored — no CDN, no build step, no dependencies.
 
+The title screen paints in a fraction of a second; the vale is forged behind it against a real
+progress bar that names what it is doing, and the tab stays responsive the whole way down.
+
 ## Play
 
 Serve the folder with any static server and open it in a browser (desktop or phone):
@@ -68,9 +71,65 @@ Then visit `http://localhost:8321/`.
 ## Controls
 
 Build with the bottom bar (hotkeys 1–7), click/tap to place — the range ring previews before you
-spend. Traps go on the road (Z X C), powers are cast from the bottom-left discs (Q W). Drag to
-pan, wheel/pinch to zoom. Space pauses, Esc cancels, T cycles targeting, 8–0 picks an omen.
+spend. Traps go on the road (Z X C), powers are cast from the bottom-left discs (Q W). Space
+pauses, Esc cancels, T cycles targeting, 8–0 picks an omen. The full sheet is in-game: press
+**H**, or click the key disc.
+
+### Camera
+
+| | |
+|---|---|
+| **Pan** | `↑ ↓ ← →` or the **WASD** cluster, held — smoothed, and it coasts to a stop |
+| | Drag with the left button, or one finger |
+| **Turn** | `,` and `.`, or **drag with the right button** (a right *click* still just cancels) |
+| **Zoom** | Wheel, or pinch |
+
+Pan keys are read by physical position, so a French AZERTY keyboard gets **ZQSD** with no
+setting to change — the in-game sheet prints whichever cluster your layout actually has. The
+power hotkeys keep priority over the camera, so on QWERTY `W` casts Fire of Heaven rather than
+panning; the arrows always pan.
 
 The **first wave never musters on its own**: the horn reads "Begin the Battle" and waits until
 you have built in peace. From wave 2 the countdown behaves as it always did — unless you switch
 auto-call on, in which case wave 1 musters like every other wave.
+
+## Settings
+
+The gear in the top bar opens Settings: sound, **Detail**, **Frame cap**, auto-call, language,
+and Restart Campaign.
+
+### Detail
+
+Three tiers and an Auto, each row printing exactly what it changes rather than making you guess:
+
+| tier | shadow map | bloom | prop scatter | pixel ratio |
+|---|---|---|---|---|
+| **Low** | 1024 | off | 55% | ×1.5 |
+| **High** | 2048 | on | 100% | ×2 |
+| **Ultra** | 4096 | on | 100% | ×2 |
+
+**Auto** is the fourth row and the default. On its first load it spends a second and a half of the
+title screen timing real frames, picks the tier this machine can actually hold, and remembers it —
+the row then tells you what it decided. An explicit choice is never overridden by it. Changing the detail rebuilds the vale, so **the page reloads** — and
+your run is saved and restored across it, so the switch costs nothing (same for the language
+toggle).
+
+### Frame cap
+
+**60** or **30** drawn frames a second. Thirty spares the battery and the heat on a phone. It
+caps *drawing* only — the battle keeps its own clock, so the simulation, the balance and the ×1/
+×2/×3 speeds are identical at either setting.
+
+## Saving and resuming
+
+There is nothing to save by hand. At every wave boundary — when a wave breaks, and when you
+sound the horn — the run is written to your device: the purse, the garrison with each tower's
+tier and orders, the traps on the road, the lives, the omen, the War Council's grades. The title
+screen then offers **"Resume the battle"** with the road, the wave and the purse named on it, and
+Play becomes **"New campaign"** so it is clear which of the two throws the run away.
+
+A resumed run restarts at that wave's muster, so the wave you were in the middle of is fought
+again. Suspending the app, losing the tab, switching detail or language, or having the phone take
+the GPU away mid-battle are all the same thing to it. That last case is handled live rather than
+by reloading: if the graphics context is lost, the vale is veiled, the forge is relit behind it,
+and the battle resumes where it stood — camera heading included.

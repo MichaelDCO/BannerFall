@@ -1,7 +1,7 @@
 {
   "name": "Bannerfall — Hold the Vale",
   "short_name": "Bannerfall",
-  "description": "Medieval tower defense: three campaigns, seven towers, elemental warfare, war omens.",
+  "description": "Medieval tower defense: four campaigns, seven towers, elemental warfare, war omens.",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

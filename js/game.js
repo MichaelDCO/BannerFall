@@ -103,6 +103,35 @@ en: {
   // ── title / campaign chrome ──────────────────────────────────────────────────────
   'tag': 'Hold the vale · Break the horde',
   'play': 'Play',
+  // ── v7-RESILIENCE §1/§2 — the saved run, and the cold forge ──────────────────────
+  // `resume.new` REPLACES the Play label when a saved run is on offer: with two buttons on
+  // the plinth "Play" stops being a verb and becomes ambiguous, and the one thing a player
+  // must not have to guess is which of the two throws the run away.
+  'resume': 'Resume the battle',
+  // The standard count is its own key so the SINGULAR is a real sentence. A run with one tower
+  // standing is an ordinary early-game state, and "1 standards" on the title plinth is exactly
+  // the sort of thing that reads as unfinished.
+  'resume.sub': '{0} · wave {1} · {2}',
+  'resume.std': '{0} standards', 'resume.std1': '1 standard',
+  'resume.T': 'Take up the saved run — {0}, wave {1}, {2} gold in the purse',
+  'resume.new': 'New campaign',
+  // §2 — the context-loss veil. The GPU took the canvas away (a phone suspending, a driver
+  // resetting, a tab restored from the background); the run is intact and the forge is being
+  // relit under it.
+  'gl.lost': 'The forge went cold — rekindling',
+  // ── BOOTPIPE §1 — the loading stages. These are the only strings a player reads before
+  // the game exists, so they are written as a smith's morning rather than as a task list.
+  'boot.cloth': 'Dyeing the banners',
+  'boot.vale': 'Forging the vale',
+  'boot.props': 'Raising the timber',
+  'boot.host': 'Mustering the host',
+  'boot.steel': 'Tempering steel',
+  'boot.forge': 'Kindling the forge',
+  // v7-RESILIENCE §1 — the restore stage. Only ever seen on a resume, and it is the one boot
+  // stage that is about the PLAYER's vale rather than the game's: the towers they raised are
+  // going back up.
+  'boot.rally': 'Rallying the garrison',
+  'boot.ready': 'Sounding the horn',
   'foot': '{0} roads &nbsp;·&nbsp; {1} fortifications &nbsp;·&nbsp; ',
   'seed': 'War Seed {0}',
   'seed.roll': 'Roll',
@@ -130,6 +159,28 @@ en: {
   'set.title': 'Settings',
   'set.sound': 'Sound', 'snd.on': 'On', 'snd.off': 'Off',
   'set.qual': 'Quality', 'qual.low': 'Low', 'qual.high': 'High', 'qual.ultra': 'Ultra',
+  // ── v7-MENUCAM §1 — the quality submenu ──
+  'qual.title': 'Detail',
+  'qual.auto': 'Auto',
+  'qual.autoD': 'Measures this device at first light and picks for it.',
+  'qual.autoBench': 'Bench says {0}.',
+  'qual.autoWait': 'Detects on next load.',
+  // The concrete rows print the tier table (G.QT) rather than restating it in prose.
+  'qual.rowD': 'Shadows {0} · {1} · Scatter {2}% · Pixels ×{3}',
+  'qual.blOn': 'Bloom on', 'qual.blOff': 'No bloom',
+  'qual.now': 'In use',
+  'qual.pick': 'Chosen',
+  'qual.foot': 'Changing the detail rebuilds the vale — the page reloads.',
+  'qual.qualT': 'Detail — shadow resolution, bloom, prop scatter, pixel ratio',
+  // v7-RESILIENCE §4 — the auto-bench's verdict. Two forms because the bench can notch the
+  // pixel ratio DOWN without dropping the whole tier, and a row that said only "High" would
+  // be hiding the half of the answer the player would actually see.
+  'qual.autoPx': 'Bench says {0} at ×{1} pixels.',
+  // v7-RESILIENCE §3 — the frame cap. It is a BATTERY control, not a quality one, so it says
+  // what it spares rather than what it costs, and it promises the sim is untouched (it is:
+  // the accumulator is wall-clock based and only the DRAW is skipped).
+  'set.fps': 'Frame cap', 'fps.60': '60 fps', 'fps.30': '30 fps',
+  'set.fpsT': 'Cap the drawn frames. Thirty spares the battery and the heat — the battle keeps its own clock either way.',
   'set.auto': 'Auto-call', 'val.on': 'On', 'val.off': 'Off',
   'set.autoT': 'Call each wave three seconds after the last one breaks — the skipped seconds are still paid in gold',
   'set.lang': 'Language',
@@ -246,6 +297,10 @@ en: {
   'pw.cast': ' · click to call it down',
   'cp.cd': 'Not yet mustered',
   'hint.powers': 'Powers', 'hint.traps': 'Traps',
+  // v7-MENUCAM §2 — the camera rows. `key.pan` names the ARROWS first because they are the
+  // only four that no layout and no hotkey can take away from the player (see PAN_CODE).
+  'hint.pan': 'Pan', 'hint.turn': 'Turn',
+  'key.pan': '↑↓←→ / WASD', 'key.turn': ', .  /  Right-drag',
   'hint.legend': 'Key bindings (H)',
   // ── garrison sheet ───────────────────────────────────────────────────────────────
   'tm.garrison': 'Garrison', 'tm.veteran': 'Veteran',
@@ -530,6 +585,22 @@ en: {
 fr: {
   'tag': 'Tenez le val. Brisez la horde.',
   'play': 'Jouer',
+  // v7-RESILIENCE §1/§2 — la course sauvegardée, et la forge refroidie.
+  'resume': 'Reprendre la bataille',
+  'resume.sub': '{0} · vague {1} · {2}',
+  'resume.std': '{0} bannières', 'resume.std1': '1 bannière',
+  'resume.T': 'Reprendre la course sauvegardée — {0}, vague {1}, {2} d’or en bourse',
+  'resume.new': 'Nouvelle campagne',
+  'gl.lost': 'La forge s’est refroidie — on la rallume',
+  // BOOTPIPE §1 — même registre : la forge au petit matin, pas une liste de tâches.
+  'boot.cloth': 'Teinture des bannières',
+  'boot.vale': 'Forge du val',
+  'boot.props': 'Levée des charpentes',
+  'boot.host': 'Levée de l’ost',
+  'boot.steel': 'Trempe de l’acier',
+  'boot.forge': 'Attisage de la forge',
+  'boot.rally': 'Ralliement de la garnison',
+  'boot.ready': 'Sonnerie du cor',
   'foot': '{0} routes &nbsp;·&nbsp; {1} ouvrages &nbsp;·&nbsp; ',
   'seed': 'Sceau de guerre {0}',
   'seed.roll': 'Tirer',
@@ -557,6 +628,20 @@ fr: {
   'set.title': 'Réglages',
   'set.sound': 'Son', 'snd.on': 'Actif', 'snd.off': 'Muet',
   'set.qual': 'Détail', 'qual.low': 'Bas', 'qual.high': 'Haut', 'qual.ultra': 'Ultra',
+  'qual.title': 'Détail',
+  'qual.auto': 'Auto',
+  'qual.autoD': 'Jauge cet appareil au premier jour et choisit pour lui.',
+  'qual.autoBench': 'La jauge dit {0}.',
+  'qual.autoWait': 'Jaugé au prochain chargement.',
+  'qual.rowD': 'Ombres {0} · {1} · Semis {2}% · Pixels ×{3}',
+  'qual.blOn': 'Halo actif', 'qual.blOff': 'Sans halo',
+  'qual.now': 'En cours',
+  'qual.pick': 'Choisi',
+  'qual.foot': 'Changer le détail reforge le val — la page se recharge.',
+  'qual.qualT': 'Détail — finesse des ombres, halo, semis de décors, densité de pixels',
+  'qual.autoPx': 'La jauge dit {0} à ×{1} pixels.',
+  'set.fps': 'Limite d’images', 'fps.60': '60 i/s', 'fps.30': '30 i/s',
+  'set.fpsT': 'Limiter les images dessinées. Trente ménagent la batterie et la chaleur — la bataille garde sa propre horloge dans les deux cas.',
   'set.auto': 'Appel auto', 'val.on': 'Oui', 'val.off': 'Non',
   'set.autoT': 'Appeler chaque vague trois secondes après la précédente — les secondes sautées sont payées en or',
   'set.lang': 'Langue',
@@ -668,6 +753,8 @@ fr: {
   'pw.cast': ' · clic pour l’appeler',
   'cp.cd': 'Pas encore rassemblé',
   'hint.powers': 'Pouvoirs', 'hint.traps': 'Pièges',
+  'hint.pan': 'Balayer', 'hint.turn': 'Pivoter',
+  'key.pan': '↑↓←→ / ZQSD', 'key.turn': ', .  /  Glisser droit',
   'hint.legend': 'Raccourcis clavier (H)',
   'tm.garrison': 'Garnison', 'tm.veteran': 'Vétéran',
   'tm.tier': 'Rang {0}', 'tm.max': 'Max',
@@ -933,6 +1020,189 @@ const L = (k, ...a) => {
 };
 document.documentElement.lang = LANG;
 document.documentElement.dataset.lang = LANG;            // CSS hangs the few ::after strings off this
+
+// ══ BOOTPIPE §1 — THE STAGED BOOT ═════════════════════════════════════════════════════════
+// Measured (tools/perfprobe.mjs, this machine, real GPU): boot was ONE 21.7 s main-thread task
+// after a 1.8 s one — 78% of it three.js compiling 93 GPU programs synchronously on first
+// render, the rest procedural canvas/terrain generation. The tab was frozen for both, so the
+// title screen was painted (by index.html) and then dead in the water.
+//
+// The fix is NOT a rewrite. Module evaluation IS the boot pipeline already, in exactly the
+// right order — it just never let go of the thread. So this module now AWAITS at top level
+// between its heavy statements. That buys the whole of a staged boot (first paint, a real
+// progress bar, an interactive tab, idle-priority tails) while preserving the ONE property
+// that everything else in this file depends on: STATEMENT ORDER IS UNCHANGED. Every `_ws` /
+// `wrng` / `arng` / `urng` / `rng` draw happens in the same sequence it always did, because
+// no statement moved — a pause between two statements cannot reorder them. That is why this
+// shape was chosen over hoisting work into workers or callbacks: the seeded streams here are
+// entangled ACROSS sections (WORLD's texture block and World.build()'s prop scatter share
+// `_ws`; TOWERS draws from it after both), and any construction that could reorder them would
+// have to be proved byte-identical instead of being byte-identical by construction.
+//
+// SEED-STREAM AUDIT (the reason no generator was moved to an OffscreenCanvas worker, GAME_SPEC_7
+// §C.9 asked the question):
+//   · `_ws` / wrng  — SHARED, and shared ACROSS sections. WORLD's procedural texture pass draws
+//     from it (the banner weave, the stone, the plaster, the plank grain, the shingles, the grass
+//     tufts), then World.build()'s prop scatter continues from wherever that left off, and then
+//     TOWERS takes three more draws. Moving ANY of it off-thread means the draws that stayed
+//     behind land at different stream positions, i.e. a different vale. Not movable, only
+//     chunkable. This is 60% of the generation budget and it is the answer to the question.
+//   · `arng` (ARMIES atlas) and `urng` (UI's grain and every canvas portrait) — genuinely
+//     independent: each is declared, consumed and abandoned inside one block, seeded off SEED (or
+//     a constant) and read by nothing else. Both are technically worker-safe. Neither was moved,
+//     because measured they are 120-370 ms and 30 ms respectively, while the transfer plus
+//     rebuilding their draw closures inside a worker is a large change to code owned by two other
+//     sections. Chunking gets the same long-task result for none of the risk.
+//   · canopyTex's `r` — a private stream, and the function is 20 ms. Not worth moving; the cost
+//     measured there is Chrome's one-time 2d-canvas backend init, which a worker also pays.
+//
+// SHOT CONTRACT (GAME_SPEC §2.3): under the harness every yield below resolves as an already
+// -settled promise, so the pipeline is synchronous-equivalent — microtask boundaries only, no
+// frames, no timers, no progress DOM, and runShot() still runs at the end of module
+// evaluation with the whole pipeline complete behind it. The harness also runs under
+// `--virtual-time-budget=20000`; a real rAF/setTimeout yield would spend that budget, and
+// compileAsync()'s 10 ms poll loop could spend all of it, which is the second reason the
+// shader stage is live-mode-only. Deterministic capture loses nothing by compiling lazily.
+const BOOT = {
+  t0: performance.now(),
+  // Named stages, in order, with the fraction of the bar each one has COMPLETED when it ends.
+  // The weights are the measured shares of boot wall time, not guesses, so the bar moves at a
+  // roughly constant rate instead of sprinting to 90% and sitting there.
+  // v7-RESILIENCE §1 — `boot.rally` is the RESTORE stage, and it sits exactly where the
+  // BOOTPIPE handoff said a restore belongs: after the forge (the world exists and its shaders
+  // are warm) and before the horn (the render loop has not started). It is SKIPPED on every
+  // boot that is not a resume — stage() walks the table forward to the key it is given, so an
+  // unvisited row costs nothing and the bar simply steps 0.94 → 1 as it always did.
+  seq: [['boot.cloth', 0.06], ['boot.vale', 0.24], ['boot.props', 0.42],
+        ['boot.host', 0.58], ['boot.steel', 0.66], ['boot.forge', 0.94],
+        ['boot.rally', 0.98], ['boot.ready', 1]],
+  i: -1, bar: null, fill: null, lbl: null, live: false,
+  // `ready` gates the two ways into a run. CSS makes the Play button inert while the bar is
+  // up, but pointer-events cannot stop a keyboard activation or the title backdrop's
+  // click-anywhere shortcut, and either would walk into a half-built world. Default TRUE so
+  // the harness and the `&auto=`/`&maps=` deep links behave exactly as they always did.
+  ready: true,
+  // One event-loop turn. rAF first so a paint lands between two chunks, then a task break so
+  // the browser's own work (paint, hit-testing, the click the player just made) is not billed
+  // to our next chunk.
+  // Every yield closes a SLICE of work. A slice longer than the browser's 50 ms long-task
+  // threshold is a stutter the player can feel, so the pipeline measures its own slices and
+  // BOOTLOG names the fat ones — that is how the chunk boundaries below were placed, and it is
+  // how the next person finds the one that regressed.
+  slices: [], _resume: 0, tag: '',
+  close() {
+    const w = performance.now() - (this._resume || this.t0);
+    if (w > 60) this.slices.push([this.seq[Math.max(0, this.i)][0].slice(5) + (this.tag ? '@' + this.tag : ''), Math.round(w)]);
+  },
+  // Awaiting something that is NOT a BOOT yield (the driver's parallel-compile poll) is not a
+  // slice of work — the thread is idle for all of it. Wrapped so the slice census keeps
+  // measuring WORK and does not bill a 12 s wait to the last chunk that ran before it.
+  async wait(p) { this.close(); const r = await p; this._resume = performance.now(); return r; },
+  frame() {
+    if (!this.live) return Promise.resolve();
+    this.close();
+    return new Promise(r => requestAnimationFrame(() => {
+      if (!this.paint) this.paint = performance.now();
+      setTimeout(() => { this._resume = performance.now(); r(); }, 0);
+    }));
+  },
+  // A cheap break INSIDE a stage: no paint needed, just a fresh task so no single chunk can
+  // become a long task. This is what keeps every generator under the 200 ms bar.
+  chunk() {
+    if (!this.live) return Promise.resolve();
+    this.close();
+    return new Promise(r => setTimeout(() => { this._resume = performance.now(); r(); }, 0));
+  },
+  // Advance to the next named stage: label + bar, then yield so both are actually on screen.
+  stage(key) {
+    if (!this.live) return Promise.resolve();
+    while (this.i < this.seq.length - 1 && this.seq[this.i + 1][0] !== key) this.i++;
+    this.i++; this.tag = '';
+    const s = this.seq[Math.min(this.i, this.seq.length - 1)];
+    if (this.lbl) this.lbl.textContent = L(s[0]);
+    if (this.fill) this.fill.style.width = (s[1] * 100).toFixed(1) + '%';
+    if (this.bar) this.bar.setAttribute('aria-valuenow', Math.round(s[1] * 100));
+    return this.frame();
+  },
+  // Sub-progress within the current stage, for the long ones (World.build, the atlas).
+  // Interpolates toward the next stage's mark so the bar never goes backwards.
+  sub(f) {
+    if (!this.live) return Promise.resolve();
+    // The fraction doubles as the slice's LABEL, so the census below names the phase that ran
+    // without every call site having to pass a string.
+    this.tag = f.toFixed(2);
+    if (!this.fill) return this.chunk();
+    const a = this.i > 0 ? this.seq[this.i - 1][1] : 0, b = this.seq[Math.min(this.i, this.seq.length - 1)][1];
+    const w = (a + (b - a) * (f < 0 ? 0 : f > 1 ? 1 : f)) * 100;
+    this.fill.style.width = w.toFixed(1) + '%';
+    if (this.bar) this.bar.setAttribute('aria-valuenow', Math.round(w));
+    return this.chunk();
+  },
+  done() {
+    if (!this.live) return;
+    this.ready = true;
+    this.barMs = performance.now();
+    if (this.fill) this.fill.style.width = '100%';
+    document.getElementById('title').classList.remove('booting');
+    document.documentElement.classList.remove('booting');
+    this.close();
+    const fat = this.slices.slice().sort((a, b) => b[1] - a[1]).slice(0, 8);
+    console.log('BOOTLOG paint=' + Math.round(this.paint) + 'ms bar=' + Math.round(this.barMs) +
+      'ms eval=' + Math.round(this.t0) + 'ms slices=' + this.slices.length +
+      ' over200=' + this.slices.filter(s => s[1] > 200).length +
+      ' worst=' + fat.map(s => s[0] + ':' + s[1]).join(' '));
+  },
+  // ══ BOOTPIPE §5 — IDLE-PRIORITY TAILS ═══════════════════════════════════════════════════
+  // Screens the player can reach but has not asked for yet. Each was already lazy — which
+  // traded a boot cost for a HITCH the first time the screen opens, and the chooser opens one
+  // click after Play. So they are built here instead, one per idle slice, at a priority the
+  // browser is free to postpone: nothing below is on the path to the first frame, and every
+  // task is idempotent (each screen rebuilds itself on open regardless).
+  // `tasks` are added by the sections that own them, so this list stays a schedule and not a
+  // second copy of what those screens are.
+  tasks: [],
+  idle() {
+    if (!this.live || !this.tasks.length) return;
+    const ric = window.requestIdleCallback || (fn => setTimeout(() => fn({ timeRemaining: () => 8 }), 120));
+    const run = () => {
+      const t = this.tasks.shift();
+      if (!t) return;
+      const t0 = performance.now();
+      // A prewarm is a convenience, never a dependency: if one throws, the screen still builds
+      // itself on open, so this must not reach the __errors gate.
+      try { t[1](); } catch (e) { console.log('IDLEWARN ' + t[0] + ': ' + e.message); }
+      console.log('IDLELOG ' + t[0] + ' ' + Math.round(performance.now() - t0) + 'ms');
+      if (this.tasks.length) ric(run);
+    };
+    ric(run);
+  },
+};
+// First-paint marker: the frame after this module's first yield IS the title screen appearing,
+// so it is the honest "time to interactive title" and it is what BOOTLOG reports. `barMs` is
+// filled by done(). Both are read by tools/perfprobe.mjs through G.
+BOOT.paint = 0; BOOT.barMs = 0;
+// The bar is created by index.html and stays `display:none` unless this line runs, so a shot
+// preset is byte-identical to the pre-BOOTPIPE build by construction: the harness never adds
+// the class, so the element never exists as far as layout is concerned.
+if (!SHOT) {
+  BOOT.live = true;
+  BOOT.ready = false;
+  BOOT.bar = document.getElementById('boot');
+  BOOT.fill = document.getElementById('bootFill');
+  BOOT.lbl = document.getElementById('bootStage');
+  document.getElementById('title').classList.add('booting');
+  // ...and on the root element too, because the in-game chrome (HUD chips, speed/pause/gear,
+  // the keybind disc) is markup in index.html that only UI.sync() hides — and UI.sync() is the
+  // LAST thing the pipeline does. Without this the load screen wore a live HUD reading 0 gold,
+  // 0 vale, wave 0/10. #title is a later sibling of #hud, so no selector rooted at #title can
+  // reach it; the root can.
+  document.documentElement.classList.add('booting');
+  // The title screen paints from index.html's markup, which is written in English. Sweep the
+  // string layer over it NOW rather than at the end of SECTION: UI, or a French player reads
+  // an English title for the whole of the load. Idempotent — UI sweeps again when it builds.
+  for (const el of document.querySelectorAll('[data-l]')) el.textContent = L(el.dataset.l);
+  BOOT.stage('boot.cloth');
+}
 // WORLD seed. The diorama's prop scatter (`_ws` in WORLD, `_as` in PATH) runs off this and
 // nothing else, so the Vale is the same Vale on every run — which is what makes a map a
 // place rather than a shuffle. It is a CONSTANT on purpose: it used to read `&seed=`, so a
@@ -986,8 +1256,56 @@ const DAILY_SEED = (+TODAY) >>> 0;                 // the date IS the war seed
 // The date key of the run IN PROGRESS ('' = not a daily). Written by the chip's deep link.
 const DAILY = ((P.get('daily') || '').replace(/\D/g, '') || '');
 const isTouch = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) < 900;
-const tier = P.get('tier') || (SHOT ? 'ultra' : (isTouch ? 'mobile' : 'high'));
-const Q = { // quality knobs — sections read these. HOOK: builders may add knobs.
+// ══ v7-MENUCAM §1 — WHERE THE QUALITY TIER COMES FROM ════════════════════════════
+// Three inputs, strict precedence, resolved ONCE here at module scope (Q is read by every
+// section during construction, so it cannot change after this line):
+//   1. `&tier=` — the shot battery, tools/perfprobe.mjs, tools/latecheck.mjs and every deep
+//      link. An explicit request always wins, and it is now VALIDATED: `?tier=potato` used
+//      to index Q with `undefined` and take the whole boot down.
+//   2. the player's saved CHOICE from the quality menu — 'mobile'|'high'|'ultra', or 'auto'.
+//   3. AUTO — the benched tier if a bench has ever run, else the touch heuristic.
+// SHOT NEVER READS STORAGE. A battery run's tier must depend on the URL and nothing else, or
+// the last live session's click silently re-tiers every preset.
+// v7-RESILIENCE §4 — THE BENCH HAS SPOKEN, and it honours that contract exactly: it writes
+// 'mobile'|'high'|'ultra' to TIER_BENCH_KEY, plus ONE additive key, TIER_PX_KEY, holding the
+// pixel-ratio notch GAME_SPEC_7 §C.4's middle band asks for ("40-55 fps -> high w/ DPR 1.5").
+// That band is not a tier — every other knob stays at high — so it cannot be expressed in the
+// tier name, and inventing a fourth tier for one number would have made the quality menu lie
+// about what the three tiers are. Both keys are read ONLY on the AUTO path (see `Q` below):
+// a player who picked High explicitly gets High's own px, whatever a bench once measured.
+const TIERS = ['mobile', 'high', 'ultra'];
+const TIER_KEY = 'bannerfall.tier', TIER_BENCH_KEY = 'bannerfall.tierBench';
+const TIER_PX_KEY = 'bannerfall.tierPx';
+const _lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };  // private mode
+const TIER_PREF = SHOT ? null : (v => v === 'auto' || TIERS.indexOf(v) >= 0 ? v : null)(_lsGet(TIER_KEY));
+const TIER_BENCH = SHOT ? null : (v => TIERS.indexOf(v) >= 0 ? v : null)(_lsGet(TIER_BENCH_KEY));
+// A notch, not a free number: only the two values the bench can write are accepted, so a
+// corrupted or hand-edited key cannot hand the renderer a pixel ratio of 0.01 or 40.
+const TIER_PX = SHOT ? null : (v => v === '1.5' || v === '2' ? +v : null)(_lsGet(TIER_PX_KEY));
+const TIER_AUTO = TIER_BENCH || (isTouch ? 'mobile' : 'high');
+// ══ v7-RESILIENCE §3 — THE FRAME CAP (GAME_SPEC_7 §C.5) ══════════════════════════
+// A preference, read here beside the other stored preferences and consumed by MAIN's render
+// loop. Two values, 60 and 30, and 60 is a REAL CAP rather than a synonym for "off": on a
+// 120/144/165 Hz panel a tower defence drawn at panel rate is pure battery and pure heat for
+// no visual gain, and that is the whole reason §C.5 exists. On a 60 Hz panel it is a no-op.
+// It caps DRAWS ONLY. The simulation is a fixed 30 tps accumulator fed from wall-clock dt, so
+// halving the draw rate does not change one tick — see the cap's site in frame() for the proof
+// that the ×3 speed guard still holds. SHOT is never capped (it renders by hand, not from rAF).
+// The two accessors are published in the `G` literal below rather than assigned here: `G` is
+// declared further down this block and is in its temporal dead zone at this line.
+const FPS_KEY = 'bannerfall.fps';
+let fpsCap = SHOT ? 0 : (_lsGet(FPS_KEY) === '30' ? 30 : 60);
+const getFpsCap = () => fpsCap;
+const setFpsCap = (v) => {
+  fpsCap = v === 30 ? 30 : 60;
+  try { localStorage.setItem(FPS_KEY, String(fpsCap)); } catch (e) { /* private mode */ }
+  return fpsCap;
+};
+const TIER_URL = TIERS.indexOf(P.get('tier')) >= 0 ? P.get('tier') : null;
+// What the menu badges as CHOSEN (as opposed to `tier`, which is what was resolved).
+const TIER_SEL = TIER_URL || TIER_PREF || 'auto';
+const tier = TIER_URL || (SHOT ? 'ultra' : (TIER_PREF && TIER_PREF !== 'auto' ? TIER_PREF : TIER_AUTO));
+const QT = { // quality knobs — sections read these. HOOK: builders may add knobs.
   // SPEC6 §D3c — the DENSITY knobs. `denseOn` is the alive count at which the render side
   // starts shedding load and `denseOff` the count it stops again (hysteresis, so a field
   // hovering on the line does not strobe); `shadCut` is how far from the lens a unit's
@@ -1000,7 +1318,17 @@ const Q = { // quality knobs — sections read these. HOOK: builders may add kno
             denseOn: 400, denseOff: 270, shadCut: 62, dpr: 0.78, peak: 1000 },
   ultra:  { px: 2,   shadow: 4096, bloom: true,  segs: 224, density: 1,
             denseOn: 400, denseOff: 270, shadCut: 62, dpr: 0.80, peak: 1000 },
-}[tier];
+};
+// v7-MENUCAM §1 — the table is named now (it used to be an anonymous literal indexed in
+// place) because the quality menu PRINTS these numbers. A description that restates them in
+// prose goes stale the first time a knob moves; one that reads the table cannot.
+// v7-RESILIENCE §4 — the ONE case where Q is not QT[tier] verbatim: an AUTO tier whose bench
+// notched the pixel ratio. The clone is deliberate and narrow — `px` is the only field that
+// moves, the quality menu still prints QT (so the rows state what the TIER is, not what this
+// device was benched at), and on every other path `Q === QT[tier]` exactly as MENUCAM left it.
+// SHOT can never reach the branch: TIER_PX is null under the harness by construction.
+const Q = (TIER_SEL === 'auto' && TIER_PX && TIER_PX !== QT[tier].px)
+  ? Object.assign({}, QT[tier], { px: TIER_PX }) : QT[tier];
 // ══ GAME MODE (SPEC6 §D3d) ═══════════════════════════════════════════════════════
 // Three ways to walk the same road. `campaign` is the shipped game and is what every
 // baseline matrix row and every shipped preset runs — the parameter has to be ASKED for.
@@ -1018,7 +1346,37 @@ const HORDE_BENCH = Math.max(0, Math.min(2400, parseInt(P.get('horde') || '', 10
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const G = { THREE, rng, srng, runSeed, tier, Q, TPS, TICK, L, LANG, LANG_KEY,
-  TODAY, DAILY, DAILY_MAP, DAILY_SEED, MODE, HORDE, HORDE_BENCH };   // shared namespace between sections
+  TODAY, DAILY, DAILY_MAP, DAILY_SEED, MODE, HORDE, HORDE_BENCH,
+  // v7-MENUCAM §1 — the quality menu needs the whole table, what was CHOSEN (vs resolved),
+  // and whether a bench has ever spoken. TIER_BENCH_KEY is the Resilience stage's write point.
+  // v7-RESILIENCE §4 adds the pixel-ratio notch's key and its resolved value. TIER_BENCH and
+  // TIER_PX are the only two properties on G that the bench WRITES BACK (after it has stored
+  // them), so that the quality menu's Auto row can name the verdict without a reload.
+  QT, TIERS, TIER_KEY, TIER_BENCH_KEY, TIER_PX_KEY, TIER_SEL, TIER_BENCH, TIER_PX, TIER_AUTO,
+  // v7-RESILIENCE §3 — the frame cap. Published here because `G` does not exist yet at the
+  // point the preference is read (see the note there).
+  fpsCap: getFpsCap, setFpsCap };   // shared namespace between sections
+// BOOTPIPE — published here rather than in the BOOT block above because `G` is declared on the
+// line above this one and the pipeline has to exist before it (the WORLD texture pass is the
+// first thing that yields). tools/perfprobe.mjs reads BOOT.paint / BOOT.barMs through this.
+G.BOOT = BOOT;
+// BOOTPIPE §2 — meshes whose per-instance COLOUR is written during play. See MAIN's warm-up:
+// InstancedMesh.setColorAt() lazily allocates `instanceColor`, and that flag is part of three's
+// program cache key, so a mesh that is tinted for the first time mid-run compiles a new program
+// mid-run. Sections that tint declare their meshes here; ARMIES' whole set arrives via
+// `Armies.meshes`, so only the odd one out (TOWERS' boulders) needs a line.
+// v7-PROGDIET: `instancingColor` is a cache-key field, so allocating the attribute on a mesh that
+// never tints is also a way to stop it forking an otherwise identical material's program (an
+// all-ones instanceColor is a multiply by 1.0). Do that at CONSTRUCTION though, not here — this
+// list is only consumed by the live branch's warm-up, so an entry added for program-sharing alone
+// would leave the SHOT harness on a different program than the game. See TOWERS' arrow shafts.
+G.warmTint = [];
+// ...and meshes that are NOT in the scene graph at boot but will be parented in during play.
+// compileAsync() can only see the graph, so anything pooled outside it must say so here or its
+// program compiles on the frame it first appears. Empty as shipped — the program census says
+// every material this game draws is already reachable from `scene` when the bar finishes — and
+// kept as the declared place to put one, because the LATEPROGRAM alarm will ask for it.
+G.warmObjects = [];
 
 // ══ WAR COUNCIL — talent grades (SPEC6 §B) ═══════════════════════════════════════
 // `TAL` is the talent grade IN FORCE FOR THIS RUN — {q,d,e}, each 0..3. It is declared here,
@@ -1470,6 +1828,11 @@ const MAP = MAPS[clamp((parseInt(P.get('map') || '') || SHOT_MAPS[SHOT] || 1) - 
 G.MAPS = MAPS; G.MAP = MAP;
 // ══════════════════════ END SECTION: CORE ══════════════════════
 
+// BOOTPIPE §1 — THE FIRST PAINT. Everything above is tables and string layers; everything
+// below generates something. Yielding here is what puts the title screen, the crest and the
+// load bar on screen before a single texture is drawn, and it is the number BOOTLOG calls
+// `paint`. Measured: without it the browser's first paint waited on ~850 ms of generation.
+await BOOT.frame();
 // ══════════════════════ SECTION: WORLD (owner: WORLD builder) ══════════════════════
 // Sculpted diorama: heightfield meadow + carved road bed + granite cliff ring, splat-blended
 // in a patched MeshStandardMaterial (fully lit & shadow-receiving). The heightfield has to
@@ -1830,6 +2193,7 @@ void main(){
   #include <colorspace_fragment>
 }`
 });
+await BOOT.sub(0.30);   // BOOTPIPE: light rig + sky shader done
 const skyDome = new THREE.Mesh(new THREE.SphereGeometry(420, 40, 22), skyMat);
 skyDome.frustumCulled = false; skyDome.renderOrder = -10; skyDome.name = 'SKY';
 scene.add(skyDome);
@@ -2825,7 +3189,12 @@ function canopyTex() {
   t.colorSpace = THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
   return t;
 }
+await BOOT.sub(0.60);   // BOOTPIPE: material/geometry helpers done, canvas work next
 const LEAF_TEX = canopyTex();
+// BOOTPIPE: isolated on purpose. This is the page's FIRST 2d canvas context, and Chrome pays
+// for the whole 2d raster backend on it — measured between 20 ms and 1.0 s on the same machine,
+// which is why it gets a slice of its own instead of hiding inside a neighbour's.
+await BOOT.sub(0.72);
 function trunkG(r0, r1, h, sides, lean) {
   // WORLD-FIX4 §8a. Six extra height rings so the trunk can carry a profile at all: it was a
   // 2-segment cylinder, i.e. a flat untextured tube with no root flare and nothing for the
@@ -3654,7 +4023,29 @@ terrainMat.onBeforeCompile = (sh) => {
 // over how each distance band separates.)
 const FAR_Y = -122;                                  // lowland floor
 const HAZE = WPAL.hazeV;
-const farMat = () => new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
+// v7-PROGDIET §3 — THE HAZE KILL IS A UNIFORM, NOT A FLAG.
+// The far bands and the plateau's plinth are the same MeshBasicMaterial (vertex-coloured,
+// double-sided, untextured) and differed in exactly one thing: `fog`. `useFog` is part of
+// three's program cache key, so that one boolean compiled the identical shader twice.
+// It is now a uniform. `uFogK` scales three's own fog result, so the far bands ask for
+// uFogK 0 and the plinth for 1, and at 0 the final `mix(preFog, postFog, 0.0)` returns
+// preFog exactly (GLSL mix is a + (b-a)*t; t=0 yields a bit-for-bit) — indistinguishable
+// from `fog: false`, on one program instead of two.
+// The patch brackets three's chunk rather than reimplementing it, so a three.js version that
+// rewrites the fog maths keeps working; if the chunk is ever renamed the warning fires rather
+// than silently shipping fogged horizon bands.
+const bandMat = (fogK) => {
+  const m = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  m.customProgramCacheKey = () => 'bf_band';
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uFogK = { value: fogK };
+    if (sh.fragmentShader.indexOf('#include <fog_fragment>') < 0) console.warn('BF: band fog chunk not found');
+    sh.fragmentShader = 'uniform float uFogK;\n' + sh.fragmentShader.replace('#include <fog_fragment>',
+      'vec3 bfPre = gl_FragColor.rgb;\n#include <fog_fragment>\n\tgl_FragColor.rgb = mix(bfPre, gl_FragColor.rgb, uFogK);');
+  };
+  return m;
+};
+const farMat = () => bandMat(0);
 const hz = (out, base, k) => { for (let i = 0; i < 3; i++) out[i] = lerp(base[i], HAZE[i], k); };
 const _c3 = [0, 0, 0];
 { // ── lowland floor: a wide annulus of hazed fields/woods far below the plateau ──
@@ -3729,7 +4120,11 @@ scene.add(
 // ══════════════════════════════ World.build() ══════════════════════════════
 const ROAD_HALF = 2.55;
 const HOUSE_SITES = MAP.houses;
-World.build = function () {
+// BOOTPIPE §4 — `async` purely so the numbered phases below can yield the thread between
+// themselves (`await BOOT.sub(f)`). Under SHOT every one of those resolves without a timer, so
+// the body runs start to finish in one task exactly as it always did; the caller awaits it
+// either way, so nothing downstream can observe a half-built world.
+World.build = async function () {
   // ── 1. extended road centrelines, ALL routes (road continues out through each gate) ──
   // XP is every route's polyline laid end to end; XS records each route's span so tangents
   // and the road-bed height profile are never smoothed ACROSS a junction. A map with one
@@ -3754,6 +4149,7 @@ World.build = function () {
     let dx = b[0] - a[0], dz = b[1] - a[1]; const l = Math.hypot(dx, dz) || 1;
     XT.push([dx / l, dz / l]);
   }
+  await BOOT.sub(0.077);
   // ── 2. signed lateral distance + along-parameter fields ──────────────────────
   SDG = new Float32Array(GX * GZ); TDG = new Float32Array(GX * GZ);
   const RMG = new Float32Array(GX * GZ), BMG = new Float32Array(GX * GZ);
@@ -3776,6 +4172,7 @@ World.build = function () {
     BMG[k] = sstep(hw + 2.7, hw - 0.5, dist);          // height-carving mask
     RMG[k] = sstep(hw + 3.5, hw - 0.7, dist);          // albedo paint mask
   }
+  await BOOT.sub(0.154);
   // ── 3. base heights, then a smoothed road-bed profile, then flattened pads ──
   const notchAt = (dist) => sstep(19.0, 7.0, dist);   // gorge wide enough to see the gates in
   const baseH = (x, z) => {
@@ -3827,10 +4224,15 @@ World.build = function () {
       if (m > 0.001) HG[k] = lerp(HG[k], py, m);
     }
   }
+  await BOOT.sub(0.231);
   // ── 4. vertex AO from the heightfield (grounding for cliffs, road cuts, pads) ──
   AOG = new Float32Array(GX * GZ);
   const RADS = [1.7, 4.0, 9.0, 19.0], DIRS = 10;
-  for (let iz = 0; iz < GZ; iz++) for (let ix = 0; ix < GX; ix++) {
+  // BOOTPIPE §4 — banded so no single slice is a long task. Same iteration order, same reads,
+  // same writes, no rng: 371k samples x 40 height lookups was one 400 ms task.
+  for (let _zb = 0; _zb < GZ; _zb += 20) {
+  const _zE = Math.min(GZ, _zb + 20);
+  for (let iz = _zb; iz < _zE; iz++) for (let ix = 0; ix < GX; ix++) {
     const x = -FW / 2 + ix * GSx, z = -FD / 2 + iz * GSz, k = iz * GX + ix, h = HG[k];
     let occ = 0;
     for (let a = 0; a < DIRS; a++) {
@@ -3841,6 +4243,9 @@ World.build = function () {
     }
     AOG[k] = clamp(1 - occ / DIRS * 1.05, 0.28, 1);
   }
+  await BOOT.sub(0.231);
+  }
+  await BOOT.sub(0.308);
   // ── 5. terrain mesh ─────────────────────────────────────────────────────────
   {
     const MX = Q.segs + 1, MZ = Math.round(Q.segs * FD / FW) + 1, NV = MX * MZ;
@@ -3941,10 +4346,11 @@ World.build = function () {
     pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     pg.setAttribute('color', new THREE.BufferAttribute(col, 3));
     pg.setIndex(new THREE.BufferAttribute(idx, 1));
-    const pm = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide }));
+    const pm = new THREE.Mesh(pg, bandMat(1));       // v7-PROGDIET §3: fogged, shares farMat's program
     pm.frustumCulled = false; pm.name = 'PLINTH';
     World.group.add(pm);
   }
+  await BOOT.sub(0.385);
   // ── 6. scatter helpers ──────────────────────────────────────────────────────
   const blockers = [];   // [x,z,r] keep-out zones (houses, gates)
   for (const [hx, hz] of HOUSE_SITES) blockers.push([hx, hz, 6.2]);
@@ -4004,6 +4410,7 @@ World.build = function () {
   const varyF = () => { const l = wr(0.72, 1.10), y = wr(-0.26, 0.26);
     return [l * (1 + y * 1.05), l * (1 - y * 0.16), l * (1 - y * 0.92)]; };
 
+  await BOOT.stage('boot.props');
   // ── 7. cliff crags + boulders (silhouette variation on the rim) ─────────────
   // Three registers so the rim reads as an escarpment rather than a boulder field:
   // (a) dense blocks fracturing the crest skyline, (b) big buttress slabs for scale,
@@ -4080,6 +4487,7 @@ World.build = function () {
   iMesh(baseBleed(cragGeo(11, 5, 31.7), 0.42, 0.48), rockMat, cragL[2], false, 'CRAGS_C');
   iMesh(baseBleed(rockGeo(1, 11.3, false), 0.46, 0.50), rockMat, bldL, true, 'ROCKS');
 
+  await BOOT.sub(0.538);
   // ── 8. trees + bushes ───────────────────────────────────────────────────────
   const oakL = [], ashL = [], pineL = [], bushL = [];
   // FOCAL HIERARCHY: the centre of the plateau is where the road-to-keep read has to live,
@@ -4153,6 +4561,7 @@ World.build = function () {
   iMesh(treePine(8.1), foliMat, pineL, true, 'TREE_PINE');
   iMesh(bushG(2.9), foliMat, bushL, true, 'BUSHES');
 
+  await BOOT.sub(0.615);
   // ── 9. grass tufts (ground clutter — reads at gameplay + closeup zoom) ──────
   {
     // A rosette of cards tipped outward: seen from the game's high camera each tuft
@@ -4275,6 +4684,7 @@ World.build = function () {
     iMesh(tuftG, tuftM, list, false, 'TUFTS');
   }
 
+  await BOOT.sub(0.692);
   // ── 10. fences along road stretches ─────────────────────────────────────────
   {
     const parts = [], T = 0.215;
@@ -4539,6 +4949,7 @@ World.build = function () {
     mkMoor(moorWood, woodMat, 1.1, 'MOOR_TIMBER');
   }
 
+  await BOOT.sub(0.769);
   // ── 11. village near the keep gate ──────────────────────────────────────────
   {
     const buckets = { plaster: [], timber: [], roof: [] };
@@ -4558,6 +4969,7 @@ World.build = function () {
     add(buckets.roof, texMat(TX.shake, { roughness: 0.68 }), 1.5, 'HOUSE_ROOF');
   }
 
+  await BOOT.sub(0.846);
   // ── 12. gates ───────────────────────────────────────────────────────────────
   const torchParts = (px, py, pz) => [
     { g: paintWood(boxG(0.24, 3.0, 0.24)), m: trs(px, py + 1.5, pz, wr(-0.05, 0.05)) },
@@ -4660,6 +5072,7 @@ World.build = function () {
       bannerTex('#8e2018', '#3d0d09', '#c8b48a', '\u2620'), 2.4));
     World.group.add(gGrp);
   }
+  await BOOT.sub(0.923);
   // ── 13. torch flames + gate glow (torch local coords mirror §12) ────────────
   {
     const faceY = Math.atan2(0.42, 0.9);
@@ -4867,6 +5280,7 @@ scene.onBeforeRender = () => {
 };
 // ══════════════════════ END SECTION: WORLD ══════════════════════
 
+await BOOT.sub(0.95);   // BOOTPIPE: the vale's cloth is woven; the road spline is next
 // ══════════════════════ SECTION: PATH (owner: WORLD builder) ══════════════════════
 // Road spline + arc-length tables. The control points come from the ACTIVE map (CORE's
 // MAPS table), so a new map is a data entry, not a code change. The PT table is
@@ -4959,7 +5373,13 @@ G.roadW = ROAD_W;                                   // painted + carved by the t
 // exists everything downstream can rely on a real G.groundY(). (The fixed build plots
 // and their dashed markers are GONE: SPEC2 §A replaced them with free placement, and
 // G.canPlace() in SECTION: SIM is now the single authority on where a tower may stand.)
-World.build();
+// BOOTPIPE §4 — the single most expensive statement in the boot (measured 0.7–1.5 s: the
+// heightfield, its AO sweep, the terrain mesh and every scatter pass). It is `async` now and
+// yields between its own numbered phases, so none of them is a long task; the `await` here is
+// TOP-LEVEL AWAIT, which is the whole trick — the statement stays exactly where it was, in
+// exactly the same position in the `_ws` stream, and merely stops hogging the thread.
+await BOOT.stage('boot.vale');
+await World.build();
 // ══════════════════════ END SECTION: PATH ══════════════════════
 
 // ══════════════════════ SECTION: ARMIES (owner: ARMIES builder) ══════════════════════
@@ -5063,6 +5483,9 @@ const SHAD_LIFT = 0.11;
 // fighting (`e.blockedBy`) and the enemy loop always runs first. Render-only scratch.
 const _kFace = new Float32Array(KNIGHT_CAP * 3);
 const AT_U = { value: 0 };                   // shared animation clock (sim-time based)
+// BOOTPIPE §4 — the host's atlas and rigs. Its `arng` stream is declared and consumed
+// entirely inside this block, so the yields below cannot be observed by anything outside it.
+await BOOT.stage('boot.host');
 {
   const TAU = Math.PI * 2, YAX = new THREE.Vector3(0, 1, 0);
   // deterministic build-time stream, independent of the sim + world scatter streams
@@ -5853,6 +6276,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   const mrmap = new THREE.CanvasTexture(mcv); mrmap.colorSpace = THREE.NoColorSpace; mrmap.anisotropy = 4;
   const emmap = new THREE.CanvasTexture(ecv); emmap.colorSpace = THREE.SRGBColorSpace;
 
+  await BOOT.sub(0.28);
   // ── 2. geometry helpers (every part carries atlas UVs + bone id + pivots) ──
   const SEG = tier === 'mobile' ? 6 : 9;               // radial segments for rods / domes
   const DSEG = tier === 'mobile' ? 10 : 16;            // shield disc segments
@@ -5918,6 +6342,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
   };
   const polyC = (r, n, sq) => { const p = []; for (let i = 0; i < n; i++) { const a = i / n * TAU; p.push([Math.cos(a) * r, Math.sin(a) * r * (sq || 1)]); } return p; };
 
+  await BOOT.sub(0.36);
   // ── 3. merge: bakes bone id, pivot, parent pivot, cloth weight and vertex AO ──
   function mergeA(parts, H) {
     let vc = 0, ic = 0;
@@ -5968,6 +6393,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return out;
   }
 
+  await BOOT.sub(0.44);
   // ── 4. archetype construction ──
   // Heroic proportions: ~6.5 heads. Bones: 0 root, 1/2 thigh L/R, 3/4 shin L/R,
   // 5 shield arm, 6 weapon arm, 7 head, 8 cloth (tabard / cape / banner).
@@ -7664,6 +8090,7 @@ const AT_U = { value: 0 };                   // shared animation clock (sim-time
     return { geo: mergeA(p, C.h), h: C.h };
   }
 
+  await BOOT.sub(0.74);
   // ── 5. GPU skinning: gait / fight lunge / death fall+sink+dither-dissolve ──
   // aAnim (per instance) = (gait phase, cycle rate, mode 0=march 1=fight 2=guard, death 0..1 / -1 alive)
   const ANIM_HEAD = `
@@ -7919,12 +8346,32 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     outgoingLight += vWard.rgb * (rim * (gate + dr*0.46));
   }
 `;
-  // `pole` (ARMIES-FIX4 §7) is a per-ARCHETYPE compile-time switch, not a per-instance one:
-  // a spear carrier and a swordsman need different marching arms, and every unit inside one
-  // InstancedMesh carries the same weapon by construction. It rides the cache key so the two
-  // variants cannot share a compiled program.
+  // `pole` (ARMIES-FIX4 §7) is a per-ARCHETYPE switch, not a per-instance one: a spear carrier
+  // and a swordsman need different marching arms, and every unit inside one InstancedMesh
+  // carries the same weapon by construction. It is a UNIFORM, though — see uPole below.
+  // ══ v7-PROGDIET §1 — ONE CACHE KEY FOR THE WHOLE RIG ═══════════════════════════════════
+  // `key` used to be the ARCHETYPE name, so each of the 21 archetypes and the five kit meshes
+  // carried its own cache key for its view material AND its depth material: 52 of this build's
+  // 102 programs, at ~130 ms of ANGLE link/translate each — measured, by a wide margin the
+  // largest single item in the boot bar (PERF_ANALYSIS solution #2). They collapse to five.
+  // Look at what actually varies in the GLSL this function injects. `hip`, `pole` and `lean`
+  // become uHip / uPole / uLean, consumed through mix() in ANIM_BODY — they change uniform
+  // VALUES, not one character of source. The only input that changes the text is `ward`,
+  // which decides whether the ward attribute, its varying and its fragment pass exist at all.
+  // So the key is now the SOURCE IDENTITY: 'bf_rig', plus a w for the warded variant.
+  // Safe because a shared program does not mean shared uniforms: three keeps
+  // `materialProperties.programs` per MATERIAL, calls onBeforeCompile once per material, and
+  // stores that material's own uniform objects in `materialProperties.uniforms`, deduping only
+  // the GPU program inside acquireProgram(). A material-id change sets `refreshMaterial`, so
+  // every archetype still uploads its own uHip/uPole/uLean every draw. TOWERS' rigMat has
+  // shipped this exact pattern since v1 — one 'bf_twm' program behind 17 materials.
+  // material.name becomes three's `#define SHADER_NAME` AND program.name, so it must stay
+  // constant per key or the source would fork behind an identical key; the archetype string
+  // goes to userData instead, where SHADERCENSUS/LATEPROGRAM can still find it.
   const patchAnim = (mat, hip, key, ward, pole, lean) => {
-    mat.customProgramCacheKey = () => key + (pole ? '_p' : '');
+    const pk = 'bf_rig' + (ward ? 'w' : '');
+    mat.name = pk; mat.userData.rig = key;
+    mat.customProgramCacheKey = () => pk;
     mat.onBeforeCompile = sh => {
       sh.uniforms.uT = AT_U; sh.uniforms.uHip = { value: hip }; sh.uniforms.uPole = { value: pole ? 1 : 0 };
       sh.uniforms.uLean = { value: lean || 0 };
@@ -8017,6 +8464,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     return mergeA(p, C.h);
   }
 
+  await BOOT.sub(0.82);
   // ── 6. archetype table + instanced meshes ──
   const CFG = {
     // FACTION LAW: red-army units carry NO T.STEEL and NO T.BLUE anywhere. Their metal is
@@ -8311,6 +8759,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   }
   Armies.enemyMesh = AM.grunt.mesh; Armies.knightMesh = AM.knight.mesh;
 
+  await BOOT.sub(0.87);   // BOOTPIPE: the archetype meshes are up; the boss kits are next
   // Variant kits: same material, same shader rig, same hip as the boss, so a kit instance
   // walks, fights and dies in lockstep with the body it is bolted to (syncVisuals writes it
   // the identical matrix / colour / aAnim row).
@@ -8337,6 +8786,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     Armies.KITS = KITM = KITS;
   }
 
+  await BOOT.sub(0.92);
   // ── 7. health bars: one instanced billboard quad system, drawn only when damaged ──
   {
     const bg = new THREE.PlaneGeometry(1, 1);
@@ -8846,6 +9296,13 @@ void main(){
     const cmat = patchAnim(new THREE.MeshStandardMaterial({
       map: albedo, roughnessMap: mrmap, metalnessMap: mrmap, roughness: 1, metalness: 1,
       vertexColors: true, envMapIntensity: 0.62,   // ARMIES-FIX5 §1 (was 1.05)
+      // v7-PROGDIET §2: emissiveMap PRESENCE is a cache-key field (emissiveMapUv), so this
+      // crown was one program and the boss kits, which do glow, were another. Carrying the
+      // sheet with `emissive` left at its default black is provably output-identical —
+      // three uploads emissive*emissiveIntensity, i.e. black, and emissivemap_fragment then
+      // MULTIPLIES the texel into it, so the contribution is exactly zero either way — and
+      // it puts the crown, the banners and the three boss kits on one program.
+      emissiveMap: emmap,
     }), 0.90, 'champkit');
     const cmesh = new THREE.InstancedMesh(cgeo, cmat, CCAP);
     cmesh.castShadow = true; cmesh.receiveShadow = false; cmesh.frustumCulled = false;
@@ -8921,6 +9378,7 @@ void main(){
     const bmat = patchAnim(new THREE.MeshStandardMaterial({
       map: albedo, roughnessMap: mrmap, metalnessMap: mrmap, roughness: 1, metalness: 1,
       vertexColors: true, envMapIntensity: 0.62,   // ARMIES-FIX5 §1 (was 1.05)
+      emissiveMap: emmap,                          // v7-PROGDIET §2 — see champkit above
     }), 0.90, 'bannkit');
     const bmesh = new THREE.InstancedMesh(bgeo, bmat, BCAP);
     bmesh.castShadow = true; bmesh.receiveShadow = false; bmesh.frustumCulled = false;
@@ -9570,6 +10028,9 @@ Armies.syncVisuals = (vtNow) => {
 };
 // ══════════════════════ END SECTION: ARMIES ══════════════════════
 
+// BOOTPIPE §4 — fortifications, simulation tables, effect pools. Each of the four is a
+// short task on its own; the yields keep them from fusing into one long one behind the bar.
+await BOOT.stage('boot.steel');
 // ══════════════════════ SECTION: TOWERS (owner: TOWERS builder) ══════════════════════
 // Four hand-authored procedural fortifications, each with three visible upgrade stages
 // and a mechanism that actually tracks and shoots at the sim's targets.
@@ -10931,6 +11392,25 @@ let arrowMesh = null, rockMesh = null, streakMesh = null;
   for (const m of [arrowMesh, rockMesh, streakMesh]) { m.frustumCulled = false; m.count = 0; scene.add(m); }
   arrowMesh.castShadow = false; rockMesh.castShadow = true;
   arrowMesh.name = 'PROJ_SHAFT'; rockMesh.name = 'PROJ_ROCK'; streakMesh.name = 'PROJ_STREAK';
+  // HOOK: BOOTPIPE — the boulders are tinted per instance (setColorAt below), and the first
+  // setColorAt() of a run allocates `instanceColor`, which is part of three's program cache key.
+  // Declaring the mesh here lets MAIN's boot warm-up compile that variant in advance instead of
+  // compiling it the first time a catapult fires. Registering a mesh that is never tinted only
+  // wastes a compile, so only tinted ones belong on this list.
+  G.warmTint.push(rockMesh);
+  // v7-PROGDIET §2 — THE SECOND REASON TO OWN AN instanceColor: PROGRAM SHARING.
+  // The arrow and the boulder are the same MeshStandardMaterial in every respect three's cache
+  // key looks at — both instanced, vertex-coloured, untextured (roughness and metalness are
+  // uniforms, not key fields). The one field that differed was `instancingColor`, because only
+  // the boulder is ever setColorAt'd, so one shader was compiled twice. Handing the arrow the
+  // same all-white attribute merges them into ONE program for the price of a buffer of ones
+  // and a multiply by 1.0 in the vertex shader (`vColor.xyz *= instanceColor.xyz`), which is
+  // bit-identical output.
+  // Allocated HERE rather than declared on G.warmTint on purpose: the warm-up runs only in the
+  // live branch, so a warmTint entry would leave the harness rendering arrows down a different
+  // program than the game does. Done at construction, both paths are the same path — and the
+  // shot battery is then able to PROVE the multiply is neutral instead of merely not seeing it.
+  arrowMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(PROJ_CAP * 3).fill(1), 3);
 }
 const _pv = new THREE.Vector3(), _pq = new THREE.Quaternion(), _ps = new THREE.Vector3(), _pm = new THREE.Matrix4();
 const _pcol = new THREE.Color();
@@ -11636,6 +12116,7 @@ Towers.syncProjectiles = (vtNow) => {
 };
 // ══════════════════════ END SECTION: TOWERS ══════════════════════
 
+await BOOT.sub(0.25);
 // ══════════════════════ SECTION: SIM (owner: architect; TOWERS/ARMIES builders may tune constants) ══
 // ARMIES pass: unit counts tripled and per-unit HP/bounty/dps scaled down to match, so a
 // wave reads as the reference's dense crimson river on the road instead of a trickle of
@@ -13100,6 +13581,13 @@ function startWave(n) {
   // with hounds and a finale answers with the boss's own sting (SPEC2 §D/§E).
   Audio.waveCue(waveDefs(n));
   UI.sync();
+  // v7-RESILIENCE §1 — THE SECOND SAVE POINT, and the reason it exists: everything the player
+  // BUYS happens during the muster, and a snapshot taken only when a wave CLEARS would throw
+  // away the whole of the first one (that phase is held open until the horn is sounded by hand,
+  // so it is the longest build window in the run). Saving as the horn sounds records the board
+  // the player actually built; `true` lets it fire from phase 'wave', and the rollback the flag
+  // performs lands the restore exactly here — at the muster for the wave now beginning.
+  runSave(true);
 }
 // ══ GATE HERALDS — DATA (SPEC5 §B3) ══════════════════════════════════
 // What FRACTION of wave `n` comes out of each gate. A group tagged with a gate (the 5th
@@ -13570,16 +14058,21 @@ for (const k in TRAP_DEFS) TRAP_BASE[k] = TRAP_DEFS[k].cost;
 // Order of authority: `&talents=` (harness/deep link) → the council's saved record (live play
 // only) → nothing. Under SHOT with no override the grades are ZERO, which is what keeps every
 // preset and every baseline matrix row bit-identical.
-G.applyTalents = () => {
-  const src = TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
-  TAL.q = src ? (src.q | 0) : 0;
-  TAL.d = src ? (src.d | 0) : 0;
-  TAL.e = src ? (src.e | 0) : 0;
+// v7-RESILIENCE §1 — the grades-to-numbers half, split out so a RESTORED run can be given the
+// grades it actually fought with rather than whatever the council record says today. (A respec
+// is legal between roads; a resumed run must not silently inherit it.) Everything the split
+// moved is verbatim, so applyTalents() computes exactly what it computed before.
+function setTalents(q, d, e) {
+  TAL.q = q | 0; TAL.d = d | 0; TAL.e = e | 0;
   // SPEC6 §D3d — the horde opens the purse at double. The talent grant is added on top
   // rather than doubled with it: the council's writ is a flat number, not a percentage.
   state.gold = GOLD0 * (HORDE ? 2 : 1) + G.talGold();
   const tm = G.talTrap();
   for (const k in TRAP_DEFS) TRAP_DEFS[k].cost = Math.round(TRAP_BASE[k] * tm);
+}
+G.applyTalents = () => {
+  const src = TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
+  setTalents(src ? src.q : 0, src ? src.d : 0, src ? src.e : 0);
   if (SHOT && (TAL.q || TAL.d || TAL.e))
     console.log('TALENTLOG q=' + TAL.q + ' d=' + TAL.d + ' e=' + TAL.e +
       ' gold=' + state.gold + ' hp=' + G.talHp().toFixed(2) + ' sell=' + G.talSell().toFixed(2) +
@@ -14103,6 +14596,10 @@ function tickSim() {
     if (autoCall && !SHOT) { state.gold += Math.ceil(INTERWAVE - AUTO_CD); state.countdown = AUTO_CD; }
     else state.countdown = INTERWAVE;
     UI.msg({ cleared: state.wave }); Audio.play('cleared'); UI.sync();
+    // v7-RESILIENCE §1 — THE SAVE POINT. Last in the branch, so everything above it (the omen
+    // reset, the purse, the countdown, the endless record) is already settled. No-ops under
+    // SHOT and for the bot, so no preset and no matrix row pays for it.
+    runSave();
   }
   if (state.tick % 90 === 0) { G.enemies = G.enemies.filter(e => e.alive || vt() - e.deathT < 2); reapMilitia(); }
   // SPEC6 §D3 — the high-water mark. Sampled rather than counted every tick because the
@@ -14467,6 +14964,10 @@ function killEnemy(e, element) {
 }
 function endGame(won) {
   state.phase = won ? 'won' : 'lost';
+  // v7-RESILIENCE §1 — the run is over, so the snapshot is a lie about a vale that no longer
+  // needs holding. Dropped BEFORE the plate goes up: a win that offers "Hold the line" writes a
+  // fresh one from holdTheLine(), and a loss must not leave a resumable corpse on the title.
+  G.runClear();
   UI.showEnd(won);
   Audio.play(won ? 'victory' : 'defeat');
 }
@@ -14483,9 +14984,168 @@ G.holdTheLine = () => {
   applyOmen(''); Omens.active = ''; Omens.forWave = 0; Omens.offer = []; Omens.picked = -1;
   state.phase = 'prewave';
   state.countdown = INTERWAVE;
+  runSave();                                            // v7-RESILIENCE §1 — a held road is still a run
   return true;
 };
 G.tickSim = tickSim;
+
+// ══ v7-RESILIENCE §1 — MID-RUN SAVE / RESUME (GAME_SPEC_7 §C.2) ═════════════════════════════
+// A store app is suspended and killed without warning, and until this stage the only way out of
+// a Bannerfall run was to finish it: switching the tongue or the detail level RELOADED the page
+// (both are resolved once at module scope, so they have to), and the run went with it. That was
+// the wart §C.2 names, and it is what makes the reload-to-apply quality menu acceptable.
+//
+// WHAT IS SAVED, and why it is a snapshot rather than an op log. The sim IS replayable from
+// (seed, ops) — that is the shape §C.2 sketched — but replay means running up to twenty
+// thousand ticks synchronously at boot, on the device least able to afford it, and it makes
+// every future balance change invalidate every saved run in the wild. The state a prewave
+// boundary carries is instead SMALL and FLAT: a purse, a garrison, a list of towers and traps,
+// four cooldowns and a damage tally. So the snapshot is the state, and it is restored through
+// the game's OWN CONSTRUCTORS (placeTower's free path, layTrap's free path, setTalents,
+// omenTick) rather than by assigning into private structures — which is what makes a restored
+// tower a real tower, with its own material set, its knights, its AO footprint and its ghost.
+//
+// WHY A PREWAVE BOUNDARY. Mid-wave state is a hundred bodies with per-unit hp, path distance,
+// lane offset, block claims, burn timers, ward charges and raise queues — an order of magnitude
+// more data and every field of it a coupling to the sim's internals. At a prewave boundary the
+// road is EMPTY by definition (the clear test is "nothing alive, nothing queued, nothing due to
+// rise"), so the snapshot has no bodies in it at all. That is the whole reason this is 30 lines
+// and not 300.
+//
+// SHOT AND THE BOT NEVER TOUCH IT — read or write. A preset that resumed the last live session's
+// run would stop being a function of its URL, and the balance matrix would depend on what this
+// machine happened to have played. Every entry point below returns early under SHOT.
+//
+// IT IS ITS OWN KEY, not a field inside `bannerfall.progress`. The progress record is the
+// campaign's permanent memory (stars, deeds, laurels, counters) and it is written from a dozen
+// places behind a debounce; a mid-run snapshot has the opposite lifecycle — it is written every
+// muster and DELETED the moment the run ends. Sharing one JSON blob would mean every snapshot
+// write risked the campaign record, for no gain.
+const RUN_KEY = 'bannerfall.run', RUN_V = 1;
+// Rounded to the millimetre. A tower's (x,z) came off a raycast, so it is an arbitrary float;
+// four decimals of a 170-unit field is well under a pixel at any zoom, and the free placement
+// path skips canPlace() entirely, so no rounding can turn a legal stand into a refusal.
+const _r4 = v => Math.round(v * 1e4) / 1e4;
+// The snapshot. `now` is the LANGUAGE/DETAIL TOGGLE path: it is allowed to fire mid-wave, and
+// when it does it rolls the wave counter back one so the wave in progress is CALLED AGAIN rather
+// than resumed with an empty road. The purse, the garrison, the losses and the kills are kept as
+// they stand, so the rollback is generous rather than punitive — and it is the only honest
+// reading of "the horn sounds again for this wave".
+function runSave(now) {
+  if (SHOT) return false;
+  const mid = state.phase === 'wave';
+  if (state.phase !== 'prewave' && !(mid && now)) return false;
+  const s = {
+    v: RUN_V, t: Date.now(), map: MAP.id, mode: MODE, seed: runSeed, daily: DAILY,
+    wave: mid ? Math.max(0, state.wave - 1) : state.wave,
+    tick: state.tick, gold: state.gold, lives: state.lives, muster: state.muster,
+    kills: state.kills, leaked: state.leaked, invested: state.invested, peak: state.peak,
+    endless: state.endless ? 1 : 0, hold: G.waveHeld() ? 1 : 0, speed: state.speed,
+    countdown: mid ? INTERWAVE : state.countdown,
+    // The omen the NEXT wave will ride is not committed yet, so what has to survive is the
+    // player's PICK (an index into an offer that omenTick re-deals from srng — same seed, same
+    // hand) and the four-school damage tally, because Elemental Ward turns whichever school the
+    // run has leaned on hardest. Lose the tally and a resumed run's ward answers the wrong one.
+    pick: mid ? -1 : Omens.picked,
+    dmg: SCHOOLS.map(k => Math.round(dmgBySchool[k])),
+    // The Long Night's light is FALLING, not switched: it is a function of (tick - night.t0),
+    // and at a prewave boundary after a surge wave the vale is still dark and coming back up.
+    // Four numbers keep that continuous. Mid-wave the night is zeroed with the wave it belongs to.
+    night: mid ? [0, 0, 0, 0] : [night.wave, night.part, night.at, night.t0 | 0],
+    tal: [TAL.q, TAL.d, TAL.e],
+    pw: PW_KEYS.map(k => powerCD[k] | 0),
+    tw: G.towersList.map(t => [_r4(t.x), _r4(t.z), t.type, t.level, t.mode]),
+    tr: G.traps.filter(t => t.armed && t.sprung < 0).map(t => [t.k, _r4(t.x), _r4(t.z)]),
+  };
+  try { localStorage.setItem(RUN_KEY, JSON.stringify(s)); } catch (e) { return false; }   // private mode / quota
+  if (P.has('dbg')) console.log('RUNSAVE wave=' + s.wave + ' gold=' + s.gold + ' lives=' + s.lives +
+    ' towers=' + s.tw.length + ' traps=' + s.tr.length + ' bytes=' + JSON.stringify(s).length +
+    (now ? ' (toggle' + (mid ? ', mid-wave rollback' : '') + ')' : ''));
+  return true;
+}
+G.runSave = runSave;
+G.runClear = () => { if (SHOT) return; try { localStorage.removeItem(RUN_KEY); } catch (e) {} };
+// Read + VALIDATE. A snapshot outlives builds: a tower type can be renamed, a map can be
+// dropped, a version can move. Anything unrecognised is discarded rather than fixed up, because
+// a half-restored run is worse than no offer at all — and every field the restore reads is
+// checked HERE, so the restore itself can be straight-line code.
+G.runSnap = () => {
+  if (SHOT) return null;
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(RUN_KEY) || 'null'); } catch (e) { return null; }
+  if (!s || s.v !== RUN_V) return null;
+  if (!MAPS.some(m => m.id === s.map)) return null;
+  if (['campaign', 'endless', 'horde'].indexOf(s.mode) < 0) return null;
+  if (!(s.wave >= 0 && s.wave < 4000) || !(s.lives > 0)) return null;         // a dead run is not resumable
+  if (!Array.isArray(s.tw) || !Array.isArray(s.tr) || !Array.isArray(s.dmg) ||
+      !Array.isArray(s.night) || !Array.isArray(s.tal) || !Array.isArray(s.pw)) return null;
+  s.tw = s.tw.filter(t => Array.isArray(t) && TOWER_DEFS[t[2]] && isFinite(t[0]) && isFinite(t[1]));
+  s.tr = s.tr.filter(t => Array.isArray(t) && TRAP_DEFS[t[0]] && isFinite(t[1]) && isFinite(t[2]));
+  return s;
+};
+// Does THIS page's resolved run identity match the snapshot? map/mode/seed/daily are all
+// resolved from the URL at module scope, so a matching snapshot can be restored in place and a
+// non-matching one needs the navigation runSnapUrl() builds.
+G.runFits = (s) => !!s && s.map === MAP.id && s.mode === MODE && s.seed === runSeed &&
+                   (s.daily || '') === (DAILY || '');
+// THE RESTORE. Runs from MAIN's boot pipeline between `boot.forge` and `boot.ready`: the world
+// exists and its shaders are warm, and the render loop has not started, so nothing here is ever
+// seen half-built. Everything it calls is a constructor the game already uses.
+//
+// ONE THING IS DELIBERATELY NOT PRESERVED, and it is worth naming: the seeded rng STREAM
+// POSITION. `_s` is where module evaluation left it, not where the abandoned run's last tick
+// left it, so the resumed run's lane jitter and knight spread differ from what an uninterrupted
+// run would have drawn. Everything a player can NAME is unaffected, because everything a player
+// can name is srng-keyed on (runSeed, salt, index) and not on stream position: the elite swap
+// slots, the omen hands, the herald's default pick, the daily's road. Restoring the stream
+// position would mean serialising `_s`, which is a private of CORE, to buy cosmetic parity with
+// a run that no longer exists. The matrix and the battery are untouched either way — neither
+// can reach this function.
+G.runRestore = (s) => {
+  if (SHOT || !s) return false;
+  // The grades the run FOUGHT WITH, not the council's record today (a respec between roads is
+  // legal and must not reach backwards into a saved run). This also re-derives the trap prices
+  // and sets the run-start purse, which the snapshot's own gold overwrites below.
+  setTalents(s.tal[0], s.tal[1], s.tal[2]);
+  state.phase = 'prewave'; state.paused = false; state.selTower = -1;
+  state.wave = s.wave | 0; state.tick = s.tick | 0;
+  state.lives = s.lives | 0; state.kills = s.kills | 0; state.leaked = s.leaked | 0;
+  state.muster = clamp(s.muster | 0, 6, 14); state.peak = s.peak | 0;
+  state.endless = !!s.endless; state.speed = [1, 2, 3].indexOf(s.speed) >= 0 ? s.speed : 1;
+  applyOmen('');                                        // an omen rides a wave; no wave is running
+  Omens.active = ''; Omens.wardEl = ''; Omens.forWave = 0; Omens.offer = []; Omens.picked = -1;
+  for (let i = 0; i < SCHOOLS.length; i++) dmgBySchool[SCHOOLS[i]] = +s.dmg[i] || 0;
+  night.wave = s.night[0] | 0; night.part = +s.night[1] || 0;
+  night.at = s.night[2] | 0; night.t0 = s.night[3] | 0;
+  waveHold = !!s.hold;
+  for (let i = 0; i < PW_KEYS.length; i++) powerCD[PW_KEYS[i]] = Math.max(0, s.pw[i] | 0);
+  // The garrison. `placeTower(..., free)` is the shot harness's own path — no purse, no
+  // validity gate — so it builds the tower, walks it up to its tier, spawns its knights and
+  // stamps its contact AO exactly as the player's click did. `mode` is a per-tower property
+  // once placed (never re-read from the def), so it is restored after the build.
+  for (const t of s.tw) {
+    if (!placeTower(t[0], t[1], t[2], clamp(t[3] | 0, 1, 3), true)) continue;
+    const tw = G.towersList[G.towersList.length - 1];
+    if (tw && MODES.indexOf(t[4]) >= 0) tw.mode = t[4];
+  }
+  for (const t of s.tr) layTrap(t[0], t[1], t[2], true);
+  // AFTER the constructors: both of them add to `invested`, and placeTower's tier walk adds to
+  // it again, so the run's real figures are written last.
+  state.gold = Math.max(0, s.gold | 0); state.invested = s.invested | 0;
+  state.countdown = Math.max(0, +s.countdown || 0);
+  // The offer is re-DEALT, not restored: drawOmens is a pure function of (map, seed, wave), so
+  // the hand is the same hand. Only the player's choice within it is state, and Omens.pick() is
+  // the same call the parchment card makes.
+  omenTick();
+  if (s.pick >= 0 && s.pick < Omens.offer.length) Omens.pick(s.pick);
+  UI.sync();
+  console.log('RUNLOAD map=' + s.map + ' mode=' + s.mode + ' seed=' + s.seed + ' wave=' + state.wave +
+    ' gold=' + state.gold + ' lives=' + state.lives + ' muster=' + state.muster +
+    ' towers=' + G.towersList.length + '/' + s.tw.length + ' traps=' + G.traps.length +
+    ' omen=' + (Omens.picked >= 0 ? Omens.offer[Omens.picked] : '-') + ' age=' +
+    Math.round((Date.now() - (s.t || Date.now())) / 1000) + 's');
+  return true;
+};
 // ══ §D3a — THE BENCH ═════════════════════════════════════════════════════════
 // `&horde=N` puts N synthetic bodies on the road in one call so a real device can be
 // measured at a head count no wave table reaches. Every body goes through G.spawnAt, which
@@ -14507,6 +15167,7 @@ G.hordeBench = (n) => {
 };
 // ══════════════════════ END SECTION: SIM ══════════════════════
 
+await BOOT.sub(0.5);
 // ══════════════════════ SECTION: VFX (owner: VFX builder) ══════════════════════
 // ONE GPU particle system for the whole game: two InstancedBufferGeometry buckets
 // (alpha-blended + additive) sharing a procedural 4x4 sprite atlas, plus one
@@ -19053,6 +19714,7 @@ VFX.debug = () => ({ alpha: BA.n, add: BB.n });
 }
 // ══════════════════════ END SECTION: VFX ══════════════════════
 
+await BOOT.sub(0.7);
 // ══════════════════════ SECTION: AUDIO (owner: AUDIO builder) ══════════════════════
 // Fully synthesised medieval score + battle SFX. No sample assets, no files. One graph:
 //
@@ -20157,6 +20819,7 @@ if (!SHOT) {
 }
 // ══════════════════════ END SECTION: AUDIO ══════════════════════
 
+await BOOT.sub(0.9);
 // ══════════════════════ SECTION: UI (owner: UI builder) ══════════════════════
 // Medieval-AAA interface. Everything is procedural: SVG filigree lives in SECTION: UI-CSS
 // and UI-HTML; the parchment/iron grain and every tower portrait / enemy bust below are
@@ -23009,6 +23672,11 @@ UI.startGame = (gesture) => {
     addEventListener('keydown', kick, { once: true });
   } else Audio.music();
   UI.sync();
+  // v7-RESILIENCE §1 — a NEW run replaces any saved one immediately, at its own first prewave
+  // boundary, rather than at the end of wave 1. Two reasons: a player who abandons before the
+  // first horn still has something to come back to, and the stale snapshot (which the title
+  // screen was offering a moment ago) stops being offerable the instant a different run exists.
+  G.runSave();
 };
 // ── first-placement writ (localStorage-gated, never shown under the harness) ────
 let tutDone = true;
@@ -23392,21 +24060,190 @@ $('btnAuto').onclick = () => { $('autoV').textContent = L(G.setAutoCall(!G.autoC
 // in the game is resolved once at module scope, so switching tongue is a new page, not a
 // live re-render of forty panels. The choice is persisted and `&lang=` is set so the reload
 // cannot be out-voted by a stale storage read.
+// v7-RESILIENCE §1 — and it no longer costs the run. See runNav() below.
 $('btnLang').onclick = () => {
   const nx = LANG === 'fr' ? 'en' : 'fr';
   try { localStorage.setItem(LANG_KEY, nx); } catch (e) { /* private mode */ }
   const p = new URLSearchParams(location.search); p.set('lang', nx);
-  location.search = p.toString();
+  runNav(p);
+};
+// ══ v7-RESILIENCE §1 — THE RELOAD THAT KEEPS THE RUN ═══════════════════════════════
+// The two mid-run reloads (tongue and detail) both end here. MENUCAM's handoff predicted this
+// correctly: nothing about either control changes, because both already went through a single
+// function. Snapshot, stamp the run's IDENTITY onto the URL, add `&resume=1`, navigate.
+//
+// The identity params are MANDATORY and not an optimisation. `runSeed` is drawn fresh from
+// crypto on any load that does not carry `&seed=`, and `map`/`mode`/`daily` are resolved from
+// the URL at module scope — so without them the reloaded page would BE a different run and the
+// snapshot would not fit it. `&auto=`/`&maps=`/`&endless=` are dropped because the resume path
+// supersedes all three: it opens neither the chooser nor a fresh run, and `endless` is state
+// the snapshot already carries.
+function resumeParams(p, s) {
+  p.set('map', String(s.map)); p.set('seed', String(s.seed)); p.set('resume', '1');
+  p.delete('maps'); p.delete('auto'); p.delete('endless');
+  if (s.mode === 'campaign') p.delete('mode'); else p.set('mode', s.mode);
+  if (s.daily) p.set('daily', s.daily); else p.delete('daily');
+  return p;
+}
+// Assigning an identical location.search does not navigate in every browser, so the same-URL
+// case is an explicit reload. (MENUCAM's rule, moved here verbatim so both callers get it.)
+function navTo(p) {
+  const q = p.toString(), url = location.pathname + (q ? '?' + q : '') + location.hash;
+  if (url === location.pathname + location.search + location.hash) location.reload(); else location.href = url;
+}
+function runNav(p) {
+  // `true` = save even mid-wave. A player who switches tongue during wave 7 is rolled back to
+  // wave 7's muster with the purse, the garrison and the losses they have now — the horn sounds
+  // again for that wave. Restoring mid-wave would mean serialising a hundred bodies; see the
+  // save block in SECTION: SIM for why that trade is not close.
+  if (G.runSave(true)) { const s = G.runSnap(); if (s) resumeParams(p, s); }
+  navTo(p);
+}
+// ══ v7-MENUCAM §1 — THE QUALITY MENU ═══════════════════════════════════════════════
+// This was a click-cycle: one button that reloaded into the NEXT tier with no way to see
+// what the tiers were, no way to go back a step, and no statement of what changed. The
+// player's report ("I see no difference") was the honest reading of a control that told them
+// nothing — high→ultra is a shadow-map resolution and nothing else on a strong GPU.
+//
+// The rows are BUILT FROM `G.QT`, not written out in prose: shadow resolution, bloom, prop
+// scatter and pixel ratio are the four knobs a player can actually see, and reading them off
+// the table means the copy cannot drift from the code. `mobile` is labelled 'Low' because
+// that is what it is on a desktop — the tier NAME is an internal.
+//
+// Applying is a RELOAD, deliberately and for this stage only: Q is consumed during
+// construction by every section (shadow map size, geometry segment counts, prop density,
+// atlas resolution), so there is no live re-tier without rebuilding the world. HANDOFF: the
+// Resilience stage's save/resume is what makes this cost nothing — snapshot before the
+// navigation, restore after it, and the reload becomes invisible. Nothing here needs to
+// change for that: it already goes through one function.
+const QNAME = { auto: 'qual.auto', mobile: 'qual.low', high: 'qual.high', ultra: 'qual.ultra' };
+const qualDesc = k => {
+  if (k !== 'auto') {
+    const q = G.QT[k];
+    return L('qual.rowD', q.shadow, L(q.bloom ? 'qual.blOn' : 'qual.blOff'), Math.round(q.density * 100), q.px);
+  }
+  // The Auto row names the tier the bench picked. Until the Resilience stage writes
+  // TIER_BENCH_KEY there is nothing to name, so it says when it will know instead. Two whole
+  // sentences rather than a dash-joined fragment: this row is the only one whose second half
+  // is a STATE ("what has auto decided?") and not a spec.
+  // v7-RESILIENCE §4 — the bench HAS spoken now. Two forms: the plain tier, and the tier plus
+  // its pixel-ratio notch when §C.4's middle band (40-55 fps) shaved the ratio without dropping
+  // the tier. The second form matters because the notch is the half of the verdict the player
+  // can actually see, and a row reading only "High" while the frame is drawn at ×1.5 would be
+  // the same kind of silence the click-cycle button was replaced for.
+  return L('qual.autoD') + ' ' + (!G.TIER_BENCH ? L('qual.autoWait')
+    : G.TIER_PX && G.TIER_PX !== G.QT[G.TIER_BENCH].px
+      ? L('qual.autoPx', L(QNAME[G.TIER_BENCH]), G.TIER_PX)
+      : L('qual.autoBench', L(QNAME[G.TIER_BENCH])));
+};
+// v7-RESILIENCE §4 — the rows are BUILT, not written once, because the auto-bench finishes ~1.5 s
+// after the title paints and the Auto row has to be able to say so without a reload. The markup
+// is character-for-character what MENUCAM emitted for the same inputs, so `_gear`/`_qual` are
+// unmoved; only the listener binding moved in here, so a rebuild cannot leave dead rows.
+function buildQual() {
+  $('qualMenu').innerHTML = ['auto', 'mobile', 'high', 'ultra'].map(k => {
+    // Two different badges, because they answer two different questions: `pick` is what the
+    // player CHOSE (Auto stays chosen even while High is what it resolved to) and `now` is what
+    // the frame in front of them is actually being drawn at.
+    const sel = k === G.TIER_SEL, now = k !== 'auto' && k === tier;
+    return '<button class="qR' + (sel ? ' sel' : '') + '" data-q="' + k + '" aria-pressed="' + (sel ? 'true' : 'false') + '">' +
+      '<span class="qN">' + esc(L(QNAME[k])) +
+        (sel ? '<em class="qB pick">' + esc(L('qual.pick')) + '</em>' : '') +
+        (now && !sel ? '<em class="qB now">' + esc(L('qual.now')) + '</em>' : '') + '</span>' +
+      '<span class="qD">' + esc(qualDesc(k)) + '</span></button>';
+  }).join('') + '<div class="qF">' + esc(L('qual.foot')) + '</div>';
+  // Behind the SHOT guard with every other interaction listener (GAME_SPEC §2.3c): the `_gear`
+  // preset renders the sheet with the submenu shut and nothing headless can open it.
+  if (!SHOT) for (const b of $('qualMenu').querySelectorAll('.qR'))
+    b.addEventListener('click', () => { Audio.play('ui'); pickTier(b.dataset.q); });
+}
+buildQual();
+// MAIN's auto-bench calls this once, after it has stored its verdict on G.
+UI.qualRefresh = buildQual;
+// Storing the choice and navigating. `auto` DELETES `&tier=` — leaving it would pin the very
+// override the player just asked to be rid of.
+// v7-RESILIENCE §1 — and it goes through runNav(), so the run survives the reload.
+const pickTier = k => {
+  if (k === G.TIER_SEL) { $('qualMenu').classList.add('hidden'); $('btnQual').setAttribute('aria-expanded', 'false'); return; }
+  try { localStorage.setItem(G.TIER_KEY, k); } catch (e) { /* private mode: the URL still carries it */ }
+  const p = new URLSearchParams(location.search);
+  if (k === 'auto') p.delete('tier'); else p.set('tier', k);
+  runNav(p);
 };
 $('btnQual').onclick = () => {
-  const order = ['mobile', 'high', 'ultra'], nx = order[(order.indexOf(tier) + 1) % 3];
-  const p = new URLSearchParams(location.search); p.set('tier', nx);
-  location.search = p.toString();
+  const open = $('qualMenu').classList.toggle('hidden');
+  $('btnQual').setAttribute('aria-expanded', open ? 'false' : 'true');
+  $('btnQual').classList.toggle('on', !open);
 };
-$('btnReset').onclick = () => location.reload();
+// v7-RESILIENCE §3 — the frame cap. A preference, so it toggles IN PLACE (no reload — nothing
+// is resolved from it at construction; MAIN's loop reads it every frame) and writes through to
+// localStorage, which is the same idiom auto-call has used since SPEC4 §A.
+$('btnFps').onclick = () => { $('fpsV').textContent = L(G.setFpsCap(G.fpsCap() === 60 ? 30 : 60) === 30 ? 'fps.30' : 'fps.60'); };
+// v7-RESILIENCE §1 — "Restart Campaign" throws the saved run away as well. It used to be a bare
+// reload, which (now that a snapshot exists) would have landed back on a title offering to
+// resume the very run the player had just asked to be rid of.
+$('btnReset').onclick = () => { G.runClear(); location.reload(); };
 // Title → map select → game. `&map=` names a road outright, so it skips the chooser and
 // Play drops straight into that map (the shot harness and any deep link rely on this).
-$('btnPlay').onclick = () => { if (P.has('map')) UI.startGame(); else UI.showMaps(); };
+// BOOTPIPE §1 — the one hard gate on the staged boot. The bar dims this button and the CSS
+// makes it inert, but a keyboard activation ignores pointer-events, so the check lives here too.
+$('btnPlay').onclick = () => { if (!BOOT.ready) return; if (P.has('map')) UI.startGame(); else UI.showMaps(); };
+// ══ v7-RESILIENCE §1 — THE OFFER ON THE PLINTH ══════════════════════════════════════
+// A saved run puts a second button on the title screen, above Play, and RELABELS Play as "New
+// campaign". Relabelling is not decoration: with two buttons on the plinth "Play" stops being a
+// verb and starts being a choice, and the one thing a player must never have to guess is which
+// of the two throws a run away. Both strings are in the string layer, EN and FR.
+// The button ships `hidden` in index.html and this is the only thing that ever unhides it, so
+// every shot preset frames the plinth exactly as it did before this existed.
+const resumeOffer = () => {
+  const s = SHOT ? null : G.runSnap();
+  const btn = $('btnResume');
+  if (!s) { btn.classList.add('hidden'); return null; }
+  const m = MAPS.find(x => x.id === s.map), nm = m ? m.name : String(s.map);
+  // `s.wave` is the last wave CLEARED, so the wave the player is about to fight is one more.
+  const std = s.tw.length === 1 ? L('resume.std1') : L('resume.std', s.tw.length);
+  btn.innerHTML = '<span>' + esc(L('resume')) + '</span>' +
+    '<em class="rS">' + esc(L('resume.sub', nm, s.wave + 1, std)) + '</em>';
+  btn.title = L('resume.T', nm, s.wave + 1, s.gold);
+  btn.classList.remove('hidden');
+  $('btnPlay').firstElementChild.textContent = L('resume.new');
+  return s;
+};
+// Taking the offer. Two paths, and the difference is whether THIS page is already the right
+// run: a page that was loaded with the snapshot's map/mode/seed (the invisible-reload case, and
+// the common case of a browser restoring the last URL) restores in place with no navigation at
+// all; anything else has to reload into the run's identity first, because map, mode, seed and
+// daily are all resolved once at module scope.
+UI.resumeRun = (s, gesture) => {
+  $('title').classList.add('hidden'); $('maps').classList.add('hidden');
+  $('council').classList.add('hidden'); $('deeds').classList.add('hidden');
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  // The laurel mark is taken exactly as UI.startGame takes it, so the victory plate can still
+  // say what the run was worth. G.applyTalents() is NOT called: runRestore installs the grades
+  // the run actually fought with, which is the whole point of snapshotting them.
+  laurelMark();
+  if (!G.runRestore(s)) { $('title').classList.remove('hidden'); return false; }
+  CAM.dist = 100; CAM.tx = -2; CAM.tz = 2;
+  if (gesture === false) {
+    const kick = () => Audio.music();
+    addEventListener('pointerdown', kick, { once: true });
+    addEventListener('keydown', kick, { once: true });
+  } else Audio.music();
+  UI.sync();
+  return true;
+};
+$('btnResume').onclick = () => {
+  if (!BOOT.ready) return;
+  const s = G.runSnap();
+  if (!s) { resumeOffer(); return; }                   // vanished under us (another tab, a purge)
+  Audio.play('ui');
+  if (G.runFits(s)) UI.resumeRun(s, true);
+  else navTo(resumeParams(new URLSearchParams(location.search), s));
+};
+// Called by MAIN's boot tail, and only on the paths that actually end at the title — a deep
+// link that drops straight into a run (`&auto=`, `&resume=`) must not spend a storage read
+// dressing a plinth nobody will see.
+UI.resumeOffer = resumeOffer;
 $('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); };
 // SPEC6 §B — the council opens off the chooser and returns to it, so it never becomes a
 // screen you can get stranded on: there is exactly one way in and one way out.
@@ -23450,6 +24287,7 @@ const rollSeed = () => {
 document.querySelectorAll('.seedTag .sD').forEach(b => { b.onclick = rollSeed; });
 $('qualV').textContent = L(tier === 'mobile' ? 'qual.low' : tier === 'ultra' ? 'qual.ultra' : 'qual.high');
 $('autoV').textContent = L(G.autoCall() ? 'val.on' : 'val.off');
+$('fpsV').textContent = L(G.fpsCap() === 30 ? 'fps.30' : 'fps.60');   // v7-RESILIENCE §3
 $('langV').textContent = LANG === 'fr' ? 'Français' : 'English';
 // ── static shell copy (SPEC4 §B) ──────────────────────────────────────────────────
 // index.html carries the chrome that exists before a single frame renders (chips, hint
@@ -23464,6 +24302,9 @@ if (!SHOT) {
   // drag-or-tap flow (ghost follows the finger, ✓ confirms) for free.
   for (const b of $('powers').children)
     b.addEventListener('click', () => { UI.deselect(); if (G.enterCast(b.dataset.pw) && G.placeAtCursor) G.placeAtCursor(); });
+  // v7-MENUCAM §1 — the quality rows' listeners used to be bound here. v7-RESILIENCE §4 moved
+  // them INTO buildQual(), because the auto-bench rebuilds those rows after the title has
+  // painted and a binding that lived out here would have been left pointing at dead nodes.
   // FIX3-UI §2 — the folded keybind sheet. Hover opens it in CSS alone; the click latch is
   // here, behind the guard, so the harness has no way to unfold it and every preset renders
   // the corner as one disc.
@@ -23480,7 +24321,17 @@ if (!SHOT) {
     if (e.key === 'h' || e.key === 'H') hintTog();
     if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false'); }
   });
-  $('title').addEventListener('pointerdown', e => { if (e.target === $('title')) $('btnPlay').click(); });
+  $('title').addEventListener('pointerdown', e => { if (BOOT.ready && e.target === $('title')) $('btnPlay').click(); });
+  // BOOTPIPE §5 — the idle schedule. In order of how soon the player can reach the screen:
+  // the chooser is one click from Play, the enemy busts are on the first wave card, and the
+  // two parchment overlays are a click off the chooser. Each is a plain rebuild of a screen
+  // that rebuilds itself on open anyway, so a skipped or failed slice costs nothing.
+  BOOT.tasks.push(
+    ['mapCards', () => buildMapCards()],
+    ['busts', () => { for (const k in E_NAME) icoFor(k); }],
+    ['deeds', () => buildDeeds()],
+    ['council', () => buildCouncil()],
+  );
 }
 // ══════════════════════ END SECTION: UI ══════════════════════
 
@@ -23501,19 +24352,113 @@ const camera = new THREE.PerspectiveCamera(46, innerWidth / innerHeight, 1, 600)
 G.camera = camera;
 // dir pitch ~50° (GAME_SPEC §1 asks for a high-angle 55–60° aerial read); azimuth puts
 // the warm sun raking in from screen-left and the road's S-curve across the frame.
-const CAM = { tx: -2, ty: 0, tz: 2, dist: 100, dir: new THREE.Vector3(0.44, 1.215, 0.92).normalize(), free: false };
+// `yaw` (v7-MENUCAM §2) is the ONLY new piece of camera state and it lives here, in CAM, so
+// that the two poses that must never move — every SHOT preset's `cam.tgt`/`dist` and the
+// free-pose `cam.pos`/`look` — are untouched by construction: `free` returns before yaw is
+// read, and yaw is 0 in every preset because nothing headless can write it. PITCH IS FIXED:
+// `dir.y` is never touched, so the 50° aerial read GAME_SPEC §1 asks for is invariant.
+const CAM = { tx: -2, ty: 0, tz: 2, dist: 100, dir: new THREE.Vector3(0.44, 1.215, 0.92).normalize(), free: false, yaw: 0 };
 G.CAM = CAM;
+// The view direction with yaw applied. At yaw 0 it returns `CAM.dir` ITSELF — not a copy and
+// not a rotation by zero — so every frame the harness renders does the identical float
+// arithmetic it did before this change. That is what makes the PNG comparison meaningful.
+const _cdir = new THREE.Vector3();
+function camDir() {
+  if (!CAM.yaw) return CAM.dir;
+  const c = Math.cos(CAM.yaw), s = Math.sin(CAM.yaw);
+  return _cdir.set(CAM.dir.x * c + CAM.dir.z * s, CAM.dir.y, CAM.dir.z * c - CAM.dir.x * s);
+}
 function updateCamera(t) {
   if (CAM.free) return;
+  camStep(t);
+  const d = camDir();
   // Shake offsets are a RENDER-time function, never rng(): a variable frame rate used to
   // pull a variable number of draws out of the sim stream, which desynced the shot harness
   // from live play. Two mutually-irrational frequencies read as noise.
   const amp = G.shake;
   const shx = amp > 0 ? Math.sin(t * 61.7) * amp * 0.5 : 0, shz = amp > 0 ? Math.sin(t * 47.3 + 1.7) * amp * 0.5 : 0;
   if (amp > 0) G.shake = Math.max(0, amp - 0.02);
-  camera.position.set(CAM.tx + CAM.dir.x * CAM.dist + shx, CAM.ty + CAM.dir.y * CAM.dist, CAM.tz + CAM.dir.z * CAM.dist + shz);
+  camera.position.set(CAM.tx + d.x * CAM.dist + shx, CAM.ty + d.y * CAM.dist, CAM.tz + d.z * CAM.dist + shz);
   camera.lookAt(CAM.tx + shx, CAM.ty, CAM.tz + shz);
 }
+// ══ v7-MENUCAM §2 — KEYBOARD PAN + YAW (GAME_SPEC_7 §C.8) ══════════════════════════
+// A held key is a STATE, not an event: a key repeat is an OS setting with a ~500 ms delay and
+// a machine-specific rate, so driving the camera off keydown gives a lurch-then-stutter that
+// reads as broken. The held set is integrated once per rendered frame against the render
+// clock, and the velocity is smoothed with an exponential approach so a tap eases in and a
+// release coasts out — frame-rate independent, so it feels the same at 30 fps and at 144.
+// COST: zero draws. The camera is a transform; the sun's shadow frustum is a world-anchored
+// ortho box (SECTION: CORE, `sun.shadow.camera` is set once and never follows the view) and
+// every billboard already faces the camera per frame. Panning and turning cost nothing that
+// the existing drag-pan did not already cost.
+// PHYSICAL codes, not characters. `e.code` names the key's POSITION on the board, so the
+// cluster under a French player's left hand — Z Q S D — is the same four keys as W A S D
+// without a line of layout detection, and a Dvorak or Colemak player gets their own cluster in
+// the same place. `e.key` is still what the ACTION hotkeys read, and must stay that way: a
+// power is a mnemonic ('w' for smite), a camera key is a fingertip.
+// It is declared HERE, above camFlags(), rather than beside the listeners that use it: camStep
+// runs on the very first frame and the listener block is 200 lines further down, so a `const`
+// there is in its temporal dead zone when the first frame calls camFlags(). (Found by
+// tools/camsmoke.mjs, which is exactly the class of bug the shot battery cannot see — the
+// throw is inside updateCamera, which SHOT never reaches through this path.)
+const PAN_CODE = { ArrowUp: 'f', ArrowDown: 'b', ArrowLeft: 'l', ArrowRight: 'r',
+                   KeyW: 'f', KeyS: 'b', KeyA: 'l', KeyD: 'r', Comma: 'ccw', Period: 'cw' };
+// The held set holds physical CODES, not directions, because two codes share every direction
+// (ArrowUp and KeyW are both "forward"). Storing a direction flag instead would let the keyup
+// of one clear the other's still-held press, and the camera would stop mid-drive.
+const CAM_KEYS = new Set();
+const CAM_HELD = { f: 0, b: 0, l: 0, r: 0, ccw: 0, cw: 0 };
+function camFlags() {
+  for (const k in CAM_HELD) CAM_HELD[k] = 0;
+  for (const c of CAM_KEYS) CAM_HELD[PAN_CODE[c]] = 1;
+  return CAM_HELD;
+}
+const PAN_SPD = 52,          // world units / second at the default zoom, scaled by distance
+      PAN_EASE = 12,         // approach rate; higher is snappier
+      YAW_SPD = 1.25,        // radians / second on , and .
+      YAW_EASE = 10,
+      YAW_DRAG = 0.0062;     // radians per pixel of right-drag
+let _panVX = 0, _panVZ = 0, _yawV = 0, _camT = -1;
+function camStep(t) {
+  // Under SHOT nothing can ever set a flag (the listeners are inside the !SHOT guard), so
+  // this is already inert — the explicit return is the guard that keeps it that way when
+  // someone later adds a non-listener writer.
+  if (SHOT) return;
+  const dt = _camT < 0 ? 0 : clamp(t - _camT, 0, 0.1);
+  _camT = t;
+  const H = camFlags();
+  const ax = H.r - H.l, az = H.f - H.b, ay = H.cw - H.ccw;
+  if (!ax && !az && !ay && !_panVX && !_panVZ && !_yawV) return;
+  // The title screen flies its own scripted orbit (SECTION: UI writes tx/tz/dist every
+  // frame there); handing the player a second set of controls over the same three numbers
+  // would just fight it.
+  if (state.phase === 'title') { _panVX = _panVZ = _yawV = 0; return; }
+  const d = camDir(), hl = Math.hypot(d.x, d.z) || 1;
+  // Screen basis on the ground plane: forward is the horizontal projection of the view
+  // direction, right is forward × up = (-fz, fx). The pointer drag's hand-tuned
+  // 0.74/0.40/1.05/−0.35 matrix is this same pair to within ~4° at yaw 0 (and is not quite
+  // orthogonal), so W and a drag downward push the vale the same way — but this one is
+  // DERIVED, which is what lets it follow the yaw instead of freezing at the shipped azimuth.
+  const fx = -d.x / hl, fz = -d.z / hl, rx = -fz, rz = fx;
+  const spd = PAN_SPD * (CAM.dist / 100);
+  const e = 1 - Math.exp(-PAN_EASE * dt), ey = 1 - Math.exp(-YAW_EASE * dt);
+  _panVX += ((ax * rx + az * fx) * spd - _panVX) * e;
+  _panVZ += ((ax * rz + az * fz) * spd - _panVZ) * e;
+  _yawV += (ay * YAW_SPD - _yawV) * ey;
+  // Below a twentieth of a unit per second the glide is invisible; snapping to zero is what
+  // lets the early-out above fire again and take this whole function off the frame.
+  if (Math.abs(_panVX) < 0.05) _panVX = 0;
+  if (Math.abs(_panVZ) < 0.05) _panVZ = 0;
+  if (Math.abs(_yawV) < 0.002) _yawV = 0;
+  // The SAME clamps the drag pan honours — the vale has one set of walls, not two.
+  CAM.tx = clamp(CAM.tx + _panVX * dt, -70, 70);
+  CAM.tz = clamp(CAM.tz + _panVZ * dt, -48, 46);
+  if (_yawV) camYaw(_yawV * dt);
+}
+// Yaw wraps rather than clamping: there is no orientation of a diorama that is out of bounds,
+// and a hard stop mid-turn is the one camera behaviour players universally read as a bug.
+const YAW_TAU = Math.PI * 2;   // named apart from ARMIES' block-scoped TAU on purpose
+function camYaw(da) { CAM.yaw = ((CAM.yaw + da) % YAW_TAU + YAW_TAU) % YAW_TAU; if (CAM.yaw > Math.PI) CAM.yaw -= YAW_TAU; }
 let composer = null, bloomPass = null;
 function buildPost() {
   composer = new EffectComposer(renderer);
@@ -23539,6 +24484,13 @@ addEventListener('resize', () => {
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const pointers = new Map();
 let pinchD = 0, dragging = false, downX = 0, downY = 0;
+// v7-MENUCAM §2 — the right button's two jobs, disambiguated by the SAME rule the left
+// button already uses: under the threshold it is a CLICK (cancel placement), over it a DRAG
+// (yaw). `_rmb` is the captured pointerId or -1; `_rmbX/_rmbY` is where it went down and
+// `_rmbL` the last x seen, because the yaw wants a per-move delta and the click test wants a
+// total displacement. 6px per the assignment; the left button's own threshold is 8px and
+// stays 8 — a mouse hand shakes less than a finger, and the two tests are independent.
+let _rmb = -1, _rmbX = 0, _rmbY = 0, _rmbL = 0, _rmbMoved = false;
 // Coarse pointers get the drag-ghost + confirm-button flow; a mouse places on click.
 // (&coarse=1 lets the harness shoot the touch variant.)
 UI.coarse = SHOT ? P.has('coarse') : matchMedia('(pointer: coarse)').matches;
@@ -23564,6 +24516,17 @@ function placeAtScreen(cx, cy) { if (groundAt(cx, cy, _gh)) G.setPlaceAt(_gh.x, 
 G.placeAtCursor = () => placeAtScreen(hoverX, hoverY);
 if (!SHOT) {
 canvas.addEventListener('pointerdown', e => {
+  // The right button never joins `pointers`, so it can neither pan nor be counted as half a
+  // pinch. Touch and pen always report button 0 here, which is why this cannot reach them.
+  if (e.button === 2) {
+    _rmb = e.pointerId; _rmbX = _rmbL = e.clientX; _rmbY = e.clientY; _rmbMoved = false;
+    canvas.setPointerCapture(e.pointerId);
+    return;
+  }
+  // A MOUSE REUSES ONE pointerId FOR EVERY BUTTON (id 1 in Chrome), so a yaw drag that never
+  // got its pointerup — chorded buttons, a lost capture, a focus steal mid-drag — would leave
+  // `_rmb` matching the very next left press and swallow it. Any non-right press clears it.
+  _rmb = -1;
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pointers.size === 2) { const p = [...pointers.values()]; pinchD = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
   dragging = false; downX = e.clientX; downY = e.clientY;
@@ -23571,9 +24534,23 @@ canvas.addEventListener('pointerdown', e => {
 });
 $('placeOk').addEventListener('click', () => G.commitPlace(false));
 $('placeNo').addEventListener('click', () => G.exitPlace());
-canvas.addEventListener('contextmenu', e => { e.preventDefault(); G.exitPlace(); });
+// v7-MENUCAM §2 — this used to be where a right-click cancelled placement. It cannot stay
+// here: Windows fires `contextmenu` on button RELEASE and Linux/macOS on PRESS, so a handler
+// that decides "click or drag" from it is correct on one platform and wrong on the other.
+// Suppressing the menu is all this event is for now; the cancel moved to `endPointer`, which
+// fires in the same order everywhere and already owns the click-vs-drag question.
+canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('pointermove', e => {
   hoverX = e.clientX; hoverY = e.clientY;
+  if (e.pointerId === _rmb) {
+    if (!_rmbMoved && Math.hypot(e.clientX - _rmbX, e.clientY - _rmbY) > 6) _rmbMoved = true;
+    // The ghost deliberately does NOT track the cursor during a yaw drag: the player is
+    // moving the world, not choosing a spot, and a ghost skating across the vale reads as
+    // the placement having gone wrong.
+    if (_rmbMoved && state.phase !== 'title') camYaw((e.clientX - _rmbL) * YAW_DRAG);
+    _rmbL = e.clientX;
+    return;
+  }
   const p = pointers.get(e.pointerId);
   // desktop: the ghost tracks the bare cursor (no button held, nothing being dragged)
   if (!p && G.place && !UI.coarse) placeAtScreen(e.clientX, e.clientY);
@@ -23589,12 +24566,29 @@ canvas.addEventListener('pointermove', e => {
     if (Math.hypot(e.clientX - downX, e.clientY - downY) > 8) dragging = true;
     if (dragging) {
       const k = CAM.dist / innerHeight * 1.35;
-      CAM.tx = clamp(CAM.tx - (dx * 0.74 + dy * 0.4) * k, -70, 70);
-      CAM.tz = clamp(CAM.tz - (dy * 1.05 - dx * 0.35) * k, -48, 46);
+      let ox = -(dx * 0.74 + dy * 0.4) * k, oz = -(dy * 1.05 - dx * 0.35) * k;
+      // v7-MENUCAM §2 — the drag's screen→world matrix is baked for the SHIPPED azimuth, so
+      // once the player yaws the camera it would push the vale sideways. Rotating the world
+      // offset by the same yaw the view took keeps "the ground follows my finger" true at
+      // every heading. Guarded on yaw so the un-yawed drag — every touch drag, and every
+      // mouse drag before anyone turns — runs the exact arithmetic it always has.
+      if (CAM.yaw) { const c = Math.cos(CAM.yaw), s = Math.sin(CAM.yaw), t2 = ox * c + oz * s; oz = oz * c - ox * s; ox = t2; }
+      CAM.tx = clamp(CAM.tx + ox, -70, 70);
+      CAM.tz = clamp(CAM.tz + oz, -48, 46);
     }
   }
 });
 const endPointer = e => {
+  // v7-MENUCAM §2 — a right-button release that never crossed the threshold IS the old
+  // right-click, and does exactly what it always did.
+  if (e.pointerId === _rmb) {
+    _rmb = -1;
+    // The same id may also be sitting in `pointers` if the buttons were chorded; releasing it
+    // here keeps the pan/pinch bookkeeping honest whichever button the user let go of last.
+    pointers.delete(e.pointerId); pinchD = 0;
+    if (!_rmbMoved && e.type !== 'pointercancel') G.exitPlace();
+    return;
+  }
   pointers.delete(e.pointerId); pinchD = 0;
   if (dragging || e.type === 'pointercancel') return;
   if (state.phase === 'title' || state.phase === 'won' || state.phase === 'lost') return;
@@ -23616,7 +24610,32 @@ const endPointer = e => {
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
 canvas.addEventListener('wheel', e => { e.preventDefault(); CAM.dist = clamp(CAM.dist * (e.deltaY > 0 ? 1.08 : 0.93), 42, 120); }, { passive: false });
+// ══ v7-MENUCAM §2 — the camera keys ═════════════════════════════════════════════════
+// `PAN_CODE` — the physical-code table these read — is declared with the camera state above,
+// not here; the comment at that site says why.
+// GAME_SPEC_7 §C.8's conflict rule, implemented literally: POWER HOTKEYS KEEP PRIORITY. Where
+// a layout puts a claimed character under a pan key, the claim wins and that key does not pan
+// — on QWERTY that costs W (smite), on AZERTY W→'z' (caltrops) and A→'q' (rally). Which is
+// why the ARROWS are the promise: no layout and no hotkey can ever take those four away, and
+// they are what the keybind sheet names first. The set is DERIVED from the hotkey tables, so
+// a new power cannot silently start double-firing with a pan key.
+const CLAIMED = new Set([...G.PW_KEYS.map(k => G.POWERS[k].key), 'z', 'x', 'c', 't', 'g', 'h']);
+// Nothing in the shipped UI takes typed input today; the guard is here so that the day one
+// does (a seed field, a profile name), the camera does not walk off while it is being typed.
+const typing = () => { const a = document.activeElement;
+  return !!a && (a.isContentEditable || a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT'); };
+const panSlot = e => {
+  if (e.ctrlKey || e.altKey || e.metaKey || typing()) return null;   // leave browser chords alone
+  const s = PAN_CODE[e.code];
+  if (!s) return null;
+  if (e.code.startsWith('Key') && CLAIMED.has((e.key || '').toLowerCase())) return null;
+  return s;
+};
 addEventListener('keydown', e => {
+  // A held key is a MEMBERSHIP, not an event: adding the same code on every OS repeat is a
+  // no-op on a Set, which is exactly the semantics wanted — the camera's speed is a constant,
+  // not a function of the keyboard's repeat rate.
+  if (panSlot(e)) { CAM_KEYS.add(e.code); e.preventDefault(); }   // arrows would scroll the page
   if (e.key === ' ') $('btnPause').click();
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
   // SPEC3 §F — T cycles the selected tower's targeting doctrine.
@@ -23640,6 +24659,15 @@ addEventListener('keydown', e => {
     if (G.enterPlace(keys[n - 1])) G.placeAtCursor();
   }
 });
+// v7-MENUCAM §2 — releasing. The keyup deliberately does NOT re-run panSlot(): a key pressed
+// while nothing was focused and released while something is (alt-tab, a click into a devtools
+// panel, a hotkey that opened a sheet) must still leave the set, or the camera drives forever
+// with no key held. Deleting a code that was never in the set is free. The blur and visibility
+// hooks are the same insurance for the case where the keyup never arrives at all.
+const camRelease = () => CAM_KEYS.clear();
+addEventListener('keyup', e => { CAM_KEYS.delete(e.code); });
+addEventListener('blur', camRelease);
+addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') camRelease(); });
 } // end !SHOT input guard
 
 // ── Render loop ──
@@ -23672,6 +24700,14 @@ function densityStep(alive) {
   if (Math.abs(px - _dprNow) > 0.01) { _dprNow = px; renderer.setPixelRatio(px); }
 }
 function render(rt) {
+  // v7-RESILIENCE §2 — THE ONE-FRAME WINDOW. `webglcontextlost` is QUEUED, not synchronous, so
+  // between the moment the driver drops the context and the moment either our `glLost` flag or
+  // three's own `_isContextLost` is set there is at least one frame in which the loop still
+  // believes it can draw. Drawing there throws out of three's onFirstUse (`getProgramInfoLog()`
+  // returns null on a dead context and the next line calls `.trim()` on it) — an uncaught
+  // TypeError inside rAF, which is exactly the kind of thing `window.__errors` exists to catch.
+  // One boolean read of a flag the context already holds; no round trip to the driver.
+  if (renderer.getContext().isContextLost()) return;
   renderer.info.reset();
   Armies.syncVisuals(vt());
   Towers.syncProjectiles(vt());
@@ -23683,14 +24719,54 @@ function render(rt) {
 // §D1/§D2 live smoke: armed by `&dbg=1` only, fired once, three wall-clock seconds after
 // the first frame. Under SHOT this loop never runs at all.
 let _paceN = (P.has('dbg') && !SHOT) ? 0 : -1, _paceW = 0, _paceK = 0;
+const _pgWatch = P.has('dbg') && !SHOT; let _pgN = 0; const _pgSeen = new Set();
+// ══ v7-RESILIENCE §3 — THE FRAME CAP (GAME_SPEC_7 §C.5) ══════════════════════════════════
+// It caps DRAWS. Nothing else. The proof that the simulation is untouched is one line up in
+// frame(): `acc += dt * speed * BASE_RATE` is fed from WALL-CLOCK dt on EVERY rAF callback,
+// whether or not that callback goes on to draw, so the sim advances at exactly the rate it
+// advanced before — the same ticks, in the same order, off the same rng stream.
+// AND THE ×3 GUARD STILL HOLDS, by the clamp rather than by luck: dt is clamped to 0.06 s, so
+// the worst a single callback can ask for is 0.06 × 3 × 1.18 / 0.0333 = 6.4 ticks against the
+// while-loop's cap of 8 — and that bound is independent of the cap, because the cap does not
+// change how often the callback runs, only what it does when it gets there.
+// A DEADLINE, not an accumulator. `_capNext` advances by exactly one period per DRAW, so the
+// long-run rate is the cap even when the display's cadence does not divide into it; an
+// accumulator that reset to zero on each draw would quantise 60-on-144 up to 72. The 1 ms of
+// slack is what stops a display running a hair under nominal (dt 16.6 against a 16.67 period)
+// from dropping every other frame, which is the classic way a 60 cap halves a 60 Hz panel.
+let _capNext = 0;
+function capSkip(now) {
+  const cap = G.fpsCap();
+  if (!cap || _benchOn) return false;      // §4's bench measures the UNCAPPED cost — see benchStart
+  // A long stall — a backgrounded tab, a GC pause, a context restore — must not be repaid as a
+  // burst of back-to-back draws, so the deadline resynchronises rather than catching up.
+  if (now - _capNext > 200) _capNext = now;
+  if (now + 1 < _capNext) return true;
+  _capNext += 1000 / cap;
+  return false;
+}
+// Draw/callback tally, for tools/reschk.mjs: the cap is invisible to any fps probe that counts
+// rAF callbacks (they keep coming at display rate), so the only honest measurement of it is the
+// ratio of these two. Two integer increments per frame.
+let _rafN = 0, _drawN = 0;
+G.frameStats = () => ({ raf: _rafN, draw: _drawN });
 function frame(now) {
   requestAnimationFrame(frame);
+  _rafN++;
+  // v7-RESILIENCE §2 — the GPU has taken the canvas away. No ticks and no draws until it comes
+  // back: a draw would throw or paint nothing, and letting the sim run on under the veil would
+  // mean a player whose phone was suspended mid-wave loses lives to a battle they cannot see.
+  // `last` is kept current so the frame the context returns on does not arrive with a dt of
+  // however many seconds the veil was up.
+  if (glLost) { last = now; return; }
   // CLAMPED AT BOTH ENDS. The upper bound has always been there (a long stall must not be
   // paid back as one enormous catch-up); the LOWER bound is new and was found by the §D1
   // live smoke: rAF's timestamp and performance.now() can disagree by hundreds of
   // milliseconds after a clock adjustment or a restored tab, and one negative dt drives the
   // accumulator so far below zero that the sim visibly stalls until it climbs back.
-  const dt = clamp((now - last) / 1000, 0, 0.06); last = now;
+  const rawMs = now - last;
+  const dt = clamp(rawMs / 1000, 0, 0.06); last = now;
+  if (_benchOn) benchTick(rawMs);           // §4 — the first-boot auto-bench, title screen only
   if (!state.paused && (state.phase === 'wave' || state.phase === 'prewave')) {
     acc += dt * state.speed * BASE_RATE;               // SPEC6 §D1
     let steps = 0;
@@ -23722,7 +24798,24 @@ function frame(now) {
       _paceN = -1;
     }
   }
+  // v7-RESILIENCE §3 — everything above this line is the SIMULATION and its bookkeeping, and it
+  // runs on every callback. Everything below it is the DRAW, and the cap gates it.
+  if (capSkip(now)) return;
+  _drawN++;
   render(now / 1000);
+  // BOOTPIPE §2 — THE LATE-PROGRAM ALARM. The whole point of the warm-up is that no program is
+  // ever compiled while the player is playing, and the only way to keep that true as the game
+  // grows is to be TOLD when it stops being true. Under `&dbg=1` this names every program that
+  // appears after the bar finished, with the frame it appeared on — which is how the pooled
+  // materials below were found. Costs one integer compare per frame and is off in shipped play.
+  if (_pgWatch && renderer.info.programs.length !== _pgN) {
+    for (const pr of renderer.info.programs) if (!_pgSeen.has(pr)) {
+      _pgSeen.add(pr);
+      if (_pgN) console.log('LATEPROGRAM ' + (pr.name || '?') + ' type=' + (pr.type || '?') +
+        ' n=' + renderer.info.programs.length + ' t=' + Math.round(performance.now()) + 'ms');
+    }
+    _pgN = renderer.info.programs.length;
+  }
   if (statsEl && !statsEl.classList.contains('hidden')) {
     fpsN++; fpsT += dt;
     if (fpsT >= 0.5) {
@@ -23736,6 +24829,459 @@ function frame(now) {
       fpsN = 0; fpsT = 0;
     }
   }
+}
+
+// ══ BOOTPIPE §2 — THE ASYNC SHADER PIPELINE ═══════════════════════════════════════════════
+// This is the headline fix. WHY the boot froze for 21.7 s, precisely: three.js creates a
+// WebGLProgram lazily, at the moment a material is first drawn, and `onFirstUse` immediately
+// asks the driver for the link result (getProgramInfoLog / LINK_STATUS). Both of those BLOCK
+// until the driver has finished linking that one program. So 93 `glLinkProgram` calls were
+// issued and waited on ONE AT A TIME — on Windows/ANGLE each is a full GLSL→HLSL→D3DCompile
+// round trip, ~230 ms for shaders this size — and the machine's other cores sat idle.
+//
+// KHR_parallel_shader_compile is the way out: `renderer.compileAsync()` issues EVERY link
+// first and then polls COMPLETION_STATUS_KHR, which does not block. The driver links the whole
+// set across its worker pool, the main thread stays free for the progress bar, and by the time
+// the first real frame calls `onFirstUse` the answer is already sitting there.
+//
+// compileAsync only covers materials reachable in the scene graph, drawn from the camera. Two
+// families are not:
+//   · SHADOW-DEPTH variants — three swaps in its own depth/distance material per caster, so
+//     those programs are created by the shadow pass and by nothing else. They are what the
+//     1.2–2.2 s trailing task was: they compiled during the player's FIRST interactions.
+//     Warm-up: one full frame with `shadowMap.needsUpdate` forced, into a 1x1 render target.
+//     The shadow pass still renders at full shadow-map resolution (it does not care about the
+//     colour target), so every depth variant gets built, while the colour pass costs one pixel.
+//   · pooled effect/projectile materials whose meshes are parented in on demand.
+// `warmExtra` collects the second family from the registries the sections expose and compiles
+// it in a throwaway scene, with the LIVE scene passed as `targetScene` so the lights/fog
+// defines — and therefore the program cache keys — are the ones the real frame will ask for.
+//
+// LIVE MODE ONLY, by two independent arguments: (1) a deterministic capture gains nothing from
+// warm shaders, and (2) the harness runs under `--virtual-time-budget=20000`, which
+// compileAsync's 10 ms poll loop would spend on itself.
+function warmExtra() {
+  const seen = new Set(), tmp = new THREE.Scene();
+  scene.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => seen.add(m)); });
+  let n = 0;
+  for (const o of (G.warmObjects || [])) {
+    if (!o || !o.material || !o.isMesh && !o.isPoints && !o.isLine && !o.isSprite) continue;
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    if (ms.every(m => seen.has(m))) continue;
+    ms.forEach(m => seen.add(m));
+    tmp.add(o.clone()); n++;
+  }
+  return n ? tmp : null;
+}
+// The program cache key carries `toneMapping` AND `outputColorSpace`, and three reads both off
+// whatever render target happens to be BOUND (WebGLPrograms.getParameters). The game draws
+// through EffectComposer, so its RenderPass binds `composer.readBuffer` whenever a second pass
+// exists — and compiling against the wrong binding is not a small waste, it is a doubling:
+// measured, warming with no target bound produced 54 programs the real frame could not use and
+// then compiled 46 more the moment it drew. Warm against the target the first pass will bind.
+// The obvious reading — `composer.passes[0].renderToScreen` — is WRONG before the first frame:
+// EffectComposer assigns that flag inside render(), so it is still the Pass constructor's `false`
+// when the warm-up runs. Derive it the way the composer will instead: the first pass writes the
+// default framebuffer exactly when it is the only enabled pass. That is the MOBILE tier, which
+// has neither bloom nor the night-grade pass — and reading the stale flag there warmed 67
+// render-target variants the mobile frames never use and then compiled 67 more on the first
+// frames (measured: 134 programs on mobile against 93 on high, and 9.4 s of long tasks).
+// The pass chain is fixed for the life of the page (VFX inserts the grade pass once, at
+// non-mobile tiers, and nothing ever toggles `enabled`), so one reading here holds for the run.
+function warmTarget() {
+  if (!composer || !composer.passes) return null;
+  let on = 0;
+  for (const p of composer.passes) if (p.enabled !== false) on++;
+  return on > 1 ? composer.readBuffer : null;
+}
+// Issue phase, sliced. `renderer.compile()` is where ANGLE translates GLSL to HLSL, and that
+// part is synchronous on the calling thread — 3.3 s in one task for the whole scene, which is
+// exactly the long task the staged boot exists to abolish. So the materials are issued a few at
+// a time with a yield between, which ALSO buys the real parallelism: every link issued in an
+// early slice is being built by the driver's workers while later slices are still translating.
+// `proxy` carries REFERENCES to the batch (children assigned directly, never `add`, so nothing
+// is reparented out of the live scene); `scene` is passed as compile()'s `targetScene`, which is
+// what supplies the lights, fog and environment the cache key needs. If a future three.js makes
+// that shape stop working the only consequence is fewer programs pre-warmed — the closing
+// compileAsync() over the whole scene is the backstop, and it is what the promise waits on.
+// ══ THE INSTANCED-VARIANT TRAP ═════════════════════════════════════════════════════════════
+// `instancingColor` is part of the program cache key, and `InstancedMesh.setColorAt()` allocates
+// `instanceColor` LAZILY — the first time it is called. So the first tinted body in a run (a
+// warded revenant, a risen corpse, a coloured boulder) flipped the key on a material that had
+// already been warmed, and three compiled a brand-new program in the middle of a wave. Measured
+// with the LATEPROGRAM alarm above: 4 programs (2 view, 2 depth) and one 2.6 s stall, on the
+// first wave of EVERY run — the exact stutter this stage exists to prevent.
+// The fix is to make the flag STOP CHANGING, not to warm both sides of it. Warming the tinted
+// variant as well as the plain one was measured at +55 programs and +14 s of boot, because every
+// army archetype carries its own patched shader and therefore its own program — the untinted
+// half of every pair being dead weight the game never draws twice. So the attribute is allocated
+// HERE, before anything is compiled, and left in place: one variant exists, it is the one the
+// game will use, and no program is ever created after the bar finishes.
+// Appearance-neutral by construction: the buffer is the same all-white fill setColorAt() would
+// have made, syncVisuals overwrites every instance it actually draws, and instances past `count`
+// are not drawn at all.
+// The set is DECLARED, not guessed. Warming the tinted variant of every instanced mesh in the
+// scene was measured at +61 programs and +13 s of boot to buy the 4 that are actually needed —
+// so the meshes that tint say so: ARMIES exposes its whole set as `Armies.meshes` (every one of
+// them takes a per-instance colour in syncVisuals) and TOWERS registers its boulders on
+// `G.warmTint`. Anything that starts tinting later and forgets to register will be named by the
+// LATEPROGRAM alarm in the frame loop, which is exactly how this list was found.
+function tintables() {
+  const objs = (G.warmTint || []).concat(Armies.meshes || []);
+  return objs.filter(o => o && o.isInstancedMesh && o.instanceMatrix && o.instanceColor === null);
+}
+function tintOn(list) {
+  for (const o of list)
+    o.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(o.instanceMatrix.count * 3).fill(1), 3);
+}
+function sceneDrawables() {
+  const objs = [];
+  scene.traverse(o => { if (o.material && (o.isMesh || o.isPoints || o.isLine || o.isSprite)) objs.push(o); });
+  return objs;
+}
+// ══ STAND-INS FOR WHAT IS NOT BUILT YET ════════════════════════════════════════════════════
+// A fortification's meshes come into existence when the player RAISES it — Towers.build() mints a
+// fresh material set per tower — so at boot there is nothing in the scene for compileAsync to look
+// at, and the LATEPROGRAM alarm duly reported 5 programs (3 view, 2 depth) compiled on the first
+// archer of the session: about 1.4 s, at the exact moment the player is watching a tower go up.
+// So one throwaway tower of every type and every level is built here, parented into the scene for
+// the two warm passes, then dropped and its materials disposed — precisely what Towers.build()
+// does to a material set when it rebuilds a tower for an upgrade.
+// They stand at the origin, not out of sight: the sun's shadow camera is an ortho box around the
+// playfield, and a stand-in parked below the world would be culled out of the shadow pass and its
+// depth variant never built. Both warm passes render into a 1x1 target, so what they overlap does
+// not matter. And `towerGeo` memoises, so this also leaves GEO_CACHE hot — the first real build of
+// each type skips its geometry merge as well as its shader.
+// The ghosts are treated differently: `ghostFor` is the game's own permanent per-type placement
+// preview, so those are simply BUILT here and left in place, exactly as arming placement would
+// have built them, which warms their translucent variants for free.
+function warmStandins() {
+  const made = [];
+  for (const type of Object.keys(TOWER_DEFS)) {
+    // Levels 1 and 3 only. Program keys do not vary with level (rigMat's customProgramCacheKey is
+    // map-presence and side), but the BUCKET SET does — a tier-3 form is the one that carries the
+    // double-sided cloth — and an upgrade only ever adds buckets, so the top and bottom forms
+    // between them cover every material configuration. Skipping the middle form keeps a third of
+    // the merged tower geometry out of GEO_CACHE for nothing given up. If some future tier-2 form
+    // ever introduces a material the other two lack, the LATEPROGRAM alarm will say so.
+    for (const level of [1, 3]) {
+      try {
+        const g = Towers.build({ type, level, x: 0, z: 0 });
+        g.name = 'WARM_' + type + level; scene.add(g); made.push(g);
+      } catch (e) { console.log('WARMWARN tower ' + type + level + ': ' + e.message); }
+    }
+    try { ghostFor(type); } catch (e) { console.log('WARMWARN ghost ' + type + ': ' + e.message); }
+  }
+  return made;
+}
+// The stand-ins leave the scene and their MATERIALS DELIBERATELY SURVIVE. Disposing them is the
+// obvious move and it is exactly wrong: three's releaseProgram() decrements the program's
+// usedTimes and DESTROYS it at zero, so tidying up after the warm-up threw away the very programs
+// the warm-up had just compiled — measured, the first archer still cost 5 fresh compiles with the
+// stand-ins disposed, and 0 with them kept. So the material objects are parked here instead: a few
+// hundred kilobytes of JS holding ~4 GPU programs alive for the life of the page, against a 1.4 s
+// stall on the first tower of every session. Their geometries were shared with GEO_CACHE and their
+// textures with the atlas, so nothing else is retained by this.
+const _warmKeep = [];
+function dropStandins(made) {
+  for (const g of made) {
+    scene.remove(g);
+    for (const c of g.children) {
+      if (c.material) _warmKeep.push(c.material);
+      if (c.customDepthMaterial) _warmKeep.push(c.customDepthMaterial);
+    }
+  }
+}
+async function warmView(objs, a, b) {
+  // Yield before the first compile so the scene walk is not billed together with it. The slice
+  // that follows is the expensive one whatever we do: three.js pays for its whole extension and
+  // render-state initialisation on the first getParameters() call, and that is one atomic task.
+  await BOOT.sub(a);
+  const proxy = new THREE.Scene();
+  // ONE object per slice. Measured with three at a time the worst slice was 908 ms, because the
+  // shaders in this scene are not equal — the splat terrain and the GPU-skinned army translate
+  // for hundreds of milliseconds each while a plain unlit quad is under ten. One at a time makes
+  // the worst slice the cost of the single worst shader, which is the floor three.js allows:
+  // a shader translation cannot be interrupted. (Lowering that floor is a shader-SIZE job — the
+  // program-count/complexity diet in PERF_ANALYSIS §2 — not a scheduling one.)
+  const B = 1;
+  for (let i = 0; i < objs.length; i += B) {
+    proxy.children = objs.slice(i, i + B);
+    try { renderer.compile(proxy, camera, scene); } catch (e) { console.log('WARMWARN issue: ' + e.message); break; }
+    await BOOT.sub(a + (b - a) * Math.min(1, (i + B) / objs.length));
+  }
+  proxy.children = [];
+  // The wait, not the work: every link is already issued, so this is the driver finishing in
+  // its own threads while the main thread runs the bar.
+  await BOOT.wait(renderer.compileAsync(scene, camera));
+  return objs.length;
+}
+// The shadow-depth variants. three swaps in its OWN depth material per caster, so the only way
+// to make those programs exist is to run a shadow pass — and three has no async path for it:
+// the pass draws, `onFirstUse` queries, the thread blocks, one program at a time. What CAN be
+// controlled is how much of that lands in a single task, so the casters are hidden and then
+// revealed a few at a time, with a warm-up frame and a yield per slice. The shadow pass renders
+// at full shadow-map resolution regardless of the colour target, which is why the colour target
+// is 1x1: every depth variant gets built and the visible half of the frame costs one pixel.
+// The exception is a tier with no bloom pass, where the real frames render straight to the
+// canvas — a program key changes with `currentRenderTarget === null`, so on that tier the
+// warm-up must render to the canvas too or it warms variants the game will not use.
+// `only` limits the pass to a subset of casters (used for the tinted second pass); null means
+// every caster in the scene.
+// Second trap, same family: an InstancedMesh with `count === 0` DRAWS NOTHING, so the shadow
+// pass never reaches it and its depth program is never built — which is why the army's depth
+// variant was one of the four programs that compiled mid-wave. Each zero-count caster is
+// therefore given a single instance for its warm-up frame and put straight back. The instance
+// draws a degenerate triangle into a shadow map that the next real frame regenerates from
+// scratch, so nothing survives the warm-up but the compiled program.
+async function warmDepth(only, a, b) {
+  const casters = [];
+  scene.traverse(o => { if (o.castShadow && o.material) casters.push(o); });
+  const list = only ? casters.filter(o => only.indexOf(o) >= 0) : casters;
+  if (!list.length) return 0;
+  const was = casters.map(o => o.visible);
+  for (const o of casters) o.visible = false;
+  const tgt = warmTarget() === null ? null : new THREE.WebGLRenderTarget(1, 1);
+  const prev = renderer.getRenderTarget();
+  for (let i = 0; i < list.length; i++) {          // one caster per slice, as in warmView()
+    const o = list[i], hadCount = o.isInstancedMesh ? o.count : -1;
+    o.visible = was[casters.indexOf(o)];
+    if (hadCount === 0) o.count = 1;
+    renderer.shadowMap.needsUpdate = true;
+    renderer.setRenderTarget(tgt);
+    renderer.render(scene, camera);
+    renderer.setRenderTarget(prev);
+    if (hadCount === 0) o.count = 0;
+    await BOOT.sub(a + (b - a) * ((i + 1) / list.length));
+  }
+  for (let i = 0; i < casters.length; i++) casters[i].visible = was[i];
+  if (tgt) tgt.dispose();
+  return list.length;
+}
+async function warmPrograms() {
+  const t0 = performance.now();
+  const par = !!renderer.getContext().getExtension('KHR_parallel_shader_compile');
+  const prev = renderer.getRenderTarget();
+  // FIRST, before a single program exists: settle the per-instance colour attribute, so every
+  // key compiled below is the key the game will ask for on every later frame.
+  const tint = tintables();
+  tintOn(tint);
+  await BOOT.sub(0.04);
+  const stand = warmStandins();
+  const objs = sceneDrawables();
+  renderer.setRenderTarget(warmTarget());
+  const nObj = await warmView(objs, 0.06, 0.56);
+  const nView = renderer.info.programs.length, t1 = performance.now();
+  const extra = warmExtra();
+  if (extra) { await BOOT.wait(renderer.compileAsync(extra, camera, scene)); extra.clear(); }
+  const nExtra = renderer.info.programs.length, t2 = performance.now();
+  renderer.setRenderTarget(prev);
+  const nCast = await warmDepth(null, 0.60, 0.99);
+  const nAll = renderer.info.programs.length, t3 = performance.now();
+  dropStandins(stand);
+  if (P.has('dbg')) {
+    const tally = {};
+    for (const pr of renderer.info.programs) tally[pr.name || pr.type || '?'] = (tally[pr.name || pr.type || '?'] | 0) + 1;
+    console.log('SHADERCENSUS ' + JSON.stringify(tally));
+  }
+  console.log('SHADERLOG parallel=' + (par ? 1 : 0) + ' standins=' + stand.length + ' objs=' + nObj + ' view=' + nView + '/' + Math.round(t1 - t0) + 'ms'
+    + ' tinted=' + tint.length + '/+' + (nExtra - nView) + '/' + Math.round(t2 - t1) + 'ms'
+    + ' casters=' + nCast + ' depth=+' + (nAll - nExtra) + '/' + Math.round(t3 - t2) + 'ms total=' + Math.round(t3 - t0) + 'ms');
+}
+
+// ══ v7-RESILIENCE §2 — WEBGL CONTEXT-LOSS RECOVERY (GAME_SPEC_7 §C.1) ═══════════════════════
+// NON-NEGOTIABLE for the store, and until this stage a lost context was a permanently black
+// screen. iOS/WKWebView drops GL contexts aggressively on suspend and tab-switch; Android kills
+// backgrounded activities; a desktop driver reset or a TDR does the same thing. All three arrive
+// as one event on the canvas.
+//
+// WHAT THREE r170 ALREADY DOES, so this code does not do it twice. WebGLRenderer registers its
+// OWN `webglcontextlost`/`webglcontextrestored` listeners in its constructor (vendored source,
+// ~line 29105) — which means they were registered BEFORE ours and run BEFORE ours. On restore it
+// calls initGLContext(), which rebuilds extensions, capabilities, state, info, PROPERTIES,
+// textures, attributes, geometries, bindingStates and the program cache from scratch. Because
+// `properties` is a fresh WebGLProperties, every texture, geometry and buffer has lost its
+// `__webglInit` marker and will be re-uploaded from its source the next time it is drawn. So the
+// baseline recovery is automatic; what is NOT automatic is everything below.
+//
+// WHAT IS NOT AUTOMATIC, and is therefore what this function is:
+//   1. The GPU PROGRAMS. The cache is empty again, so every one of the 52 would be compiled
+//      LAZILY, one blocking link at a time, on the first frame after the veil lifts — the exact
+//      14-second freeze the whole v7 boot pipeline exists to abolish, landing mid-battle. So the
+//      warm-up is re-run under the veil. warmPrograms() was written to be re-callable (it saves
+//      and restores the bound render target and holds no global state); the BOOTPIPE handoff's
+//      list of what must accompany it is honoured here in full.
+//   2. The LATEPROGRAM alarm's baseline. `renderer.info` is a NEW WebGLInfo, so its program list
+//      starts at zero; without resetting `_pgN`/`_pgSeen` the alarm would report all 52 as
+//      late-compiled and then go permanently quiet.
+//   3. RENDER TARGETS. composer.setSize() disposes and reallocates the ping-pong buffers and
+//      every pass's own target — which is the rebuild §C.1 asks for, and it does it without
+//      constructing a single new material, so no new program and no new cache key. Rebuilding
+//      the composer itself would re-run VFX.post() and mint a second night-grade ShaderMaterial.
+//   4. PROCEDURAL TEXTURES. Belt and braces over three's automatic path: every one of this
+//      game's textures is a canvas we still hold, so a version bump guarantees the re-upload
+//      even if a future three.js starts caching outside `properties`.
+// AND WHAT MUST NOT BE TOUCHED: `_warmKeep`. Disposing those materials destroys the programs
+// they hold alive (three's releaseProgram deletes at usedTimes 0) — the BOOTPIPE handoff's risk
+// 4, and it applies to a rebuild exactly as it applies to the boot.
+//
+// THE RUN ITSELF IS NOT AT RISK. Nothing here touches sim state, and CAM keeps its yaw and its
+// target (MENUCAM handoff item 5): only `_camT` is reset, so the first frame back computes a dt
+// of zero instead of flinging the camera across the vale by however long the veil was up.
+let glLost = false;
+G.glLost = () => glLost;
+const veil = on => $('veil').classList.toggle('hidden', !on);
+// Every texture reachable from anything that can be drawn. Render-target textures are SKIPPED on
+// purpose: they have no source image, and marking one would make three try to upload from null.
+const TEX_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap',
+  'aoMap', 'bumpMap', 'displacementMap', 'envMap', 'lightMap', 'specularMap', 'gradientMap',
+  'matcap', 'clearcoatMap', 'clearcoatNormalMap', 'sheenColorMap', 'iridescenceMap'];
+function texSweep() {
+  const seen = new Set();
+  const mark = t => { if (t && t.isTexture && !t.isRenderTargetTexture && !seen.has(t)) { seen.add(t); t.needsUpdate = true; } };
+  const mat = m => {
+    if (!m) return;
+    for (const f of TEX_SLOTS) if (m[f]) mark(m[f]);
+    // The atlases this game actually runs on are mostly here rather than in a named slot: every
+    // onBeforeCompile fork and every ShaderMaterial carries its sheet as a uniform.
+    if (m.uniforms) for (const k in m.uniforms) { const v = m.uniforms[k]; if (v && v.value && v.value.isTexture) mark(v.value); }
+  };
+  const walk = o => {
+    if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(mat);
+    if (o.customDepthMaterial) mat(o.customDepthMaterial);
+    if (o.customDistanceMaterial) mat(o.customDistanceMaterial);
+  };
+  scene.traverse(walk);
+  for (const m of _warmKeep) mat(m);                      // the stand-ins' retained material sets
+  for (const o of (G.warmObjects || [])) if (o) walk(o);  // pooled effects not yet parented in
+  for (const o of (G.warmTint || [])) if (o) walk(o);
+  mark(scene.environment);                                // the sky IBL — a CanvasTexture the renderer PMREMs
+  mark(scene.background);
+  if (composer && composer.passes) for (const p of composer.passes) mat(p.material);
+  return seen.size;
+}
+async function glRestore() {
+  const t0 = performance.now();
+  // The renderer's outer-scope size/ratio survived, but re-asserting them is free and it puts the
+  // NEW WebGLState in a known place. `_dprNow` is the density ladder's current notch (§D3c).
+  renderer.setPixelRatio(_dprNow > 0 ? _dprNow : Math.min(devicePixelRatio, Q.px));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.needsUpdate = true;
+  let nPass = -1;
+  try { composer.setSize(innerWidth, innerHeight); nPass = composer.passes.length; }
+  catch (e) { console.log('GLWARN composer: ' + e.message); }
+  const nTex = texSweep();
+  _pgN = 0; _pgSeen.clear();
+  let nProg = -1;
+  try {
+    // tintables() returns [] on a rebuild — the attribute is on the mesh, not in the GL context —
+    // so this is a no-op that stays honest if some future mesh arrives after boot.
+    tintOn(tintables());
+    await warmPrograms();
+    nProg = renderer.info.programs.length;
+    // AND THEN ONE REAL COMPOSED FRAME, under the veil. warmPrograms draws through
+    // `renderer.render()` into a 1x1 target, which never touches the POST chain — so the bloom's
+    // five blur radii, its composite and luminosity passes, the night grade and the PMREM set
+    // (measured: 10 programs) are not covered by it. At boot those compile on the first frame
+    // after the bar and that was accepted; here we can do better for free, because there is
+    // already a veil over the screen to hide it behind. Measured with tools/reschk.mjs's program
+    // census: 43 after the warm, 53 after this line, and 53 is what was up before the loss.
+    composer.render();
+    nProg = renderer.info.programs.length;
+  } catch (e) { console.log('GLWARN warm: ' + e.message); }
+  // Back to the fight. `acc` is dropped rather than carried: at most one tick, and paying back a
+  // suspended phone's worth of accumulator is the one thing the clamp cannot protect against.
+  _camT = -1; last = performance.now(); acc = 0; _capNext = 0;
+  glLost = false; veil(false);
+  console.log('GLRESTORE ms=' + Math.round(performance.now() - t0) + ' textures=' + nTex +
+    ' passes=' + nPass + ' programs=' + nProg + ' phase=' + state.phase + ' wave=' + state.wave +
+    ' towers=' + G.towersList.length + ' yaw=' + CAM.yaw.toFixed(3));
+}
+if (!SHOT) {
+  // preventDefault() is what makes the loss RECOVERABLE — without it the browser never fires
+  // `webglcontextrestored`. three's own handler already calls it; ours is explicit because that
+  // is a fact about a vendored library and this is the contract §C.1 names.
+  canvas.addEventListener('webglcontextlost', e => {
+    e.preventDefault();
+    glLost = true; veil(true);
+    console.log('GLLOST t=' + Math.round(performance.now()) + 'ms phase=' + state.phase +
+      ' wave=' + state.wave + ' alive=' + G.enemies.filter(en => en.alive).length);
+  }, false);
+  // Ours runs AFTER three's, which is what makes the ordering correct: by the time this is
+  // called initGLContext() has already re-created the whole GL-side world.
+  canvas.addEventListener('webglcontextrestored', () => { glRestore(); }, false);
+  // The test rig, `&dbg=1` only. WEBGL_lose_context is the only way to provoke a real loss on
+  // demand, and the extension object must be re-fetched each time because the restore replaces
+  // three's whole extension cache. tools/reschk.mjs drives exactly these two.
+  if (P.has('dbg')) {
+    // CACHED, and that is the whole trick: `getExtension()` on an ALREADY-LOST context returns
+    // null, so a lazily re-fetched handle can kill the context and then never revive it. The
+    // extension object stays valid across a restore because the WebGLRenderingContext object
+    // itself is the same one — only its GL-side resources were replaced.
+    const ext = renderer.getContext().getExtension('WEBGL_lose_context');
+    G.glKill = () => { if (ext) ext.loseContext(); return !!ext; };
+    G.glRevive = () => { if (ext) ext.restoreContext(); return !!ext; };
+    console.log('GLTEST ext=' + (ext ? 1 : 0) + ' — G.glKill() then G.glRevive()');
+  }
+}
+
+// ══ v7-RESILIENCE §4 — THE FIRST-BOOT AUTO-BENCH (GAME_SPEC_7 §C.4) ═════════════════════════
+// "Phones vary 10×" is the whole argument: a UA string cannot tell a flagship from a three-year
+// -old budget device, and the tier is the single biggest lever on whether this game is playable.
+// So the first boot MEASURES, once, and stores the answer for the next load.
+//
+// FIVE GUARDS, and each of them is there because the failure it prevents is worse than no bench:
+//   · never under SHOT — a preset's tier must come from its URL and nothing else;
+//   · only when TIER_SEL === 'auto' — MENUCAM's contract rule (a): a player who chose Ultra must
+//     not be re-tiered by a two-second sample taken while the GPU was thermally throttled;
+//   · only at HIGH tier, because §C.4's bands are stated in high-tier frame times. A touch device
+//     resolves to mobile on its first boot, so it is not benched: measuring the mobile tier and
+//     PROMOTING off it is a different and much riskier decision (mobile→high is 2× the shadow
+//     map, the whole bloom chain and 1.8× the prop scatter), and it is not one a desktop-only
+//     measurement can justify. That gap is stated in the handoff rather than guessed at;
+//   · only if no bench has ever run (or `&bench=1` forces one) — "first-boot", literally. A
+//     bench on every load would let one throttled sample downgrade a good machine for good;
+//   · only at the title, and it aborts the moment the phase leaves it — a sample taken over a
+//     wave is measuring the wave, and the bands were not calibrated for that.
+//
+// STORED, NEVER APPLIED to the live session. MENUCAM's contract rule (b), and it is not a
+// nicety: Q is consumed during construction by every section (shadow-map size, geometry segment
+// counts, prop density, atlas resolution) and cannot change after SECTION: CORE.
+const BENCH_SKIP = 10, BENCH_N = 90, BENCH_MS = 1500;
+let _benchOn = null;
+// The banding, as a PURE FUNCTION of frames per second, so it can be asserted without faking a
+// slow GPU (tools/reschk.mjs calls it across the whole range). `ultra` is deliberately never
+// returned: it is a choice a player makes, not something a 1.5 s sample should promote to.
+G.benchPick = fps => fps >= 55 ? ['high', 2] : fps >= 40 ? ['high', 1.5] : ['mobile', G.QT.mobile.px];
+function benchTick(ms) {
+  if (state.phase !== 'title') { _benchOn = null; return; }   // the player pressed Play — abandon it
+  if (_benchOn.skip > 0) { _benchOn.skip--; return; }
+  _benchOn.f.push(ms);
+  if (_benchOn.f.length >= BENCH_N || performance.now() - _benchOn.t0 >= BENCH_MS) benchDone();
+}
+function benchDone() {
+  const f = _benchOn.f.slice().sort((a, b) => a - b);
+  _benchOn = null;
+  // MEDIAN, not mean: the first frames after a cold start carry compositor and GPU-process
+  // warm-up, and one 300 ms outlier would drag a mean across a whole band.
+  if (f.length < 20) { console.log('BENCHLOG samples=' + f.length + ' — too few to judge, no verdict'); return; }
+  const med = f[f.length >> 1], fps = 1000 / med, pick = G.benchPick(fps);
+  try {
+    localStorage.setItem(G.TIER_BENCH_KEY, pick[0]);
+    localStorage.setItem(G.TIER_PX_KEY, String(pick[1]));
+  } catch (e) { /* private mode: the bench simply runs again next load */ }
+  G.TIER_BENCH = pick[0]; G.TIER_PX = pick[1];
+  if (UI.qualRefresh) UI.qualRefresh();       // the Auto row can now name the verdict
+  console.log('BENCHLOG samples=' + f.length + ' medianMs=' + med.toFixed(2) + ' fps=' + fps.toFixed(1) +
+    ' verdict=' + pick[0] + ' px=' + pick[1] + ' (stored — applies on the next load)');
+}
+function benchStart() {
+  if (SHOT || G.TIER_SEL !== 'auto' || tier !== 'high') return false;
+  if (G.TIER_BENCH && !P.has('bench')) return false;
+  if (state.phase !== 'title') return false;
+  // The first frames are the least representative frames there are, so they are thrown away.
+  _benchOn = { skip: BENCH_SKIP, f: [], t0: performance.now() };
+  return true;
 }
 
 // ── SHOT HARNESS (sacred — deterministic screenshots for the critic pipeline) ──
@@ -24855,6 +26401,18 @@ const SHOT_PRESETS = {
       // The writ has to answer with the MUSTER copy (roster + price of the next slot), which
       // UI.place selects on `why` — so the staged refusal has to carry it, not just prose.
       UI.place(Object.assign({ type: 'ballista' }, canPlace(26, 6), { ok: false, why: 'mfull', reason: L('cp.mfull') })); } },
+  // v7-MENUCAM §1 — the QUALITY SUBMENU, open. `_gear` deliberately keeps it shut (it is the
+  // sheet's default state and that frame must stay byte-identical to the pre-menu battery), so
+  // the four rows and their descriptions would otherwise have no shot coverage at all — they
+  // live behind a click, and clicks are what the harness cannot do. Opening it is one
+  // classList call in the same synchronous `ui` phase every other preset writes its DOM in, so
+  // the freeze contract is untouched. Shoot it in both tongues: this is the one panel in the
+  // game whose copy is a full sentence per row, and French is 15-20% longer.
+  _qual:   { t: 40, builds: [[26, 21, 'archer', 1], [16, -3, 'archer', 1]],
+    cam: { pos: [38, 16, 36], look: [26, 1, 21] },
+    ui: () => { $('settings').classList.remove('hidden'); $('btnGear').classList.add('on');
+      $('qualMenu').classList.remove('hidden'); $('btnQual').classList.add('on');
+      $('btnQual').setAttribute('aria-expanded', 'true'); } },
 };
 // [x, z, type, level] since free placement landed. The coordinates are the eight old fixed
 // plots, so every shipped frame keeps its composition; levels are literal (see placeTower).
@@ -25150,13 +26708,50 @@ if (P.get('dbg')) window.G = G;
 if (SHOT) G.applyTalents();
 if (SHOT) runShot(SHOT);
 else {
+  // BOOTPIPE §2 — the forge stage. Everything above this line built the world; this line pays
+  // for the GPU programs that draw it, off-thread, with the bar still moving. Nothing after it
+  // may compile a program for the first time during play.
+  await BOOT.stage('boot.forge');
+  await warmPrograms();
+  // ══ v7-RESILIENCE §1 — THE RESTORE, in its own boot stage ═══════════════════════════════
+  // Exactly where the BOOTPIPE handoff said a restore belongs: after the forge (the world
+  // exists, its shaders are warm, GEO_CACHE is hot so the towers going back up cost no
+  // geometry merge) and before the horn (the render loop has not started, so a half-built
+  // vale is never on screen for a frame). `&resume=1` is written by runNav() when a mid-run
+  // reload happens, and by the title plinth's offer when the saved run needs a different
+  // map/mode/seed than this page resolved.
+  // A snapshot that does not FIT this page is LEFT ALONE rather than forced: map, mode, seed
+  // and daily are all resolved from the URL at module scope, so restoring across a mismatch
+  // would silently graft a Barrowmoor garrison onto the Vale. It stays on disk, and the title
+  // screen offers it properly (with the navigation it needs) on the next pass.
+  let resumed = false;
+  if (P.has('resume')) {
+    const s = G.runSnap();
+    if (G.runFits(s)) { await BOOT.stage('boot.rally'); resumed = UI.resumeRun(s, false); }
+    else console.log('RUNSKIP &resume asked, snapshot does not fit this page — ' + (s
+      ? 'map=' + s.map + '/' + MAP.id + ' mode=' + s.mode + '/' + MODE + ' seed=' + s.seed + '/' + runSeed
+      : 'nothing stored'));
+  }
+  await BOOT.stage('boot.ready');
   // `&auto=1` (written by a map card) drops straight into the chosen road; `&maps=1`
   // ("Choose Your Road" on the victory plate) opens the chooser over the title backdrop.
-  if (P.has('auto')) UI.startGame(false); else if (P.has('maps')) UI.showMaps();
+  // Neither runs after a resume: the run is already under way.
+  if (!resumed) { if (P.has('auto')) UI.startGame(false); else if (P.has('maps')) UI.showMaps(); }
+  // v7-RESILIENCE §1 — dress the plinth, but only on the paths that actually END at the title.
+  if (state.phase === 'title') UI.resumeOffer();
   // SPEC6 §D3a — the bench in LIVE play, which is the case it exists for: `?horde=900&stats=1`
   // puts 900 bodies on the road of whatever device is holding the phone and the stats line
   // reads back fps, draw calls, alive, `over` (must be 0) and whether the §D3c ladder engaged.
   if (HORDE_BENCH > 0 && state.phase !== 'title') G.hordeBench(HORDE_BENCH);
-  UI.sync(); requestAnimationFrame(frame);
+  UI.sync();
+  // The bar reaches its end, the Play button comes alive, and the render loop starts on the
+  // same frame — so the first frame the player sees is also the first frame they can act on.
+  BOOT.done();
+  requestAnimationFrame(frame);
+  BOOT.idle();
+  // v7-RESILIENCE §4 — LAST, and after the loop has started, because the thing being measured is
+  // frames. Its five guards are at benchStart(); on every boot but a first one it returns false
+  // and costs nothing.
+  benchStart();
 }
 // ══════════════════════ END SECTION: MAIN ══════════════════════

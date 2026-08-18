@@ -1683,6 +1683,26 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    run off any viewport under 250px and nothing in the file was stopping it. */
 #settings{ position:absolute; top:58px; right:12px; width:min(238px, calc(100vw - 24px));
    max-width:calc(100vw - 24px); padding:10px 12px 12px; border-radius:6px; pointer-events:auto; }
+/* v7-MENUCAM §1 — the sheet can now GROW: the quality submenu adds ~200px when it is open, and
+   the game is landscape-locked, so the height it has to survive is a phone's 390px SHORT side.
+   Capping and scrolling is what keeps the last row reachable there. The rule is behind a HEIGHT
+   query, not applied unconditionally, for a measured reason: `overflow-y:auto` makes the sheet a
+   scroll container, and that alone shifts its bottom border-image edge by Δ≤3 on a 200px strip
+   — a real (if invisible) diff in the `_gear` shot. On a viewport tall enough to hold the open
+   sheet there is nothing to scroll, so the container should not exist. */
+@media (max-height:660px){
+  #settings{ max-height:calc(100vh - 70px); overflow-y:auto; overscroll-behavior:contain; }
+}
+/* v7-MENUCAM §1 — and the sheet needs to WIN THE PAINT on a narrow viewport. It carried no
+   z-index, so #buildMenu and #powers — later in the document, and on a phone occupying the
+   bottom ~480px full width — drew over it. On a wide viewport the sheet is a 238px plate in the
+   top-right corner and touches neither, which is why this never showed on desktop and why the
+   rule is scoped: an unconditional z-index would make the sheet its own stacking context
+   everywhere, which measurably (5 px, Δ≤10) recomposites its translucent border-image against
+   the frame beneath it in the `_gear` shot. 12 clears the omen modal's 8 and everything under. */
+@media (max-width:900px){
+  #settings{ z-index:12; }
+}
 #settings .sT{ font-size:11px; letter-spacing:.26em; text-transform:uppercase; color:var(--gold-l); margin-bottom:8px; }
 /* FIX2-UI §4b — SETTINGS shipped a THIRD type language: plain sentence-case light serif
    ("Sound On", "Restart Campaign") that appears nowhere else in the game. Every interactive
@@ -1694,6 +1714,29 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
       transition:filter .14s; }
 #settings button:hover{ filter:brightness(1.22); }
 #settings button b{ float:right; color:#ffdc8e; font-weight:400; letter-spacing:.12em; }
+/* ── v7-MENUCAM §1 — the quality submenu ────────────────────────────────────────────
+   An accordion INSIDE the sheet, not a second floating panel: it inherits the sheet's
+   position, its clamp and its mobile bottom-dock for free, and there is never a moment
+   where two iron plates overlap at 390px. The rows are inset and rule-joined to the
+   Quality button above them so the nesting reads without a second frame. */
+#qualMenu{ margin:5px 0 2px; padding:1px 0 0 9px; border-left:1px solid rgba(232,182,76,.22); }
+#settings #qualMenu button.qR{ min-height:0; margin-top:5px; padding:7px 10px 8px; letter-spacing:.14em;
+   border-color:rgba(232,182,76,.17); box-shadow:0 3px 9px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,228,178,.08); }
+#qualMenu .qN{ display:block; color:#e3d2a8; font-size:10.5px; }
+/* the description is the whole point of the menu, so it is sentence-case and unspaced —
+   the one place in the sheet where prose is being READ rather than a control being labelled */
+#qualMenu .qD{ display:block; margin-top:3px; font-size:10px; line-height:1.44; letter-spacing:.01em;
+   text-transform:none; color:#b6a687; }
+#qualMenu .qB{ float:right; font-style:normal; font-size:8.5px; letter-spacing:.14em; padding:1px 6px 2px;
+   border-radius:8px; margin-left:8px; }
+#qualMenu .qB.pick{ color:#1a140c; background:linear-gradient(180deg,#f0cb7a,#c9993f); }
+#qualMenu .qB.now{ color:#ffdc8e; border:1px solid rgba(232,182,76,.4); padding:0 5px 1px; }
+#settings #qualMenu button.qR.sel{ border-color:rgba(232,182,76,.62);
+   background-image:var(--noise),linear-gradient(178deg,#3a3122,#1d1810); background-size:180px 180px,100% 100%; }
+#settings #qualMenu button.qR.sel .qN{ color:#ffe6b4; }
+/* FIX2-UI §5's rule applies here too: a line whose job is to warn must be READABLE. 9.5px on
+   the sheet's own parchment-gold rather than 8.5px in a grey that fails contrast. */
+#qualMenu .qF{ margin:8px 2px 1px; font-size:9.5px; line-height:1.42; color:#a3947a; letter-spacing:.02em; }
 /* FIX2-UI §4e — wiping the campaign is not a toggle. It is separated by a rule, carries the
    dismantle plate's crimson accent bar, and says what it destroys. */
 #btnReset{ margin-top:11px; letter-spacing:.13em; white-space:nowrap; color:#e8a89c; border-color:rgba(226,120,90,.42);
@@ -1871,8 +1914,75 @@ h1#logo{ margin:0; font-size:min(11.2vw,104px); line-height:1; letter-spacing:.0
 .bigBtn:hover{ filter:brightness(1.16); transform:translateY(-2px);
    box-shadow:0 14px 34px rgba(0,0,0,.7), 0 0 34px rgba(232,182,76,.5), inset 0 1px 0 rgba(255,204,164,.32); }
 .bigBtn:active{ transform:translateY(0) scale(.985); filter:brightness(.9); }
+/* ── v7-RESILIENCE §1 — THE SAVED-RUN OFFER ON THE TITLE PLINTH ────────────────────────
+   Two buttons where there was one, so the hierarchy has to be unmistakable: Resume keeps the
+   blue-enamel primary and carries the run's own line (road · wave · standards), while Play —
+   which SECTION: UI relabels "New campaign" whenever the offer is up — steps back to the
+   struck-iron secondary the victory plate already uses for its second call.
+   EVERY rule that changes the existing screen is scoped to `#btnResume:not(.hidden)`. The
+   button ships `hidden` and only live mode with a snapshot present unhides it, so a title with
+   no saved run — which is every shot preset, by construction — is laid out exactly as before. */
+#btnResume{ padding:13px 46px 15px; }
+#btnResume .rS{ display:block; margin-top:5px; font-family:var(--sans); font-style:normal;
+   font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#cfe1ff; opacity:.8;
+   text-shadow:0 1px 3px rgba(0,0,0,.8); }
+#btnResume:not(.hidden) + #btnPlay{ margin-top:13px; padding:11px 40px; font-size:min(4.2vw,17px);
+   letter-spacing:.2em; color:#e2d4b4;
+   background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f);
+   background-size:180px 180px,100% 100%;
+   box-shadow:0 6px 16px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.24),
+              inset 0 1px 0 rgba(255,228,178,.12); }
+/* The load bar dims Play while the world builds; the offer button has to answer to the same
+   gate, because BOOT.ready is what makes either of them safe to press. */
+#title.booting #btnResume{ opacity:.30; filter:saturate(.35) brightness(.7); pointer-events:none; }
+/* A SHORT LANDSCAPE PHONE, measured rather than guessed. The game is landscape-locked, so the
+   dimension the plinth has to survive is a 390 px SHORT side — and a second button plus its own
+   subtitle line adds 111 px to a stack that had 136 px of room between the tagline and the plinth
+   footer. Measured at a true 828x295 with tools/measure.mjs: unscoped, Play landed at bottom 313
+   against a 295 viewport and drew straight over #titleFoot. Compressed, the pair ends at ~200.
+   Scoped to `#btnResume:not(.hidden)`, so the one-button title — which is every shot preset, by
+   construction, and every player who has no saved run — keeps the composition the art was tuned
+   for at every viewport. */
+@media (max-height:460px){
+  #btnResume:not(.hidden){ margin-top:10px; padding:7px 26px; font-size:min(4.4vw,15px); letter-spacing:.18em; }
+  #btnResume:not(.hidden) .rS{ margin-top:2px; font-size:9px; letter-spacing:.16em; }
+  #btnResume:not(.hidden) + #btnPlay{ margin-top:8px; padding:6px 22px; font-size:min(3.4vw,13px); }
+}
 #titleFoot{ position:absolute; bottom:calc(18px + env(safe-area-inset-bottom)); left:0; right:0; font-size:10.5px;
             letter-spacing:.3em; text-transform:uppercase; color:#a8977a; opacity:.92; text-shadow:0 1px 4px #000; }
+
+/* ── BOOTPIPE §1 — THE LOAD BAR ──────────────────────────────────────────────────────────
+   Display state is the whole contract with the shot harness: the bar is `display:none` in the
+   BASE rule and only ever shown under `#title.booting`, a class SECTION: CORE adds when SHOT
+   is unset. So the harness's freeze stylesheet has nothing to freeze here and every title
+   frame in the battery is laid out exactly as it was before the bar existed.
+   The bar occupies the same block the Play button will, and the button stays IN LAYOUT while
+   loading (dimmed, inert) rather than being hidden — a title screen that reflows the instant
+   the world finishes is a title screen that moves the button out from under the cursor. */
+#boot{ display:none; }
+/* While the bar is up the ONLY thing in the interface layer is the title lockup. index.html
+   ships the HUD chips, the speed/pause/gear rail and the keybind disc as live markup, and the
+   thing that hides them for the title screen is UI.sync() — which is the last statement of the
+   boot pipeline. So for ~20 s the load screen wore a HUD reading "0 gold, 0 vale, wave 0/10".
+   One rule, rooted at the element that has the class, covering anything UI adds later too. */
+html.booting #ui > *:not(#title){ display:none !important; }
+#title.booting #boot{ display:block; width:min(76vw,352px); margin:16px auto 0; }
+#title.booting #btnPlay{ opacity:.30; filter:saturate(.35) brightness(.7); pointer-events:none; }
+/* The plinth line is index.html's no-JS fallback ("10 waves, 4 fortifications, one road") and it
+   is both stale and untranslated until SECTION: UI rewrites it with the real counts and the war
+   seed. `visibility` rather than `display` so the line keeps its box and the lockup does not
+   shift the moment the real text arrives. */
+#title.booting #titleFoot{ visibility:hidden; }
+/* struck-iron channel with a gold inner rule — the chip idiom, at bar scale */
+#bootTrack{ height:7px; border-radius:4px; overflow:hidden;
+  background-image:linear-gradient(180deg,#05070b,#0d1219 60%,#070a10);
+  box-shadow:inset 0 0 0 1px rgba(232,182,76,.34), inset 0 2px 5px rgba(0,0,0,.9),
+             0 1px 0 rgba(232,182,76,.10); }
+#bootFill{ width:0%; height:100%; border-radius:3px;
+  background-image:linear-gradient(180deg,#ffeab4 0,#e8b64c 42%,#a9761d 78%,#f2d493 100%);
+  box-shadow:0 0 10px rgba(232,182,76,.55); transition:width .32s ease-out; }
+#bootStage{ margin-top:9px; font-family:var(--sans); font-size:10px; letter-spacing:.22em;
+  text-transform:uppercase; color:#cbb488; text-shadow:0 1px 4px rgba(0,0,0,.9); min-height:12px; }
 
 #end{ background-image:
    radial-gradient(ellipse 40% 40% at 50% 48%, rgba(5,4,2,.62), rgba(5,4,2,0) 76%),
@@ -2286,7 +2396,8 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      resist row wraps to its own line under its label, full width, still right-docked */
   #towerMenu .rby{ flex-wrap:wrap; }
   #towerMenu .rby>em{ flex:1 0 100%; justify-content:flex-start; }
-  #settings{ top:auto; bottom:calc(10px + env(safe-area-inset-bottom)); right:7px; left:7px; width:auto; }
+  #settings{ top:auto; bottom:calc(10px + env(safe-area-inset-bottom)); right:7px; left:7px; width:auto;
+     max-height:calc(100vh - 20px - env(safe-area-inset-bottom)); overflow-y:auto; overscroll-behavior:contain; }
   #msg{ top:24%; padding:0 16px; }
   #msg .mT{ font-size:9.6vw; letter-spacing:.12em; }
   #msg .mS{ font-size:9px; letter-spacing:.2em; }
@@ -2299,6 +2410,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #tagRow .flr{ width:9vw; }
   #tagline{ font-size:9.5px; letter-spacing:.14em; }
   .bigBtn{ margin-top:22px; padding:14px 44px; min-height:52px; letter-spacing:.16em; }
+  /* BOOTPIPE §1 — the load bar tracks the button it sits under, and the stage name loses a
+     little tracking so the longest of them ("Rassemblement"/"Raising the timber") still fits on
+     one line at 375px rather than wrapping and shifting the footer mid-load. */
+  #title.booting #boot{ width:min(86vw,320px); margin-top:12px; }
+  #bootStage{ font-size:9px; letter-spacing:.14em; }
   #titleFoot{ font-size:9px; letter-spacing:.16em; }
   #maps{ justify-content:flex-start; padding-top:calc(14px + env(safe-area-inset-top)); }
   #mapCards{ flex-direction:column; gap:9px; margin-top:14px; width:100%;
@@ -2583,3 +2699,29 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #deedToast .dtN{ font-size:12px; }
   .mCard .mMc{ font-size:9px; padding:3px 7px; letter-spacing:.1em; }
 }
+
+/* ── v7-RESILIENCE §2 — THE CONTEXT-LOSS VEIL (GAME_SPEC_7 §C.1) ───────────────────────
+   The GPU can take the canvas away at any moment — iOS suspending a WKWebView, an Android
+   activity returning from the background, a driver reset — and until this stage that was a
+   black screen with no way back. The veil goes up on `webglcontextlost`, the run is frozen
+   under it (MAIN's loop halts: no ticks, no draws), and it comes down when the forge is relit.
+   NOT an `.overlay`: a loss can land on any screen, so it has to sit above the title, the
+   chooser, the end plate and every panel — hence `position:fixed` and a z-index above the
+   deed toast (60), which was the previous ceiling inside #ui.
+   Nothing headless can reach it: `hidden` at rest and the only writer is inside `if (!SHOT)`.
+   The one animation is the ember ring, and it lives on a child rather than on #veil itself, so
+   the freeze contract has nothing to catch even if a preset ever did show it. */
+#veil{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column;
+   align-items:center; justify-content:center; gap:17px; pointer-events:auto;
+   background-image:radial-gradient(ellipse 62% 62% at 50% 50%, rgba(11,7,3,.74), rgba(4,3,2,.94) 78%);
+   -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+/* an ember on a cold anvil: a gold arc turning on a dark ring, the HUD's own two metals */
+#veil .vI{ width:34px; height:34px; border-radius:50%;
+   border:2px solid rgba(232,182,76,.16); border-top-color:#e8b64c;
+   box-shadow:0 0 20px rgba(232,182,76,.34), inset 0 0 10px rgba(232,182,76,.12);
+   animation:vSpin 1.05s linear infinite; }
+#veil .vT{ font-size:min(4.4vw,17px); letter-spacing:.2em; text-transform:uppercase;
+   color:#f0dcae; text-align:center; padding:0 22px; line-height:1.5;
+   text-shadow:0 2px 0 rgba(0,0,0,.8), 0 0 26px rgba(255,196,120,.3); }
+@keyframes vSpin{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce){ #veil .vI{ animation:none; } }
