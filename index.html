@@ -133,6 +133,14 @@
     <button id="btnFps" data-lt="set.fpsT"><span data-l="set.fps">Frame cap</span> <b id="fpsV">60 fps</b></button>
     <button id="btnAuto" data-lt="set.autoT"><span data-l="set.auto">Auto-call</span> <b id="autoV">Off</b></button>
     <button id="btnLang"><span data-l="set.lang">Language</span> <b id="langV">English</b></button>
+    <!-- SPEC_8 §G — RUNEBINDING, the experimental toggle. It RELOADS (see btnRb in SECTION: UI),
+         which is why it sits next to Language rather than next to Sound: it is one of the three
+         controls in this panel that rebuild the page instead of changing a value in place.
+         It is VISIBLE UNCONDITIONALLY, including in the shot battery, and that is the deliberate
+         reading of the brief: the user ordered a settings toggle, so it is shipped UI, and shipped
+         UI that no preset renders is UI nobody has ever looked at. `_gear` and `_gear_fr` are
+         re-rendered against this sixth row. What is default-OFF is the MECHANIC, not the switch. -->
+    <button id="btnRb" data-lt="set.rbT"><span data-l="set.rb">Runebinding</span> <b id="rbV">Off</b></button>
     <button id="btnReset" data-l="set.reset">Restart Campaign</button>
   </div>
   <!-- v7-RESILIENCE §2 — the context-loss veil (GAME_SPEC_7 §C.1). The GPU can take the canvas

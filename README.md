@@ -3,8 +3,8 @@
 *Hold the vale. Break the horde.*
 
 A medieval tower-defense game built with Three.js — procedural art, deterministic simulation,
-four campaigns, free tower placement, elemental warfare, per-run War Omens, hero powers,
-road traps, choreographed waves, a persistent War Council, 28 Deeds, endless / daily / horde
+five campaigns, free tower placement, elemental warfare, per-run War Omens, hero powers,
+road traps, choreographed waves, a persistent War Council, 31 Deeds, endless / daily / horde
 modes. English and French.
 
 **Installable PWA**: works offline after first load, installs to the home screen on phones
@@ -25,18 +25,31 @@ Then visit `http://localhost:8321/`.
 
 ## Features
 
-- **4 campaigns**, each unlocked by holding the one before it: The Vale (easy) · Frostfell Pass
+- **5 campaigns**, each unlocked by holding the one before it: The Vale (easy) · Frostfell Pass
   (hard, twin spawn gates) · Ember Wastes (expert, forked road, double-boss finale) ·
-  **The Barrowmoor** (legend, 16 waves — *"the moor keeps its dead poorly, bring fire"*)
+  The Barrowmoor (legend, 16 waves — *"the moor keeps its dead poorly, bring fire"*) ·
+  **The Shattered Pass** (mythic, 16 waves — *"no wall holds a canyon with three mouths"*)
+- **The Shattered Pass** — a sandstone canyon with **three spawn mouths** and a woven lattice of
+  lanes that *cross*. At each crossing a walker may turn onto the intersecting lane, and which way
+  it turns is drawn from the run seed at the moment it spawns — so the mouths are readable, the
+  weave is not, and every lane converges into one short final gorge whose walls are unbuildable.
+  Camping the merge is the trap the map is built to punish; the answer is a coverage web. Finale:
+  **the Flanklord**, who at every crossing computes the sum of your towers' damage touching each
+  branch and takes the *least defended* one, while his escort splits to all the others
 - **The Risen** — the Barrowmoor's rule. On the cursed waves (5, 9, 13) every non-elite killed
   stands back up 2.5 s later at its own corpse: a spectral copy at 45% health. From wave 7 a
   seeded slice of every ordinary wave carries the curse individually, marked by a wisp.
   **A fire killing blow burns the corpse** — nothing rises from ash, and necromancers are
   denied it too. Finale: **the Barrow King**, who raises every unburned body within 12 u every
   nine seconds while he walks
-- **7 towers** across four elemental schools (pierce / crush / fire / storm + support), three
+- **8 towers** across five elemental schools (pierce / crush / fire / storm / frost + support), three
   upgrade tiers each, per-tower targeting modes
-- **20 enemy types + 5 boss finales** with elemental resistances — no mono-build wins. Six of
+- **The Frostspire** — the roster's dedicated slower and the **frost** school's tower. It is the
+  lowest-damage fighting tower in the game on purpose: what you buy is *time*. Its hits stack a
+  chill (12% each, three deep), and a fully chilled body spends half again as long inside every
+  other tower's ring, so a spire is a damage multiplier for the battery around it rather than a
+  gun of its own. At tier three a kill sets off a frost nova that chills everything near the corpse
+- **23 enemy types + 6 boss finales** with elemental resistances — no mono-build wins. Six of
   them answer a solved strategy: **wyverns** fly over knights, traps and fire; **gravemolds**
   split in two when they die; **necromancers** raise the wave's own dead as skeletons; **the
   warded** shrug off the first six hits whatever they weigh; **cutpurses** steal gold when they
@@ -44,6 +57,12 @@ Then visit `http://localhost:8321/`.
   for three and a half seconds*, so a battery camped on a junction goes dark all at once while a
   spread line loses only a slice. Knights, militia, road traps and hero powers all keep working
   through a hex: the answer is the rest of your army
+- **Three new beasts.** The **dune stalker** burrows between crossings and cannot be targeted while
+  it is under — a battery that covers a crossing gets every window it has, one that covers open road
+  gets none. The **charger** gallops at double pace down straightaways and slows to normal through
+  crossings, so it rewards traps and coverage on the *straights*. The **rimeborn troll** resists
+  frost by 85% and is immune to slow from every source, tar included — the anti-frost doctrine check,
+  sibling of the ironclad and the wyvern
 - **Wave choreography** — waves *arrive* as formations (swarms, three-abreast phalanxes,
   stampede pulses, vanguards), one marked wave per road is a **Long Night** that goes quiet and
   then surges a second time, multi-gate roads beat **war drums** at the mouth the horde is
@@ -57,7 +76,7 @@ Then visit `http://localhost:8321/`.
   **laurels** won by stars, first victories, endless records, daily wars and Deeds. Three
   branches of three tiers: Quartermaster (a fuller opening purse), Drillmaster (tougher knights
   and militia), Engineer (a better dismantle refund, cheaper traps). Respec is free
-- **28 Deeds** (FR «Hauts faits») in four registers — Campaign, Doctrine, Feats, Collection —
+- **31 Deeds** (FR «Hauts faits») in four registers — Campaign, Doctrine, Feats, Collection —
   each worth one laurel, with a chronicle screen and an unlock toast
 - **Three modes per road**: Campaign · **Endless** (hold past the finale for generated waves,
   best run recorded) · **Horde** (eight waves, every one a flood, up to ~1,000 bodies alive on
@@ -70,7 +89,7 @@ Then visit `http://localhost:8321/`.
 
 ## Controls
 
-Build with the bottom bar (hotkeys 1–7), click/tap to place — the range ring previews before you
+Build with the bottom bar (hotkeys 1–8), click/tap to place — the range ring previews before you
 spend. Traps go on the road (Z X C), powers are cast from the bottom-left discs (Q W). Space
 pauses, Esc cancels, T cycles targeting, 8–0 picks an omen. The full sheet is in-game: press
 **H**, or click the key disc.
@@ -96,7 +115,24 @@ auto-call on, in which case wave 1 musters like every other wave.
 ## Settings
 
 The gear in the top bar opens Settings: sound, **Detail**, **Frame cap**, auto-call, language,
-and Restart Campaign.
+**Runebinding**, and Restart Campaign.
+
+### Runebinding (experimental — off by default)
+
+An unfinished mechanic you can switch on to try. With it enabled, a tower's garrison sheet grows a
+**Bond** row: bind it to a tower of a *different* school standing within 7 paces, for 60% of that
+tower's base cost, and your shots start carrying the partner's school as a weaker rider — cold
+arrows from an Archer bound to a Frostspire, a small burn from one bound to a Pyre, an occasional
+extra chain from a Storm Spire, armour shredding from a pierce partner, an occasional stagger from
+a Catapult. A rune arc rises between the pair and the bonded tower's shafts take the partner's
+tint. One bond per tower, both ends; towers that do not strike for themselves (Warbanner, Barracks)
+cannot be bound; selling either tower breaks the bond and refunds half of what it cost.
+
+It is **off in the shipped game on purpose**. The mechanic works and it is deterministic, but its
+five riders have not been balanced against the campaign the way every other number in the game has
+— the difficulty matrix is measured with Runebinding *off*, and turning it on is stepping outside
+what has been tested. Switching it rebuilds the page, and your run is saved across the reload
+exactly as it is for the language and detail toggles.
 
 ### Detail
 
@@ -124,7 +160,8 @@ caps *drawing* only — the battle keeps its own clock, so the simulation, the b
 
 There is nothing to save by hand. At every wave boundary — when a wave breaks, and when you
 sound the horn — the run is written to your device: the purse, the garrison with each tower's
-tier and orders, the traps on the road, the lives, the omen, the War Council's grades. The title
+tier, orders and (if Runebinding is on) its bond, the traps on the road, the lives, the omen, the
+War Council's grades. The title
 screen then offers **"Resume the battle"** with the road, the wave and the purse named on it, and
 Play becomes **"New campaign"** so it is clear which of the two throws the run away.
 
