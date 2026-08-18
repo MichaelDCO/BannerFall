@@ -205,6 +205,7 @@ en: {
   // ── settings ─────────────────────────────────────────────────────────────────────
   'set.title': 'Settings',
   'set.sound': 'Sound', 'snd.on': 'On', 'snd.off': 'Off',
+  'set.music': 'Music', 'set.sfx': 'Effects',
   'set.qual': 'Quality', 'qual.low': 'Low', 'qual.high': 'High', 'qual.ultra': 'Ultra',
   // ── v7-MENUCAM §1 — the quality submenu ──
   'qual.title': 'Detail',
@@ -844,6 +845,7 @@ fr: {
   'mus.raiseT': 'Lever une bannière pour {0} d’or.',
   'set.title': 'Réglages',
   'set.sound': 'Son', 'snd.on': 'Actif', 'snd.off': 'Muet',
+  'set.music': 'Musique', 'set.sfx': 'Effets',
   'set.qual': 'Détail', 'qual.low': 'Bas', 'qual.high': 'Haut', 'qual.ultra': 'Ultra',
   'qual.title': 'Détail',
   'qual.auto': 'Auto',
@@ -24885,6 +24887,16 @@ await BOOT.sub(0.7);
 const Audio = (() => {
   let ac = null, ok = false, _muted = false, live = false;   // live = music scheduler running
   let master, musicG, duckG, sfxG, revIn, luteB, droneB, drumB;
+  // Volume sliders (user 2026-08-18). 0-100 per bus, persisted; squared curve so the low half
+  // of the slider is usable (linear gain lives almost entirely in the top quarter of hearing).
+  const VOLM_KEY = 'bf.vol.music', VOLS_KEY = 'bf.vol.sfx';
+  const vCurve = v => (v / 100) ** 2;
+  let volMus = 100, volSfx = 100;
+  if (!SHOT) {
+    const m = parseInt(_lsGet(VOLM_KEY) || '', 10), s = parseInt(_lsGet(VOLS_KEY) || '', 10);
+    if (m >= 0 && m <= 100) volMus = m;
+    if (s >= 0 && s <= 100) volSfx = s;
+  }
   let droneG = null, droneLP = null, windG = null, timer = 0;
   let PANS = [], NOISE = null, BROWN = null, voices = 0;
   const KSC = new Map();                                     // Karplus-Strong buffer cache
@@ -25058,8 +25070,10 @@ const Audio = (() => {
       comp.connect(clip); clip.connect(master); master.connect(ac.destination);
 
       duckG = g(1, comp);
-      musicG = g(0.56, duckG);
-      sfxG = g(0.95, comp);
+      // Volume sliders (user 2026-08-18): the mix's own numbers stay the BASE (0.56/0.95);
+      // the player's 0-100 scales on top through a squared perceptual curve.
+      musicG = g(0.56 * vCurve(volMus), duckG);
+      sfxG = g(0.95 * vCurve(volSfx), comp);
       const revRet = g(tier === 'mobile' ? 0.34 : 0.46, comp);
       revIn = ac.createConvolver();
       revIn.buffer = irBuf(tier === 'mobile' ? 1.0 : 1.7);
@@ -26133,6 +26147,23 @@ const Audio = (() => {
   }
   return {
     init, music, play, waveCue,
+    // Volume sliders: live-ramped per-bus scaling over the mix's base gains (music .56, sfx .95).
+    // Values persist; before the context exists the setter just stores — init() applies them.
+    getVol(which) { return which === 'music' ? volMus : volSfx; },
+    setVol(which, v) {
+      v = Math.max(0, Math.min(100, Math.round(+v || 0)));
+      const music = which === 'music';
+      if (music) volMus = v; else volSfx = v;
+      try { localStorage.setItem(music ? VOLM_KEY : VOLS_KEY, '' + v); } catch (e) { /* private mode */ }
+      const node = music ? musicG : sfxG, base = music ? 0.56 : 0.95;
+      if (node && ac) {
+        const t = ac.currentTime;
+        node.gain.cancelScheduledValues(t);
+        node.gain.setValueAtTime(node.gain.value, t);
+        node.gain.linearRampToValueAtTime(base * vCurve(v), t + 0.08);
+      }
+      return v;
+    },
     get muted() { return _muted; },
     set muted(v) {
       _muted = !!v;
@@ -29852,6 +29883,15 @@ $('btnPause').onclick = () => { state.paused = !state.paused;
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
   $('btnGear').classList.toggle('on', !s.classList.contains('hidden')); };
 $('btnMute').onclick = () => { Audio.muted = !Audio.muted; $('muteV').textContent = L(Audio.muted ? 'snd.off' : 'snd.on'); };
+// Volume sliders — same property-handler idiom as btnMute (reachable only through the live
+// settings sheet, so SHOT never exercises them). SFX plays a preview tick on release.
+for (const [id, vid, which] of [['volMus', 'volMusV', 'music'], ['volSfx', 'volSfxV', 'sfx']]) {
+  const el = $(id), val = $(vid);
+  if (!el) continue;
+  el.value = Audio.getVol(which); val.textContent = el.value;
+  el.oninput = () => { val.textContent = Audio.setVol(which, +el.value); };
+  if (which === 'sfx') el.onchange = () => Audio.play('ui');
+}
 // SPEC4 §A — auto-call is a preference, so it toggles in place (no reload) and writes
 // through to localStorage; SIM reads it at the next wave clear.
 $('btnAuto').onclick = () => { $('autoV').textContent = L(G.setAutoCall(!G.autoCall()) ? 'val.on' : 'val.off'); };

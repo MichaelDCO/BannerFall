@@ -1924,6 +1924,27 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
       transition:filter .14s; }
 #settings button:hover{ filter:brightness(1.22); }
 #settings button b{ float:right; color:#ffdc8e; font-weight:400; letter-spacing:.12em; }
+/* ── Volume sliders (user order) — the same iron voice as the buttons around them: a row of
+   [label · track · value], the track a struck-iron channel, the thumb a gold rivet. */
+#settings .sVol{ display:flex; align-items:center; gap:10px; min-height:36px; margin-top:7px; padding:4px 12px;
+      font-size:11px; letter-spacing:.19em; text-transform:uppercase; color:#d5c49b;
+      background-image:var(--noise),linear-gradient(178deg,#241f1a,#14110d); background-size:180px 180px,100% 100%;
+      border:1px solid rgba(232,182,76,.22); border-radius:5px; }
+#settings .sVol span{ flex:0 0 auto; }
+#settings .sVol b{ flex:0 0 30px; text-align:right; color:#ffdc8e; font-weight:400; font-variant-numeric:tabular-nums; }
+#settings .sVol input[type=range]{ flex:1 1 auto; -webkit-appearance:none; appearance:none; height:22px;
+      background:transparent; margin:0; min-width:60px; }
+#settings .sVol input[type=range]::-webkit-slider-runnable-track{ height:4px; border-radius:2px;
+      background:linear-gradient(90deg,#5c4a1e,#8a6f2e); box-shadow:inset 0 1px 2px rgba(0,0,0,.7); }
+#settings .sVol input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:14px; height:14px;
+      border-radius:50%; margin-top:-5px; background:radial-gradient(circle at 35% 30%,#ffe9b6,#c69a3a 60%,#7a5c1c);
+      border:1px solid #3a2f14; box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer; }
+#settings .sVol input[type=range]::-moz-range-track{ height:4px; border-radius:2px;
+      background:linear-gradient(90deg,#5c4a1e,#8a6f2e); box-shadow:inset 0 1px 2px rgba(0,0,0,.7); }
+#settings .sVol input[type=range]::-moz-range-thumb{ width:14px; height:14px; border-radius:50%;
+      background:radial-gradient(circle at 35% 30%,#ffe9b6,#c69a3a 60%,#7a5c1c);
+      border:1px solid #3a2f14; box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer; }
+#settings .sVol input[type=range]:focus-visible{ outline:1px solid rgba(255,220,142,.6); outline-offset:2px; }
 /* ── v7-MENUCAM §1 — the quality submenu ────────────────────────────────────────────
    An accordion INSIDE the sheet, not a second floating panel: it inherits the sheet's
    position, its clamp and its mobile bottom-dock for free, and there is never a moment

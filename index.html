@@ -122,6 +122,10 @@
   <div id="settings" class="iron frm hidden">
     <div class="sT" data-l="set.title">Settings</div>
     <button id="btnMute"><span data-l="set.sound">Sound</span> <b id="muteV">On</b></button>
+    <!-- Volume sliders (user order): per-bus gains over the mix's own base numbers. Plain range
+         inputs styled in the iron voice; values live-apply with a short ramp and persist. -->
+    <div class="sVol"><span data-l="set.music">Music</span><input id="volMus" type="range" min="0" max="100" step="5" value="100"><b id="volMusV">100</b></div>
+    <div class="sVol"><span data-l="set.sfx">Effects</span><input id="volSfx" type="range" min="0" max="100" step="5" value="100"><b id="volSfxV">100</b></div>
     <!-- v7-MENUCAM §1: Quality is a SUBMENU, not a click-cycle. The button latches #qualMenu
          open in place (an accordion, so it needs no positioning of its own and works at 390px);
          the four rows are built in SECTION: UI from the tier table so their descriptions cannot
