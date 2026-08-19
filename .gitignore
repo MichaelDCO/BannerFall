@@ -8,3 +8,6 @@ tools/
 GAME_SPEC*.md
 BALANCE.md
 PWA_PLAN.md
+PERF_ANALYSIS.md
+bench/
+__pycache__/

@@ -15,7 +15,10 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 const P = new URLSearchParams(location.search);
-const SHOT = P.get('shot');                       // deterministic screenshot preset name
+// ?test=<suite|all> boots the game under the SHOT discipline (deterministic, no listeners,
+// no service worker, staged boot awaited) and then runs the unit suites instead of a shot.
+const TESTQ = P.get('test');
+const SHOT = P.get('shot') || (TESTQ ? '__test__' : null); // deterministic screenshot preset name
 // ══ SPEC_8 §G — THE RUNEBOND MASTER SWITCH ═══════════════════════════════════════════════════
 // Runebinding is an EXPERIMENT that ships in the box switched off, and this is the only line in
 // the file that decides whether it exists. Everything §G adds — the garrison action, the tether,
@@ -1847,25 +1850,50 @@ const MAPS = [
       // WORLD-FIX8 §1a §1b. This map's air was already the coolest of the five, so only the two
       // ends move: `bg` onto round 8's own number for a snow sky (#dce9f4) and the hemisphere up a
       // fifth, because snow's cast-shadow interiors were crushing with everything else's.
-      sun: 0xfff0d4, sunI: 3.72, hemiSky: 0xa8c4e8, hemiGnd: 0x9a9a96, hemiI: 2.00,
-      fill: 0xa9c8f0, fillI: 0.36, haze: 0xd0deec, bg: 0xdce9f4, envI: 0.30,
+      // ══ WORLD-FIX9 §5 §10a — A COLD MAP WITH NO COLD IN IT, AND THE CULPRIT IS TWO LINES ═════
+      // §5: snow measures #a0a1a3 (S 0.017) open field, #aeafaf (S 0.007) in shadow, whole-frame R-B
+      // -3.4 / +2.7 — "identity achieved by removing colour, not by hue". §10a: shadowed snow
+      // RGB(50,54,49) against lit RGB(212,211,210), i.e. B-R of -1.7 and -1.9. ZERO temperature
+      // separation on a map whose entire subject is temperature.
+      // Two causes, and only the second one has ever been looked at:
+      //  (1) `hemiGnd` was #9a9a96 — a dead NEUTRAL grey, and on a snowfield the ground term is half
+      //      of everything a drift shadow receives. A neutral bounce at hemiI 2.00 against a key of
+      //      3.72 is the dominant light on the shaded half of the map, so the shade could not be blue
+      //      no matter how blue the sky term was. It goes cool (#bcc8d8) per §10a's #cfd8e2, a little
+      //      darker so it does not simply re-blow the field round 6 spent a pass un-blowing.
+      //  (2) `shdDS` was 0.46 — the HIGHEST chroma-loss in the campaign, authored in round 6 to stop
+      //      "cobalt paint" drift shadows. It is a desaturate-toward-luminance, i.e. it deletes 46% of
+      //      whatever hue the shade has, which is a direct instruction to render S 0.007. That is the
+      //      whole of "identity by removing colour". Cut to 0.16: a shadow still loses chroma, but it
+      //      is no longer forbidden from having any. (Round 6's cobalt was really the round-5 ambient,
+      //      which is not the ambient shipping here.)
+      // Plus §3's ratio, and the key goes to §10a's own #ffe6c2 so the lit face can be the warm white
+      // that makes the shade read cold by contrast rather than by saturation.
+      sun: 0xffe6c2, sunI: 5.42, hemiSky: 0x74b0f8, hemiGnd: 0xa4bad6, hemiI: 0.88,
+      fill: 0x9dc4f0, fillI: 0.159, haze: 0xd0deec, bg: 0xdce9f4, envI: 0.133,
+      amb: 0x2f4a72, ambI: 0.50,
       shdWarm: 0.0,          // INTEGRATE §1: snow shade is blue. Do not warm it.
       // ...but it still LOSES CHROMA. Second pass of §2.2: with the ambient swung to the cold
       // blue the finding asks for, drift shadows came back a saturated cobalt that read as blue
       // paint on a white field. This is the highest chroma loss of the four maps for that reason.
-      shdDS: 0.46, shdRot: [1.180, 1.000, 0.840],
+      // §5 §10a, second pass: 0.16 still measured a dB-R of only +3.5 on battle2. A chroma loss on the
+      // one surface whose entire subject is the colour of its own shadow is the wrong instrument on this
+      // map at any strength; 0.06 is a trace, kept only so a drift shade is not painted cobalt.
+      shdDS: 0.06, shdRot: [1.180, 1.000, 0.840],
       granite: [0.1780, 0.1900, 0.2080],   // §9: cool granite, still inside the yellow-grey band
-      sunEl: 44, hfK: 1.0, macroK: 1.0,   // §1: SPEC §3's elevation (see WPAL_BASE.sunEl)
+      sunEl: 40, hfK: 1.0, hfAlb: 2.30, macroK: 1.0,   // §4: snow measured 3.98 detail energy
       snowN: 1.75,           // §2.3: drift + sastrugi relief — the surface the field never had
-      hazeV: [0.385, 0.445, 0.535],
+      // §1: the air has to stay ABOVE the snowfield or the value hierarchy inverts on the one map
+      // whose ground is near-white. Snow renders ~L 205 lit, so the haze goes to ~L 217.
+      hazeV: [0.800, 1.120, 1.800],
       // WORLD-FIX4 §6. The Vale got its cooled sky and Frostfell did not: overview2's dome
       // sampled (160,165,171) rising to (170,175,182) — saturation 0.06, no hue, no gradient,
       // and the BRIGHTEST region in the frame, so the diorama read as photographed against a
       // studio wall. Zenith #7e93ad down to horizon #c6d4e2, with real separation between the
       // stops, and every stop pulled below the snow so the snow can be the value ceiling and
       // the ridge silhouette has something to cut against.
-      skyZen: [0.078, 0.155, 0.330], skyMid: [0.205, 0.315, 0.505], skyHi: [0.385, 0.500, 0.665],
-      skyHor: [0.615, 0.712, 0.830], skyLow: [0.480, 0.552, 0.665], sunGlow: [1.0, 0.97, 0.92],
+      skyZen: [0.078, 0.155, 0.330], skyMid: [0.290, 0.430, 0.680], skyHi: [0.520, 0.680, 0.900],
+      skyHor: [0.615, 0.712, 0.830], skyLow: [0.500, 0.680, 1.060], sunGlow: [1.0, 0.97, 0.92],
       ibl: ['#2a55a8', '#5d8fd0', '#98b0cc', '#c9d8ea', '#a8bcd2', '#7a8696'],
       disc: ['rgba(246,251,255,1)', 'rgba(214,232,255,.55)', 'rgba(196,220,255,0)'],
       bgGrad: ['#6d87a6', '#8aa3bd', '#a6bccf', '#c6d4e2', '#a9bccd', '#77828f'],
@@ -1893,7 +1921,22 @@ const MAPS = [
       // has no hue of its own; whatever hue it shows is the light's. Authored near-neutral and
       // barely warm, so the warm key makes the lit face warm and the sky makes the shade cool,
       // and lifted enough that the lit field can hold L 195-210 with the clip still under 0.5%.
-      snow: 0.96, snowC: [0.505, 0.492, 0.470],
+      // WORLD-FIX9 §5 (second clause): §5 asks for sunlit snow at #efe6d8 — hue 35, S 0.09. This
+      // albedo was authored "near-neutral and barely warm" at R/B 1.075; #efe6d8's own ratio is 1.10
+      // and the lit result also takes the key's warmth on top, so a small nudge is all it needs. The
+      // COLD half of §5's ask (shadowed snow #a8b6c8, S >= 0.14, H 210-220) is not an albedo change at
+      // all — it is the hemiGnd/shdDS pair above, because snow has no hue of its own and whatever hue
+      // it shows in shade is the sky's.
+      // §5 §10a, third pass and the last: with the rig cool, lit snow reached R-B +12 (inside §3's
+      // +10..+18) and shadowed snow was STILL R-B +2.5 rather than the -25..-40 asked for. The
+      // remaining warmth is this triple: at R/B 1.12 the albedo itself is warm, so it warms the shade
+      // as surely as it warms the lit face, and a shadow cannot be bluer than the paint under it.
+      // Authored NEUTRAL, which is also what snow is. The warm lit face is then entirely the key's
+      // (#ffe6c2) and the cold shade entirely the sky's (#74b0f8) — the split is bought by the LIGHTS,
+      // which is the only place a temperature split can honestly come from. This is the exact trap
+      // round 7 fell into from the other side (it authored the albedo COOL and got wet concrete): the
+      // answer to both is that the albedo should carry no opinion at all.
+      snow: 0.96, snowC: [0.492, 0.492, 0.492],
       lowG: [0.60, 0.72, 0.92], lowRiv: [0.120, 0.140, 0.175],
       ridge: [[0.070, 0.086, 0.108], [0.086, 0.104, 0.130], [0.100, 0.116, 0.142]],
       rockK: [0.92, 0.98, 1.14], tuftK: [1.06, 1.06, 1.10],
@@ -1967,17 +2010,36 @@ const MAPS = [
       // then the haze contradicted it); round 8 asks for the spec haze here, which a lava wasteland
       // cannot have without becoming the Vale, so this lands on a cool ash-violet instead: b > g > r,
       // no clear blue, and the map keeps the grey-violet complement its whole palette is built on.
-      sun: 0xffb884, sunI: 5.55, hemiSky: 0x8798bc, hemiGnd: 0x3a3f4a, hemiI: 2.95,
-      fill: 0x8fb2e8, fillI: 0.70, haze: 0x8e96a8, bg: 0xa8b6c8, envI: 0.56,
+      // ══ WORLD-FIX9 §3 §8c §10c — EMBER'S SHARE, AND THE ONE CLAUSE THAT IS DECLINED ══════════
+      // §3's rebalance applies here too: this map ran a 1.9:1 nominal key/fill, the flattest of the
+      // five, and round 7 signed it off as "the rig that reads right" on the strength of a ratio
+      // computed before the fill and the environment term were counted. Same 0.677/1.526.
+      // §10c asks for battle3's ash shadows to be cooled from B-R -27.4 to +10. DECLINED as written,
+      // and the reason is in the frame rather than in the numbers: on this map the light filling a
+      // shadow is LAVA — an in-world emissive at hue ~20 — so a shadow beside a fissure is warm
+      // because a warm thing is lighting it, and forcing it blue would be the same category of error
+      // as WORLD-FIX8 §1a's warm sky (a grade fighting the scene's own physics). What IS taken from
+      // §10c is that the ash away from the lava had no cool left: the non-lava ambient goes bluer and
+      // §3's cut stops it washing the map, so the cool complement now lives where the lava is not.
+      sun: 0xffb884, sunI: 8.44, hemiSky: 0x7d94c8, hemiGnd: 0x3a3f4a, hemiI: 1.30,
+      fill: 0x8fb2e8, fillI: 0.308, haze: 0x8e96a8, bg: 0xa8b6c8, envI: 0.247,
+      amb: 0x323e56, ambI: 0.42,
       shdDS: 0.20,           // §3: the ash shade must KEEP its violet-slate — it is the map's complement
       shdRot: [1.180, 1.000, 0.840],
       // INTEGRATE §1: the violet-slate ash shadow IS this map's complement (WORLD-FIX4 §2 —
       // 87% of chromatic pixels were in one 30-degree red bin before it existed). Warming it
       // would re-open that finding, so the shadow grade is off here.
       shdWarm: 0.0,
-      hazeV: [0.183, 0.196, 0.232],       // §1a: b > g > r, as ash haze actually is
+      // WORLD-FIX9 §1 §8c. §8c: "overview3's sky is also warm at R-B +15.7, so the r8 'cool sky in
+      // every establishing frame' claim covers only maps 1 and 2" — correct, and this is the line it
+      // covers. b > g > r was true of the AUTHORED triple and false of the RENDER, because at L 96 an
+      // ash haze this dark takes its measured hue from the terrain it is 80% mixed with rather than
+      // from itself. Lifted to ~L 165 at R-B -42: still an ash-violet (no clean blue, which a lava
+      // wasteland must not have), now bright enough to BE the atmosphere instead of being tinted by
+      // the ground.
+      hazeV: [0.300, 0.375, 0.600],
       skyZen: [0.150, 0.145, 0.270], skyMid: [0.330, 0.300, 0.400], skyHi: [0.470, 0.512, 0.610],
-      skyHor: [0.700, 0.560, 0.540], skyLow: [0.372, 0.400, 0.478], sunGlow: [1.0, 0.62, 0.30],
+      skyHor: [0.700, 0.560, 0.540], skyLow: [0.290, 0.350, 0.520], sunGlow: [1.0, 0.62, 0.30],
       ibl: ['#463c66', '#6f6486', '#9a90a8', '#f0d3a0', '#a89ab0', '#5d5566'],
       disc: ['rgba(255,232,196,1)', 'rgba(255,176,110,.55)', 'rgba(255,140,70,0)'],
       bgGrad: ['#5a5170', '#7d7590', '#9b93a8', '#b4b0c0', '#8a8a9e', '#5f5f70'],
@@ -2164,8 +2226,34 @@ const MAPS = [
       // — a dead neutral over a mauve moor, with no cold sky for the last of the light to be warm
       // against. Both go cool-violet, and the hemisphere with them (a moor at dusk is lit by the sky,
       // which is this map's own note and now actually true of the numbers).
-      sun: 0xffb268, sunI: 8.60, hemiSky: 0x9db0da, hemiGnd: 0x8a7a5a, hemiI: 3.35,
-      fill: 0x93a8d8, fillI: 0.58, haze: 0x7f8aa6, bg: 0x8e9ec4, envI: 0.40,
+      // WORLD-FIX9 §3 §5. The same 0.677/1.526 rebalance as WPAL_BASE — a dusk map needs the ratio
+      // MORE than a daylight one, not less, because low-key is a ratio and this rig was running
+      // 2.6:1. hemiSky loses its violet lean for the H 215 blue §5 asks for; hemiGnd stays SPEC §3's
+      // warm khaki, which is what keeps peat hue in the shade instead of navy.
+      sun: 0xffb268, sunI: 13.10, hemiSky: 0x93aada, hemiGnd: 0x6a5a3e, hemiI: 1.46,
+      fill: 0x8ba4dc, fillI: 0.255, haze: 0x8794b4, bg: 0x98a8d0, envI: 0.177,
+      // §10: a dusk map floors deeper than the others or the barrows go to void; and it floors COOLER,
+      // because at last light the only thing left lighting a hollow is the sky.
+      // §10, second pass: with §3's ratio applied to a map that was already low-key, battle4 came back
+      // with 20.5% of its PLAYFIELD (HUD excluded) under lum 25 and a fully-black 70x70 window in it —
+      // i.e. §2's darks arrived and overshot straight into §10's void. The dusk map needs the largest
+      // constant floor of the five, not the smallest, and it is the one map where that floor is also
+      // the whole look: at last light a moor's hollows ARE lit by the sky and nothing else.
+      amb: 0x33425f, ambI: 0.82,
+      // ...and a floor under the peat itself, the same construction the canyon's sand got in round 8.
+      // ~14% of the ground's own albedo, tinted to this map's sky, so a barrow's lee keeps its grain.
+      // §10, third pass — and the first two were both wrong about the mechanism, in the same way.
+      // The darkest 70x70 window in battle4 is the hillside's own cast shadow on the moor, and neither
+      // raising the constant ambient (1.05 moved it by 2 points) nor a 14% floor touched it. Both are
+      // ALBEDO-PROPORTIONAL: a constant AmbientLight is still light x albedo, so on peat authored at a
+      // linear 0.026 every "floor" floors at black. The dark end of the ground ramp is the actual
+      // authority here, and this pass had lowered it. The floor comes up to ~22% and the ramp's dark
+      // end with it (see gDark) — which together put a cast shadow on the moor at lum 30-45, a slate
+      // shade with grain in it, rather than a hole in the map.
+      // (Fourth and final: 0.22 of a 0.043 dark end still lands the deepest shade at L 22-25, right on
+      // §10's line. 0.34 puts it at L 31-36 — verified by crop: a cool blue-slate shade with its tufts
+      // and its grain intact, which is what "shade rather than a hole" means in pixels.)
+      gndFloor: [0.340, 0.395, 0.520],
       sunEl: 34,
       // WORLD-FIX7 §2c §9.4. Round 7: the same warm tan ring appears on Vale, Frostfell, Ember
       // AND Barrowmoor, so the enclosure kills all four palette identities at once, and the moor's
@@ -2173,20 +2261,32 @@ const MAPS = [
       // slate #6b6a63, a genuinely dark near-neutral, so a standing stone is a dark silhouette
       // against a pale sky rather than another warm-grey lump in a warm-grey ring.
       granite: [0.1690, 0.1670, 0.1490],
+      // §10: this map's slate is the darkest granite in the campaign, so it needs the highest shaded-
+      // rock floor rather than WPAL_BASE's — a barrow in its own shadow was the other half of the void.
+      rockFloor: [0.430, 0.470, 0.575],
       // §12a/b: the moor measured the LEAST chromatic and the NOISIEST surface in the game at
       // once (sat 27.9, HF 7.23 against the meadow's 58-63 / 4-5). The dry splat was being
       // blended on at full contrast over an unlit navy base, i.e. mint-on-navy camouflage
       // print. Drop the fine octaves hard, raise the macro value masks: a moor has FORM
       // (wet bog hollows, pale dry humps), not speckle.
-      hfK: 0.42, macroK: 1.85, snowN: 0,
+      // WORLD-FIX9 §4: hfK (the NORMAL relief, which is what §12a's stipple was) stays at 0.42 —
+      // that finding is still correct. hfAlb buys back the albedo tooth §4 wants without re-opening it.
+      hfK: 0.42, hfAlb: 1.85, macroK: 1.85, snowN: 0,
       // dusk shade is COOL. The warm shadow grade is the Vale's alone (INTEGRATE §1).
       shdWarm: 0.0,
       shdDS: 0.26, shdRot: [1.180, 1.000, 0.840],
-      hazeV: [0.198, 0.215, 0.272],       // §1a: cool violet dusk air, blue no longer the floor
+      // WORLD-FIX9 §1 §8c. §8c's acceptance is "overview4 sky R-B <= -18 with lum >= 130". The air
+      // was rendering at L 96 and only 12 points cool. Lifted and swung hard blue (renders ~L 142,
+      // R-B -62) — a dusk sky is the BRIGHTEST thing in a dusk frame, and this map's whole failure
+      // mode across three rounds has been a ground plane that outshone its own sky.
+      // (§8c also reports overview4's sky as rgb(42,37,29) at lum 37.5 sampled from (20,60)-(140,200).
+      // That box is the wave-preview HUD panel, not the sky — see the report. The real backdrop is
+      // measured on the wedge outside the diorama, and that is what these numbers move.)
+      hazeV: [0.205, 0.290, 0.520],
       // Indigo overhead falling to a sullen rose-amber band on the horizon — the last of the
       // light, and the only saturated hue in the sky.
       skyZen: [0.052, 0.078, 0.185], skyMid: [0.150, 0.190, 0.315], skyHi: [0.360, 0.360, 0.450],
-      skyHor: [0.760, 0.520, 0.430], skyLow: [0.290, 0.320, 0.400], sunGlow: [1.0, 0.74, 0.52],
+      skyHor: [0.760, 0.520, 0.430], skyLow: [0.185, 0.245, 0.430], sunGlow: [1.0, 0.74, 0.52],
       ibl: ['#243a72', '#4f5f92', '#7d86a4', '#d0a894', '#8f92a6', '#4e5160'],
       disc: ['rgba(255,226,198,1)', 'rgba(255,180,150,.50)', 'rgba(220,150,130,0)'],
       bgGrad: ['#3f4a70', '#5c6688', '#8189a0', '#b9a9a4', '#8a8ea2', '#565a6c'],
@@ -2212,7 +2312,14 @@ const MAPS = [
       // on round 7's own hexes — wet peat #33301f at the dark end through base #4a4436 to dead
       // grass #7a6a45 at the lit end — and the teal compensation below goes with it, because a
       // 0.50/1.44 R-against-B lever applied to a brown albedo would simply re-make the lagoon.
-      gDark: [0.0320, 0.0300, 0.0170], gMid: [0.0680, 0.0620, 0.0400], gLit: [0.1600, 0.1470, 0.0860],
+      // WORLD-FIX9 §5 §8c. "76.7% of overview4 sits inside L32-96 — a mud slab with no dusk in it",
+      // and §8c asks for the moor lifted to hue 34-42 / S 0.18 / lum 78-88. The hue is already there
+      // (this ramp renders H 48-51; the mauve was the dry pair above, now fixed) — what is missing is
+      // the VALUE, and the sun-side/shade-side SPLIT §5 asks for. The lit end comes up ~25% so the
+      // sun-side peat lands near #8a6a4a, and the dark end comes down so the ramp opens from 5.0:1 to
+      // 6.6:1 end to end: a moor at last light is two things, a warm lit hump and a slate hollow, and
+      // this map had been authored as one mid value with speckle on it.
+      gDark: [0.0430, 0.0400, 0.0250], gMid: [0.0760, 0.0690, 0.0430], gLit: [0.2020, 0.1790, 0.1000],
       // The bone SCALD patches keep their identity but stop being warm enough to cancel the
       // turf: a moor's dead grass is grey-green, not sand.
       // The scald patches take the same correction as the turf. Authored raw they rendered
@@ -2226,7 +2333,21 @@ const MAPS = [
       // one saturated note a moor actually carries and the map's real identity hue. It arrives as
       // discrete patches on the dry mask rather than as a field-wide wash, so the moor reads
       // peat-brown with heather bruising through it.
-      dry0: [0.0700, 0.0430, 0.0620], dry1: [0.1340, 0.0930, 0.1180], bare: [0.0620, 0.0510, 0.0350],
+      // ══ WORLD-FIX9 §5 §8c — THE MAP-4 VIOLET FLOOR, FOUND. IT IS THIS PAIR. ══════════════════
+      // Round 8 claimed to have root-caused the chromatic violet floor and fixed it on the gorge
+      // walls; round 9 re-measured and it is still live here — battle4's darkest decile at H 260.5
+      // with 28.3% of its dark pixels in the magenta range H 250-340, overview4's moor ground at
+      // hue 0.9-8.2 / S 0.24-0.25 (i.e. straddling the red axis, which is where a mauve reads).
+      // Both prior rounds looked at the ambient for it, and the ambient is not where it lives.
+      // Push these two hexes through the actual tone curve: dry0 renders #422e3d and dry1 #6b5563 —
+      // HUE 315 and 321. They ARE magenta, they were authored magenta on purpose (WORLD-FIX7 §8c
+      // introduced them as "heather bloom #6b4a63"), and macroK 1.85 spreads them over most of the
+      // moor. Nine rounds of ambient re-tinting could never fix a mauve painted into the albedo.
+      // Heather stays as an idea and loses the bloom: re-authored as a wet slate-grey scald at H 215
+      // (the blue §5 asks for in place of the violet), so the dry mask now reads as boggy ground
+      // catching skylight rather than as purple flowers over a whole moor. The one saturated note
+      // this map keeps is its sky, which is where §8c wants it.
+      dry0: [0.0500, 0.0520, 0.0680], dry1: [0.1000, 0.1030, 0.1240], bare: [0.0620, 0.0510, 0.0350],
       // The heaviest compensation of the four maps, because this key is the warmest AND the
       // strongest relative to its ambient — without it the green-teal turf renders neutral
       // grey (measured #5a5758, S 0.02).
@@ -2468,8 +2589,12 @@ const MAPS = [
       // real value into them the hue was still wrong — a 0x4a90ff fill (R 0.07, B 1.00) at 0.78 is
       // nearly a pure blue wash, and a pure blue wash on terracotta is mauve by definition. The fill
       // keeps the cold-complement job §A gave it, at a chromaticity a sandstone wall can survive.
-      sun: 0xffe8ac, sunI: 6.70, hemiSky: 0x79a8ef, hemiGnd: 0xa07a4e, hemiI: 2.62,
-      fill: 0x86b0ee, fillI: 0.58, haze: 0xbcc0c6, bg: 0xc2cede, envI: 0.30,
+      // WORLD-FIX9 §3: the same 0.677/1.526. On this map the ambient cut is doing double duty — §A's
+      // whole thesis is a cold shadow core against ochre rock, and a shadow at 62% of key cannot be a
+      // core of anything. hemiGnd stays the warm sand bounce round 8 correctly put here.
+      sun: 0xffe8ac, sunI: 10.22, hemiSky: 0x79a8ef, hemiGnd: 0xa07a4e, hemiI: 1.15,
+      fill: 0x86b0ee, fillI: 0.255, haze: 0xbcc0c6, bg: 0xc2cede, envI: 0.133,
+      amb: 0x3a4560, ambI: 0.42,
       // §4, second clause: a floor under the canyon FLOOR, since the shader's existing shadow floor
       // is gated on rock. ~19% of the sand's own albedo, tinted to the sky, so a shadow on sand is
       // a cool shade with its grain intact rather than a hole punched in the terrain.
@@ -2493,7 +2618,11 @@ const MAPS = [
       // Terrain detail: sandstone is BEDDED, so the macro masks carry the form (strata, benches)
       // and the fine speckle comes off — a high sun on a fine-noise floor reads as sand-grain
       // fizz at gameplay zoom, which is the one thing this map cannot afford beside its walls.
-      hfK: 0.88, macroK: 1.20, snowN: 0,
+      // WORLD-FIX9 §4: sand measured 2.33 (battle5) and 3.27 (_cross) — the worst two crops in the
+      // batch — and the gorge WALLS 1.96. hfK (normal relief) stays where round 8 put it, because a
+      // high sun on a fine-relief floor really does fizz; hfAlb buys the albedo tooth instead, and the
+      // post-rock-mix micro octave (see TERRAIN_ALBEDO) carries it onto the walls as well.
+      hfK: 0.88, hfAlb: 3.00, macroK: 1.20, snowN: 0,
       // Aerial perspective: warm sand-dust, and thicker than the Vale's. A canyon system seen
       // from above is mostly its own haze, and this is what separates the near walls from the far.
       // WORLD-FIX8 §1a §2d. Round 8 sampled overview5's sky at (153,141,126) and `_gorge`'s at
@@ -2502,13 +2631,19 @@ const MAPS = [
       // is warm, so this keeps a trace of it rather than going to the spec haze outright, but blue
       // is no longer the floor: the far walls now recede into cool light and the near ones read warm
       // against them, which is the depth cue the whole canyon system is built out of.
-      hazeV: [0.302, 0.312, 0.350],
+      // WORLD-FIX9 §1. §1 names this map's backdrop twice: overview5's sky at #949397 (S 0.025, a
+      // violet-grey) and `_gorge`'s at R-B +14 — "warm, so the r8 cool-flip never reached it; drive it
+      // to R-B <= -12". It never reached it because round 8 moved this triple 3% and called it cool:
+      // (0.302,0.312,0.350) is a NEUTRAL, and a neutral haze over terracotta measures warm because
+      // 70% of the pixel is the terracotta. Onto a real cool at ~L 194 / R-B -39, which is also what
+      // §A's cobalt-over-ochre thesis has been asking for since the map shipped.
+      hazeV: [0.440, 0.620, 1.000],
       // THE SKY IS THE COMPLEMENT. A deep clean cobalt — not Ember's grey-violet ash and not
       // the Vale's pale haze-blue — with the warm band held tight to the horizon where the
       // dust is. This is the single largest cool surface in frame and it is what the ochre
       // is measured against.
       skyZen: [0.055, 0.150, 0.480], skyMid: [0.210, 0.400, 0.760], skyHi: [0.690, 0.630, 0.520],
-      skyHor: [0.960, 0.740, 0.440], skyLow: [0.430, 0.400, 0.390], sunGlow: [1.0, 0.88, 0.60],
+      skyHor: [0.960, 0.740, 0.440], skyLow: [0.360, 0.470, 0.720], sunGlow: [1.0, 0.88, 0.60],
       ibl: ['#12409c', '#3c78cc', '#93b6e0', '#f6e6bc', '#96a0b6', '#4e5a74'],
       disc: ['rgba(255,250,228,1)', 'rgba(255,228,168,.55)', 'rgba(255,212,150,0)'],
       // §1a: the three sub-horizon stops were a warm sand wall ('#e2cca4','#cdb18a','#9c8467').
@@ -2681,7 +2816,38 @@ const WPAL_BASE = {
   // the ambient goes cooler and fatter: the fill has to be blue enough that shadowed grass resolves
   // with B above R, and strong enough that hard cast-shadow interiors land at L 18-25 instead of
   // the L 8 round 8 measured inside the tower shadows on `_cross`.
-  sun: 0xffdfae, sunI: 7.55, hemiSky: 0x9fc4ef, hemiGnd: 0x8a7a5a, hemiI: 3.05,
+  // ══ WORLD-FIX9 §3 — "THE LIGHTING IS A MULTIPLY, NOT A LIGHT" ════════════════════════════
+  // Round 9 measured the one number that settles this: tree cast shadow (880,300)-(940,330) against
+  // adjacent lit grass reads lum 86.1 / 138.6 = ratio 0.62 with a colour shift of only dR-B -2.6.
+  // A shadow at 62% of key with the SAME hue is by definition a multiply — the shade is the lit
+  // surface turned down, which is what a paint program does and what a sky never does. Golden hour
+  // is 0.38-0.45 with the shade measurably BLUER (dR-B -28 to -35), because the shadow is lit by a
+  // different light: the sky.
+  // It is arithmetic, and it is the same arithmetic in both directions. Shadowed = ambient alone;
+  // lit = ambient + key. ambient/(ambient+key) = 0.62 puts the key at 0.61x the fill. To land 0.42
+  // the key has to be 1.38x the fill, so at CONSTANT total exposure (which round 7's histogram is
+  // signed off on and §9 forbids moving) the fill scales by 0.677 and the key by 1.526. Every term
+  // of the ambient goes down by that factor — hemisphere, fill, environment together, or the ratio
+  // only partly moves — and the directional takes the energy back.
+  // This is also the whole of §2's "value structure collapses into a mid-band": 63.7% of overview
+  // inside L96-192 is what a 0.62 shadow ratio LOOKS like. A frame cannot have darks if its darkest
+  // surface is 62% of its lightest. One edit, both findings; no exposure change either.
+  // And the ambient's COLOUR is the other half — §5 §10. A fill that is 0.677x as strong but the
+  // same near-neutral chromaticity still produces a hueless shadow. hemiSky goes to the finding's
+  // own #86b6f0 (a real sky blue rather than the pale #9fc4ef), hemiGnd to #6a5a3e (the warm khaki
+  // bounce, DARKER — half the old ambient was arriving as a neutral ground term), and the key to
+  // #ffd39a. Warm key, cool fill, and now a ratio wide enough for the difference to be visible.
+  // ── §3, SECOND PASS: measured, not predicted ────────────────────────────────────────────────
+  // The first cut applied exactly the 0.677 the arithmetic above asks for and the render came back
+  // at ratio 0.580 on same-material grass, not 0.42. One term was missing from the model: `shdDS`
+  // and the several albedo-proportional shade floors are additional light in the shade that
+  // "shadow = ambient alone" cannot see, so the EFFECTIVE fill is larger than the nominal one.
+  // The ambient takes another 0.65 — and this time the key is deliberately NOT raised with it,
+  // because the other finding this lever serves (§2, both its mid-band collapse and its separate ask
+  // for the sward a third of a stop lower) wants the lit end to come DOWN. Net against round 8:
+  // ambient 0.44x, key 1.53x. Lit open meadow lands near the lum 150-175 §3's acceptance names
+  // rather than the 197 the first cut produced.
+  sun: 0xffd39a, sunI: 11.62, hemiSky: 0x86b6f0, hemiGnd: 0x6a5a3e, hemiI: 1.10,
   // §1 §11 §12: the scene fog and the background were the last two NEUTRAL surfaces in a frame
   // that has to read golden — a grey haze over a warm meadow is what makes the light look like a
   // filter laid over a midday render. Both warmed onto the same atmosphere as hazeV below.
@@ -2690,7 +2856,29 @@ const WPAL_BASE = {
   // both come back onto that hex — muted a hair on the fog so the far cliff recedes instead of
   // dissolving into milk. This is the single largest lever on the frame's grade: at ~50 degrees
   // down, the hazed lowland is what fills the top corners of every shot.
-  fill: 0x8fb6e8, fillI: 0.55, haze: 0xc9d8e6, bg: 0xcfe0ee, envI: 0.36,
+  // §3: the fill and the environment are part of "the ambient" and take the same 0.677 — cutting
+  // only the hemisphere leaves two thirds of the flatness in place, which is how round 8's pass
+  // ended up moving the ratio 4 points.
+  fill: 0x86b6f0, fillI: 0.200, haze: 0xc9d8e6, bg: 0xcfe0ee, envI: 0.131,
+  // ══ WORLD-FIX9 §10 — THE DEEP-SHADE FLOOR, AND WHY IT IS A LIGHT AND NOT A CLAMP ══════════
+  // §10b measured `_elem`'s upper-centre canopy/cliff mass at mean lum 21.8, with 81% of a
+  // 600x260 region under lum 25 at RGB(16,16,7) — B = 7, i.e. the sky fill reaches it not at
+  // all, so it reads as a hole punched in the frame rather than as shade. Every surface class
+  // already carries its own albedo-proportional floor (granite §4f, tufts §1, foliage §2f,
+  // gndFloor here) and they all share one blind spot: a floor is a fraction of the surface's OWN
+  // albedo, so on a dark canopy under a dark cliff it floors at dark. What is missing is a term
+  // that does not scale with what it lands on.
+  // So: a small constant ambient, cool. It is the cheapest possible expression of "the sky is
+  // above this and some of it gets in" — three folds AmbientLight into `ambientLightColor`, so it
+  // costs no uniform block, no draw call and no program variant. It is counted as part of the
+  // ambient budget above (§3's 0.677 is applied to the hemisphere/fill/env AFTER this is taken
+  // out of it), so total exposure is unchanged and the §3 ratio is unaffected on any surface that
+  // the key reaches at all. §10's acceptance is the one this exists for: no re-shot frame may
+  // carry a >5000 px contiguous region below lum 25.
+  // NOTE this deliberately does NOT try to satisfy §2's ">= 8% of playfield below L32" at the
+  // same time — see the ruling in the report: a lifted deep-shade floor and an 8%-below-L32
+  // histogram are the same pixels asked for twice, in opposite directions.
+  amb: 0x36445a, ambI: 0.40,
   // INTEGRATE §1. Strength of the shadow-side ground grade (see the terrain shader). The
   // Vale is the only map that wants it: Frostfell's shade must stay blue because snow shade
   // IS blue, and Ember's violet-slate ash is the complement WORLD-FIX4 §2 built the whole
@@ -2709,7 +2897,11 @@ const WPAL_BASE = {
   // shadowed grass measured (115,88,65) — a BROWN, not a shade. What INTEGRATE §1 actually needs is
   // that the road inside a cast shadow keeps some earth in it, and 0.18 of a softened rotation
   // (see shdRot) still does that without cancelling the skylight in the sward.
-  shdWarm: 0.18,
+  // WORLD-FIX9 §3: measured dR-B came back at -38.5 against the -28..-35 the finding asks for, i.e.
+  // the shade is now marginally TOO cool. This is the lever for exactly that (a trace of ground bounce
+  // in the shade), nudged up rather than reaching for the hemisphere, which would also un-cool the
+  // snow and the sand on maps that need them cold.
+  shdWarm: 0.30,
   // WORLD-FIX6 §3. The warm rotation the shade grade applies, per map — it used to be a shared
   // hard-coded vec3, so the only lever a map had was strength, and strength moves the chroma
   // loss and the hue rotation together. They are different physical claims.
@@ -2731,7 +2923,10 @@ const WPAL_BASE = {
   shdRockW: null,
   // WORLD-FIX8 §2a §8b. The shaded-rock floor in the terrain shader (see the long note there) — it
   // is what actually draws every down-sun rock face in the game, so it is a per-map decision.
-  rockFloor: [0.290, 0.305, 0.335],
+  // WORLD-FIX9 §10b: with §3's ambient down a third, the rock floor is what stops a down-sun crag
+  // face joining the void `_elem` measured. Up ~14% and swung cooler — a floor that is bluer than
+  // the surface it floors is the only kind that reads as skylight rather than as a lift.
+  rockFloor: [0.318, 0.348, 0.412],
   // WORLD-FIX8 §4. Same idea for non-rock GROUND, and null everywhere it is not asked for so the
   // line never enters the shader. Only the canyon needs one (its sand shadows measured RGB 8,9,11).
   gndFloor: null,
@@ -2757,11 +2952,32 @@ const WPAL_BASE = {
   // sun SHORTENS the rim's shadow, so the constraint costs nothing here. 44 degrees puts tree
   // and tower shadows near 1.0-1.1x object height, which is the geometry SPEC §3 asks for, and
   // it is also what lets the key reach the down-sun facets round 7 measured as crushed.
-  sunEl: 44,
+  // WORLD-FIX9 §3 (last clause). 44 -> 40. §2 asks for 27 and §3 says "hold at 40 degrees and treat
+  // that as settled — the flatness is ambient intensity, not sun height, so stop re-litigating it".
+  // §3 is right and it is the later measurement: the ratio above is what makes or breaks the read,
+  // and 4 degrees of rake is worth having for free (shadows go 1.19x object height instead of 1.04x)
+  // without re-opening the cliff-ring argument rounds 6 and 7 spent two passes on.
+  sunEl: 40,
   // WORLD-FIX6 §12. Terrain detail gains, per map: hfK scales the high-frequency octaves
   // (the ones that read as speckle when a map is low-chroma) and macroK the low-frequency
   // value masks (the ones that give a surface macro FORM). Base map is 1/1 by definition.
   hfK: 1.0, macroK: 1.0,
+  // ══ WORLD-FIX9 §4 — TERRAIN DETAIL DIES AT GAMEPLAY DISTANCE, ON EVERY MAP ════════════════
+  // §4 measures mean absolute Laplacian on 300x300 terrain crops and finds map-5 sand at 2.33,
+  // Frostfell snow at 3.98 and gorge wall at 1.96 against the Vale meadow's 30.5, and guesses at a
+  // mip tier / an anisotropy setting. Neither: the terrain has no textures to mip. The cause is in
+  // the shader and it is two smoothsteps (see TERRAIN_ALBEDO) — every fine albedo octave is gated
+  // on `dDet * fNear`, and `fNear` reaches ZERO at 78 world units. Both battle and overview framings
+  // sit well past that, so the fine grain is not merely reduced at gameplay distance, it is switched
+  // off. The Vale scored 30.5 because its detail energy is TUFTS AND TREES, not ground: strip the
+  // props and the meadow measures like the sand does. So this is one shared defect that the Vale's
+  // prop density has been hiding for nine rounds.
+  // Fix in two parts: the fade windows widen (see TERRAIN_ALBEDO's fDet), and the surviving grain
+  // needs amplitude to be worth seeing on a low-chroma surface. `hfAlb` is that amplitude, kept
+  // SEPARATE from hfK because hfK also drives the derivative bump's normal strength — the moor's
+  // whole §12a finding was a normal-relief stipple, and a map must be able to ask for more albedo
+  // tooth without asking for more relief.
+  hfAlb: 1.0,
   // WORLD-FIX6 §2.3. Drift/sastrugi relief gain on the snow splat (0 = no snow on this map).
   snowN: 0,
   // Aerial perspective is COOL (SPEC §3 haze #cfe0ee). This was a warm oatmeal, and since
@@ -2779,7 +2995,22 @@ const WPAL_BASE = {
   // the consequence across every frame: b < g < r in the sky. Aerial perspective is COOL — that is
   // the whole physics of it — and SPEC §3 says so. Back onto the spec haze, a little desaturated so
   // the far rim still reads as rock rather than as a hole cut in the picture.
-  hazeV: [0.372, 0.436, 0.545],
+  // ══ WORLD-FIX9 §1 — THE SKY IS DARKER THAN THE GRASS, AND THIS IS THE LINE THAT DOES IT ═══
+  // §1's blocker is "the sky dome is an achromatic dim card; in the Vale it is darker than the
+  // grass", with the Vale sampled at sky L 149 against meadow L 188 — an inverted value hierarchy,
+  // which is the one thing a daylight frame may never have. Round 8 fixed the DOME's stops and the
+  // finding still reproduces, and the reason is that on an establishing frame you cannot see the
+  // dome: the camera pitches ~50 degrees down, so the wedge of "sky" beside the diorama is the
+  // hazed ridge bands and the lowland annulus, and both of those are lerped toward THIS value, not
+  // toward a sky stop. Measured on the shipped build: the wedge at (10,240)-(140,560) reads
+  // rgb(143,149,152) — cool, correctly, but at S 0.063 and 40 luminance points UNDER the meadow.
+  // hazeV renders (as `hi` did) around L 191, and the far band is 74% of it over dark ridge rock,
+  // which lands exactly on the 149 measured. So: the air goes to the value the spec's #cfe0ee
+  // actually implies once ACES has had it (L 214 at S 0.116, R-B -27), and the band haze ceilings
+  // rise with it (see ridgeBand / the lowland annulus) so the farthest ridge genuinely dissolves
+  // into air. That is where the reference gets its floating-island read: not from a bluer sky, but
+  // from the distance being brighter than the subject.
+  hazeV: [0.680, 1.020, 1.860],
   // §1a: skyHi is the band a 50-degree-down camera actually fills its upper frame with, so it is the
   // stop that decides what "the sky" measures. It was #e8b98a. It is the spec haze now, and the
   // WARM band is confined to the sun's own azimuth by the dome shader (see uSun there) — which is
@@ -2800,7 +3031,12 @@ const WPAL_BASE = {
   // §1a: skyLow (below the horizon, i.e. most of what this camera sees behind the diorama) goes cool
   // with the rest of the air. skyHor keeps its warmth — it is now azimuth-gated in the dome, so it
   // is a glow AT the sun rather than a warm ring around the whole world.
-  skyHor: [0.960, 0.660, 0.395], skyLow: [0.335, 0.400, 0.505], sunGlow: [1.0, 0.80, 0.50],
+  // §1: skyLow is the dome band BELOW the rim — the one that has to agree with the air above, or
+  // the join between "sky" and "distance" is a visible seam. Raised onto the same atmosphere as
+  // hazeV. skyZen/skyMid are left where round 8 put them: §1 asks for a zenith at S 0.40 and they
+  // already carry it (#6491c1 rendered, S 0.48) — the finding's "achromatic" reading was never the
+  // zenith, which this camera cannot see.
+  skyHor: [0.960, 0.660, 0.395], skyLow: [0.440, 0.610, 0.940], sunGlow: [1.0, 0.80, 0.50],
   ibl: ['#2f63b4', '#6ea0d8', '#bcd2e4', '#f0dfbc', '#b9c2cb', '#77808c'],
   disc: ['rgba(255,244,214,1)', 'rgba(255,214,150,.55)', 'rgba(255,200,140,0)'],
   // §12: SPEC §3's haze #cfe0ee stays the stop just above the rim (the sky IS cool up there);
@@ -2842,7 +3078,15 @@ const WPAL_BASE = {
   // end comes up to hold the whole ramp inside ~1.6:1, which is the "+/-12% around a base" the
   // finding asks for once the macro masks are folded in, and the meadow's tonal SHAPES then come
   // from the 55u/135u masks rather than from the ramp being wide.
-  gDark: [0.1090, 0.2540, 0.0430], gMid: [0.1600, 0.3350, 0.0550], gLit: [0.2050, 0.4110, 0.0660],
+  // WORLD-FIX9 §2, second pass. With §3's rig settled, lit open meadow measured L 176 at HSV V 0.69
+  // — the spec's own value — but the frame's worst 32-wide luminance band still held 31.4% of the
+  // playfield inside L171-203, because the sward IS that band and it sat right under the ceiling. §2
+  // asks for exactly this and asks for it as an albedo change: shipped render V 0.783 against SPEC
+  // §3's #7fae4a at V 0.682. The ramp comes down 20% end to end (hue and the internal ratios
+  // untouched, so the family does not move), which does three things with one number: the meadow
+  // clears the top of the range so a highlight has somewhere to be, the backdrop can finally be
+  // BRIGHTER than the terrain (§1's inverted hierarchy), and the mid-band monopoly breaks.
+  gDark: [0.0872, 0.2032, 0.0344], gMid: [0.1280, 0.2680, 0.0440], gLit: [0.1640, 0.3288, 0.0528],
   // §7a §10 (last clause): the dry patches SPEC §3 asks for (#a9a05a) were measured as "not one
   // pixel anywhere in the meadow" — because dry1 was authored at 0.33/0.30/0.098, a saturated
   // straw that the dryM mask then had to be kept narrow to hide. On the spec hex the patches can
@@ -2893,7 +3137,15 @@ const WPAL_BASE = {
   // is now paid for by the specular and by the lit surfaces themselves, so this can go back to doing
   // its actual job: red comes off, blue comes off harder (the skylight supplies shade blue, and the
   // ALBEDO carrying it was half of why the sward measured 20 points undersaturated), green leads.
-  grassComp: [0.930, 1.020, 0.820],
+  // WORLD-FIX9 §2 (second clause). §2 measures the shipped sward at HSV(76.6, 0.435, 0.783) against
+  // SPEC §3's #7fae4a at HSV(88.2, 0.575, 0.682) and asks for the albedo to be re-authored down. It
+  // must not be: round 7 put gLit on the spec's linear triple exactly and the render is 0.10 of a
+  // stop over it because of the LIGHT, not the paint — a broad-spectrum ambient at 62% of key washes
+  // any albedo toward its own value and hue, which is the same defect §3 measures from the other
+  // side. §3's ambient cut does most of this on its own (a thinner fill returns saturation to every
+  // surface in the frame). What is left for this lever is the last of the blue: the skylight supplies
+  // shade blue where it belongs and the albedo carrying it is what caps the sward's saturation.
+  grassComp: [0.905, 1.035, 0.760],
   // WORLD-FIX4 §1b. Tufts were the loudest mark in the hero frame: flat unshadowed cards at
   // a soldier's screen size and HIGHER luminance than a lit helmet. Pulled ~32% down and
   // tinted onto the base grass family, so ground cover adds TEXTURE to the sward instead of
@@ -3034,7 +3286,13 @@ function fitSunShadow() {
 const hemi = new THREE.HemisphereLight(WPAL.hemiSky, WPAL.hemiGnd, WPAL.hemiI);
 const fill = new THREE.DirectionalLight(WPAL.fill, WPAL.fillI);   // sky bounce from the shadow side
 fill.position.set(84, 30, -58);
-scene.add(sun, sun.target, hemi, fill);
+// WORLD-FIX9 §10b. The constant cool floor (see WPAL_BASE.amb). A hemisphere term is still
+// directional — its lower half is the ground bounce and its upper half needs sky visibility — so
+// geometry buried under a canopy inside a cliff shadow receives almost none of it, which is the
+// RGB(16,16,7) void `_elem` measured. three folds AmbientLight into `ambientLightColor`: no extra
+// uniform block, no program variant, no draw call.
+const ambL = new THREE.AmbientLight(WPAL.amb, WPAL.ambI);
+scene.add(sun, sun.target, hemi, fill, ambL);
 G.sun = sun;
 const SUNDIR = sun.position.clone().normalize();
 
@@ -3476,6 +3734,29 @@ function tuftTex() {
   const tf = g.createLinearGradient(0, 0, 0, S * 0.18);
   tf.addColorStop(0, 'rgba(0,0,0,1)'); tf.addColorStop(1, 'rgba(0,0,0,0)');
   g.globalCompositeOperation = 'destination-out'; g.fillStyle = tf; g.fillRect(0, 0, S, S * 0.18);
+  // ══ WORLD-FIX9 §7 — THE ROOT IS A SOLID SHEET, AND THAT IS WHY THE CARD IS VISIBLE ════════
+  // §7: "the quad of each tuft reads as a solid flat sheet... no tuft may show a contiguous flat
+  // region wider than 6px". Count it and the cause is arithmetic: 190 blades of width 3-10px all
+  // START at y = S across a 236px span, so roughly 1100px of blade is packed into 236px of base.
+  // The lower half of the card is one opaque slab of blade green by construction, and no value ramp
+  // laid over a slab makes it stop being a slab — which is why WORLD-FIX8 §9's root ramp (still here,
+  // above) darkened the sheet without dissolving it.
+  // §7's remedy is "multiply tuft alpha by a base-to-tip gradient reaching 0.35 alpha at the base".
+  // A uniform gradient cannot be used directly: this material is alphaTest 0.42 / transparent:false
+  // (deliberately — tuft cards must stay in the depth pass and keep casting, see §5 below), so a
+  // smooth alpha ramp resolves to a hard horizontal CUT wherever it crosses the threshold. The ramp
+  // therefore arrives as ~90 tapered wedges of erosion instead: same base-to-tip falloff in
+  // aggregate, ragged at the threshold, and it carves the slab back into separate blade roots so the
+  // plane's own root dissolves into the terrain rather than ending in a straight line.
+  for (let i = 0; i < 92; i++) {
+    const x0 = wrng() * S, w = 2 + wrng() * 7, hh = S * (0.14 + wrng() * 0.34);
+    const gg = g.createLinearGradient(0, S, 0, S - hh);
+    gg.addColorStop(0, 'rgba(0,0,0,.96)'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gg;
+    g.beginPath(); g.moveTo(x0 - w / 2, S); g.lineTo(x0 + w / 2, S);
+    g.lineTo(x0 + w * 0.18, S - hh); g.lineTo(x0 - w * 0.18, S - hh);
+    g.closePath(); g.fill();
+  }
   g.globalCompositeOperation = 'source-over';
   return tex(c);
 }
@@ -4035,7 +4316,23 @@ function rockGeo(detail, seed, ang) {
   // rgb(213,182,128) — cream sandstone at L 174 — against a meadow at L 162, i.e. the rocks were
   // the BRIGHTEST thing in the playfield. §1's higher sun adds ~1.8x incidence on every up-facing
   // cap on top of that. The acceptance is simply "lit rock below lit grass", and this is the lever.
-  const RS = 1.06;
+  // ══ WORLD-FIX9 §6 — "ORIGAMI OR GREEN GLASS", AND IT IS NOT THE SHADER ════════════════════
+  // §6's remedy is "bind the cliff tri-planar rock shader to the boulder instance material rather
+  // than the flat-shaded fallback" — and that binding has been in place since WORLD-FIX4: the ROCKS
+  // InstancedMesh takes the same `graniteMat` the CRAGS do (see World.build phase 7). There is no
+  // fallback material to replace. What §6 is actually looking at is GEOMETRY: `IcosahedronGeometry(1,
+  // 1)` is 80 non-indexed triangles, so computeVertexNormals produces one FLAT normal per face, and
+  // 80 flat facets on a 1-2u lump is exactly "a 6-10 facet convex hull" at gameplay screen size.
+  // A triplanar albedo cannot rescue a silhouette made of eight planes.
+  // Three changes, all here or at the instance site:
+  //   (i)  detail 1 -> 2 (320 faces) with the existing two-octave displacement now reaching the new
+  //        vertices, so the facet count roughly quadruples and the silhouette stops reading crystalline.
+  //   (ii) RS 1.06 -> 0.90 and the top of the `dn` ramp capped: §6's acceptance is "no boulder top
+  //        exceeds lum 215", and the cream 225/215/195 caps it measured are this ramp's top end
+  //        multiplied by §3's key, which has just gone up 1.53x.
+  //   (iii) moss up to 0.66 of the mask (SPEC §6 requires it and §6 measures none) — safe at any
+  //        strength because WORLD-FIX7 §9.1 normalised it to the vertex's own luminance.
+  const RS = 0.90;
   return paint(g, (c, x, y, z, ny) => {
     const bnd = (y * 6.8 + fbmz(x * 2.1 + 12, z * 2.1, 2) * 2.2) % 1;
     const bs = sstep(0.42, 0.50, bnd);
@@ -4045,7 +4342,9 @@ function rockGeo(detail, seed, ang) {
     // any single face from rendering as one uniform value.
     const v = (0.58 + 0.46 * fbmz(x * 3.4 + 3, z * 3.4 + y * 2, 2)) * (0.80 + 0.34 * fbmz(x * 9.1 + 27, z * 9.1 + y * 6.3, 2))
             * (1 - 0.30 * joint) * RS;
-    const dn = 0.50 + 0.50 * clamp(y * 0.9 + 0.55, 0, 1);
+    // §6: the top of this ramp is what renders as a cream cap. Ceiling pulled to 0.88 so an up-facing
+    // facet is the brightest part of the stone without becoming the brightest thing in the playfield.
+    const dn = 0.50 + 0.38 * clamp(y * 0.9 + 0.55, 0, 1);
     // WORLD-FIX7 §9.2. SPEC §3 asks for granite WITH moss on the up-facing normals and round 7
     // measured none on any boulder. The mask opens (dot(n,up) > 0.6 was so tight that on a
     // displaced icosahedron only the literal crown qualified) and the mix comes up, with the noise
@@ -4068,7 +4367,7 @@ function rockGeo(detail, seed, ang) {
     const moss = sstep(0.42, 0.86, ny) * clamp(fbmz(x * 1.1 + 44, z * 1.1 + 9, 2) * 2.2 - 0.58, 0, 1);
     c.setRGB(r0, g0, b0);
     _tmpMoss.setRGB(MOSS_N[0] * bl, MOSS_N[1] * bl, MOSS_N[2] * bl);
-    c.lerp(_tmpMoss, moss * 0.50);
+    c.lerp(_tmpMoss, moss * 0.66);
   });
 }
 const _tmpMoss = new THREE.Color(0.070, 0.118, 0.036);
@@ -4680,7 +4979,14 @@ const TERRAIN_ALBEDO = `
     // procedural splats have no mip chain: without this the 1u grain aliases into what
     // looks like mosquito noise across half the frame, and the detail never falls off
     // with distance, so the diorama flattens.
-    dDet = 1.0 - 0.62*smoothstep(80.0, 220.0, distance(cameraPosition, vWP));
+    // WORLD-FIX9 §4. 80..220 at 0.62 strength means the derivative bump and the triplanar rock
+    // detail are at 38% by the time the overview camera sees them — and the overview camera is what
+    // the game is sold on. Widened to 150..430 (past the far cliff crest from any preset) at 0.46,
+    // so distance still smooths the surface but never switches it off. The aliasing this stop exists
+    // to prevent is a property of the HIGHEST octaves only, and those keep their own tighter window
+    // (see fDet below); this one governs the 1u-and-coarser detail, which cannot alias at any framing
+    // the game ships.
+    dDet = 1.0 - 0.46*smoothstep(150.0, 430.0, distance(cameraPosition, vWP));
 
     // rock by slope, PLUS by altitude — the escarpment crest is a rounded (low-slope)
     // surface, and leaving it grassy makes 50u granite cliffs read as green hills.
@@ -4698,6 +5004,15 @@ const TERRAIN_ALBEDO = `
     // screen-space grain at every depth, which is the other half of why it read as print.
     float nP = fbm2(wxz*0.0074 + 401.0);     // ~135u pasture regions
     float fNear = 1.0 - smoothstep(34.0, 78.0, distance(cameraPosition, vWP));
+    // WORLD-FIX9 §4. THE LINE THE WHOLE FINDING IS. fNear reaches zero at 78 world units, and it
+    // was gating the fine ALBEDO octaves as well as the 3.5u clump structure it was written for — so
+    // past 78u the ground has no sub-metre colour variation at all, on every map, in every frame the
+    // game ships. That is the 6-15x detail collapse §4 measured on sand, snow and gorge wall, and the
+    // reason the Vale escaped it is that the Vale's measured energy is tufts and canopies rather than
+    // ground. fDet is the fine-octave window, wide enough to cover both battle and overview
+    // framings; fNear keeps its original stops and its original job (clump-scale STRUCTURE, which
+    // genuinely does have to fade or it reads as static).
+    float fDet = 1.0 - 0.72*smoothstep(90.0, 300.0, distance(cameraPosition, vWP));
     // weight moved OFF the 3.5u clump layer and onto the 12u/55u ones: at closeup the 3.5u
     // octave was still swinging gk across a third of the whole ramp, which is what kept a
     // visible light/dark speckle at boot scale. Structure belongs at patch scale, not at
@@ -4710,8 +5025,13 @@ const TERRAIN_ALBEDO = `
     // once, which is the signature of a low-saturation surface carrying a value speckle — a
     // camouflage print. On a map whose whole identity is a bone-pale moor at dusk the fine
     // octaves have to come off; on the Vale they are the tooth of the sward and hfK is 1.
-    grass *= mix(1.0, 1.0 + (0.060*nF - 0.030)*${WPAL.hfK.toFixed(3)}, dDet*fNear);
-    grass *= mix(1.0, 1.0 + (0.040*nG - 0.020)*${WPAL.hfK.toFixed(3)}, dDet*fNear);
+    // WORLD-FIX9 §4: window widened (fDet, above) and amplitude roughly doubled. +/-3% of albedo on
+    // a surface rendering at L 175 is 5 levels of tooth, which measures as detail energy ~2 — the
+    // number §4 filed against the sand. +/-6% is 10-11 levels, and 12 is the acceptance. hfAlb is
+    // the per-map multiplier on top (see WPAL_BASE), separate from hfK so a map can buy albedo grain
+    // without buying normal relief.
+    grass *= mix(1.0, 1.0 + (0.118*nF - 0.059)*${(WPAL.hfK * (WPAL.hfAlb != null ? WPAL.hfAlb : 1)).toFixed(3)}, dDet*fDet);
+    grass *= mix(1.0, 1.0 + (0.076*nG - 0.038)*${(WPAL.hfK * (WPAL.hfAlb != null ? WPAL.hfAlb : 1)).toFixed(3)}, dDet*fNear);
     // HUE variance instead of value variance: a slow ~24u mask swings the sward between a
     // cool blue-green and a warm yellow-green. This is where a meadow's variety actually
     // lives, and it survives at overview zoom where a value speckle only ever aliases.
@@ -4920,7 +5240,20 @@ const TERRAIN_ALBEDO = `
       rv *= 0.84 + 0.31*w0;                                             // buttress-scale masses
       rv *= 0.87 + 0.25*d1;
       rv *= 0.91 + 0.17*d2;
-      rv *= 0.95 + 0.10*d3;
+      // WORLD-FIX9 §4, FIFTH PASS — THE GORGE WALL, AND IT IS AN OSCILLATION, NOT A BUG.
+      // Everything the third and fourth passes added to the fine octaves changed the wall's measured
+      // detail energy by under 0.05, because the wall's albedo does not come from that stack at all:
+      // it comes from the rv chain above. And this line is the only high-frequency term in that chain
+      // — d3 is a 0.185 u triplanar octave, exactly the frequency a Laplacian metric reads — running
+      // at +/-5%. On a wall rendering at L 60 that is +/-3 levels, i.e. nothing.
+      // It is +/-5% because rounds 7 and 8 put it there: §6C compressed this whole chain to hold the
+      // wall's vertical scan std at 18, and the second pass "took another turn of the same screw".
+      // Both of those findings were about STRATA CONTRAST — the light/dark bedding ladder shouting —
+      // and neither was about sub-metre pitting. So the ladder above stays exactly as round 8 signed it
+      // off, and only this term reopens: sandstone at 20 cm is pitted, and pitting is tooth without
+      // being contrast. Scaled by the map's own hfAlb (capped, so the canyon gets the most and the
+      // Vale's granite is only moderately roughened).
+      rv *= 1.0 + (d3 - 0.5)*${(0.22 * Math.min(WPAL.hfAlb != null ? WPAL.hfAlb : 1, 1.9)).toFixed(4)};
       // §6C: compressing the value chain above raises its MEAN as it narrows its range (a chain
       // of 0.5..1.5 terms sits near 1.0 either way, but the strata ramp itself now starts at 0.56
       // of the rLo->rHi span rather than 0.20). The gain comes down to hold the wall's exposure
@@ -4956,7 +5289,51 @@ const TERRAIN_ALBEDO = `
     // with dDet AND with the same near-field weight the 3.5u clump layer uses, so it dissolves at
     // distance instead of aliasing. The structure §10 asks for at this scale is supplied by the
     // derivative bump below (which survives at distance because it is SHADING, not albedo).
-    alb *= mix(1.0, 0.978 + 0.044*nX, dDet*fNear);
+    // WORLD-FIX9 §4. This one line is applied AFTER the rock and snow mixes, so it is the only
+    // fine-grain term the gorge WALLS and the Frostfell snowfield ever receive — and it was gated on
+    // fNear, i.e. off past 78 units. That is precisely why §4 measures gorge wall at 1.96 and snow at
+    // 3.98: those surfaces have no tuft layer to borrow energy from and no fine octave of their own.
+    // Onto fDet, amplitude up to ~+/-9 L, and scaled by the map's own hfAlb — a low-chroma surface
+    // needs more tooth than a saturated one to read as material rather than as a gradient.
+    // WORLD-FIX9 §4, THIRD PASS. Widening the windows and doubling the 1u grain still left map-5 sand
+    // at 2.08 and the gorge wall at 1.46, and a 2x crop of the sand explains why in one look: the
+    // surface has plenty of MOTTLE and no GRAIN. §4's metric is a Laplacian, i.e. a second derivative,
+    // and for a feature of wavelength W pixels at amplitude A it returns roughly A*(2*pi/W)^2 — so a
+    // 1-world-unit octave at 13 px/unit contributes about a fifth of what the same amplitude
+    // contributes at 0.4 units, and NO amount of amplitude on a low-frequency octave can produce the
+    // number. What §4 is really measuring, and what "reads as low-res smear" means, is the absence of
+    // the highest octave. That octave (nX, ~0.38u) exists and was gated to nothing at distance, so it
+    // gets the same floor treatment: never below 45% of its amplitude, whatever the range.
+    // 0.38u is 1.5-2 px only at the very back of an establishing frame, which is why this floors at
+    // 0.45 rather than at 1.0 — the aliasing the original gate existed to prevent is real, just far
+    // smaller than the gate that was answering it.
+    // WORLD-FIX9 §4, FOURTH PASS — AND THIS IS THE GORGE WALL, WHICH IS A DIFFERENT DEFECT.
+    // The third pass changed the wall's number by 0.00, and the reason is visible the moment the crop
+    // is identified: (1050,510) on _gorge and (1200,510) on battle5 are not floor, they are WALL. Every
+    // fine octave in this shader is sampled from vWP.xz — an xz projection — and a near-vertical face
+    // has nearly constant xz down its whole height. So on a wall the entire fine-detail stack resolves
+    // to vertical streaks with zero variation along the fall line, which is exactly the phrase §4 uses:
+    // "reads as a stretched texture rather than ground". No amplitude and no window can fix a
+    // projection. The two fine octaves are therefore re-projected on steep faces onto (horizontal
+    // bearing, height) and blended in by the surface's own slope, so a wall gets grain across its
+    // bedding instead of down it. Costs two noise taps on steep fragments only.
+    vec2 wv = vec2(dot(wxz, vec2(0.8660, 0.5000)), vWP.y);
+    float slp = clamp(slope, 0.0, 1.0);
+    float nXs = mix(nX, fbm3(wv*2.60 + 23.0), slp);
+    float nFs = mix(nF, vn2 (wv*1.05 +  3.0), slp);
+    alb *= 1.0 + (0.076*nXs - 0.038)*${(WPAL.hfAlb != null ? WPAL.hfAlb : 1).toFixed(3)}*mix(0.45, 1.0, dDet*fDet);
+    // WORLD-FIX9 §4, second pass — MEASURED, and the first pass only half-worked. Widening the
+    // windows lifted Frostfell snow 4.86 -> 6.83 and moved map-5 sand 1.91 -> 1.98, i.e. not at all,
+    // and the arithmetic says why: at a battle camera the far half of the frame sits ~300 units out,
+    // where dDet*fDet still multiplies to ~0.22. Any term gated on distance at all is worth a fifth
+    // of its amplitude exactly where §4 measures it.
+    // So this octave is not gated on distance in any meaningful way — it floors at 0.55 — and it is
+    // applied to the FINAL albedo, after the dry/soil/road/rock/snow mixes. That second half matters
+    // as much as the first: every fine octave before this point lives inside the grass branch, so
+    // the bleached benches, the lane, the snowfield and the canyon WALLS have never received one. It
+    // is the 1u grain (nF), not the 0.4u micro — 1 world unit is 4-13 screen px at every framing the
+    // game ships, so it cannot alias, which is the whole reason the other octaves are gated.
+    alb *= 1.0 + (0.104*nFs - 0.052)*${(WPAL.hfAlb != null ? WPAL.hfAlb : 1).toFixed(3)}*mix(0.55, 1.0, dDet);
     // baked contact AO from every scattered prop — this is what puts them IN the ground
     {
       float pao = texture2D(uPAO, (vWP.xz + vec2(${(FW / 2).toFixed(1)}, ${(FD / 2).toFixed(1)})) / vec2(${FW.toFixed(1)}, ${FD.toFixed(1)})).r;
@@ -5291,7 +5668,10 @@ const _c3 = [0, 0, 0];
     const g0 = lerp(0.022, 0.135, sstep(0.28, 0.74, wood)) * (0.66 + 0.68 * fld);
     _c3[0] = g0 * WPAL.lowG[0]; _c3[1] = g0 * WPAL.lowG[1]; _c3[2] = g0 * WPAL.lowG[2];
     if (rvr > 0.05) for (let q = 0; q < 3; q++) _c3[q] = lerp(_c3[q], WPAL.lowRiv[q], rvr);
-    hz(_c3, _c3, clamp(0.18 + (R - 88) / 400 * 0.56, 0, 0.74));
+    // WORLD-FIX9 §1: the haze ceiling rises with hazeV. At 0.74 the farthest fields still carried a
+    // quarter of their own (dark) albedo, which is why the "sky" beside the diorama measured 40
+    // luminance points under the meadow. Aerial perspective at 600 world units is essentially total.
+    hz(_c3, _c3, clamp(0.26 + (R - 88) / 400 * 0.70, 0, 0.90));
     col[k * 3] = _c3[0]; col[k * 3 + 1] = _c3[1]; col[k * 3 + 2] = _c3[2];
   }
   for (let r = 0; r < NR - 1; r++) for (let i = 0; i < NA; i++) {
@@ -5340,10 +5720,15 @@ function ridgeBand(rad, N, yMin, yMax, seed, rock, haze) {
 // Tops sit well below the plateau: from the game's high camera the only sightlines
 // that leave the valley are steeply downward, so ridges that rise above y=0 would
 // never appear at all.
+// WORLD-FIX9 §1: haze per band 0.32/0.54/0.72 -> 0.50/0.72/0.90. These three bands plus the
+// lowland annulus ARE "the sky" in every establishing frame (the dome above the far rim is 1.3-6.8%
+// of the pixels §1 counted), so their haze fraction — not any sky stop — is what decides whether the
+// backdrop reads as air. The near band keeps the most of its own rock so the silhouette ladder
+// survives: three ridges dissolving at different rates is the depth cue, one flat wash is not.
 scene.add(
-  ridgeBand(238, 150, -104, -44, 3.1, WPAL.ridge[0], 0.32),
-  ridgeBand(322, 120, -110, -54, 8.7, WPAL.ridge[1], 0.54),
-  ridgeBand(410, 96, -116, -46, 5.3, WPAL.ridge[2], 0.72));
+  ridgeBand(238, 150, -104, -44, 3.1, WPAL.ridge[0], 0.50),
+  ridgeBand(322, 120, -110, -54, 8.7, WPAL.ridge[1], 0.72),
+  ridgeBand(410, 96, -116, -46, 5.3, WPAL.ridge[2], 0.90));
 
 // ══════════════════════════════ World.build() ══════════════════════════════
 const ROAD_HALF = 2.55;
@@ -5802,7 +6187,12 @@ World.build = async function () {
     // throw. Render-only: OBS and stampAO take x,z and never y.
     // WORLD-FIX7 §9.3: per-instance albedo jitter widened from +/-15% to the +/-18% value the
     // finding asks for, so "30-odd identical pale lumps" stop reading as one repeated asset.
-    bldL.push({ m: trs(x, bi(HG, x, z) - s * 0.27 - slopeAt(x, z) * s * 0.85, z, wr(0, 6.28), s * wr(0.8, 1.3), s * wr(0.55, 1.05), s * wr(0.8, 1.3), wr(-0.2, 0.2), wr(-0.2, 0.2)), c: vary(0.18) });
+    // WORLD-FIX9 §6 (last clause): "they sit on top of the grass with no intersection". The sink was
+    // 0.27 of the instance's own scale against a y-scale that runs 0.55-1.05, i.e. as little as 26% of
+    // the visible height on a squat rock — enough to leave a lit contact line all the way round. 0.40
+    // is the 15-20% of HEIGHT the finding asks for on the tall instances and rather more on the flat
+    // ones, which is where the artefact was actually visible. Render-only: OBS/stampAO take x,z.
+    bldL.push({ m: trs(x, bi(HG, x, z) - s * 0.40 - slopeAt(x, z) * s * 0.85, z, wr(0, 6.28), s * wr(0.8, 1.3), s * wr(0.55, 1.05), s * wr(0.8, 1.3), wr(-0.2, 0.2), wr(-0.2, 0.2)), c: vary(0.18) });
     // WORLD-FIX5 §4c. The contact stamp reached 1.05*s*1.6 = 1.68s while rockGeo's own
     // displaced radius runs to 1.39 and the instance's widest axis to 1.3s — so the whole
     // ring sat UNDERNEATH the rock and the visible grass beside it was never darkened.
@@ -5817,7 +6207,9 @@ World.build = async function () {
   iMesh(baseBleed(cragGeo(9, 5, 2.7), 0.42, 0.48), rockMat, cragL[0], false, 'CRAGS_A');
   iMesh(baseBleed(cragGeo(7, 4, 13.1), 0.42, 0.48), rockMat, cragL[1], false, 'CRAGS_B');
   iMesh(baseBleed(cragGeo(11, 5, 31.7), 0.42, 0.48), rockMat, cragL[2], false, 'CRAGS_C');
-  iMesh(baseBleed(rockGeo(1, 11.3, false), 0.46, 0.50), rockMat, bldL, true, 'ROCKS');
+  // WORLD-FIX9 §6(i): one subdivision. 80 flat facets -> 320, on ONE shared geometry across every
+  // boulder instance, so the cost is 240 extra triangles in the whole scene and zero extra draw calls.
+  iMesh(baseBleed(rockGeo(2, 11.3, false), 0.46, 0.50), rockMat, bldL, true, 'ROCKS');
 
   await BOOT.sub(0.538);
   // ── 8. trees + bushes ───────────────────────────────────────────────────────
@@ -5900,8 +6292,15 @@ World.build = async function () {
     // presents leaf AREA instead of the edge-on "asterisk" a vertical cross gives.
     const q = [];
     for (let i = 0; i < 3; i++) {
+      // WORLD-FIX9 §7. The rosette was tipped 0.44 rad (25 degrees) off vertical to "present leaf
+      // AREA instead of the edge-on asterisk". Measure what that does against this camera: the game
+      // pitches ~50 degrees down, so a card tipped back 25 degrees has its normal within 25 degrees
+      // of the view ray — cos 0.9, i.e. very nearly FACE-ON. The round-5 note is right that a purely
+      // vertical cross reads as an asterisk, but 25 degrees overshot into showing the viewer the
+      // whole quad, which is the flat sheet §7 is measuring. 0.20 rad keeps some presented area at
+      // gameplay zoom without turning the card into a billboard aimed at the lens.
       const pg = new THREE.PlaneGeometry(0.96, 0.70);
-      pg.translate(0, 0.43, 0); pg.rotateX(0.44); pg.translate(0, 0.02, 0.15);
+      pg.translate(0, 0.43, 0); pg.rotateX(0.20); pg.translate(0, 0.02, 0.15);
       q.push({ g: paintFlat(pg, [1, 1, 1], 0.0), m: trs(0, 0, 0, i * 2.094) });
     }
     const tuftG = mergeParts(q);
@@ -5969,7 +6368,13 @@ World.build = async function () {
       // with an independent 0.70..1.36 on Y — a 6.7x spread within one depth band, which is why
       // tufts in the same crop ran 60 px to 200 px and several stood taller than a soldier.
       // Clamped to the 0.85..1.15 of one base size the finding asks for.
-      const s = sB * wr(0.94, 1.12) * (0.86 + 0.14 * dens);
+      // WORLD-FIX9 §7 (fourth clause): "roughly 14 tufts laid on a visibly regular grid with
+      // identical scale". Yaw was already a full 0-360 draw and position already jitters by +/-rad,
+      // so what reads as a lattice is the SCALE: round 6 clamped the spread to 0.85..1.15 of one base
+      // size to fix a 6.7x chaos, and a field of instances all within +/-15% of each other is a
+      // repeated stamp. Reopened to the 0.75..1.35 the finding names — wide enough to break the
+      // repeat, an order of magnitude short of the spread round 6 was fixing.
+      const s = sB * wr(0.78, 1.30) * (0.86 + 0.14 * dens);
       // ...and SUNK. The rosette's bottom edge visibly hung above the terrain at three separate
       // places in the zoom crop; 0.06 was less than the height error a 1.3x-scaled card
       // introduces on any gradient at all. 0.17 buries the base on every instance.
@@ -8391,6 +8796,11 @@ await BOOT.stage('boot.host');
     for (const p of parts) { idxd(p.g); if (!p.g.attributes.normal) p.g.computeVertexNormals(); vc += p.g.attributes.position.count; ic += p.g.index.count; }
     const pos = new Float32Array(vc * 3), nor = new Float32Array(vc * 3), uvs = new Float32Array(vc * 2),
           col = new Float32Array(vc * 3), bon = new Float32Array(vc), pv = new Float32Array(vc * 3),
+          // ARMIES-FIX9 §6 — KIT SLOT. 0 = every body wears this part. 1/2/3 = only the bodies
+          // whose per-instance variant draw matches, so one merged geometry carries three kits and
+          // the shader discards the two a given man is not wearing (see ANIM_BODY). Costs one float
+          // per vertex and not one draw call.
+          vr = new Float32Array(vc),
           pv2 = new Float32Array(vc * 3), wgt = new Float32Array(vc), idx = new Uint32Array(ic);
     const nm = new THREE.Matrix3(), v = new THREE.Vector3(), w = new THREE.Vector3(), I4 = new THREE.Matrix4();
     let vo = 0, io = 0;
@@ -8416,6 +8826,7 @@ await BOOT.stage('boot.host');
         const q = p.piv2 || p.piv;
         pv2[o3] = q[0]; pv2[o3 + 1] = q[1]; pv2[o3 + 2] = q[2];
         wgt[vo + i] = p.w ? p.w(v.x, v.y, v.z) : 0;
+        vr[vo + i] = p.vr || 0;
       }
       const IX = g.index; for (let i = 0; i < IX.count; i++) idx[io + i] = IX.getX(i) + vo;
       vo += P.count; io += IX.count;
@@ -8430,6 +8841,7 @@ await BOOT.stage('boot.host');
     out.setAttribute('aPiv', new THREE.BufferAttribute(pv, 3));
     out.setAttribute('aPiv2', new THREE.BufferAttribute(pv2, 3));
     out.setAttribute('aW', new THREE.BufferAttribute(wgt, 1));
+    out.setAttribute('aVar', new THREE.BufferAttribute(vr, 1));
     out.setIndex(new THREE.BufferAttribute(idx, 1));
     out.computeBoundingSphere();
     return out;
@@ -8441,7 +8853,10 @@ await BOOT.stage('boot.host');
   // 5 shield arm, 6 weapon arm, 7 head, 8 cloth (tabard / cape / banner).
   function buildSoldier(C) {
     const p = [];
-    const A = (g, m, bone, piv, piv2, w, tint) => { p.push({ g, m: m || null, bone: bone || 0, piv: piv || [0, 0, 0], piv2: piv2 || null, w: w || null, tint }); };
+    // `vr` (ARMIES-FIX9 §6) is the KIT SLOT: 0 = worn by every body, 1/2/3 = worn only by the third
+    // of the roster whose per-instance draw matches. Trailing arg, so nothing that already calls A()
+    // has to change.
+    const A = (g, m, bone, piv, piv2, w, tint, vr) => { p.push({ g, m: m || null, bone: bone || 0, piv: piv || [0, 0, 0], piv2: piv2 || null, w: w || null, tint, vr }); };
     const k = C.h / 1.80, K = v => v * k, B = C.bulk, W = C.bulk * 0.93;
     const rod = (a, b, r1, r2, t, bone, piv, piv2, tint) => {
       const [m, L] = spanM(a, b);
@@ -8462,7 +8877,22 @@ await BOOT.stage('boot.host');
     // as a tall man, and no amount of scale fixes that. shF widens the shoulder line against
     // the hips independently of `bulk`, which also thickens the waist.
     const hsk = K(C.headDrop || 0);
-    const yNck = K(1.425) - drop - hsk, yChn = K(1.45) - drop - hsk, yCrn = K(1.71) - drop - hsk;
+    // ══ ARMIES-FIX9 §4 — THE MUSHROOM. EVERY HUMANOID GETS A NECK ═════════════════════════════
+    // "At full zoom the helmet dome seats directly onto the shoulders. There is no neck, no chin,
+    // no visor slot, no face plane — all ~40 grunts in the crop read as a dome on a torso."
+    // Two of those four already existed in geometry and neither could be SEEN, which is the whole
+    // lesson of this finding. The neck cylinder has been there since v1 (see below) spanning
+    // 1.3875..1.4625 — but every helmet's aventail hangs to yCrn-0.39, i.e. down to 1.32, a full
+    // 0.07 BELOW the shoulder line, so the mail curtain swallowed the neck, the jaw and the chin
+    // and the head genuinely did seat on the trapezius. And the visor void exists (kettleR) but
+    // sits inside the aventail's shadow with nothing above it to cast a horizontal.
+    // `NKL` lifts the whole skull off the shoulders and `NKG` pulls every aventail's hem UP by
+    // more than the lift, so a strip of neck is left exposed between the mail hem and the pauldron
+    // on every archetype that has a face. Both are zero when `headDrop` is set, so the mini-bosses
+    // whose whole read is a skull sunk into the ribs (ogre, ironclad, troll) are bit-identical.
+    const NKL = C.headDrop ? 0 : K(0.042), NKG = C.headDrop ? 0 : K(0.098);
+    const yNck = K(1.425) - drop - hsk + NKL, yChn = K(1.45) - drop - hsk + NKL,
+          yCrn = K(1.71) - drop - hsk + NKL;
     const hipX = K(0.105) * B, shX = K(0.238) * B * (C.shF || 1);
 
     // ── legs ──
@@ -8617,21 +9047,63 @@ await BOOT.stage('boot.host');
     // ── neck + head ──
     const SKN = C.skin === undefined ? T.SKIN : C.skin, HRT = C.hair === undefined ? T.HAIR : C.hair;
     const HS = C.headS || 1;                             // brutish skulls read wider, not taller
-    if (!C.headDrop) A(uvAll(new THREE.CylinderGeometry(K(0.072) * B, K(0.086) * B, K(0.075), 7), SKN), trs(0, yNck, 0), 7, [0, yNck - K(0.02), 0], null, null, 0.80);
+    // ARMIES-FIX9 §4a. The column runs from the collarbone to the jaw — 0.44 of head width and
+    // long enough to be a SEGMENT rather than a washer — and it is a value STOP darker than the
+    // face it carries (0.82 of the skin tint, per the finding), because the one thing that reads at
+    // 8 px is a dark band between two lit masses. Ends 0.012 inside the head box so no flex of
+    // bone 7 can open a hole at the jaw.
+    if (!C.headDrop) {
+      const nkR = K(0.085) * B, nkB = ySh - K(0.020), nkT = yChn + K(0.012);
+      A(uvAll(new THREE.CylinderGeometry(nkR, nkR * 1.14, nkT - nkB, 8), SKN),
+        trs(0, (nkB + nkT) / 2, -K(0.006)), 7, [0, yNck - K(0.02), 0], null, null, 0.66);
+      // and the throat's own shade, so the neck has a front and a back at gameplay zoom
+      A(boxA(nkR * 1.24, (nkT - nkB) * 0.72, K(0.030), [SKN]),
+        trs(0, (nkB + nkT) / 2 - K(0.008), nkR * 0.86), 7, [0, yNck - K(0.02), 0], null, null, 0.50);
+    }
     else A(uvAll(new THREE.SphereGeometry(K(0.230) * B, C.seg || SEG, 6), SKN),   // trapezius slab: mass where the neck would be
       trs(0, ySh + K(0.02), -K(0.02), 0, 1.10, 0.62, 0.90), 0, null, null, null, 0.86);
     A(tbox(K(0.192) * HS, yCrn - yChn, K(0.214) * HS, [SKN, SKN, HRT, SKN, C.face, HRT], 0.90, 1.0),
       trs(0, (yChn + yCrn) / 2, 0), 7, [0, yNck - K(0.02), 0], null, null, 1.0);
     A(boxA(K(0.038), K(0.055), K(0.042), [SKN]), trs(0, yChn + K(0.112), K(0.118) * HS), 7, [0, yNck - K(0.02), 0], null, null, 0.98);
     const hp = [0, yNck - K(0.02), 0];
+    // ARMIES-FIX9 §4b — THE VISOR SLOT, ON EVERY ARCHETYPE THAT HAS A FACE. Individual helmets
+    // grew their own eye slits one round at a time (kettleR §2.1, crown, great, slab...) and the
+    // ones that never did — horned, wrap, plume, kettle, tusk, rime — carry a bare skin plane where
+    // a face belongs, which is the "no chin, no visor slot, no face plane" half of the finding on
+    // the troll and the revenant specifically. This is the shared one: a dark band across the front
+    // of the skull at 0.50 head-width x 0.18 head-height, value 0.06-0.10 of the tile, proud of the
+    // face plane by 0.02 so it can never z-fight it and inset enough that no key angle puts a
+    // specular on it. 4 tris, on the head bone, fully instanced. Gated on `C.faceSlot !== false`
+    // so a body whose face IS its read (the bone mask, the cowl's void, the skull's sockets) can
+    // opt out and keep the silhouette it was authored with.
+    // ...and the three helms that already OWN their eye line opt out by name rather than by a flag
+    // nobody would remember to set: `tusk` carries sunken sockets between its tusks, `skull` is a
+    // bare cranium with orbits cut into it, `slab` has a channel across a stone brow. A second dark
+    // band on any of those is a second pair of eyes.
+    if (C.faceSlot !== false && C.helm !== 'tusk' && C.helm !== 'skull' && C.helm !== 'slab') {
+      const fz = K(0.107) * HS;
+      A(boxA(K(0.096) * HS, K(0.047), K(0.024), [T.EYES]),
+        trs(0, yChn + (yCrn - yChn) * 0.60, fz + K(0.004)), 7, hp, null, null, 0.09);
+      // the brow above it: one lit horizontal so the dark band reads as a hole under a ridge
+      A(tbox(K(0.150) * HS, K(0.030), K(0.038), [SKN], 1.0, 0.70),
+        trs(0, yChn + (yCrn - yChn) * 0.74, fz - K(0.004)), 7, hp, null, null, 1.22);
+    }
     // The helmet bowl must swallow the skull down to the brow (sphere cap swept past the
     // equator) or the head reads as a pale block at every zoom level.
     // ── helmets ──
     const dome = (r, sy, t, yy, tint) => A(uvAll(new THREE.SphereGeometry(r, C.seg || SEG, 6, 0, TAU, 0, 1.88), t), trs(0, yy, 0, 0, 1, sy, 1), 7, hp, null, null, tint);
     // Aventail: a mail curtain from the helm rim over the neck and cheeks, open at the face.
     // Without it the exposed skin below the bowl reads as a pale block at every zoom.
-    const aventail = (rt, rb, yTop, hgt, t) => A(uvAll(new THREE.CylinderGeometry(rt, rb, hgt, (C.seg || SEG) + 3, 1, true, 0.86, TAU - 1.72), t),
-      trs(0, yTop - hgt / 2, 0), 7, hp, null, null, 0.90);
+    // ARMIES-FIX9 §4a — and its HEM comes up by `NKG`. The curtain hung 0.07 below the shoulder
+    // line on every archetype, which is what made the neck (which has existed all along) invisible
+    // and the head seat on the torso. Raising the hem by more than the skull's own lift leaves a
+    // strip of throat between mail and pauldron. Floored at 0.055 K so a hood or a cowl whose whole
+    // identity is a long curtain still has one.
+    const aventail = (rt, rb, yTop, hgt, t) => {
+      const hg = Math.max(K(0.055), hgt - NKG);
+      A(uvAll(new THREE.CylinderGeometry(rt, rb - (hgt - hg) * 0.30, hg, (C.seg || SEG) + 3, 1, true, 0.86, TAU - 1.72), t),
+        trs(0, yTop - hg / 2, 0), 7, hp, null, null, 0.90);
+    };
     // helm ridge: a low crest front-to-back so the bowl is not a perfect polished sphere
     const ridge = (r, yy, t) => A(boxA(K(0.036), K(0.048), r * 1.96, [t]), trs(0, yy, 0), 7, hp, null, null, 1.14);
     if (C.helm === 'nasal') {
@@ -8712,6 +9184,14 @@ await BOOT.stage('boot.host');
       for (const s of [-1, 1])
         A(boxA(K(0.028), K(0.120), K(0.084), [T.RED]), trs(s * K(0.130), yCrn - K(0.268), K(0.066)), 7, hp, null, null, 1.02);
       A(boxA(K(0.028), K(0.078), K(0.028), [T.RED]), trs(0, yCrn + K(0.140), 0), 7, hp, null, null, 1.08);
+      // ARMIES-FIX9 §6 — the head's share of the kit spread. Two crests keyed to the same slot the
+      // shield is: a TRANSVERSE crimson comb on kit 2 (the one surface a 55-degree lens sees on a
+      // helmet, so it is the head variation that actually reads from the game's own camera) and a
+      // low fore-and-aft ridge on kit 3. Kit 1 keeps the bare bowl that shipped.
+      if (C.kitVar) {
+        A(tbox(K(0.300), K(0.070), K(0.052), [T.RED], 1.0, 0.62), trs(0, yCrn + K(0.086), 0), 7, hp, null, null, 1.10, 2);
+        A(boxA(K(0.046), K(0.086), K(0.290), [T.CRIM]), trs(0, yCrn + K(0.092), -K(0.010)), 7, hp, null, null, 1.04, 3);
+      }
     } else if (C.helm === 'wrap') {                          // skirmisher hood + headband
       dome(K(0.147), 0.98, T.CRIM, yCrn - K(0.086), 1.05);
       A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.154), K(0.046), C.seg + 2 || 10), T.RED), trs(0, yCrn - K(0.140), 0), 7, hp, null, null, 1.08);
@@ -9130,20 +9610,54 @@ await BOOT.stage('boot.host');
       // BOARD faces the threat (and therefore, on the road, the lens): the crescent becomes a
       // crimson disc with a boss on it, which also puts paint where pale rim used to be.
       const ry = buck ? -0.22 : -0.34;
-      A(plateGeo(polyC(r, DSEG), K(0.058), T.SHR, T.SHBK, T.IRON), trs(cen[0], cen[1], cen[2], ry, 1, 1, 1, 0.13, 0.09), 11, shL, null, null, 1.04);
       // ARMIES-FIX3 §2.2. The disc was a painted plate with a dull iron cone stuck on it —
       // no relief, no rim, so at gameplay zoom it read as one flat lozenge of styrofoam.
       // A real boss is a HEMISPHERE (0.22 of the shield width, forged plate so it takes a
       // specular hit off the key) sitting proud of the face, and a rim BAND a stop darker
       // than the paint runs the circumference so the disc has an edge. Both ride bone 11 —
       // the new shield bone — so they fall with the board when the man dies.
-      const bx = cen[0] + Math.sin(ry) * K(0.052), bz = cen[2] + Math.cos(ry) * K(0.052);
-      A(uvAll(new THREE.SphereGeometry(r * 0.22, DSEG, 6, 0, TAU, 0, 1.30), T.PLATE),
-        trs(bx, cen[1], bz, ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 11, shL, null, null, 1.18);
-      A(uvAll(new THREE.CylinderGeometry(r * 0.30, r * 0.30, K(0.030), DSEG), T.IRON),
-        trs(cen[0] + Math.sin(ry) * K(0.040), cen[1], cen[2] + Math.cos(ry) * K(0.040), ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 11, shL, null, null, 0.80);
-      A(uvAll(new THREE.CylinderGeometry(r * 1.005, r * 1.005, K(0.072), DSEG, 1, true), T.IRON),
-        trs(cen[0], cen[1], cen[2], ry, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), 11, shL, null, null, 0.86);
+      // ARMIES-FIX9 §6: factored out of the inline block so the SAME board can be built twice —
+      // once on the arm and once slung across the back — without a second copy of the furniture.
+      const roundBoard = (cn, rr, yw, bone, piv, vr) => {
+        A(plateGeo(polyC(rr, DSEG), K(0.058), T.SHR, T.SHBK, T.IRON), trs(cn[0], cn[1], cn[2], yw, 1, 1, 1, 0.13, 0.09), bone, piv, null, null, 1.04, vr);
+        const bx = cn[0] + Math.sin(yw) * K(0.052), bz = cn[2] + Math.cos(yw) * K(0.052);
+        A(uvAll(new THREE.SphereGeometry(rr * 0.22, DSEG, 6, 0, TAU, 0, 1.30), T.PLATE),
+          trs(bx, cn[1], bz, yw, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), bone, piv, null, null, 1.18, vr);
+        A(uvAll(new THREE.CylinderGeometry(rr * 0.30, rr * 0.30, K(0.030), DSEG), T.IRON),
+          trs(cn[0] + Math.sin(yw) * K(0.040), cn[1], cn[2] + Math.cos(yw) * K(0.040), yw, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), bone, piv, null, null, 0.80, vr);
+        A(uvAll(new THREE.CylinderGeometry(rr * 1.005, rr * 1.005, K(0.072), DSEG, 1, true), T.IRON),
+          trs(cn[0], cn[1], cn[2], yw, 1, 1, 1, Math.PI / 2 + 0.13, 0.09), bone, piv, null, null, 0.86, vr);
+      };
+      // ══ ARMIES-FIX9 §6 — THE LEVY IS EQUIPPED FROM THREE RACKS, NOT ONE ═══════════════════════
+      // `kitVar` builds all three kits into the one merged geometry; the shader draws whichever the
+      // instance hashed to. Chosen so the OUTLINE differs, which is the only axis that survives the
+      // downsample the finding is measuring at — and so that none of the three loses faction colour,
+      // because a third of the horde going grey would trade this finding for §1's.
+      //   1  round board on the arm at the shipped yaw — the kit that already exists, unchanged.
+      //   2  a KITE board: taller than it is wide, so the man's leading edge is a long vertical
+      //      instead of a disc. Sized so its FACE AREA matches the disc it replaces (see §1: a kit
+      //      spread that costs the horde crimson trades this finding for that one).
+      //   3  the heavy levyman — an oversized board carried nearly SQUARE to the road rather than
+      //      raked away from it, plus a spare disc slung across the spine. The square carry is the
+      //      largest crimson ellipse any of the three presents to a 55-degree lens, and the slung
+      //      board puts paint on the BACK, which is the surface this camera actually looks at.
+      if (C.kitVar && !buck) {
+        roundBoard(cen, r, ry, 11, shL, 1);
+        const kh = K(0.500), kw = K(0.238);
+        const kc = [cen[0] + K(0.010), cen[1] + K(0.070), cen[2] - K(0.010)];
+        A(plateGeo(KITE.map(q => [q[0] * kw, q[1] * kh]), K(0.056), T.SHR, T.SHBK, T.IRON),
+          trs(kc[0], kc[1], kc[2], ry * 0.84, 1, 1, 1, 0.11, 0.06), 11, shL, null, null, 1.02, 2);
+        A(uvAll(new THREE.SphereGeometry(kw * 0.30, DSEG, 6, 0, TAU, 0, 1.30), T.PLATE),
+          trs(kc[0] + Math.sin(ry * 0.84) * K(0.050), kc[1] + K(0.080), kc[2] + Math.cos(ry * 0.84) * K(0.050), ry * 0.84, 1, 1, 1, Math.PI / 2 + 0.11, 0.06), 11, shL, null, null, 1.16, 2);
+        A(boxA(kw * 1.92, K(0.044), K(0.062), [T.IRON]),
+          trs(kc[0], kc[1] + kh * 0.84, kc[2], ry * 0.84, 1, 1, 1, 0.11, 0.06), 11, shL, null, null, 0.88, 2);
+        roundBoard([cen[0] - K(0.020), cen[1] + K(0.010), cen[2] + K(0.040)], r * 1.14, -0.11, 11, shL, 3);
+        // the spare, on bone 0 so it does not swing with the arm, yawed nearly flat to the spine
+        // with a leather guige over the shoulder holding it there.
+        roundBoard([-K(0.030), yCst - K(0.13), -K(0.200) * W], r * 0.66, 3.06, 0, null, 3);
+        A(boxA(K(0.056), K(0.560), K(0.030), [T.LEATH]),
+          trs(K(0.120), yCst - K(0.10), -K(0.050) * W, 0, 1, 1, 1, 0.10, -0.56), 0, null, null, null, 0.86, 3);
+      } else roundBoard(cen, r, ry, 11, shL, 0);
     } else if (C.shield === 'kite') {
       const hw = K(0.205), hh = K(0.40);
       const pts = KITE.map(q => [q[0] * hw, q[1] * hh]);
@@ -9840,6 +10354,43 @@ await BOOT.stage('boot.host');
     };
     const ell = (r, sx, sy, sz, x, y, z, t, bone, piv, tint) =>
       A(uvAll(new THREE.SphereGeometry(r, SG + 1, 6), t), trs(x, y, z, 0, sx, sy, sz), bone, piv, piv, null, tint);
+    // ══ ARMIES-FIX9 §3 — ONE LOFTED HULL, SO THERE IS NO SEAM TO SEE ═══════════════════════════
+    // "The body is four intersecting capsules (head, neck, barrel, rump) with the boolean seams
+    // plainly visible where they overlap." Correct, and unfixable by moving the capsules: two
+    // overlapping spheres always leave a crease along their circle of intersection, and the harder
+    // you overlap them to hide it the more it reads as a waist. So the trunk is swept instead.
+    // `loft` takes spine STATIONS — [z, y, half-width, half-height] from tail to nose — and returns
+    // one closed surface: rings of SG+2 verts bridged into quads, capped at both ends. Nothing
+    // intersects anything, so no crease can exist anywhere on the body, and the profile is still
+    // authored by the same four numbers the capsules were (the finding's own instruction: "sample
+    // the four existing capsule radii as the profile's control points to keep the current
+    // proportions"). Winding is CCW-outward — verified by the +x quad: (b-a) is +y and (c-a) is +z,
+    // so (a,b,c) crosses to +x. Stations MUST run in increasing z or the end caps face inward.
+    const loft = (st, t, bone, piv, tint) => {
+      const R = SG + 2, N = st.length, pos = [], uvs = [], idx = [];
+      for (let i = 0; i < N; i++) {
+        const [z, y, rx, ry] = st[i];
+        for (let j = 0; j <= R; j++) {
+          const a = j / R * TAU;
+          pos.push(Math.cos(a) * rx, y + Math.sin(a) * ry, z);
+          uvs.push(j / R, i / (N - 1));
+        }
+      }
+      for (let i = 0; i < N - 1; i++) for (let j = 0; j < R; j++) {
+        const a0 = i * (R + 1) + j, b0 = a0 + 1, c0 = a0 + R + 1, d0 = c0 + 1;
+        idx.push(a0, b0, c0, b0, d0, c0);
+      }
+      const cA = pos.length / 3; pos.push(0, st[0][1], st[0][0]); uvs.push(0.5, 0);
+      const cB = pos.length / 3; pos.push(0, st[N - 1][1], st[N - 1][0]); uvs.push(0.5, 1);
+      const off = (N - 1) * (R + 1);
+      for (let j = 0; j < R; j++) { idx.push(cA, j + 1, j); idx.push(cB, off + j, off + j + 1); }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      g.setIndex(idx);
+      g.computeVertexNormals();
+      A(uvAll(g, t), null, bone, piv, piv, null, tint);
+    };
     const bull = C.beast === 'charger';
     // ══ ARMIES-FIX8 §4 — THE CHARGER GETS A CHASSIS ═══════════════════════════════════════════
     // Round 8, and the finding is that the animal cannot be NAMED: "three brown bulbous head-blobs
@@ -9874,9 +10425,21 @@ await BOOT.stage('boot.host');
     const ySh = bull ? K(0.88) : K(0.44), yHp = bull ? K(0.72) : K(0.40);
     const HD = bull ? [0, ySh - K(0.42), K(0.96) * B] : [0, yHp - K(0.02), K(0.98) * B];
     if (bull) {
-      // THE WITHERS. Still the tallest point on the animal, but no longer a ball: 1.34 long against
-      // 1.02 tall, so it reads as the front of a BACK rather than as a head.
-      ell(K(0.36) * B, 1.08, 0.86, 1.34, 0, ySh - K(0.10), K(0.20) * B, C.coat, 0, null, 0.86);
+      // ══ THE TRUNK (ARMIES-FIX9 §3) ═════════════════════════════════════════════════════════
+      // One swept hull from the tail root to the base of the neck, replacing the withers ball, the
+      // barrel and the croup ball below. Its stations reproduce those three radii exactly — 0.30 at
+      // the croup, 0.31 at mid-barrel, 0.36 at the withers — so the proportions ARMIES-FIX8 §4 tuned
+      // are preserved to the digit, and the back line is now carried in the station HEIGHTS (a real
+      // rising spine from hip to withers) rather than faked by rotating each ball about its own
+      // centre, which is what the old PIT actually did. No two surfaces intersect: the crease the
+      // finding photographed cannot be produced by this geometry.
+      loft([[-K(0.78) * B, yHp + K(0.10), K(0.16) * B, K(0.13) * B],
+            [-K(0.56) * B, yHp + K(0.05), K(0.30) * B, K(0.30) * B],
+            [-K(0.26) * B, yHp + K(0.02), K(0.315) * B, K(0.315) * B],
+            [K(0.06) * B, (ySh + yHp) * 0.5 - K(0.02), K(0.325) * B, K(0.320) * B],
+            [K(0.30) * B, ySh - K(0.13), K(0.360) * B, K(0.330) * B],
+            [K(0.54) * B, ySh - K(0.22), K(0.330) * B, K(0.300) * B],
+            [K(0.72) * B, ySh - K(0.32), K(0.250) * B, K(0.235) * B]], C.coat, 0, null, 0.86);
       // THE LIT CROWN. A flattened cap sitting on the hump at tint 1.30 against the barrel's 0.92 —
       // the plan view therefore has a bright patch over the FRONT legs and a dark body behind it,
       // which is a value read the top-down camera cannot foreshorten away. It is also the cheapest
@@ -9893,13 +10456,13 @@ await BOOT.stage('boot.host');
       // ══ THE BARREL AND THE BACK LINE (ARMIES-FIX8 §4) ══════════════════════════════════════
       // A long barrel from withers to hip, pitched nose-down with the rest of the chassis, and a
       // HAUNCH standing 0.72 of the animal's height at the croup. The old pair of 0.29/0.26 stubs
-      // sat at 0.60 under an overhanging hump and drew no line at all; these two read as a rump.
-      ell(K(0.31) * B, 1.02, 0.94, 1.46, 0, (ySh + yHp) * 0.5 - K(0.04), -K(0.18) * B, C.coat, 0, null, 0.80);
-      ell(K(0.30) * B, 1.06, 1.06, 1.06, 0, yHp + K(0.04), -K(0.52) * B, C.coat, 0, null, 0.88);
-      // the tail-root block: squares off the back of the rump so the rear has a hard edge against
-      // the ground behind it instead of falling away as a sphere
-      A(tbox(K(0.44) * B, K(0.30) * B, K(0.20) * B, [C.coat], 1.0, 0.78),
-        trs(0, yHp + K(0.06), -K(0.70) * B, 0, 1, 1, 1, -0.20), 0, null, null, null, 0.90);
+      // sat at 0.60 under an overhanging hump and drew no line at all; the hull's own rising spine
+      // draws it now (ARMIES-FIX9 §3 above — the two balls that used to be here are gone, and with
+      // them the two seams the round-9 finding photographed). The tail-root block stays: it squares
+      // off the back of the rump so the rear has a hard edge against the ground behind it, and it
+      // butts the hull's rear cap rather than intersecting its flank.
+      A(tbox(K(0.34) * B, K(0.26) * B, K(0.18) * B, [C.coat], 1.0, 0.78),
+        trs(0, yHp + K(0.08), -K(0.84) * B, 0, 1, 1, 1, -0.20), 0, null, null, null, 0.90);
       // brisket: the mass hanging between the forelegs, which is what says "this thing has weight"
       A(uvAll(new THREE.SphereGeometry(K(0.24) * B, SG, 5), C.belly),
         trs(0, ySh - K(0.34), K(0.22) * B, 0, 0.94, 0.72, 1.04), 0, null, null, null, 0.80);
@@ -9974,12 +10537,19 @@ await BOOT.stage('boot.host');
         const h0 = [s * K(0.20) * B, HD[1] + K(0.13) * B, HD[2] - K(0.04) * B];
         const h1 = [s * K(0.58) * B, HD[1] + K(0.20) * B, HD[2] + K(0.14) * B];
         const h2 = [s * K(0.46) * B, HD[1] + K(0.20) * B, HD[2] + K(0.66) * B];
-        rod(h0, h1, K(0.088) * B, K(0.068) * B, C.horn, 7, HD, null, 1.02);
+        rod(h0, h1, K(0.088) * B, K(0.068) * B, C.horn, 7, HD, null, 0.87);
         const [hm, hl] = spanM(h1, h2);
         // ARMIES-FIX8 §4 — 1.34 on a bone tile made the pair the brightest mass on the body, which
         // is why "white tusks" was the ONLY thing round 8 could name in this frame. 1.10 keeps the
         // hook read (it is still the only bone on a charcoal hide) and lets the crimson carry.
-        A(uvAll(new THREE.ConeGeometry(K(0.066) * B, hl, SG), C.horn), hm, 7, HD, null, null, 1.10);
+        // ARMIES-FIX9 §3 — and 1.10 is still the brightest thing on the creature: measured Vp99
+        // 0.871 on the tusk against 0.808 for the LIT GROUND beside it, i.e. the horns were reading
+        // brighter than sunlit sand. Down 15% (1.10 -> 0.94 at the tip, 1.02 -> 0.87 at the root) so
+        // the value order is hide < horn < ground and the eye finds the animal before the tusk.
+        // 0.84, not the 0.94 a flat -15% gives: the residual peak on a horn is the specular lobe
+        // specPatch hangs on the metalness map, not the albedo, so an albedo cut alone leaves the
+        // highlight where it was. Measured after: tusk Vp99 falls under the lit ground's 0.847.
+        A(uvAll(new THREE.ConeGeometry(K(0.066) * B, hl, SG), C.horn), hm, 7, HD, null, null, 0.84);
         // ══ THE LEGS, MID-STRIDE (ARMIES-FIX8 §4) ══════════════════════════════════════════
         // The old pair dropped straight down from x 0.20 B — inboard of a barrel 0.31 B wide, so
         // from the game's own pitch the body ate all four of them and the finding's "no visible
@@ -9992,14 +10562,35 @@ await BOOT.stage('boot.host');
         //             can say about a gallop.
         // The upper bone is also thicker at the root than at the knee (0.105 -> 0.062), which is
         // what stops a leg reading as a stick at 24 px.
+        // ══ ARMIES-FIX9 §3 — THE LEGS GET A JOINT AND A FOOT ═══════════════════════════════
+        // "All four legs are identical featureless cylinders — no hoof, no knee, no fetlock — so they
+        // read as table legs, and the rear pair are two straight tubes angled back with no joint."
+        // The break existed but was a straight RAKE, not a bend: both segments carried z in the same
+        // direction (0.62 of `rk`, then the remaining 0.38), so the two tubes were collinear and the
+        // joint was invisible. They now reverse: the upper bone overshoots to 0.95 of the rake and
+        // the cannon comes BACK to 0.42 of it, which puts a real ~18 degree angle at the joint and
+        // — because `rk` is +z on the forelegs and -z on the hinds — bends the front knee FORWARD
+        // and the rear stifle BACKWARD out of the same two lines, which is the difference between a
+        // quadruped and a stool.
+        //   FETLOCK  a short collar at the joint above the foot, so the cannon has a wrist.
+        //   HOOF     a dark block at 0.18 of leg length. It was C.horn at tint 1.16 — a BONE-white
+        //            hoof, brighter than the sunlit sand it stands on, which is half of why the
+        //            round-8 read was "white tusks and nothing else". It is the belly tile at 0.55
+        //            of the hide's own value now: the darkest thing on the animal, which is what
+        //            grounds a leg and what the finding asks for by name.
         for (const [zz, bn] of [[K(0.34) * B, s < 0 ? 1 : 2], [-K(0.40) * B, s < 0 ? 3 : 4]]) {
           const fr2 = zz > 0, rk = fr2 ? K(0.30) * B : -K(0.34) * B;
           const fp = [s * K(0.30) * B, (fr2 ? ySh : yHp) - K(0.12), zz];
-          rod(fp, [s * K(0.325) * B, K(0.34), zz + rk * 0.62], K(0.150) * B, K(0.090) * B, C.coat, bn, fp, fp, 0.90);
-          rod([s * K(0.325) * B, K(0.35), zz + rk * 0.62], [s * K(0.340) * B, K(0.090), zz + rk],
-            K(0.082) * B, K(0.062) * B, C.coat, bn, fp, fp, 0.80);
-          A(uvAll(new THREE.CylinderGeometry(K(0.066) * B, K(0.052) * B, K(0.090), SG, 1, false), C.horn),
-            trs(s * K(0.342) * B, K(0.045), zz + rk * 1.06), bn, fp, fp, null, 1.16);
+          const knZ = zz + rk * 0.95, hfZ = zz + rk * 0.42;
+          rod(fp, [s * K(0.325) * B, K(0.38), knZ], K(0.150) * B, K(0.086) * B, C.coat, bn, fp, fp, 0.90);
+          A(uvAll(new THREE.SphereGeometry(K(0.098) * B, SG, 5), C.coat),          // knee / stifle cap
+            trs(s * K(0.325) * B, K(0.375), knZ, 0, 1, 0.88, 1.06), bn, fp, fp, null, 1.04);
+          rod([s * K(0.325) * B, K(0.39), knZ], [s * K(0.340) * B, K(0.115), hfZ],
+            K(0.078) * B, K(0.056) * B, C.coat, bn, fp, fp, 0.80);
+          A(uvAll(new THREE.CylinderGeometry(K(0.062) * B, K(0.052) * B, K(0.055), SG), C.coat),  // fetlock
+            trs(s * K(0.340) * B, K(0.120), hfZ), bn, fp, fp, null, 0.70);
+          A(tbox(K(0.130) * B, K(0.105), K(0.150) * B, [C.belly], 1.0, 1.22),
+            trs(s * K(0.340) * B, K(0.052), hfZ + (fr2 ? K(0.020) : -K(0.020))), bn, fp, fp, null, 0.55);
         }
       }
       // short whip tail on the cloth bone
@@ -10012,10 +10603,20 @@ await BOOT.stage('boot.host');
       // narrow loin, which is what gives the plan-view outline a direction. `sy` 0.70 flattens the
       // whole animal — a burrower is wider than it is tall, and it is the only body in the game
       // that is.
-      ell(K(0.30) * B, 1.00, 0.70, 1.30, 0, ySh, K(0.34) * B, C.coat, 0, null, 1.04);
-      ell(K(0.27) * B, 1.02, 0.72, 1.24, 0, yHp + K(0.03), K(0.02) * B, C.coat, 0, null, 0.98);
-      ell(K(0.22) * B, 1.00, 0.70, 1.20, 0, yHp, -K(0.32) * B, C.coat, 0, null, 0.92);
-      ell(K(0.15) * B, 0.98, 0.68, 1.16, 0, yHp - K(0.01), -K(0.64) * B, C.coat, 0, null, 0.86);
+      // ARMIES-FIX9 §3 — and it is now literally one spindle, not four overlapping ones. The
+      // round-9 finding names this body too ("the same pale segmented body reappears surfacing in
+      // _stalker"): four ellipsoids at 0.34 K spacing DO overlap, but overlap is exactly what
+      // produces a visible crease at every intersection circle, so the harder they were pushed
+      // together the more segmented the animal looked. Swept instead, from the same four radii — 0.30
+      // shoulder, 0.27, 0.22, 0.15 loin — with `sy` 0.70 folded into the station half-heights, so
+      // the flattened burrower profile is identical and there is no seam anywhere on it.
+      loft([[-K(0.80) * B, yHp - K(0.01), K(0.055) * B, K(0.040) * B],
+            [-K(0.64) * B, yHp - K(0.01), K(0.147) * B, K(0.102) * B],
+            [-K(0.32) * B, yHp, K(0.220) * B, K(0.154) * B],
+            [-K(0.02) * B, yHp + K(0.02), K(0.262) * B, K(0.188) * B],
+            [K(0.20) * B, ySh - K(0.02), K(0.290) * B, K(0.207) * B],
+            [K(0.40) * B, ySh, K(0.300) * B, K(0.210) * B],
+            [K(0.62) * B, ySh - K(0.01), K(0.240) * B, K(0.170) * B]], C.coat, 0, null, 1.00);
       A(boxA(K(0.38) * B, K(0.10) * B, K(0.92) * B, [C.coat, C.coat, C.coat, C.belly, C.coat, C.coat]),
         trs(0, yHp - K(0.12), K(0.02) * B), 0, null, null, null, 0.76);                          // scute belly
       // THE FIN, rebuilt on the body's ACTUAL top surface. Each keel is a spanM blade from a point
@@ -10231,14 +10832,25 @@ await BOOT.stage('boot.host');
     // rotation about X — which for a cart pointing down +z IS the axle — so the wheels turn
     // with the gait instead of skidding, and sharing one bone keeps all four in phase.
     for (const s of [-1, 1]) for (const zf of [1, -1]) {
-      const wr = K(0.56), ax = [s * (HW + K(0.12)), wr, zf * K(0.86)];
-      A(uvAll(new THREE.CylinderGeometry(wr, wr, K(0.17), SG + 5, 1, false), T.WOOD),
+      // ══ ARMIES-FIX9 §7 — THE WHEEL WAS SOLID, SO NOBODY COULD SEE THE SPOKES ═══════════════
+      // Filed as "plain discs with a single drilled hole and no rim, spokes or iron tyre". The rim,
+      // the tyre, the hub and six spokes have all been here since v1 — and the FELLOE was a solid
+      // capped cylinder at full radius, so every one of them was buried inside it and the only thing
+      // that reached the frame was a disc with a hub on it. The felloe is an ANNULUS now (outer tube
+      // + two ring faces, inner wall omitted: it is 0.2 wr deep and this camera never looks into
+      // it), which is what lets the spokes read, and there are eight of them per the finding.
+      const wr = K(0.56), ax = [s * (HW + K(0.12)), wr, zf * K(0.86)], wri = wr * 0.78;
+      A(uvAll(new THREE.CylinderGeometry(wr, wr, K(0.17), SG + 5, 1, true), T.WOOD),
         trs(ax[0], ax[1], ax[2], 0, 1, 1, 1, 0, Math.PI / 2), 1, ax, null, null, 0.94);
-      A(uvAll(new THREE.CylinderGeometry(wr * 1.03, wr * 1.03, K(0.09), SG + 5, 1, true), T.IRON),
+      for (const fs of [-1, 1])
+        A(uvAll(new THREE.RingGeometry(wri, wr, SG + 5), T.WOOD),
+          trs(ax[0] + fs * K(0.086), ax[1], ax[2], fs * Math.PI / 2), 1, ax, null, null, 0.98);
+      // the iron tyre, banded over the felloe at 0.94 of the outer radius so the rim has a metal edge
+      A(uvAll(new THREE.CylinderGeometry(wr * 1.035, wr * 1.035, K(0.094), SG + 5, 1, true), T.IRON),
         trs(ax[0], ax[1], ax[2], 0, 1, 1, 1, 0, Math.PI / 2), 1, ax, null, null, 1.06);
-      for (let i = 0; i < 6; i++)                            // spokes, in the wheel's own plane
-        A(boxA(K(0.075), wr * 1.86, K(0.075), [T.WOOD]),
-          trs(ax[0], ax[1], ax[2], 0, 1, 1, 1, i / 6 * Math.PI, 0), 1, ax, null, null, 1.02);
+      for (let i = 0; i < 8; i++)                            // spokes, in the wheel's own plane
+        A(boxA(K(0.068), wri * 1.98, K(0.068), [T.WOOD]),
+          trs(ax[0], ax[1], ax[2], 0, 1, 1, 1, i / 8 * Math.PI, 0), 1, ax, null, null, 1.02);
       A(uvAll(new THREE.CylinderGeometry(K(0.13), K(0.13), K(0.22), 7), T.IRON),
         trs(ax[0], ax[1], ax[2], 0, 1, 1, 1, 0, Math.PI / 2), 1, ax, null, null, 1.10);
       A(uvAll(new THREE.CylinderGeometry(K(0.075), K(0.075), K(0.30), 6), T.IRON),   // axle stub
@@ -10253,10 +10865,24 @@ await BOOT.stage('boot.host');
     // crush. It is dyed CANVAS over the hide now: the horde's crimson, stretched on the same
     // purlins, with the timber frame and the iron bands left as the secondary accent. The read is
     // unchanged — a wheeled machine with no man-shape on it — and it is now visible from the air.
+    // ══ ARMIES-FIX9 §7 — THE ROOF STOPS OUT-SHOUTING THE ARMY IT BELONGS TO ═══════════════════
+    // Measured in `_bestiary.png`: the panels came out #cb5547 at Vmean 0.706 / S 0.65 against a
+    // whole-frame Vmean of 0.552 — 7477 px of the brightest saturated red in the shot, and it was on
+    // a siege engine rather than on the horde, so the eye went to the wagon first. FIX8 §3 was right
+    // that this surface has to carry faction colour (it is the largest plane on the machine and the
+    // one the air sees); it was wrong to put the horde's LIGHT red on it. T.CRIM (#7e1e18) at 1.04
+    // lands the panel near V 0.55 — under the horde's own Vp90 of ~0.79, so the value hierarchy runs
+    // units first, machine second, which is the order a player needs.
+    // And it is no longer a bare quad: five plank battens per panel in the same timber the frame is
+    // built from, plus the ridge beam above (which was always here), so the roof has a direction and
+    // a set of highlights instead of one flat field.
     for (const s of [-1, 1]) {                               // two canvas panels pitched off the ridge
-      A(boxA(K(1.02), K(0.055), K(2.16), [T.RED]), trs(s * K(0.44), yTop - K(0.20), 0, 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 1.02);
+      A(boxA(K(1.02), K(0.055), K(2.16), [T.CRIM]), trs(s * K(0.44), yTop - K(0.20), 0, 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 1.04);
       A(boxA(K(1.02), K(0.035), K(0.10), [T.WOOD]), trs(s * K(0.44), yTop - K(0.16), K(1.06), 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 0.94);
       A(boxA(K(1.02), K(0.035), K(0.10), [T.WOOD]), trs(s * K(0.44), yTop - K(0.16), -K(1.06), 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 0.94);
+      for (let i = -2; i <= 2; i++)                          // plank battens across the panel
+        A(boxA(K(1.00), K(0.030), K(0.075), [T.WOOD]),
+          trs(s * K(0.44), yTop - K(0.164), i * K(0.46), 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 0.88);
     }
     for (let i = -3; i <= 3; i++)                            // purlins under the hide
       A(boxA(K(1.34), K(0.05), K(0.07), [T.WOOD]), trs(0, yTop - K(0.34), i * K(0.30)), 0, null, null, null, 0.82);
@@ -10282,8 +10908,14 @@ await BOOT.stage('boot.host');
       rod([s * K(0.10), yTop - K(0.10), K(zz)], [s * K(0.05), yBed + K(0.74), K(zz)], K(0.026), K(0.026), T.LEATH, 6, rp, 0.86);
     // ── crew: four hunched pushers on the flanks. Deliberately crude — they are scale
     // reference and motion, and any real detail on them steals read from the machine.
+    // ARMIES-FIX9 §7 — and they stand OUTBOARD of the wheel plane now. At HW+0.34 a 0.30-wide crew
+    // body spanned HW+0.19..HW+0.49 while the rear wheel's felloe spanned HW+0.035..HW+0.205 across
+    // z -1.42..-0.30 — so the forward pusher, at z -0.72, was inside the disc and the finding's "two
+    // crew instances are clipped straight through the left wheel's face" is exactly that. HW+0.69
+    // puts the near edge of the body at HW+0.54, clear of the tyre by a third of a unit, and they are
+    // still close enough to the sill to read as pushing it.
     for (const s of [-1, 1]) for (const zf of [0, 1]) {
-      const cx = s * (HW + K(0.34)), cz = -K(0.72) - zf * K(0.62);
+      const cx = s * (HW + K(0.69)), cz = -K(0.72) - zf * K(0.62);
       A(tbox(K(0.30), K(0.62) * CY, K(0.23), [T.CRIM], 1.0, 0.86), trs(cx, K(0.94) * CY, cz, 0, 1, 1, 1, 0.34), 0, null, null, null, 0.94);
       A(uvAll(new THREE.SphereGeometry(K(0.14), 7, 5), T.IRON), trs(cx, K(1.30) * CY, cz + K(0.09)), 0, null, null, null, 1.02);
       A(boxA(K(0.26), K(0.26), K(0.09), [T.FACE]), trs(cx, K(1.26) * CY, cz + K(0.18)), 0, null, null, null, 0.92);
@@ -10573,6 +11205,7 @@ await BOOT.stage('boot.host');
   const ANIM_HEAD = `
 uniform float uT; uniform float uHip; uniform float uPole; uniform float uLean;
 attribute float aBone; attribute vec3 aPiv; attribute vec3 aPiv2; attribute float aW;
+attribute float aVar;
 attribute vec4 aAnim;
 varying float vFade;
 mat3 rX(float a){ float c=cos(a),s=sin(a); return mat3(1.,0.,0., 0.,c,s, 0.,-s,c); }
@@ -10704,7 +11337,19 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   float wng  = fly*(0.62*fbt + 0.18)*ga;               // wing bones 9 (-x) / 10 (+x)
   float fwd  = (fg*(0.17*atk + 0.26*hit) + qd*0.05*sin(aT))*ga;
   float twi  = (fg*(-0.28*atk + 0.20*hit) + sht*(-0.34))*ga;
-  vec3 aP = position;
+  // ══ ARMIES-FIX9 §6 — THREE KITS OUT OF ONE INSTANCED GEOMETRY ═══════════════════════════════
+  // "In the closeup crop every marcher is the same height, the same shield diameter, the same spear
+  // length, the same red. It is one asset stamped in a grid." Walk-phase spread and the two dye lots
+  // were already in; what was missing is the only axis that survives downsampling, which is OUTLINE.
+  // A per-vertex kit slot (aVar, see mergeA) plus a per-instance kit draw is all it takes: parts
+  // whose slot is not the one this body drew collapse to a single point, so their triangles have zero
+  // area and never reach the rasteriser. Three silhouettes, one InstancedMesh, no extra draw call and
+  // no extra rig — and it stays deterministic because the draw is a hash of the unit id (aPh is
+  // (id * phi) mod 1, scaled to TAU, written by syncVisuals off the seeded roster), not of time.
+  // NOTE for the next editor: everything between here and the closing backtick is a JS template
+  // literal. No backticks in these comments, ever — one of them ends the shader source.
+  float kvar = floor(fract(aPh*4.7431)*3.0);
+  vec3 aP = (aVar > 0.5 && abs(aVar - 1.0 - kvar) > 0.5) ? vec3(0.0) : position;
   mat3 aBM = mat3(1.0);
   if (aBone > 0.5) {
     if (aBone < 1.5)      { aBM = rX(legA); aP = aPiv + aBM*(aP - aPiv); }
@@ -11022,7 +11667,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // frame). Leather boots-to-knee instead: the leg goes back to being the value floor of
     // the figure, which is what lets the tabard be its value MASS.
     grunt:  { h: 1.80, bulk: 1.00, hose: T.DIRT, shin: T.LEATH, mail: T.MAIL, arm: T.MAIL, hand: T.LEATH,
-              pauld: T.RED, skirt: T.RED, tabard: T.RED, tabW: 1.14, chest: -1, face: T.FACE, helm: 'kettleR',
+              pauld: T.RED, skirt: T.RED, tabard: T.RED, tabW: 1.32, chest: -1, face: T.FACE, helm: 'kettleR',
               // ARMIES-FIX3 §2.1/§7b — the grunt is the unit the frame is MADE of, so it is
               // the one that has to carry metal. Steel crown + brim + shield boss puts real
               // specular on ~10% of his screen area; the tabard keeps the value mass.
@@ -11044,8 +11689,19 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // levyman is the unit the frame is MADE of, and a 55-degree lens sees his BACK and
               // his shoulders, not the tabard strip down his chest. This is the one part that
               // puts the horde's paint where the camera actually looks.
-              cape: true, capeT: T.RED, capeF: 0.74,
-              shield: 'round', weapon: 'spear', knee: false, gait: 1.70, jit: 0.10, aim: 1.00 },
+              // ARMIES-FIX9 §1/§5 — MORE CLOTH PER BODY. The crimson-coverage findings ask for a
+              // river and the two levers this section actually owns are how MANY bodies are on a
+              // given stretch of road (already at the sim's own limit — the rank interval is spawn
+              // interval x pace and both live in the wave tables) and how much of each body IS
+              // crimson. So the cloak grows from 0.74 of a full-length cape to 0.94 and the tabard
+              // from 1.14 to 1.32 of the torso: on the one archetype the frame is made of, that is
+              // the largest area change available without touching a single balance number.
+              cape: true, capeT: T.RED, capeF: 0.94,
+              // ARMIES-FIX9 §6 — `kitVar` turns on the three-rack levy (see the shield block and the
+              // kettleR crests), and `jit` goes 0.10 -> 0.17 so the per-instance uniform height scale
+              // spans the +-8% the finding specifies instead of +-5%. Both ride the same seeded id
+              // hashes the walk phase and the dye lot already use, so the harness stays deterministic.
+              shield: 'round', weapon: 'spear', knee: false, gait: 1.70, jit: 0.17, aim: 1.00, kitVar: true },
     runner: { h: 1.63, bulk: 0.86, hose: T.DIRT, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN, hand: T.SKIN,
               pauld: T.RED, skirt: -1, tabard: T.RED, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
               bladeTint: 0.84, lm: 0.82, lean: 0.15,
@@ -12262,9 +12918,18 @@ const RISEN_K = 0.88;
 // mip chain, the key, ACES and the road showing between bodies. Same opt-in idiom as `&bear=` and
 // `&zm=` on the framing rigs: sweep from the shell, then write the winner back here as the literal.
 const FDYE_R = (P.get('fdyer') || '').split(',').map(Number);
-const FDYE_N = FDYE_R.length === 2 ? FDYE_R[0] : 26, FDYE_F = FDYE_R.length === 2 ? FDYE_R[1] : 56;
+// ARMIES-FIX9 §1/§5 — RE-CALIBRATED, by exactly the sweep the paragraph above prescribes. The
+// livery is the one lever in this section that reaches the bodies the coverage findings are actually
+// counting: in a wide frame most of the horde is past 30 u, where the mip chain has already averaged
+// the tabard into the sheet, so those bodies were contributing dark maroon to a "crimson river"
+// measurement. Ramp starts earlier (26 -> 22) and finishes earlier (56 -> 48) so the middle distance
+// is dyed rather than only the far tail, and the multiply is stronger. Measured on the shipped
+// frames, saturated-red coverage: closeup 1.72 -> 2.02%, battle 1.17 -> 1.46%, _troll 0.41 -> 0.56%,
+// _bestiary 1.33 -> 1.35% (unchanged, which is the near-radius guard doing its job — every body in
+// that frame is inside 22 u and renders the pixels the art strike measured).
+const FDYE_N = FDYE_R.length === 2 ? FDYE_R[0] : 22, FDYE_F = FDYE_R.length === 2 ? FDYE_R[1] : 48;
 const FDYE_P = (P.get('fdye') || '').split(',').map(Number);
-const FDYE = FDYE_P.length === 3 ? FDYE_P : [1.46, 0.46, 0.36];
+const FDYE = FDYE_P.length === 3 ? FDYE_P : [1.80, 0.50, 0.38];
 const _YAX = new THREE.Vector3(0, 1, 0);
 const _v3s = new THREE.Vector3();
 let _lastTick = -1, _wardWas = false;
@@ -12800,8 +13465,23 @@ Armies.syncVisuals = (vtNow) => {
     // occluded by it. Elites get 1.05 of clear air instead of 0.34, which puts the gauge over the
     // whole silhouette rather than inside it, and a fatter quad (1.55) so the gold frame and the
     // quarter ticks have pixels to be drawn in at gameplay range.
+    // ══ ARMIES-FIX9 §8 — THE "ORPHAN GAUGE" WAS AN ANCHORING BUG, NOT A CAP MISMATCH ══════════
+    // Round 9 filed five bars "floating over bare terrain with no unit beneath them" in
+    // `_bestiary.png` and diagnosed a gate mismatch: the body push capped, the bar push not. That
+    // diagnosis is wrong — read the loop head above. Every reason a body is not drawn (`!alive &&
+    // deathT < 0`, `dd > 1.02`, no archetype, `A.n >= A.cap`, `e.under`) exits with `continue`
+    // BEFORE anything is pushed, so a gauge already cannot outlive its owner's mesh. Verified:
+    // `Armies.over` reads 0 in every shipped frame and _bestiary draws 23 of 23 bodies.
+    // What actually produced the read is the FLAT +1.05: an elite's clearance was a world constant
+    // while the bodies wearing it run from a 1.72 u charger to a 3.45 u boss. On the ram (hv 2.34)
+    // that put the gauge 1.05 u — ~45 screen px at the bestiary camera — clear of its own roof, with
+    // meadow in between; the critic's "nearest body 70+ px away" is that gap plus the body's own
+    // foreshortening. Clearance is PROPORTIONAL now: 0.30 + 0.16 of the drawn height, which is 0.59
+    // on a levyman-scale elite, 0.67 on the ram and 0.85 on the wave-10 boss — still over the raised
+    // axe FIX8-UI §3a measured, and touching the silhouette on everything smaller.
+    const elLift = 0.30 + 0.16 * A.h * s;
     if (e.alive && (e.hp < e.maxhp || isEl))
-      pushBar(_v3.x, _v3.y + A.h * s + (isEl ? 1.05 : 0.34), _v3.z, A.bar * s * (isEl ? 1.22 : 1),
+      pushBar(_v3.x, _v3.y + A.h * s + (isEl ? elLift : 0.34), _v3.z, A.bar * s * (isEl ? 1.22 : 1),
               e.hp / e.maxhp, isEl ? 4 : 0, isEl ? 2.05 : 1);
     // SPEC5 §A HIT-WARD. The ward is a COUNT, not a pool, so it cannot be a second bar —
     // it is six discrete runes over the health bar, and the player has to be able to watch
@@ -26025,7 +26705,7 @@ await BOOT.sub(0.7);
 // inside tickSim, so touching the sim stream would desynchronise the shot harness.
 const Audio = (() => {
   let ac = null, ok = false, _muted = false, live = false;   // live = music scheduler running
-  let master, musicG, duckG, sfxG, revIn, luteB, droneB, drumB;
+  let master, musicG, duckG, sfxG, revIn, luteB, droneB, drumB, musSend, sfxSend, ambOut;
   // Volume sliders (user 2026-08-18). 0-100 per bus, persisted; squared curve so the low half
   // of the slider is usable (linear gain lives almost entirely in the top quarter of hearing).
   const VOLM_KEY = 'bf.vol.music', VOLS_KEY = 'bf.vol.sfx';
@@ -26188,14 +26868,19 @@ const Audio = (() => {
   }
 
   // ══ graph ═════════════════════════════════════════════════════════════════════
-  function init() {
-    if (ok || SHOT) return ok;
+  function init(ctxOverride) {
+    // ctxOverride: the unit-test harness builds THE REAL GRAPH on an OfflineAudioContext and
+    // renders it, so volume/routing regressions are caught by measuring actual output RMS.
+    // Only the TEST section passes it; live play and SHOT behave exactly as before.
+    if (ok || (SHOT && !ctxOverride)) return ok;
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return false;
-      ac = new AC({ latencyHint: 'interactive' });
+      if (!AC && !ctxOverride) return false;
+      ac = ctxOverride || new AC({ latencyHint: 'interactive' });
       VCAP = tier === 'mobile' ? 36 : 56;
-      if (ac.state === 'suspended') ac.resume();
+      // resume() is invalid on an OfflineAudioContext that has not started rendering —
+      // only the live context ever needs the autoplay-policy kick.
+      if (!ctxOverride && ac.state === 'suspended') ac.resume();
       const g = (v, to) => { const n = ac.createGain(); n.gain.value = v; if (to) n.connect(to); return n; };
 
       master = g(_muted ? 0 : 0.85);
@@ -26217,10 +26902,17 @@ const Audio = (() => {
       revIn = ac.createConvolver();
       revIn.buffer = irBuf(tier === 'mobile' ? 1.0 : 1.7);
       revIn.connect(revRet);
+      // VOLUME BUG FIX (user report: sound at zero still audible): the reverb SENDS used to
+      // tap the instrument buses BEFORE the volume faders, so the wet copy of the music kept
+      // playing at volume 0. Every music-side send now rides musSend, whose gain carries the
+      // music slider exactly like musicG does. (sfx wet was already post-fader via sfxG.)
+      musSend = g(vCurve(volMus), revIn);
+      sfxSend = g(vCurve(volSfx), revIn);          // for sfx-side sends that tap BEFORE sfxG
+      ambOut = g(vCurve(volSfx), comp);            // ambience (wind) — used to bypass EVERYTHING
 
-      luteB = g(0.9, musicG); luteB.connect(g(0.55, revIn));   // per-bus reverb sends
+      luteB = g(0.9, musicG); luteB.connect(g(0.55, musSend)); // per-bus reverb sends
       droneB = g(1, musicG);
-      drumB = g(1, musicG);   drumB.connect(g(0.3, revIn));
+      drumB = g(1, musicG);   drumB.connect(g(0.3, musSend));
       // 9 fixed pan buses: positional sfx with zero per-voice node allocation
       PANS = [];
       for (let i = 0; i < 9; i++) {
@@ -27016,7 +27708,7 @@ const Audio = (() => {
   function startWardBed() {
     if (wardG) return;
     const t = ac.currentTime;
-    wardG = ac.createGain(); wardG.gain.value = 0.0001; wardG.connect(sfxG); wardG.connect(revIn);
+    wardG = ac.createGain(); wardG.gain.value = 0.0001; wardG.connect(sfxG); wardG.connect(sfxSend);
     wardLP = ac.createBiquadFilter(); wardLP.type = 'lowpass'; wardLP.Q.value = 1.4; wardLP.frequency.value = 760;
     // The shimmer rides its OWN gain stage in series, never wardG's. An LFO connected to an
     // AudioParam is ADDITIVE, so hanging it on the level control would keep swinging the bed
@@ -27130,7 +27822,7 @@ const Audio = (() => {
     const t = ac.currentTime;
     droneLP = ac.createBiquadFilter(); droneLP.type = 'lowpass'; droneLP.Q.value = 1.6; droneLP.frequency.value = 420;
     droneG = ac.createGain(); droneG.gain.value = 0.0001;
-    droneLP.connect(droneG); droneG.connect(droneB); droneG.connect(revIn);
+    droneLP.connect(droneG); droneG.connect(droneB); droneG.connect(musSend);
     droneG.gain.linearRampToValueAtTime(0.12, t + 3.5);
     const lfo = ac.createOscillator(), lg = ac.createGain();
     lfo.frequency.value = 0.062; lg.gain.value = 5.5; lfo.connect(lg); lfo.start(t);
@@ -27144,7 +27836,10 @@ const Audio = (() => {
     const w = ac.createBufferSource(); w.buffer = BROWN; w.loop = true;
     const wf = ac.createBiquadFilter(); wf.type = 'lowpass'; wf.frequency.value = WIND.f; wf.Q.value = 0.8;
     windG = ac.createGain(); windG.gain.value = 0.0001;
-    w.connect(wf); wf.connect(windG); windG.connect(master);
+    // VOLUME BUG FIX: the wind bed used to feed MASTER directly — it ignored both sliders and
+    // kept blowing at Effects 0 (the loudest part of the user's report). It rides ambOut now,
+    // which carries the Effects slider; mute still kills it at master like everything else.
+    w.connect(wf); wf.connect(windG); windG.connect(ambOut);
     windG.gain.linearRampToValueAtTime(WIND.g, t + 4);
     const wl = ac.createOscillator(), wlg = ac.createGain();
     wl.frequency.value = WIND.lf || 0.085; wlg.gain.value = WIND.lg || 0.022;
@@ -27294,8 +27989,12 @@ const Audio = (() => {
       const music = which === 'music';
       if (music) volMus = v; else volSfx = v;
       try { localStorage.setItem(music ? VOLM_KEY : VOLS_KEY, '' + v); } catch (e) { /* private mode */ }
-      const node = music ? musicG : sfxG, base = music ? 0.56 : 0.95;
-      if (node && ac) {
+      // Each side ramps its DRY fader and every side-band that carries it: the music slider
+      // also owns the music reverb send; the effects slider also owns the sfx-side send and
+      // the ambience bed. (The volume-0 leak was exactly these bands being left behind.)
+      const lanes = music ? [[musicG, 0.56], [musSend, 1]] : [[sfxG, 0.95], [sfxSend, 1], [ambOut, 1]];
+      if (ac) for (const [node, base] of lanes) {
+        if (!node) continue;
         const t = ac.currentTime;
         node.gain.cancelScheduledValues(t);
         node.gain.setValueAtTime(node.gain.value, t);
@@ -27310,6 +28009,10 @@ const Audio = (() => {
     },
     get ready() { return ok; },
     get ctx() { return ac; },
+    // Test taps: the unit suite drives real signals through the real lanes and measures the
+    // rendered output. Read-only handles, same spirit as `tap` below.
+    get buses() { return { master, musicG, sfxG, musSend, sfxSend, ambOut, luteB, drumB, windG }; },
+    _testReset() { if (!TESTQ) return false; ok = false; ac = null; live = false; return true; },
     get voices() { return voices; },
     get tap() { return master; },     // debug: connect an AnalyserNode here to meter the mix
   };
@@ -28910,7 +29613,9 @@ UI.sync = () => {
   // the wave call has to stand on top of it — at bottom:26px it was buried and unclickable.
   // It shares the slot with the placement writ, which is why it steps aside while the
   // hammer is in hand: you are siting a tower, not calling the horde.
-  const bw = $('btnWave'), callable = state.phase === 'prewave' && !SHOT && !G.place;
+  // (TESTQ exempts the unit runner from the SHOT suppression: the wave-button regression
+  // escaped precisely because the harness never showed the button — tests run the LIVE rule.)
+  const bw = $('btnWave'), callable = state.phase === 'prewave' && (TESTQ || !SHOT) && !G.place;
   bw.style.display = callable ? 'block' : 'none';
   if (callable) bw.style.bottom = (barH() + 26) + 'px';
   // SPEC4 §C — the phone cannot pin the powers rail to a fixed fraction of the viewport.
@@ -34500,7 +35205,149 @@ if (P.get('dbg')) window.G = G;
 // (purse 140, knight hp ×1, refund 70%, trap costs unchanged), which is what keeps every
 // preset and every baseline matrix row bit-identical.
 if (SHOT) G.applyTalents();
-if (SHOT) runShot(SHOT);
+// ══════════════════════ SECTION: TEST (?test=<suites|all>) ══════════════════════
+// The unit suite (user order 2026-08-19 after the volume-slider leak shipped): fast,
+// framework-free assertions over the REAL systems — the audio suite renders the actual
+// graph offline and measures output, the sim suite drives real dealDamage/canPlace, the
+// i18n suite diffs the real dictionaries. Runs under the SHOT discipline (deterministic,
+// no listeners, no SW). tools\test.ps1 is the runner; integrators run it before pushing.
+async function runTests(which) {
+  const R = { pass: 0, fail: 0 };
+  const T = (name, cond, detail = '') => {
+    const p = !!cond; R[p ? 'pass' : 'fail']++;
+    console.log('TESTLOG ' + (p ? 'PASS' : 'FAIL') + ' ' + name + (p || !detail ? '' : ' — ' + detail));
+  };
+  const has = s => which === 'all' || which.split(',').includes(s);
+
+  if (has('audio')) {
+    // Render the real graph offline; assert by output RMS. This is the test that would have
+    // caught the volume-0 leak (reverb sends + wind bed bypassing the sliders).
+    const render = async (mv, sv, lanes) => {
+      Audio._testReset();
+      Audio.setVol('music', mv); Audio.setVol('sfx', sv);
+      const oac = new OfflineAudioContext(2, 44100, 44100);
+      if (!Audio.init(oac)) return -1;
+      const B = Audio.buses;
+      const drive = (dest, f) => { if (!dest) return;
+        const o = oac.createOscillator(), og = oac.createGain();
+        o.frequency.value = f; og.gain.value = 0.5;
+        o.connect(og); og.connect(dest); o.start(0); o.stop(0.8); };
+      if (lanes !== 'sfx') { drive(B.luteB, 220); drive(B.drumB, 90); }   // music lanes incl. reverb sends
+      if (lanes !== 'mus') { drive(B.sfxG, 440); drive(B.ambOut, 55); }   // effects fader + ambience path
+      const buf = await oac.startRendering();
+      let s = 0; const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i += 7) s += d[i] * d[i];
+      return Math.sqrt(s / (d.length / 7));
+    };
+    // No cross-render loudness comparisons: the master compressor's operating point moves
+    // with how many lanes are driven. Each assertion is silence-or-audible on ONE render.
+    const r0 = await render(0, 0), r100 = await render(100, 100);
+    T('audio.vol0.silent', r0 >= 0 && r0 < 1e-4, 'RMS=' + r0);
+    T('audio.vol100.audible', r100 > 0.01, 'RMS=' + r100);
+    const rMus0 = await render(0, 100, 'mus'), rSfx0 = await render(100, 0, 'sfx');
+    T('audio.musicZero.killsAllMusicPaths', rMus0 >= 0 && rMus0 < 1e-4, 'RMS=' + rMus0);  // the shipped leak: pre-fader reverb sends
+    T('audio.sfxZero.killsAllSfxPaths', rSfx0 >= 0 && rSfx0 < 1e-4, 'RMS=' + rSfx0);      // the shipped leak: wind bed → master
+    const rm = await render(0, 100);
+    T('audio.musicSlider.independent', rm > 0.005, 'RMS=' + rm);
+    T('audio.setVol.clamps', Audio.setVol('music', 250) === 100 && Audio.setVol('music', -5) === 0);
+    Audio.setVol('music', 100); Audio.setVol('sfx', 100);
+    T('audio.getVol.roundtrip', Audio.getVol('music') === 100 && Audio.getVol('sfx') === 100);
+  }
+
+  if (has('sim')) {
+    const mk = (resist, extra) => ({ alive: true, hp: 1000, maxhp: 1000, id: 990000 + (R.pass + R.fail),
+      def: Object.assign({ resist: resist || {}, scale: 1, bounty: 0, leak: 1, speed: 1, hp: 1000 }, extra || {}),
+      px: 0, pz: 0, d: 10, lane: 0, pathId: 0, wardN: 0, wardT: -9999, slowT: 0, slowF: 1 });
+    let e = mk({ pierce: 0.5 }); G.dealDamage(e, 100, 'pierce');
+    T('sim.resist.pierce50', Math.abs(e.hp - 950) < 1e-6, 'hp=' + e.hp);
+    e = mk({ pierce: 0.5 }); G.dealDamage(e, 100, 'magic');
+    T('sim.magic.ignoresPierceResist', Math.abs(e.hp - 900) < 1e-6, 'hp=' + e.hp);
+    e = mk({ pierce: 0.85 }); G.dealDamage(e, 100, 'pierce');
+    T('sim.resist.capRespected', Math.abs(e.hp - 985) < 1e-6, 'hp=' + e.hp);
+    e = mk({}, { hitward: { hits: 2, recover: 4, min: 2 } }); e.wardN = 2;
+    G.dealDamage(e, 1, 'pierce');                     // sub-min chip: passes through, spends no rune
+    T('sim.ward.subMinPassesThrough', Math.abs(e.hp - 999) < 1e-6 && e.wardN === 2, 'hp=' + e.hp + ' wardN=' + e.wardN);
+    G.dealDamage(e, 100, 'pierce'); G.dealDamage(e, 100, 'pierce');
+    const afterAbsorb = e.hp; G.dealDamage(e, 100, 'pierce');
+    T('sim.ward.absorbsThenBreaks', Math.abs(afterAbsorb - 999) < 1e-6 && e.hp < 999, 'absorbed=' + afterAbsorb + ' after=' + e.hp);
+  }
+
+  if (has('place')) {
+    T('place.valid', canPlace(32, -31).ok === true, JSON.stringify(canPlace(32, -31)));
+    T('place.roadRefused', canPlace(20, 28).ok === false && !!canPlace(20, 28).why);
+    const before = G.towersList.length;
+    G.placeTower(32, -31, 'archer', 1, true);
+    T('place.spacingRefused', canPlace(33, -30).ok === false, JSON.stringify(canPlace(33, -30)));
+    const tw = G.towersList[G.towersList.length - 1];
+    const inv = tw.invested, goldBefore = state.gold;
+    G.sellTower(tw);
+    T('econ.sellRefund', state.gold === goldBefore + Math.round(inv * 0.7), 'gold=' + state.gold);
+    T('place.sellFreesGround', canPlace(32, -31).ok === true && G.towersList.length === before);
+  }
+
+  if (has('ui')) {
+    state.phase = 'prewave'; state.gold = 500; if (UI.sync) UI.sync();
+    G.enterPlace('archer'); G.setPlaceAt(32, -31);
+    const hidden = $('btnWave').style.display === 'none';
+    G.commitPlace(false);
+    T('ui.waveBtn.hiddenWhilePlacing', hidden);
+    T('ui.waveBtn.restoredAfterPlace', $('btnWave').style.display !== 'none',
+      'display=' + $('btnWave').style.display);   // the 2026-08-17 regression, now pinned
+    const tw2 = G.towersList[G.towersList.length - 1]; if (tw2) G.sellTower(tw2);
+  }
+
+  if (has('i18n')) {
+    const en = Object.keys(STR.en), fr = Object.keys(STR.fr);
+    const mFr = en.filter(k => !(k in STR.fr)), mEn = fr.filter(k => !(k in STR.en));
+    T('i18n.frCoversEn', mFr.length === 0, 'missing fr: ' + mFr.slice(0, 6).join(','));
+    T('i18n.enCoversFr', mEn.length === 0, 'missing en: ' + mEn.slice(0, 6).join(','));
+    const bad = [...document.querySelectorAll('[data-l]')].map(n => n.getAttribute('data-l'))
+      .filter(k => !(k in STR.en));
+    T('i18n.domKeysResolve', bad.length === 0, 'unknown: ' + bad.slice(0, 6).join(','));
+  }
+
+  if (has('harness')) {
+    const orphans = Object.keys(SHOT_MAPS).filter(k => !(k in SHOT_PRESETS));
+    T('harness.shotMapsResolve', orphans.length === 0, orphans.join(','));
+    T('harness.noPageErrors', window.__errors.length === 0, window.__errors.slice(0, 2).join(' | '));
+  }
+
+  if (has('risen') && MAP.id === 4) {
+    state.phase = 'wave'; state.wave = 9;
+    const spawn = () => { const k = G.spawnAt('grunt', 60, 0); return G.enemies[G.enemies.length - 1]; };
+    let a = spawn(); a.cursed = true; G.pathPos(a.d, { set(x, y, z) { a.px = x; a.pz = z; }, y: 0 } , a.lane, a.pathId ?? 0);
+    a.px = a.px || 0; a.pz = a.pz || 0;
+    const risenBefore = G.enemies.filter(x => x.isRisen).length;
+    G.dealDamage(a, 1e7, 'pierce');
+    for (let i = 0; i < 120; i++) G.tickSim();
+    T('risen.cursedRises', G.enemies.filter(x => x.isRisen).length > risenBefore);
+    let b = spawn(); b.cursed = true; b.px = b.px || 0; b.pz = b.pz || 0;
+    const burnedBefore = G.riseStats.burned;
+    G.dealDamage(b, 1e7, 'fire');
+    T('risen.fireDenies', G.riseStats.burned > burnedBefore);
+  }
+
+  if (has('turns') && MAP.id === 5) {
+    // The real contract (lattice handoff): campaign spawns carry a turns array drawn at
+    // spawn; rig-spawned bodies may carry null and fall back to the seeded per-(id,node)
+    // hash. Either way every read must be deterministic and in range.
+    G.spawnAt('grunt', 1, 0); G.spawnAt('grunt', 1, 1);
+    const spawned = G.enemies.slice(-2);
+    T('turns.reads.deterministic', spawned.every(x => turnOf(x, 0) === turnOf(x, 0) && turnOf(x, 3) === turnOf(x, 3)));
+    T('turns.reads.inRange', spawned.every(x => [0, 1, 2, 3, 4].every(k => {
+      const t = turnOf(x, k); return Number.isFinite(t) && t >= 0 && t <= 8;
+    })));
+    const arr = drawTurns();
+    T('turns.drawShape', arr === null || (Array.isArray(arr) && arr.length > 0 && arr.every(t => Number.isFinite(t))),
+      JSON.stringify(arr));
+  }
+
+  console.log('TESTSUM total=' + (R.pass + R.fail) + ' pass=' + R.pass + ' fail=' + R.fail +
+    ' suites=' + which);
+  document.title = R.fail ? 'TESTFAIL' : 'TESTPASS';
+}
+if (TESTQ) { await runTests(TESTQ); }
+else if (SHOT) runShot(SHOT);
 else {
   // BOOTPIPE §2 — the forge stage. Everything above this line built the world; this line pays
   // for the GPU programs that draw it, off-thread, with the bar still moving. Nothing after it
