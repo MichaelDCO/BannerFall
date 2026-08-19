@@ -254,6 +254,7 @@ en: {
   'wave.horde': 'The horde',
   'wave.musterIn': 'Wave in {0}',        // FIX7-UI §2 — the CLOCK says wave, never muster
   'wave.strong': '{0} strong on the road',
+  'wave.strongS': '{0} strong',                  // FIX9-UI §5 — the phone's one-row dispatch
   'wave.foe': 'This foe',
   'wave.more': '+{0} more',
   'pip.res': '{0} resists {1}',
@@ -504,6 +505,9 @@ en: {
   'cn.ledger': '{0} won · {1} pledged',
   'cn.granted': 'Granted',
   'cn.respec': 'Rescind all orders',
+  // FIX9-UI §2 — the armed leg of the two-tap. Named as the consequence, not as "confirm?": the
+  // player is about to unmake every standing order, and the button should say the number.
+  'cn.respecC': 'Rescind {0} laurels?',
   'cn.respecT': 'Return every pledged laurel. Free, and as often as you like.',
   'cn.earn': 'Laurels are won by stars, first victories, endless records, daily wars and deeds.',
   'cn.none': 'No laurels yet. Hold a road and the council will convene.',
@@ -892,6 +896,7 @@ fr: {
   'wave.horde': 'La horde',
   'wave.musterIn': 'Vague dans {0}',
   'wave.strong': '{0} sur la route',
+  'wave.strongS': '{0} en marche',
   'wave.foe': 'Cet ennemi',
   'wave.more': '+{0} autres',
   'pip.res': '{0} résiste : {1}',
@@ -1105,6 +1110,7 @@ fr: {
   'cn.ledger': '{0} gagnés · {1} engagés',
   'cn.granted': 'Accordé',
   'cn.respec': 'Révoquer les ordres',
+  'cn.respecC': 'Révoquer {0} lauriers ?',
   'cn.respecT': 'Rend chaque laurier engagé. Gratuit, et aussi souvent que vous voulez.',
   'cn.earn': 'Les lauriers se gagnent aux étoiles, aux premières victoires, aux records sans fin, aux guerres du jour et aux hauts faits.',
   'cn.none': 'Aucun laurier. Tenez une route et le conseil siégera.',
@@ -4121,7 +4127,7 @@ function specPatch(sh, k, p, rim, mr) {
           float _rm = pow(1.0 - clamp(dot(normal, _Vv), 0.0, 1.0), 2.2)
                     * max(dot(normal, _Lv), 0.0) * ${rim.toFixed(3)};
           gl_FragColor.rgb += ${SPEC_LIN} * (_sp * ${k.toFixed(3)} + _rm) * _kl`
-      + (mr ? ` * (0.26 + 1.55*metalnessFactor)` : '') + `;
+      + (mr ? ` * (0.20 + 1.10*metalnessFactor + 1.30*metalnessFactor*metalnessFactor)` : '') + `;
         }
       }`);
 }
@@ -6109,7 +6115,10 @@ World.build = async function () {
     const m = new THREE.MeshStandardMaterial(Object.assign({ map, vertexColors: true, roughness: 0.9, metalness: 0 }, o));
     const sm = m.roughness < 0.5 ? 1 : 0;
     m.customProgramCacheKey = () => 'bf_tex' + sm;
-    m.onBeforeCompile = (sh) => specPatch(sh, sm ? 2.80 : 1.30, sm ? 34 : 16, sm ? 0.145 : 0.090, false);
+    // r9-VFX §1 — "slate roof glance" by name. This family dresses the houses, the keep, the
+    // gates and the moor's chapel, and `sm` is exactly the roughness<0.5 surfaces (slate,
+    // shingle) the finding points at. Plaster and timber stay on 1.30/16.
+    m.onBeforeCompile = (sh) => specPatch(sh, sm ? 18.0 : 1.30, sm ? 26 : 16, sm ? 0.120 : 0.090, false);
     return m;
   };
   // foliage varies in luminance AND hue (yellow-green ↔ blue-green) so a wood never reads flat
@@ -8232,7 +8241,13 @@ await BOOT.stage('boot.host');
       // largest crimson facets a grunt turns to the lens used to be the same paint, so the
       // column was one flat slab of red. Shield #8f202a under tabard #a4242e gives the mass
       // two values, and the disc's own edge stops needing the rim to define it.
-      g.fillStyle = '#6b1017'; g.fillRect(0, 0, S, S);                // FIX6 §5: off the magenta side, a stop under the tabard
+      // ARMIES-FIX9b §1/§5 — #6b1017 is V 0.42 against the tabard's 0.64, i.e. not a stop under it
+      // but two and a half, and the board is the single largest facet a grunt turns to the lens.
+      // Measured on the closeup crop the discs read as dark holes punched in the crimson mass — the
+      // opposite of the job FIX4 §5 gave them, which was to give that mass a SECOND value, not a
+      // hole. #7d1620 is V 0.49: still unmistakably the shade of #a42a22 (one stop under, which is
+      // what the two-value read needs) and still off the magenta side FIX6 §5 corrected for.
+      g.fillStyle = '#7d1620'; g.fillRect(0, 0, S, S);
       const ug = g.createLinearGradient(0, S * 0.42, 0, S);           // deep shade underside
       ug.addColorStop(0, 'rgba(74,12,16,0)'); ug.addColorStop(1, '#3c0a0d');
       g.fillStyle = ug; g.fillRect(0, S * 0.42, S, S * 0.58);
@@ -8928,7 +8943,27 @@ await BOOT.stage('boot.host');
     }
     // ── pelvis / skirt / torso / belt ──
     A(tbox(K(0.36) * B, K(0.18), K(0.27) * W, [C.mail], 1.0, 0.94), trs(0, yHip + K(0.05), 0), 0, null, null, null, 0.95);
-    if (C.skirt >= 0) A(uvAll(new THREE.CylinderGeometry(K(0.215) * B, K(0.285) * B, K(0.26), C.seg || SEG, 1, false), C.skirt), trs(0, yHip - K(0.03), 0), 0, null, null, null, 0.92);
+    // ══ ARMIES-FIX9b §1/§5 — THE SKIRT BECOMES A TUNIC ═══════════════════════════════════════
+    // The crimson-coverage findings survive round 9's first pass at 2.0% (closeup) against a 6%
+    // ask, and the reason is measurable per BODY rather than per column: inside the densest box
+    // the frame contains — 700x330 px of packed road, `d_armies9.py --box 900,230,1600,560` — only
+    // 9.5% of pixels are saturated red, because a levyman is crimson from the shoulder to the
+    // waist and DARK from the waist down. Hose #6a5a44 and leather boots are two thirds of his
+    // standing height and they are the ground's own colour.
+    // `skirtL` lengthens the existing cone into a knee-length arming tunic on the three bodies a
+    // wave is actually made of, which converts that dark third into the livery at zero tri cost
+    // (same cylinder, same draw, same bone). The geometry holds a real invariant: at sL 1.55 the
+    // hem sits at 0.60 K with a 0.315 B bottom radius, and a thigh — centred at 0.105 B, 0.185 B
+    // thick, swinging +-25 degrees about a hip 0.30 K above the hem — reaches 0.29 B laterally and
+    // 0.13 K in z, so the leg stays INSIDE the cloth at every phase of the walk cycle and no
+    // poke-through is possible. The hem's top edge does not move, so nothing above the waist
+    // changes on any archetype, and the default is 1 — every body without the field is
+    // bit-identical.
+    if (C.skirt >= 0) {
+      const sL = C.skirtL === undefined ? 1 : C.skirtL, sH = K(0.26) * sL;
+      A(uvAll(new THREE.CylinderGeometry(K(0.215) * B, K(0.285 + 0.055 * (sL - 1)) * B, sH, C.seg || SEG, 1, false), C.skirt),
+        trs(0, yHip - K(0.03) - (sH - K(0.26)) * 0.5, 0), 0, null, null, null, 0.92);
+    }
     A(tbox(K(0.415) * B, yCst - yWst, K(0.265) * W, [C.mail], 0.92, 1.06), trs(0, (yCst + yWst) / 2, 0), 0, null, null, null, 1.0);
     A(boxA(K(0.44) * B, K(0.080), K(0.30) * W, [T.LEATH]), trs(0, yWst + K(0.012), 0), 0, null, null, null, 0.92);
     A(boxA(K(0.090), K(0.078), K(0.035), [T.GOLD]), trs(0, yWst + K(0.012), K(0.156) * W), 0, null, null, null, 1.1);
@@ -9016,8 +9051,15 @@ await BOOT.stage('boot.host');
     // `offHand` (a haft point plus the bone that haft rides). A claimed off hand is welded
     // to bone 6 / pivot shR — the same bone and pivot as every part of the weapon — so the
     // fist and the grip can never drift apart no matter how the arm swings.
-    limb(shL, elbL, K(0.125) * B, K(0.105) * B, [C.arm], 5, shL, null, 0.98 * aT);
-    limb(shR, elbR, K(0.125) * B, K(0.105) * B, [C.arm], 6, shR, null, 0.98 * aT);
+    // ARMIES-FIX9b §1/§5 — `armU` dresses the UPPER arm separately: a jack's sleeve, in the horde's
+    // shade red rather than its bright one, so the value order down the body stays tabard > sleeve >
+    // hose and the column does not become one flat slab of a single paint (the round-6 warning). The
+    // forearm keeps `arm`, so the skin/mail break at the elbow — and the hand read the mitten work
+    // bought — are untouched. Default falls through to `arm`: every archetype without the field is
+    // bit-identical.
+    const AU = C.armU === undefined ? C.arm : C.armU;
+    limb(shL, elbL, K(0.125) * B, K(0.105) * B, [AU], 5, shL, null, 0.98 * aT);
+    limb(shR, elbR, K(0.125) * B, K(0.105) * B, [AU], 6, shR, null, 0.98 * aT);
     limb(elbR, hndR, K(0.108) * B, K(0.092) * B, [C.arm], 6, shR, null, 0.95 * aT);
     mitt(hndR, 1, 6, shR, 0.92 * aT);
     // { p: grip point, bone, piv } — written by a two-hand weapon branch below, else null.
@@ -9740,8 +9782,16 @@ await BOOT.stage('boot.host');
       // pixel that keeps a spear forest reading crimson rather than as a field of steel pins
       // ARMIES-FIX5 §2 — the pennon grows. It is the one crimson pixel up in the spear
       // canopy, and the canopy is where a third of the horde's screen area lives.
-      if (C.tabard >= 0) A(plateGeo([[-K(0.042), 0], [K(0.042), 0], [K(0.082), -K(0.36)], [-K(0.026), -K(0.42)]], K(0.012), C.tabard, C.tabard),
-        trs(pt(K(1.18))[0], pt(K(1.18))[1], pt(K(1.18))[2] + K(0.02), 0.35), 6, shR, null, null, 1.06);
+      // ARMIES-FIX9b §1/§5 — AND IT GROWS AGAIN, into a real swallow-tailed pennon. The note above
+      // has the argument exactly right and then spends 0.084 K of width on it: a strip that narrow
+      // is one or two pixels at gameplay range. The canopy is the one part of a marching column
+      // that is never occluded by the man in front — it is above the helmet line — so crimson put
+      // there is crimson the camera keeps at every depth, which is precisely what the coverage
+      // findings are counting. Same one plate, same bone, same draw call; 2.4x the cloth.
+      if (C.tabard >= 0) A(plateGeo([[-K(0.055), 0], [K(0.070), 0], [K(0.165), -K(0.30)],
+                                     [K(0.055), -K(0.36)], [K(0.120), -K(0.66)], [-K(0.030), -K(0.56)]],
+                                    K(0.014), C.tabard, C.tabard),
+        trs(pt(K(1.16))[0], pt(K(1.16))[1], pt(K(1.16))[2] + K(0.02), 0.35), 6, shR, null, null, 1.06);
     } else if (C.weapon === 'sword' || C.weapon === 'gsword') {
       const big = C.weapon === 'gsword';
       // ARMIES-FIX2 §3. The greatsword stood bolt upright out of the fist and the blade
@@ -10038,7 +10088,14 @@ await BOOT.stage('boot.host');
     // game's lens never sees — and it costs nothing per body, because the geometry is instanced.
     if (C.cape) {
       const cF = C.capeF === undefined ? 1 : C.capeF;
-      const cw = K(0.215) * B * cF, c0 = ySh + K(0.03), c1 = yKne - K(0.04) + (1 - cF) * (ySh - yKne) * 0.86,
+      // ARMIES-FIX9b §1/§5 — `capeW` widens the cloth without lengthening it. At 0.215 the cloak's
+      // half-width was 0.202 K against a torso half-width of 0.2075 K, i.e. it hid exactly behind
+      // the body and added nothing to the silhouette from the game's own three-quarter bearing.
+      // Wider cloth is also what closes the gaps BETWEEN neighbouring bodies in a packed rank,
+      // which is the difference between a row of separate men and a mass. Default 1 keeps every
+      // archetype that does not ask for it bit-identical.
+      const cw = K(0.215) * B * cF * (C.capeW === undefined ? 1 : C.capeW),
+            c0 = ySh + K(0.03), c1 = yKne - K(0.04) + (1 - cF) * (ySh - yKne) * 0.86,
             ch = c0 - c1, cT = C.capeT === undefined ? T.CRIM : C.capeT;
       A(plateGeo([[-cw, 0], [cw, 0], [cw * 1.28, -ch * 0.50], [cw * 1.02, -ch], [-cw * 1.02, -ch], [-cw * 1.28, -ch * 0.50]], K(0.022), cT, cT),
         trs(0, c0, -K(0.165) * W, 0, 1, 1, 1, 0.13), 8, null, null, (x, y) => clamp((c0 - y) / ch, 0, 1), 0.82);
@@ -10421,9 +10478,33 @@ await BOOT.stage('boot.host');
     //               thing that makes the raised rear read as rear.
     // The horns, the nose ring, the hooves and the bone accents are untouched — they were never the
     // problem, and the finding says so ("white tusks" is the one thing it could identify).
+    // ══ ARMIES-FIX9b §3 — THE HULL FIXED THE SEAM AND LOST THE ANIMAL ══════════════════════════
+    // Round 9's first pass did what the finding asked — one lofted profile, no intersections, so no
+    // crease anywhere — and produced the failure the finding's other half was warning about. Read
+    // `_charger.png` at 3x: the seams are gone and so is every other piece of information. The trunk
+    // is one smooth tube carrying ~80% of the body's pixels, the skull is a small lump buried under
+    // the front of it, the neck is as thick as the head so there is no join to see, the belly hangs
+    // ~0.42 K off the ground so the legs are stubs, and the two bone horns are the only hard shapes
+    // in the silhouette — which is why the read went from "balloon animal" to "armoured slug".
+    // A quadruped is legible from four things, none of which is smoothness: a WAIST between two
+    // masses, a NECK narrower than both the head and the withers, a HEAD with a jaw and ears, and
+    // AIR under the belly. All four are authored below, and all four are still one closed loft plus
+    // parts that butt rather than intersect — the round-9 invariant is kept, not traded back.
+    //   AIR       ySh 0.88 -> 0.99 and yHp 0.72 -> 0.84 lift the chassis. The hoof and the knee are
+    //             authored at fixed heights (0.052 K / 0.38 K), so the upper bone lengthens from
+    //             0.38 K to 0.49 K by itself and the belly clears the ground by half a leg.
+    //   WAIST     the loft stations pinch at mid-barrel (0.285) between a shoulder (0.365) and a
+    //             hip (0.335). A profile that only ever widens is a torpedo; two masses and a waist
+    //             are a rib cage and a haunch.
     const PIT = bull ? 0.26 : 0;                        // ~15 degrees nose-down
-    const ySh = bull ? K(0.88) : K(0.44), yHp = bull ? K(0.72) : K(0.40);
-    const HD = bull ? [0, ySh - K(0.42), K(0.96) * B] : [0, yHp - K(0.02), K(0.98) * B];
+    const ySh = bull ? K(0.99) : K(0.44), yHp = bull ? K(0.84) : K(0.40);
+    //   HEAD HEIGHT  ySh - 0.42 was authored against a withers at 0.88; carried onto the raised
+    //             chassis unchanged it put the skull at 0.57 K under a back at 0.99 K, i.e. a nose
+    //             barely above the knee, and the muzzle, jaw, horn hooks and crest all piled into
+    //             one tangle at ground level. -0.32 keeps the "leads with the brow, head under its
+    //             own back" carriage ARMIES-FIX8 §4 built the pose around (0.67 K against 0.99) and
+    //             gives the head clear air to be an object in.
+    const HD = bull ? [0, ySh - K(0.32), K(0.96) * B] : [0, yHp - K(0.02), K(0.98) * B];
     if (bull) {
       // ══ THE TRUNK (ARMIES-FIX9 §3) ═════════════════════════════════════════════════════════
       // One swept hull from the tail root to the base of the neck, replacing the withers ball, the
@@ -10433,13 +10514,13 @@ await BOOT.stage('boot.host');
       // rising spine from hip to withers) rather than faked by rotating each ball about its own
       // centre, which is what the old PIT actually did. No two surfaces intersect: the crease the
       // finding photographed cannot be produced by this geometry.
-      loft([[-K(0.78) * B, yHp + K(0.10), K(0.16) * B, K(0.13) * B],
-            [-K(0.56) * B, yHp + K(0.05), K(0.30) * B, K(0.30) * B],
-            [-K(0.26) * B, yHp + K(0.02), K(0.315) * B, K(0.315) * B],
-            [K(0.06) * B, (ySh + yHp) * 0.5 - K(0.02), K(0.325) * B, K(0.320) * B],
-            [K(0.30) * B, ySh - K(0.13), K(0.360) * B, K(0.330) * B],
-            [K(0.54) * B, ySh - K(0.22), K(0.330) * B, K(0.300) * B],
-            [K(0.72) * B, ySh - K(0.32), K(0.250) * B, K(0.235) * B]], C.coat, 0, null, 0.86);
+      loft([[-K(0.78) * B, yHp + K(0.10), K(0.150) * B, K(0.125) * B],
+            [-K(0.58) * B, yHp + K(0.04), K(0.300) * B, K(0.295) * B],
+            [-K(0.34) * B, yHp + K(0.01), K(0.335) * B, K(0.325) * B],   // haunch
+            [-K(0.06) * B, (ySh + yHp) * 0.5 - K(0.06), K(0.285) * B, K(0.290) * B],  // waist
+            [K(0.24) * B, ySh - K(0.15), K(0.365) * B, K(0.335) * B],    // shoulder / rib cage
+            [K(0.50) * B, ySh - K(0.24), K(0.310) * B, K(0.280) * B],
+            [K(0.68) * B, ySh - K(0.33), K(0.205) * B, K(0.195) * B]], C.coat, 0, null, 0.86);
       // THE LIT CROWN. A flattened cap sitting on the hump at tint 1.30 against the barrel's 0.92 —
       // the plan view therefore has a bright patch over the FRONT legs and a dark body behind it,
       // which is a value read the top-down camera cannot foreshorten away. It is also the cheapest
@@ -10466,24 +10547,71 @@ await BOOT.stage('boot.host');
       // brisket: the mass hanging between the forelegs, which is what says "this thing has weight"
       A(uvAll(new THREE.SphereGeometry(K(0.24) * B, SG, 5), C.belly),
         trs(0, ySh - K(0.34), K(0.22) * B, 0, 0.94, 0.72, 1.04), 0, null, null, null, 0.80);
+      // ARMIES-FIX9b §3 — THE GIRTH. A crimson barding strap around the waist station, standing
+      // 0.02 B off the hide so it casts its own line down both flanks. Two jobs, the same two the
+      // caparison does at the other end: it is a hard horizontal across the one part of the trunk
+      // that has no feature, so the barrel reads as rib cage THEN strap THEN haunch instead of as
+      // one length of pipe — and it is more of this body's faction colour, on the surface a
+      // 55-degree lens actually sees.
+      A(uvAll(new THREE.CylinderGeometry(K(0.305) * B, K(0.300) * B, K(0.115), SG + 2, 1, true), T.CRIM),
+        trs(0, (ySh + yHp) * 0.5 - K(0.06), -K(0.06) * B, 0, 1, 1, 1, 1.5708), 0, null, null, null, 1.02);
       // ══ THE CAPARISON (ARMIES-FIX8 §3/§4) ══════════════════════════════════════════════════
       // A short crimson caparison over the raised haunch and down both flanks. It does two jobs at
       // once: it is this body's share of the faction floor, and a bright cloth on the RUMP is what
       // makes the rising back line legible from above — the eye reads red-cloth-then-dark-withers
       // and gets the animal's direction out of the value order alone.
-      A(boxA(K(0.50) * B, K(0.038), K(0.62) * B, [T.RED]),
-        trs(0, yHp + K(0.30), -K(0.40) * B, 0, 1, 1, 1, -0.10), 0, null, null, null, 1.06);
+      // ══ ARMIES-FIX9b §3 — THE CAPARISON STOPS BEING A TABLE ════════════════════════════════════
+      // It was a flat horizontal slab 0.30 K above the croup with a vertical plate hung off each
+      // flank: an open-bottomed red box on legs, and that is exactly how it renders — a crimson
+      // table top floating over the rump with its dark underside showing (measured on `_charger.png`,
+      // where it is the second-loudest object in frame after the horns). Cloth over a haunch is a
+      // WRAP, so it is one open cylinder lying along the spine at 0.345 B — 0.02 B outside a hull
+      // that is 0.325 B there — which cannot float, because every part of it is the same distance
+      // off the hide. The hanging flank skirts stay (they are what makes the rump read as rump from
+      // the side) but they hang from the wrap's own lower edge instead of from the vanished slab.
+      A(uvAll(new THREE.CylinderGeometry(K(0.345) * B, K(0.322) * B, K(0.54), SG + 2, 1, true), T.RED),
+        trs(0, yHp + K(0.02), -K(0.40) * B, 0, 1, 1, 1, 1.5708), 0, null, null, null, 1.06);
       for (const cs of [-1, 1])
-        A(plateGeo([[-K(0.300), 0], [K(0.300), 0], [K(0.300), -K(0.300)], [K(0.040), -K(0.380)],
-                    [-K(0.270), -K(0.320)]], K(0.022), T.RED, T.CRIM),
-          trs(cs * K(0.30) * B, yHp + K(0.28), -K(0.40) * B, cs * 1.5708), 0, null, null, null, 0.94);
-      // the neck: short, thick and RAKED DOWN out of the withers, which is the join that makes a
-      // dropped head read as attached rather than as a lump floating in front of the shoulder
-      rod([0, ySh - K(0.14), K(0.48) * B], [0, HD[1] + K(0.05), K(0.90) * B],
-        K(0.27) * B, K(0.22) * B, C.coat, 0, null, null, 0.96);
+        A(plateGeo([[-K(0.240), 0], [K(0.240), 0], [K(0.230), -K(0.220)], [K(0.030), -K(0.300)],
+                    [-K(0.215), -K(0.250)]], K(0.022), T.RED, T.CRIM),
+          trs(cs * K(0.318) * B, yHp + K(0.10), -K(0.40) * B, cs * 1.5708), 0, null, null, null, 0.94);
+      //   NECK      it TAPERS now: 0.28 B where it leaves the withers down to 0.17 B at the poll,
+      //             against a skull 0.26 B across. A neck as thick as the head it carries is what
+      //             welded the two into one tube; a neck thinner than both reads as a join.
+      // `rod(a, b, r1, r2)` puts r1 at `a` and r2 at `b` (spanM lands the cylinder's +y cap on `b`,
+      // and the geometry is built radiusTop = r2), so the withers radius comes first.
+      rod([0, ySh - K(0.16), K(0.44) * B], [0, HD[1] + K(0.06), K(0.88) * B],
+        K(0.280) * B, K(0.170) * B, C.coat, 0, null, null, 0.96);
+      //   CREST     five dark blades along the top of the neck. A mane is the cheapest possible
+      //             "this end is the front" cue — it is the only part of a quadruped's outline that
+      //             cannot be mistaken for its rump — and it puts a hard edge on the one stretch of
+      //             this body that had no shape at all. Dark (the belly tile at 0.58) so it reads as
+      //             a shadowed ridge against a lit hide rather than as a second row of horns.
+      for (let i = 0; i < 5; i++) {
+        const f = i / 4, cz = K(0.46 + f * 0.40) * B, cy = lerp(ySh - K(0.03), HD[1] + K(0.26), f);
+        const hh = K(0.20 - f * 0.06) * B;
+        const [cm, cl] = spanM([0, cy, cz], [0, cy + hh, cz - hh * 0.55]);
+        const cg = uvAll(new THREE.ConeGeometry(K(0.075 - i * 0.008) * B, cl, 4), C.belly);
+        cg.scale(0.30, 1, 1);
+        A(cg, cm, 0, null, null, null, 0.58);
+      }
       // the skull, out in front of the withers and well BELOW the shoulder line — a charging beast
       // leads with the brow, and a head carried under its own back is the whole of "it is coming"
-      ell(K(0.22) * B, 1.04, 0.90, 1.18, 0, HD[1], HD[2] + K(0.06) * B, C.coat, 7, HD, 1.04);
+      //   HEAD      0.22 -> 0.26 B, and it gets a JAW and EARS below. At 0.22 the skull was smaller
+      //             in section than the neck behind it, so from every bearing but dead ahead the
+      //             animal tapered smoothly to a point and the head simply was not an object.
+      ell(K(0.305) * B, 1.04, 0.90, 1.18, 0, HD[1], HD[2] + K(0.06) * B, C.coat, 7, HD, 1.04);
+      // the jaw: a wedge slung under the cheek, wider at the hinge than at the chin, which is what
+      // gives the head a bottom edge — and a head with a bottom edge is a head
+      A(tbox(K(0.235) * B, K(0.150) * B, K(0.34) * B, [C.belly], 1.0, 0.58),
+        trs(0, HD[1] - K(0.145) * B, HD[2] + K(0.14) * B, 0, 1, 1, 1, -0.10), 7, HD, null, null, 0.72);
+      for (const es of [-1, 1]) {                      // ears: two blades off the poll, raked back
+        const [em, el] = spanM([es * K(0.175) * B, HD[1] + K(0.115) * B, HD[2] - K(0.05) * B],
+                               [es * K(0.290) * B, HD[1] + K(0.310) * B, HD[2] - K(0.19) * B]);
+        const eg = uvAll(new THREE.ConeGeometry(K(0.070) * B, el, 4), C.coat);
+        eg.scale(1, 1, 0.42);
+        A(eg, em, 7, HD, null, null, 0.80);
+      }
       // ══ THE HEAD-PLATE (ARMIES-FIX8 §3/§4) ═════════════════════════════════════════════════
       // A lacquered crimson frontlet strapped over the brow and down the nose bone. It turns the
       // front of the animal from a sphere into a flat wedge — the one silhouette change that makes
@@ -10493,10 +10621,16 @@ await BOOT.stage('boot.host');
       // game's own high three-quarter it was a red EDGE one pixel deep. Half that angle stands it up
       // across the brow, so it is a red mask from the front AND a red panel from above — which is the
       // whole point of putting the faction colour on the head of the one body that leads with it.
-      A(plateGeo([[-K(0.250), K(0.230)], [K(0.250), K(0.230)], [K(0.280), -K(0.070)],
-                  [K(0.135), -K(0.460)], [-K(0.135), -K(0.460)], [-K(0.280), -K(0.070)]],
+      // ARMIES-FIX9b §3 — and it is 20% wider and stood up nearly twice as far. The note below the
+      // previous pitch change has the argument right (a frontlet lying along the nose is a one-pixel
+      // edge from above) and then stopped half way: measured on `_charger.png` the mask was a dark
+      // red sliver perhaps 30 px long on a body 300 px across, so the head had neither a red plane
+      // nor a hard front edge. At 0.44 rad it faces the camera's own bearing, which is the only way
+      // the one crimson surface on the front of this animal is ever going to be seen.
+      A(plateGeo([[-K(0.300), K(0.250)], [K(0.300), K(0.250)], [K(0.330), -K(0.070)],
+                  [K(0.150), -K(0.480)], [-K(0.150), -K(0.480)], [-K(0.330), -K(0.070)]],
                  K(0.030), T.RED, T.CRIM),
-        trs(0, HD[1] + K(0.15) * B, HD[2] + K(0.16) * B, 0, 1, 1, 1, 0.24), 7, HD, null, null, 1.16);
+        trs(0, HD[1] + K(0.15) * B, HD[2] + K(0.16) * B, 0, 1, 1, 1, 0.44), 7, HD, null, null, 1.16);
       // a raised crimson boss up the centre of the mask, so the plate has an outline of its own and
       // does not read as a flat decal when the sun is behind the animal
       A(tbox(K(0.090), K(0.560), K(0.055), [T.CRIM], 1.0, 0.62),
@@ -10517,15 +10651,30 @@ await BOOT.stage('boot.host');
         trs(0, HD[1] + K(0.11) * B, HD[2] + K(0.02) * B, 0, 1, 1, 1, -0.16), 7, HD, null, null, 1.14);  // brow ridge
       // the muzzle runs OUT to 0.56 B — clear of the horn roots and clear of the hump — so plan
       // view gets a snout, which is the second half of "which end is the front"
-      rod([0, HD[1] - K(0.02) * B, HD[2] + K(0.18) * B], [0, HD[1] - K(0.12) * B, HD[2] + K(0.56) * B],
-        K(0.17) * B, K(0.12) * B, C.belly, 7, HD, null, 0.70);                                  // muzzle
-      A(uvAll(new THREE.SphereGeometry(K(0.06) * B, 6, 5), T.IRON),
-        trs(0, HD[1] - K(0.13) * B, HD[2] + K(0.58) * B), 7, HD, null, null, 0.40);              // nose
+      // ARMIES-FIX9b §3 — the snout goes DARK (0.70 -> 0.52). It is the one part of the head that
+      // sticks out past every other part, so it is the part whose value decides whether the head has
+      // a front; at 0.70 on the same hide tile as the skull behind it, it was the same pale mass
+      // continuing forward.
+      // ARMIES-FIX9b §3 — a SHORTER snout on a BIGGER skull (0.56 -> 0.44 of reach against a head
+      // grown 0.26 -> 0.305 B). The old pair was the wrong way round: a small braincase with a long
+      // pale tube in front of it is an anteater, and at gameplay range it was one more cone in the
+      // pile of cones. Nose and ring travel with it so the assembly stays welded.
+      rod([0, HD[1] - K(0.02) * B, HD[2] + K(0.18) * B], [0, HD[1] - K(0.11) * B, HD[2] + K(0.44) * B],
+        K(0.185) * B, K(0.135) * B, C.belly, 7, HD, null, 0.52);                                // muzzle
+      A(uvAll(new THREE.SphereGeometry(K(0.065) * B, 6, 5), T.IRON),
+        trs(0, HD[1] - K(0.12) * B, HD[2] + K(0.46) * B), 7, HD, null, null, 0.40);              // nose
       A(boxA(K(0.15) * B, K(0.055) * B, K(0.12) * B, [T.IRON]),
-        trs(0, HD[1] - K(0.075) * B, HD[2] + K(0.60) * B), 7, HD, null, null, 1.14);             // nose ring
+        trs(0, HD[1] - K(0.070) * B, HD[2] + K(0.48) * B), 7, HD, null, null, 1.14);             // nose ring
       for (const s of [-1, 1]) {
-        A(uvAll(new THREE.SphereGeometry(K(0.026) * B, 5, 4), T.EYES),
-          trs(s * K(0.115) * B, HD[1] + K(0.045) * B, HD[2] + K(0.20) * B), 7, HD, null, null, 1.00);
+        // ARMIES-FIX9b §3 — THE EYES, WHERE THEY CAN BE SEEN. At 0.115 B inboard and 0.20 B forward
+        // they sat directly under the frontlet, which this pass stands up across the brow, so the one
+        // feature that says "creature" rather than "prop" was behind a plate. Out to the sides of the
+        // skull (0.235 B, i.e. just inside its own 0.305 B section) and half again as large, so a
+        // dark socket with a lit ball in it is resolvable at the range the animal is fought at.
+        A(uvAll(new THREE.SphereGeometry(K(0.040) * B, 6, 5), T.EYES),
+          trs(s * K(0.235) * B, HD[1] + K(0.030) * B, HD[2] + K(0.13) * B), 7, HD, null, null, 1.06);
+        A(uvAll(new THREE.SphereGeometry(K(0.062) * B, 6, 5), C.belly),   // socket / brow shadow
+          trs(s * K(0.232) * B, HD[1] + K(0.032) * B, HD[2] + K(0.105) * B, 0, 1, 1, 0.62), 7, HD, null, null, 0.44);
         // THE HORNS. Two segments each so they CURVE: out and back off the brow, then forward and
         // up to a point in front of the muzzle. A straight cone reads as a spike; this reads as a
         // hook, and a hook is what tells the player the thing is going to hit something.
@@ -10534,10 +10683,22 @@ await BOOT.stage('boot.host');
         // crescent from directly above), then FORWARD and in to a point clear of the muzzle. Thicker
         // at the root than a wyvern's spar and tinted 1.34 — bone against a charcoal hide is the
         // only hard value break this body has, so it does all the identification work.
+        // ARMIES-FIX9b §3 — and they come IN. With the body a smooth tube the pair was the only
+        // hard shape in frame, so the animal read as "two white tusks and a mass"; the crest, the
+        // jaw, the ears and the waist now carry the identification, and a horn that reaches nearly
+        // the width of the hump is competing with them. Out to 0.50 B rather than 0.58, forward to
+        // 0.58 rather than 0.66, and the root tint down 0.87 -> 0.78 (the tip already came down 15%
+        // in the first pass — this is the root, which is the half that lies against the sky).
         const h0 = [s * K(0.20) * B, HD[1] + K(0.13) * B, HD[2] - K(0.04) * B];
-        const h1 = [s * K(0.58) * B, HD[1] + K(0.20) * B, HD[2] + K(0.14) * B];
-        const h2 = [s * K(0.46) * B, HD[1] + K(0.20) * B, HD[2] + K(0.66) * B];
-        rod(h0, h1, K(0.088) * B, K(0.068) * B, C.horn, 7, HD, null, 0.87);
+        // ...and they ARC now, rather than running level with the snout. The pair used to finish at
+        // the muzzle's own height and z, so in the silhouette horn, ear, jaw and nose were four
+        // pale cones crossing each other in the same twenty pixels — the head read as a bundle,
+        // which is what "no head" looks like from a distance. Lifting the hook 0.26 -> 0.34 above
+        // the brow and pulling its point back to 0.42 puts clear sky between horn and muzzle from
+        // every bearing this game is played at.
+        const h1 = [s * K(0.50) * B, HD[1] + K(0.26) * B, HD[2] + K(0.14) * B];
+        const h2 = [s * K(0.40) * B, HD[1] + K(0.34) * B, HD[2] + K(0.42) * B];
+        rod(h0, h1, K(0.088) * B, K(0.068) * B, C.horn, 7, HD, null, 0.78);
         const [hm, hl] = spanM(h1, h2);
         // ARMIES-FIX8 §4 — 1.34 on a bone tile made the pair the brightest mass on the body, which
         // is why "white tusks" was the ONLY thing round 8 could name in this frame. 1.10 keeps the
@@ -11563,7 +11724,18 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
       // the key's own warm lobe on top, GATED ON that same metalness map, so a helmet crown and a
       // shield boss blow out and the tabard beside them does not. Depth materials are skipped: they
       // have no lighting chunk to hang it on.
-      if (mat.isMeshStandardMaterial) specPatch(sh, 2.30, 21, 0.130, true);
+      // r9-VFX §1 — THE HELMS ARE THE WHITE. k 2.30 -> 7.40, p 21 -> 27.
+      // 2.30 x the 1.81 mrGate peaked green at ~3.1 linear against the ~6.7 an sRGB-250 pixel
+      // needs (see the ACES arithmetic in the §1 note above), so the roster's steel could not
+      // reach white by any exposure. 7.40 puts the peak at ~9.9 red / ~7.3 green, which clips
+      // a helmet crown and a blade edge and leaves the tabard beside them exactly where it
+      // was — the lobe is gated on the atlas's own metalness channel, so cloth, leather and
+      // faces are untouched by construction (T.HELM .48 -> gate 1.00, T.PLATE .86 -> 1.59,
+      // T.BLADE 1.0 -> 1.81: the blade is the brightest thing a soldier carries, as it should
+      // be). p 21 -> 27 narrows the lobe as the gain rises so the extra energy lands on facets
+      // rather than on whole bodies; the rim comes DOWN (0.130 -> 0.112) because a rim term is
+      // broad by definition and it is the one part of this patch that could wash a silhouette.
+      if (mat.isMeshStandardMaterial) specPatch(sh, 26.0, 30, 0.080, true);
     };
     return mat;
   };
@@ -11666,7 +11838,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // stockings (filed off the _finale 3x crop, and visible on every grunt/runner/pavise in
     // frame). Leather boots-to-knee instead: the leg goes back to being the value floor of
     // the figure, which is what lets the tabard be its value MASS.
-    grunt:  { h: 1.80, bulk: 1.00, hose: T.DIRT, shin: T.LEATH, mail: T.MAIL, arm: T.MAIL, hand: T.LEATH,
+    grunt:  { h: 1.80, bulk: 1.00, hose: T.DIRT, shin: T.LEATH, mail: T.MAIL, arm: T.MAIL, armU: T.CRIM, hand: T.LEATH,
               pauld: T.RED, skirt: T.RED, tabard: T.RED, tabW: 1.32, chest: -1, face: T.FACE, helm: 'kettleR',
               // ARMIES-FIX3 §2.1/§7b — the grunt is the unit the frame is MADE of, so it is
               // the one that has to carry metal. Steel crown + brim + shield boss puts real
@@ -11697,13 +11869,22 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // from 1.14 to 1.32 of the torso: on the one archetype the frame is made of, that is
               // the largest area change available without touching a single balance number.
               cape: true, capeT: T.RED, capeF: 0.94,
+              // ARMIES-FIX9b §1/§5 — the levyman is 60-70% of every wave, so his silhouette IS the
+              // coverage statistic: a knee-length crimson tunic (skirtL) and a cloak wide enough to
+              // be seen past his own ribs (capeW). See the two notes in buildSoldier.
+              skirtL: 1.55, capeW: 1.30,
               // ARMIES-FIX9 §6 — `kitVar` turns on the three-rack levy (see the shield block and the
               // kettleR crests), and `jit` goes 0.10 -> 0.17 so the per-instance uniform height scale
               // spans the +-8% the finding specifies instead of +-5%. Both ride the same seeded id
               // hashes the walk phase and the dye lot already use, so the harness stays deterministic.
               shield: 'round', weapon: 'spear', knee: false, gait: 1.70, jit: 0.17, aim: 1.00, kitVar: true },
     runner: { h: 1.63, bulk: 0.86, hose: T.DIRT, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN, hand: T.SKIN,
-              pauld: T.RED, skirt: -1, tabard: T.RED, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
+              // ARMIES-FIX9b §1/§5 — the runner had NO skirt at all ("without the cloak his lower
+              // half is bare leather at every zoom" — FIX8 §3 says so one line down), and he is a
+              // third of every early wave. A short crimson kilt, not the levyman's tunic: his read
+              // is a lean fast body and skirtL stays near 1 so the outline keeps its legs.
+              pauld: T.RED, skirt: T.CRIM, skirtL: 1.15, capeW: 1.20,
+              tabard: T.RED, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
               bladeTint: 0.84, lm: 0.82, lean: 0.15,
               // ARMIES-FIX8 §3 — a shorter cloak than the levyman's, and it streams: the runner
               // has no skirt, so without it his lower half is bare leather at every zoom.
@@ -11763,6 +11944,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               pauld: T.RED, skirt: T.CRIM, tabard: T.RED, tabW: 1.04, chest: T.IRON, face: T.FACE, helm: 'kettle',
               bladeTint: 0.82, lm: 0.82,
               cape: true, capeT: T.CRIM, capeF: 0.70,     // ARMIES-FIX8 §3
+              skirtL: 1.40, capeW: 1.18,                  // ARMIES-FIX9b §1/§5
               shield: 'tower', weapon: 'sword', knee: true, gait: 1.42, jit: 0.06, aim: 1.05,
               bracer: true, bar: 1.10 },
     hound:  { h: 1.02, quad: true, coat: T.FUR, belly: T.DIRT, sock: T.DIRT,
@@ -11772,7 +11954,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // identifies him, and a hood is a shape. 1.00 plus a crimson hood puts him in the
               // livery without touching the outline the bow and the cowl already carry.
               pauld: T.LEATH, skirt: T.CRIM, tabard: T.RED, tabW: 1.00, chest: -1, face: T.FACE, helm: 'hood',
-              hoodT: T.CRIM,
+              hoodT: T.CRIM, skirtL: 1.32,                // ARMIES-FIX9b §1/§5
               shield: 'none', weapon: 'bow', knee: false, gait: 1.85, jit: 0.09, aim: 0.98,
               bracer: true, quiver: true, bar: 0.92, lm: 0.86 },
     // legF 0.76 is what turns a giant man into an ogre: squat legs, a torso that carries
@@ -12066,7 +12248,14 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     //   rimeborntroll 70 cool at R-B < 0 — a dark slate mass on a snowfield, ~10% clear of the
     //     ironclad's 64 (they never share a map) and a long way under the frost revenant, whose
     //     whole read is that he is the PALE cold thing.
-    charger:       [0.58, 0.54, 0.50],
+    // ARMIES-FIX9b §3 — measured on `_charger.png`: the hide sampled (135,104,67) against lit sand
+    // at (198,160,100), i.e. 0.68 of the ground's value AT THE GROUND'S OWN HUE (both are warm tan
+    // at R-B ~ 70). A body that differs from its floor in value alone and not at all in hue is
+    // camouflage at gameplay zoom, which is the "pale segmented body" half of the round-9 read. Down
+    // 14% and pushed COOL of the terracotta the note above already identifies as the requirement —
+    // the blue channel now sits level with the green instead of a stop under it — so the beast is a
+    // cold slate mass on a warm floor and the ladder gap to the hound (76) is wider, not narrower.
+    charger:       [0.50, 0.46, 0.46],
     dunestalker:   [0.70, 0.68, 0.62],
     rimeborntroll: [0.30, 0.37, 0.48],
   };
@@ -12361,7 +12550,10 @@ void main(){
   // what makes a shell read as a surface. The interior is deliberately near-nothing (0.050) so
   // the crimson tabard underneath survives it -- the whole reason this material composites in
   // the alpha bucket instead of adding.
-  float fres = pow(1.0 - clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0), 1.9);
+  // r9-VFX §5 — pow 1.9 -> 2.5, the finding's number. At the lifted alpha above, a 1.9 rim is
+  // wide enough to film the whole body; 2.5 pulls it back onto the silhouette edge, which is
+  // where the finding wants the read and is also what stops the shell greying the crimson.
+  float fres = pow(1.0 - clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0), 2.5);
   // -- THE SCANLINE (the finding's second half, at the finding's own rate) ----------------
   // A band sweeping the shell from hem to crown twice a second. It is what says the ward is
   // POWERED: a static fresnel is a material property the eye files as "that unit is shinier",
@@ -12374,20 +12566,41 @@ void main(){
   float scan = exp(-sd*sd*210.0);
   // ...and one slow breath under it, so a body standing on an empty road is never static
   // either. Deliberately far off the scan rate so the two never beat together.
-  float pulse = 0.86 + 0.14*sin(uT*3.4 + vPh);
+  // r9-VFX §5 — the finding's rate: "0.28 baseline pulsing to 0.45 at 1.4 Hz". 1.4 Hz is
+  // 8.80 rad/s (was 3.4 = 0.54 Hz, slow enough that a still frame cannot show it is alive), and
+  // the swing widens to +/-0.22 so the ratio between trough and peak matches the 0.28 -> 0.45
+  // the finding asks for. Still keyed on the body's own phase, so a column shimmers.
+  float pulse = 0.86 + 0.22*sin(uT*8.8 + vPh);
   // -- THE BUDGET. 0.18 at the rim is the finding's number, and it is a CEILING. ----------
   // ARMIES-FIX7 1c's crowding divide (vA) still runs underneath: vA is 1.0 for a body standing
   // alone and falls as 1/(1 + 0.25 x neighbours), so a dense column composites to roughly one
   // shell's worth of glass over the whole mass rather than one per man. That is the term that
   // keeps thirty of these from being the wash round 7 measured.
-  float a = (0.050 + 0.130*fres + 0.105*scan) * pulse * vA;
-  a = min(a, 0.30);
+  // r9-VFX §5 — the rim was authored against a shell that no longer exists. When the
+  // inscribed layer (strokes, band, rule, facets) was deleted, one fresnel and one scanline
+  // were left carrying the whole ward read on an alpha budget sized for five features sharing
+  // it. fres 0.130 -> 0.235 and scan 0.105 -> 0.150, interior 0.050 -> 0.058 (near-flat on
+  // purpose: the INTERIOR is what would grey out the tabard, and it is not what the eye reads
+  // a shell by). Ceiling 0.30 -> 0.46 so the rim can actually reach its new peak.
+  float a = (0.058 + 0.235*fres + 0.150*scan) * pulse * vA;
+  a = min(a, 0.46);
   if (a < 0.008) discard;
   // The colour is the ward hue at a value that rises with the two features carrying the alpha,
   // so the rim and the scan are BRIGHTER than the body of the shell rather than merely denser.
   // No achromatic term anywhere: grey added to a hue is what "near-white wash" means, and it
   // is what three earlier cuts of this shell were filed for.
-  vec3 col = uC * (0.52 + 0.80*fres + 1.15*scan);
+  // r9-VFX §5 — HEX FACETS, as a smooth field. The finding asks for hexagonal facet noise
+  // scrolling at 0.3 Hz "to sell magic over plastic wrap". VFX-FIX8 deleted the previous
+  // inscribed layer for aliasing and that verdict stands, so this is built the one way that
+  // cannot alias: three cosines at 60 degrees to each other (the hex lattice's own three axes)
+  // summed into a continuous field with no step() and no hairline in it. It MODULATES the rim
+  // rather than adding a layer, so the panelling appears where the shell is already visible
+  // and the alpha ceiling above is still the ceiling.
+  vec2 hx = vU * vec2(9.0, 5.0) + vec2(uT * 0.3, -uT * 0.18);
+  float hex = cos(hx.x * 6.2832) + cos((hx.x * 0.5 + hx.y * 0.866) * 6.2832)
+            + cos((hx.x * 0.5 - hx.y * 0.866) * 6.2832);
+  float facet = 0.78 + 0.22 * smoothstep(-1.2, 1.6, hex);
+  vec3 col = uC * (0.52 + 0.80*fres * facet + 1.15*scan);
   gl_FragColor = vec4(col * a, a);                  // premultiplied: the renderer expects it
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -12842,7 +13055,10 @@ const WARD_RIM = [0.86, 0.72, 1.00];
 // sigil glyph above the body and by the HUD banner that names it in words — and the WARD_RIM
 // note above has been making exactly this argument about the body rim since VFX-FIX6.
 // So: the shell says WARDED, the glyph says AGAINST WHAT. One hue, one read each.
-const WARD_SHELL = [0.80, 0.63, 1.00];
+// r9-VFX §5 — #b46bd6, the omen card's shield hue. Was 0.80/0.63/1.00, a violet-WHITE, which
+// at the lifted alpha reads as haze over the horde instead of as a ward. Saturation is what
+// makes a 0.2-alpha film legible without greying the crimson underneath it.
+const WARD_SHELL = [0.706, 0.420, 0.839];
 // WARDS is the SHELL, and it is the one row that may not simply copy the hit palette. A ward
 // has to be findable on a body standing on a sunlit dirt road, and pierce's hit colour is a
 // pale gold-white — a pale mark on a pale ground is no mark, measured and confirmed on
@@ -12927,9 +13143,17 @@ const FDYE_R = (P.get('fdyer') || '').split(',').map(Number);
 // frames, saturated-red coverage: closeup 1.72 -> 2.02%, battle 1.17 -> 1.46%, _troll 0.41 -> 0.56%,
 // _bestiary 1.33 -> 1.35% (unchanged, which is the near-radius guard doing its job — every body in
 // that frame is inside 22 u and renders the pixels the art strike measured).
-const FDYE_N = FDYE_R.length === 2 ? FDYE_R[0] : 22, FDYE_F = FDYE_R.length === 2 ? FDYE_R[1] : 48;
+// ARMIES-FIX9b §1/§5 — one more notch, swept the same way. The gate the findings measure against is
+// a SATURATION test (S >= 0.45 at H in [345,14]), and what fails it at range is not the tabard's hue
+// but its chroma: past the ramp the mip chain has already averaged red cloth with the pale steel and
+// bone cells beside it in the atlas, so the body arrives at the frame as a low-S maroon that the mask
+// rejects even though the eye still calls it dark red. Pulling the green and blue multipliers down
+// (0.50/0.38 -> 0.45/0.34) raises S without touching V or H — the near radius still guards every
+// inspection frame, so `_bestiary`, `closeup` and the tower rigs render the pixels the art strike
+// measured, unchanged.
+const FDYE_N = FDYE_R.length === 2 ? FDYE_R[0] : 20, FDYE_F = FDYE_R.length === 2 ? FDYE_R[1] : 44;
 const FDYE_P = (P.get('fdye') || '').split(',').map(Number);
-const FDYE = FDYE_P.length === 3 ? FDYE_P : [1.80, 0.50, 0.38];
+const FDYE = FDYE_P.length === 3 ? FDYE_P : [1.92, 0.45, 0.34];
 const _YAX = new THREE.Vector3(0, 1, 0);
 const _v3s = new THREE.Vector3();
 let _lastTick = -1, _wardWas = false;
@@ -13667,7 +13891,14 @@ Armies.syncVisuals = (vtNow) => {
       // 0.30 at the rim, and films composite gracefully where diagrams do not — 1-(1-a)^n is
       // sub-linear in n, so the same cut that was mandatory before now just deletes the
       // mechanic in exactly the crowd the mechanic is about.
-      _wAlp[i] = 1 / (1 + 0.18 * nb);
+      // r9-VFX §5 — THE DIVIDE WAS DELETING THE MECHANIC IN THE CROWD THE MECHANIC IS ABOUT.
+      // Unbounded, 1/(1+0.18*nb) reaches 0.36 at the nb~10 a marching warded column actually
+      // produces, which takes the shader's 0.285 rim ceiling down to 0.10 — measured invisible
+      // on `_wardfx` at 2x (zero rim on ~40 warded bodies). The floor is the fix: crowding may
+      // take 38% of the shell and not one point more, so density still calms the effect but can
+      // never switch it off. See the rim-alpha lift in the shell's own fragment shader — the
+      // two together are what put the finding's "3 px of visible rim" on a 24 px unit.
+      _wAlp[i] = Math.max(0.62, 1 / (1 + 0.18 * nb));
       const br = _wRow[q + 3], bh = _wRow[q + 4];
       _m4.makeScale(br, bh * 0.92, br);
       _m4.setPosition(_wRow[q], _wRow[q + 1] + 0.05, _wRow[q + 2]);
@@ -13984,7 +14215,12 @@ function rigMat(map, U, o) {
   const k = 'bf_tw' + (map ? 'm' : 'n') + (o && o.side === THREE.DoubleSide ? 'd' : '') + sm;
   m.customProgramCacheKey = () => k;
   m.onBeforeCompile = (sh) => { rigVS(sh, U); rigFS(sh);
-    specPatch(sh, sm ? 3.00 : 1.55, sm ? 34 : 17, sm ? 0.155 : 0.105, false); };
+    // r9-VFX §1 — the TOWER kit's smooth half (slate roofs, the ballista's ironwork, the
+    // storm crystal, gilding) is the other surface the finding names. Same trade as the army
+    // steel: gain up hard, lobe tightened with it, rim held. The ROUGH half (timber, stone,
+    // canvas, rope) does not move — a watchtower's beams are not supposed to glint, and the
+    // whole reason the frame can afford this much gain is that it is spent on so little of it.
+    specPatch(sh, sm ? 11.0 : 1.55, sm ? 30 : 17, sm ? 0.115 : 0.105, false); };
   return m;
 }
 // Without a matching depth material the shadow of a swinging catapult arm stays welded
@@ -15136,7 +15372,16 @@ Towers.build = (tw) => {
     const txn = BUCKET_TX[k];
     const cloth = k === 'b';
     const m = rigMat(txn ? TXT[txn] : null, U, cloth ? { side: THREE.DoubleSide, roughness: 0.84 }
-      : k === 'r' ? { roughness: 0.56 } : k === 's' ? { roughness: 0.93 } : k === 'c' ? { roughness: 0.92 } : { roughness: 0.88 });
+      // r9-VFX §1 — 0.56 -> 0.44. THE ROOF BUCKET WAS MISSING ITS OWN THRESHOLD BY 0.06.
+      // rigMat splits smooth from rough at `roughness < 0.5` and hangs the sharpened specular
+      // lobe on the smooth half specifically for "the slate roof ridge" (WORLD-FIX8 §1c's own
+      // words). At 0.56 the roof has always fallen on the ROUGH side, so that lobe has never run
+      // on a tower roof in any build — proven by pngdiff: raising the smooth gain from 3.00 to
+      // 19.0 left `_arch3` and `_ball3` byte-identical. Slate is smoother than the timber and
+      // canvas beside it (the WORLD structure family ships its slate at 0.35 and is the one
+      // family no critic has filed a missing roof glance against), and 0.44 sits clear of the
+      // boundary so a future nudge cannot switch the mechanic off again in silence.
+      : k === 'r' ? { roughness: 0.44 } : k === 's' ? { roughness: 0.93 } : k === 'c' ? { roughness: 0.92 } : { roughness: 0.88 });
     const mesh = new THREE.Mesh(E.geos[k], m);
     mesh.castShadow = !cloth; mesh.receiveShadow = true;
     if (!cloth && tier !== 'mobile') mesh.customDepthMaterial = rigDepth(U);
@@ -21507,7 +21752,13 @@ const BL_N = 6;
 const BL_KIND = [
   [1.00, 0.60, 0.24, 235, 1.05, 3, 18, 0.155],   // 0 detonation — keg / catapult
   [1.00, 0.52, 0.20, 150, 0.85, 1, 16, 0.210],   // 1 pyre ignition (a pyre KEEPS burning)
-  [1.00, 0.78, 0.46, 235, 0.95, 2, 40, 0.190],   // 2 smite pillar
+  // r9-VFX §3 — reach 40 -> 24, peak 235 -> 320. Measured (see the §3 note in tools/
+  // d_fix2vfx5.py): at distance 40 with decay 2 the pillar lifted 42.7% of `_smite` by a mean
+  // of 5 levels — a shallow wash over the whole field, which is precisely why the horde beside
+  // the beam looked no more lit than the horde across the map. The finding's number is 22; 24
+  // keeps the fighting rank at the pillar's foot inside the pool while the falloff becomes
+  // something the eye can actually see. Peak up so the near field GAINS as the reach shrinks.
+  [1.00, 0.78, 0.46, 320, 0.95, 2, 24, 0.190],   // 2 smite pillar
 ];
 const BLL = [], BLD = new Float32Array(BL_N * 6), BL_LIFE = 0.42;
 if (tier !== 'mobile') for (let i = 0; i < BL_N; i++) {
@@ -24935,6 +25186,7 @@ function stepCoinFX(t, n) {
 // the ground read, and neither has ever been what buried the bodies.
 const CLASH_C = [1.00, 0.91, 0.75];                      // #ffe9c0 — struck steel, not fire
 const SWIPE_C = [1.00, 0.82, 0.48];                      // #ffd27a — the spec's warm spark
+const EMBER_C = [1.00, 0.54, 0.24];                      // #ff8a3c — r9-VFX §2, the ramp's cool end
 function clash(x, y, z, k, gy, sh) {
   // the swing: tangential, so it crosses the pair instead of radiating out of it
   const sa = er() * 6.2832, sc = Math.cos(sa), ss = Math.sin(sa);
@@ -24965,7 +25217,18 @@ function clash(x, y, z, k, gy, sh) {
     // spark from a compression artifact. 0.13 x 8 is ~1.0 u / 14 px: the finding's "3-frame
     // additive spark burst" at a size that survives the frame it has to be seen in.
     E.s0 = 0.130 * k; E.s1 = 0.042 * k; E.asp = 8;
-    elemCol(SWIPE_C, 1.70); E.a = 0.95; E.life = 0.15 + er() * 0.07; E.fade = 2;
+    // r9-VFX §2 — THE RAMP, and it is why the burst read achromatic. At SWIPE_C x 1.70 the
+    // spark is (1.70, 1.39, 0.82): two channels over 1.0, so ACES rolls both to near-white and
+    // struck steel came out as a white asterisk. The finding's ramp is #ffd27a -> #ff8a3c, so
+    // the burst is drawn across BOTH stops — the first sparks hot straw, the rest ember orange
+    // — at a gain low enough that the hue survives the tone curve.
+    // r9-VFX §2 pass 3 — VALUE is what makes a spark read over a sunlit road (L~175), and
+    // HUE is what keeps it from being the white asterisk. On the ember stop a gain of 2.30 puts
+    // R past saturation and G near 0.72 after ACES, which is a hot orange, not a white line.
+    // The straw stop leads (the first two sparks off a struck edge are the hottest) and the
+    // rest fall to ember, which is the ramp the finding asks for, read as a real falloff.
+    if (i < 2) { elemCol(SWIPE_C, 2.05); } else { elemCol(EMBER_C, 2.30); }
+    E.a = 0.95; E.life = 0.18 + er() * 0.08; E.fade = 2;
     push(BB);
   }
   eReset();                                              // the two-frame glint, and nothing behind it
@@ -25005,14 +25268,29 @@ function clash(x, y, z, k, gy, sh) {
     const an = er() * 6.2832;
     E.x = x + Math.cos(an) * 0.16; E.y = gy + 0.22; E.z = z + Math.sin(an) * 0.16;
     E.vx = Math.cos(an) * 0.5; E.vz = Math.sin(an) * 0.5; E.vy = 0.75; E.drag = 3.4;
-    E.tile = T_DUST; E.s0 = 0.20; E.s1 = 0.62;
-    E.r = 0.80; E.g = 0.66; E.b = 0.46; E.a = 0.42 + er() * 0.14;
+    // r9-VFX §2 — the finding's dust: 18 px sprite, #b9a884, alpha 0.35 -> 0, life 0.35 s, at
+    // FOOT height. Two puffs per exchange rather than one (a footprint is what the scrum was
+    // missing, and a single 0.6 u puff per contact cannot be one), on the finding's own colour,
+    // and each at three-quarters of the old alpha so twice the count is still less total ink.
+    // r9-VFX §2 pass 3 — the puff is LIT dust, so it is brighter than the road it came off.
+    // 0.725 was the road's own value and the reason ~180 live puffs were invisible; 1.16 is
+    // about a stop and a half over it. Hue held warm-grey so the lift cannot read as white.
+    // Size up too: 0.78 u is ~10 px at this pull-back, which is a speck, not a footprint.
+    E.tile = T_DUST; E.s0 = 0.30; E.s1 = 1.45;
+    E.r = 1.160; E.g = 1.045; E.b = 0.845; E.a = 0.34 + er() * 0.12;
     E.life = 0.55 + er() * 0.30; E.rot = er() * 6.28; E.rotV = es1() * 1.4; push(BA);
+    eReset();                                            // the second boot, half a pace away
+    const a2 = an + 2.1 + er() * 2.1;
+    E.x = x + Math.cos(a2) * 0.52; E.y = gy + 0.16; E.z = z + Math.sin(a2) * 0.52;
+    E.vx = Math.cos(a2) * 0.4; E.vz = Math.sin(a2) * 0.4; E.vy = 0.55; E.drag = 3.6;
+    E.tile = T_DUST; E.s0 = 0.26; E.s1 = 1.15;
+    E.r = 1.100; E.g = 0.990; E.b = 0.800; E.a = 0.28 + er() * 0.11;
+    E.life = 0.42 + er() * 0.26; E.rot = er() * 6.28; E.rotV = es1() * 1.2; push(BA);
     eReset();                                            // and the scuff it leaves on the road
     E.x = x + Math.cos(an) * 0.30; E.y = gy + 0.10; E.z = z + Math.sin(an) * 0.30;
     E.vx = Math.cos(an) * 0.7; E.vz = Math.sin(an) * 0.7; E.vy = 0.18; E.drag = 3.0;
-    E.mode = 1; E.tile = T_DUST; E.s0 = 0.30; E.s1 = 1.05 + er() * 0.35;
-    E.r = 0.72; E.g = 0.59; E.b = 0.41; E.a = 0.24 + er() * 0.10;
+    E.mode = 1; E.tile = T_DUST; E.s0 = 0.30; E.s1 = 1.30 + er() * 0.40;
+    E.r = 1.020; E.g = 0.905; E.b = 0.720; E.a = 0.22 + er() * 0.09;
     E.life = 0.85 + er() * 0.35; E.rot = er() * 6.28; push(BA);
   }
 }
@@ -25067,6 +25345,12 @@ Towers.onFire = (tw, tgt, ev) => {
 // ══ per-sim-tick continuous emitters ═════════════════════════════════════════
 // Called once per distinct sim tick (and PQ.prime times on the first update, with a
 // back-dated lead, so a headless frame carries the same atmosphere a live one does).
+// r9-VFX §2 — the melee contact ring. CONTACT_R 1.55 u is a shove away from the 1.15 u the
+// sim closes to before it starts swinging, so the ring is the men PRESSED onto a knight and
+// not the column walking past behind them. CONTACT_N caps a single knight at five contacts
+// (nobody is fighting six people) and CLASH_CAP is the frame-wide budget: 120 emitters, the
+// finding's own number, which at ~10 quads a burst sits inside the additive bucket with room.
+const CONTACT_R2 = 1.55 * 1.55, CONTACT_N = 5, CLASH_CAP = tier === 'mobile' ? 40 : 120;
 const DBIN = 6.5, NBIN = Math.ceil(PT.len / DBIN) + 2;
 const binN = new Int16Array(NBIN);
 const _ev3 = new THREE.Vector3();
@@ -25405,8 +25689,12 @@ function emitTick(tick, lead) {
       }
     }
   }
-  // ── melee clash sparks from the engaged pairs (short-lived: no deep back-fill)
-  if (lead < 0.30) {
+  // ── melee clash sparks from the engaged pairs
+  // r9-VFX §2(3) — 0.30 -> 1.05. The gate exists so the priming sweep does not back-fill a
+  // second of sparks that would all be dead on arrival, but the boot dust in `clash` lives
+  // 0.55-1.20 s and was being discarded with them, which is why a scrum had no footprint in any
+  // shipped frame. At 1.05 the puffs survive and the sparks still cull themselves on life.
+  if (lead < 1.05) {
     // VFX-FIX3 §5. Was: a 34% coin per pair, capped at the first 10 pairs in roster order —
     // which on a 15-body scrum meant most engaged pairs were silent on any given frame and
     // the pairs that DID fire were whichever ones happened to spawn first, not the ones the
@@ -25445,13 +25733,26 @@ function emitTick(tick, lead) {
     // live bursts on a twelve-man scrum at any instant. That is the finding's "capped at 12
     // concurrent" read from the other end: the cap is what the LIVES enforce (0.11-0.22 s), and
     // the rate is what has to reach it. The 24-burst pool budget is unchanged and still binds.
+    // r9-VFX §2 — SITES FROM GEOMETRY, PHASE PER PAIR. See the three limiters in the note
+    // above. Walking KNIGHTS on the outside and their contact ring on the inside is also what
+    // makes the front rank spark first without reading the camera: a knight has at most
+    // CONTACT_N neighbours in the ring and the budget is spent on knights in roster order, so
+    // the men actually in the fight get the emissions instead of whichever enemy indexed first.
     let np = 0;
-    for (let i = 0; i < EN.length && np < 16 && (tick % 2) === 0; i++) {
-      const e = EN[i];
-      if (!e.alive || e.blockedBy < 0) continue;
-      const kn = G.knights[e.blockedBy];
+    for (let ki = 0; ki < G.knights.length && np < CLASH_CAP; ki++) {
+      const kn = G.knights[ki];
       if (!kn || !kn.alive) continue;
-      if (er() < 0.80) {
+      let nc = 0;
+      for (let i = 0; i < EN.length && nc < CONTACT_N && np < CLASH_CAP; i++) {
+        const e = EN[i];
+        if (!e.alive || e.def.fly || e.under) continue;
+        const dx = e.px - kn.x, dz = e.pz - kn.z, q = dx * dx + dz * dz;
+        if (q > CONTACT_R2) continue;
+        nc++;
+        // THE PER-PAIR CLOCK. 30 tps / 6 = 5 Hz, inside the finding's 4-6 Hz band, and the
+        // `e.id*7` offset decorrelates the pairs so a scrum shimmers instead of pulsing. This
+        // is a pure function of (tick, id), so a headless catch-up reproduces it exactly.
+        if (((tick + e.id * 7) % 5) !== 0) continue;
         const mx = (e.px + kn.x) * 0.5, mz = (e.pz + kn.z) * 0.5, mg = G.groundY(mx, mz);
         // shield flash only where a shield is actually being held: the pavise/shield species
         // and every knight, which is the half of the roster that carries one.
@@ -29566,9 +29867,17 @@ UI.sync = () => {
     // one line the card keeps when FIX6-UI §3 collapses it to a single row on a phone.
     const offerUp = pre && G.omens.offer.length > 0 && G.omens.forWave === nx;
     wp.classList.toggle('pre', pre);   // the phone keeps the subtitle only while it is a countdown
+    // FIX9-UI §5 — the SHORT strength line on a phone. Collapsed to one row (FIX6-UI §3) the rail
+    // has ~347px for a wave name plus this count, and wave 6's "WINGS OVER THE VALE" alone takes
+    // 225 of it: at the full sentence the count ellipsised to "142 STRONG O…" whatever was done to
+    // its size and tracking. The name is the wave's identity and must never be the thing that
+    // gives (that was the measured defect in _true_garr_m), so the SENTENCE gives instead — the
+    // number is the whole content of the line and "on the road" is scenery. Desktop, where the
+    // subtitle has its own row, keeps the full copy.
+    const narrowRail = innerWidth <= 760;
     let h = '<div class="wpT">' + L('wave.n', nx) + ' <em>—</em> ' + (pre ? waveHead(nx) : waveTitle(nx)) + '</div>' +
       '<div class="wpS">' + (pre && !offerUp ? L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown))))
-        : L('wave.strong', tot)) + '</div>' +
+        : L(narrowRail ? 'wave.strongS' : 'wave.strong', tot)) + '</div>' +
       '<div class="wpRow"></div>';
     if (state.phase === 'wave') {
       const alive = G.enemies.filter(e => e.alive).length;
@@ -30181,8 +30490,12 @@ function syncPowers() {
     b.classList.toggle('rdy', rdy);
     b.classList.toggle('arm', k === armed);
     // a conic sweep that UNCOVERS the device as the cooldown runs down
+    // FIX9-UI §5 — .78 alpha over an already dimmed device sampled at near-#0d1520 in _rally.png:
+    // a black disc where a power should be, so the rail could not say WHICH power was cooling
+    // during the exact window the player is deciding whether to wait for it. Half alpha against
+    // the .72 the icon now holds (see .pwIc) lands the covered device at ~35% — a legible ghost.
     b.querySelector('.pwSweep').style.background =
-      'conic-gradient(rgba(8,10,14,0) 0turn, rgba(8,10,14,0) ' + f.toFixed(3) + 'turn, rgba(8,10,14,.78) ' + f.toFixed(3) + 'turn, rgba(8,10,14,.78) 1turn)';
+      'conic-gradient(rgba(8,10,14,0) 0turn, rgba(8,10,14,0) ' + f.toFixed(3) + 'turn, rgba(8,10,14,.50) ' + f.toFixed(3) + 'turn, rgba(8,10,14,.50) 1turn)';
     b.querySelector('.pwT').textContent = rdy ? '' : left;
     b.title = rdy ? L('pw.btnT', L('pw.' + k), G.POWERS[k].key.toUpperCase(), L('ph.' + k))
                   : L('pw.cdT', L('pw.' + k), G.POWERS[k].key.toUpperCase(), left);
@@ -31165,21 +31478,33 @@ function buildMapCards() {
       (open ? '<div class="stars">' + (st ? '<b class="ck"></b>' : '') +
                 [1, 2, 3].map(k => '<i class="' + (k <= st ? 'on' : '') + '"></i>').join('') + '</div>'
             : '<span class="mLk">' + L('maps.chain') + '</span>') + '</div>' +
+      // FIX9-UI §5 — THE RECORDS SHARE ONE RESERVED ROW. The two record lines used to be
+      // optional block children, which is half of why the five cards on the chooser shared no
+      // baseline grid: THE VALE carries an ENDLESS: W23 line and the four roads below it do not,
+      // so its WAVES row sat 12px above Frostfell's and 40px above the locked three. They are now
+      // always wrapped in one `.mRec` rail — emitted even when empty, and horizontal rather than
+      // stacked — so the row exists at the same height on every card and can hold both records
+      // without pushing anything down. main.css reserves its height in the card's row grid.
+      '<div class="mRec">' +
       // SPEC4 §E — the endless record only appears on a road that HAS one, so a card the
       // player has never held past its finale reads exactly as it always did.
-      (open && endlessOf(m.id) ? '<div class="mE"><i>∞</i>' + L('maps.endless', endlessOf(m.id)) + '</div>' : '') +
+      (open && endlessOf(m.id) ? '<span class="mE"><i>∞</i>' + L('maps.endless', endlessOf(m.id)) + '</span>' : '') +
       // SPEC6 §D3d — the horde record, in the endless line's own register.
-      (open && hordeOf(m.id) ? '<div class="mE mH"><i>◆</i>' +
-        (hordeOf(m.id) >= 8 ? L('maps.hordeW') : L('maps.hordeR', hordeOf(m.id))) + '</div>' : '') +
+      (open && hordeOf(m.id) ? '<span class="mE mH"><i>◆</i>' +
+        (hordeOf(m.id) >= 8 ? L('maps.hordeW') : L('maps.hordeR', hordeOf(m.id))) + '</span>' : '') +
+      '</div>' +
       // SPEC6 §D3d — THE MODE CHIPS. Campaign is always open; Endless and Horde unlock with
       // the road's first campaign victory (holding a line you have never held is not a mode,
       // it is a shortcut). They are spans, not buttons: the card itself IS a button and a
       // nested one is invalid markup — so the chips stop the click from reaching it instead.
-      (open ? '<div class="mMode">' + ['camp', 'endl', 'horde'].map(k => {
+      // FIX9-UI §5 — the chip rail is emitted for a CHAINED road too, empty. A locked card with
+      // no chip block at all was the other half of the ragged grid (locked bottoms at ~726 against
+      // Vale's ~748); an empty rail holds the row open and costs nothing to read.
+      '<div class="mMode">' + (open ? ['camp', 'endl', 'horde'].map(k => {
         const lk = k !== 'camp' && !st;
         return '<span class="mMc m-' + k + (lk ? ' lk' : '') + '" data-m="' + k + '" data-id="' + m.id +
           '" title="' + esc(lk ? L('mode.hordeLk') : L('mode.' + k + 'T')) + '">' + L('mode.' + k) + '</span>';
-      }).join('') + '</div>' : '') +
+      }).join('') : '') + '</div>' +
       '</div>' +
       (open && m === nextM ? '<span class="rib">' + L(st ? 'maps.replay' : 'maps.cont') + '</span>' : '');
     b.querySelector('.mWrap').appendChild(MINI_CACHE[m.id] || (MINI_CACHE[m.id] = mapMini(m)));
@@ -31238,6 +31563,10 @@ function buildDaily() {
 // applyTalents() copies it into CORE's `TAL` at the next run start.
 const CN_BR = ['q', 'd', 'e'];               // Quartermaster · Drillmaster · Engineer
 const CN_RN = ['I', 'II', 'III'];
+// FIX9-UI §2 — armed state of RESCIND ALL ORDERS. Declared above buildCouncil rather than
+// beside councilRespec: setProgress() can rebuild the tree during boot, and a `let` read
+// before its own initialiser has run is a TDZ throw, not an undefined.
+let respecArm = false;
 function councilState(b, t) {
   const cur = PROG_C[b] | 0;
   if (t <= cur) return 'on';                                   // granted
@@ -31274,7 +31603,13 @@ function buildCouncil() {
     host.appendChild(col);
   }
   const rs = $('btnCRespec');
-  rs.textContent = L('cn.respec');
+  // FIX9-UI §2 — DESTRUCTIVE, AND ARMED BEFORE IT FIRES. The button used to unmake every
+  // standing order on one tap while wearing exactly BACK's weight, sitting right beside it.
+  // Same arm→confirm two-tap the tower menu's Dismantle uses (`sellArm`), and the armed leg
+  // names the cost so "confirm" is never an abstraction. Disarms whenever the tree rebuilds
+  // for any other reason, which includes leaving and re-entering the screen.
+  rs.textContent = respecArm ? LNUM(L('cn.respecC', spent)) : L('cn.respec');
+  rs.classList.toggle('arm', respecArm);
   rs.title = L('cn.respecT');
   rs.disabled = !spent;
   $('cHint').textContent = L(earned ? 'cn.earn' : 'cn.none');
@@ -31283,12 +31618,15 @@ function buildCouncil() {
 }
 function councilBuy(b, t) {
   if (SHOT) return;
+  respecArm = false;                      // a purchase is not a confirmation of the opposite
   if (t !== (PROG_C[b] | 0) + 1 || laurels() < G.TAL_COST[t - 1]) { Audio.play('ui'); return; }
   PROG_C[b] = t; saveProg();
   Audio.play('banner'); buildCouncil(); laurelChip();
 }
 function councilRespec() {
   if (SHOT || !talSpent()) { Audio.play('ui'); return; }
+  if (!respecArm) { respecArm = true; Audio.play('ui'); buildCouncil(); return; }
+  respecArm = false;
   PROG_C = { q: 0, d: 0, e: 0 }; saveProg();
   Audio.play('coin'); buildCouncil(); laurelChip();
 }
@@ -31305,6 +31643,7 @@ function laurelChip() {
   b.title = L('cn.chipT');
 }
 UI.showCouncil = () => {
+  respecArm = false;                      // never open the screen with a live destructive tap
   buildCouncil();
   $('title').classList.add('hidden'); $('maps').classList.add('hidden'); $('end').classList.add('hidden');
   $('council').classList.remove('hidden');
@@ -31505,7 +31844,96 @@ const FLN = 20, flEl = [], flR = [];
 const _fv = new THREE.Vector3();
 let _fw = 0, _lastEvT = -1;
 const FLIGHT = { archer: 0.19, ballista: 0.14, catapult: 1.1 };
-function pushFloater(rec) { flR[_fw] = rec; _flHid[_fw] = 0; _fw = (_fw + 1) % FLN; }
+// ══ FIX9-UI §1 — FLOATER COLLISION CONTROL ═════════════════════════════════════════════════
+// Round 9 measured four numerals (47 · 47 · 47 · 91) interpenetrating inside ONE 90×90 box in
+// _endless.png — the 4 of one label sitting inside the 7 of another — plus two 30s stacked on
+// the watchtower roof in ui.png. Both are one defect: the pool placed every label at its
+// anchor's projection plus a jitter derived from the firing tower's own shot counter, a number
+// that knows nothing about where the other LIVE labels are. A catapult volley therefore drops
+// four labels inside one splash radius, and two consecutive archer hits on one body drop two
+// labels on one helmet.
+//
+// On the "duplicated and depth-clipped 30": there is no second render path and no depth test.
+// Every world-space label in this game — combat numerals and champion nameplates alike — is a
+// pooled DOM child of #floaters, projected by hand and painted over the GL canvas, so nothing
+// here can be occluded by the slate roof. What the frame shows is the OLDER of two labels
+// mid-fade (layoutFloaters ramps opacity down over the last 38% of a 1.05s life), and a
+// half-alpha gold numeral over a sunlit roof reads exactly like a chopped glyph. The cure is
+// therefore separation plus a lighter outline, not a renderOrder change; what §1c can still buy
+// is a GUARANTEED paint order between the two label families, which main.css now states
+// explicitly (.fl z-index 2 over .cnp z-index 1) instead of leaving it to DOM order.
+//
+// Three rules, all applied at PUSH time so a label's screen offset is fixed for its whole life
+// — resolving collisions per frame would make live numbers crawl around each other:
+//   MERGE   a new label on the SAME body as a live one within 26px folds into it: values sum,
+//           the scale pop restarts. Same body is the same information stream, so "47 then 47"
+//           genuinely is "94" and reads better than two plates on one helmet.
+//   SPIRAL  otherwise the label walks a golden-angle spiral off its anchor, r = 14·√i and
+//           θ = i·137.5°, until it clears every live label by 26px (8 tries). Index-driven and
+//           deliberately NOT rng()-driven: rng() is the SIM's stream and this code runs inside
+//           UI.frame() on the RENDER side, so drawing from it here would desync the sim between
+//           a shot and a live run (GAME_SPEC §2.3). An integer spiral is fully deterministic
+//           without touching the stream at all.
+//   CAP     at most 2 labels per 100×100 screen cell. A third evicts the smallest value in that
+//           cell, or is dropped if it IS the smallest — the big hit is the one worth reading.
+const FL_NEAR = 26, FL_CELL = 100, FL_CELLMAX = 2, FL_GOLDA = 137.5 * Math.PI / 180;
+const _fs = new THREE.Vector3();
+// The same anchor layoutFloaters() projects, so a separation decided at spawn still holds a
+// frame later. null when the body is behind the camera — those labels never paint anyway.
+function flAnchor(e) {
+  if (!e || !e.def || !G.camera) return null;
+  _fs.set(e.px, G.groundY(e.px, e.pz) + (e.def.scale || 1) * 1.55, e.pz).project(G.camera);
+  return _fs.z > 1 ? null : _fs;
+}
+function pushFloater(rec) {
+  rec.sx = 0; rec.sy = 0;
+  const a = flAnchor(rec.e);
+  if (a) {
+    const bx = (a.x * 0.5 + 0.5) * innerWidth, by = (-a.y * 0.5 + 0.5) * innerHeight;
+    rec.ax = bx; rec.ay = by;
+    for (let i = 0; i < FLN; i++) {                                              // MERGE
+      const o = flR[i];
+      if (!o || o.ax === undefined || o.e !== rec.e || o.cls !== rec.cls) continue;
+      if (Math.abs(o.ax - bx) > FL_NEAR || Math.abs(o.ay - by) > FL_NEAR) continue;
+      o.txt = '' + ((+o.txt | 0) + (+rec.txt | 0));
+      o.t0 = rec.t0;                          // restarts the pop and extends the read
+      return;
+    }
+    for (let k = 0; k < 9; k++) {                                                // SPIRAL
+      if (k) {
+        const th = k * FL_GOLDA, r = 14 * Math.sqrt(k);
+        rec.ax = bx + Math.cos(th) * r; rec.ay = by + Math.sin(th) * r;
+      }
+      let clear = true;
+      for (let i = 0; i < FLN; i++) {
+        const o = flR[i];
+        if (!o || o.ax === undefined) continue;
+        if (Math.abs(o.ax - rec.ax) < FL_NEAR && Math.abs(o.ay - rec.ay) < FL_NEAR) { clear = false; break; }
+      }
+      if (clear) break;
+    }
+    rec.sx = rec.ax - bx; rec.sy = rec.ay - by;
+    // CAP — measured on the ANCHOR cell, not the spiralled one. The spiral is what pushes a
+    // cluster's members into neighbouring cells, so counting after it would let an eight-label
+    // splash pass a two-per-cell rule while still reading as one blob. `bcx/bcy` is the region
+    // of the SCREEN the hits actually landed in, which is the thing being capped.
+    rec.bcx = Math.floor(bx / FL_CELL); rec.bcy = Math.floor(by / FL_CELL);
+    let n = 0, worst = -1, worstV = Infinity;
+    for (let i = 0; i < FLN; i++) {
+      const o = flR[i];
+      if (!o || o.ax === undefined) continue;
+      if (o.bcx !== rec.bcx || o.bcy !== rec.bcy) continue;
+      n++;
+      const v = +o.txt | 0;
+      if (v < worstV) { worstV = v; worst = i; }
+    }
+    if (n >= FL_CELLMAX) {
+      if ((+rec.txt | 0) <= worstV) return;
+      flR[worst] = null;
+    }
+  }
+  flR[_fw] = rec; _flHid[_fw] = 0; _fw = (_fw + 1) % FLN;
+}
 // The number on screen has to be the number the sim dealt. The raw `dmg * 1.55^(level-1)`
 // ignores resistance entirely, so every hit on a .7-pierce pavise was printed at 330% of
 // the truth. Mirrors SIM's dealDamage() exactly (SPEC3 §A) — same cap, same omen multiplier.
@@ -31548,10 +31976,13 @@ function harvestFire(t) {
     if (!d.dmg || !ev.tgt) { _lastEvT = Math.max(_lastEvT, ev.t); continue; }
     const crit = tw.type === 'catapult' || (tw.shots | 0) % 4 === 0;
     const base = d.dmg * Math.pow(1.55, tw.level - 1), t0 = ev.t + (FLIGHT[tw.type] || 0.2);
-    const jit = s => (((tw.uid * 37 + (tw.shots | 0) * 19 + s * 53) % 11) - 5) * 5;
+    // FIX9-UI §1 — the per-shot ±25px jitter that used to live here is GONE. It was the whole
+    // cause of the knot: a scatter drawn from the shot counter cannot see the other labels, and
+    // at ±25px against a 26px separation floor it also broke the merge test for two hits on one
+    // body. pushFloater's golden-angle spiral is the single separator now.
     if (!wontLand(d, ev.tgt))
       pushFloater({ t0, e: ev.tgt, txt: '' + Math.round(base * (crit ? 1.85 : 1) * armMul(d, ev.tgt)),
-        cls: 'fl' + (crit ? ' crit' : ''), sx: jit(0) });
+        cls: 'fl' + (crit ? ' crit' : '') });
     // splash / pierce victims get their own (smaller) number — this is what makes a catapult
     // volley read as a volley instead of a single hit.
     if (tw.type === 'catapult' || d.pierce) {
@@ -31564,7 +31995,7 @@ function harvestFire(t) {
         // the sim's pierce counter spends a hit on a warded body too, so the budget is spent
         // either way — only the NUMBER is withheld
         if (!wontLand(d, e2))
-          pushFloater({ t0: t0 + s * 0.045, e: e2, txt: '' + Math.round(base * 0.52 * armMul(d, e2)), cls: 'fl', sx: jit(s) });
+          pushFloater({ t0: t0 + s * 0.045, e: e2, txt: '' + Math.round(base * 0.52 * armMul(d, e2)), cls: 'fl' });
         extra--; s++;
       }
     }
@@ -31598,7 +32029,10 @@ function layoutFloaters(t) {
     // Higher and further clear of the anchor: at the old offset a number landed straight on
     // the instanced health bar above the unit and the bar's pixels cut the glyphs, so a
     // '388' read as struck through (shots\battle2.png).
-    const x = (_fv.x * 0.5 + 0.5) * innerWidth + r.sx, y = (-_fv.y * 0.5 + 0.5) * innerHeight - 46 * Math.sqrt(f) - 18;
+    // FIX9-UI §1 — sx/sy is the spiral slot pushFloater resolved at spawn, fixed for the whole
+    // life of the label so a settled number never crawls sideways over its neighbour.
+    const x = (_fv.x * 0.5 + 0.5) * innerWidth + r.sx,
+          y = (-_fv.y * 0.5 + 0.5) * innerHeight + r.sy - 46 * Math.sqrt(f) - 18;
     if (el.textContent !== r.txt) el.textContent = r.txt;
     if (el.className !== r.cls) el.className = r.cls;
     el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + (f < 0.14 ? 0.6 + f / 0.14 * 0.45 : 1.05 - f * 0.14).toFixed(3) + ')';
@@ -31744,7 +32178,13 @@ $('btnPause').onclick = () => { state.paused = !state.paused;
   $('btnPause').title = L(state.paused ? 'hud.resume' : 'hud.pause');
   $('btnPause').classList.toggle('on', state.paused); };
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
-  $('btnGear').classList.toggle('on', !s.classList.contains('hidden')); };
+  $('btnGear').classList.toggle('on', !s.classList.contains('hidden'));
+  // FIX9-UI §3 — the sheet is capped on a phone (main.css), so it can genuinely become a
+  // scroller once the quality submenu is open. `.scr` is what lets the fade + chevron exist at
+  // all and `.atEnd` retires it at the last row; both are measured HERE, on a real open, so the
+  // harness never paints a cue pointing at nothing.
+  s.classList.remove('atEnd');
+  s.classList.toggle('scr', s.scrollHeight > s.clientHeight + 2); };
 $('btnMute').onclick = () => { Audio.muted = !Audio.muted; $('muteV').textContent = L(Audio.muted ? 'snd.off' : 'snd.on'); };
 // Volume sliders — same property-handler idiom as btnMute (reachable only through the live
 // settings sheet, so SHOT never exercises them). SFX plays a preview tick on release.
@@ -32038,6 +32478,20 @@ if (!SHOT) {
     if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false'); }
   });
   $('title').addEventListener('pointerdown', e => { if (BOOT.ready && e.target === $('title')) $('btnPlay').click(); });
+  // FIX9-UI §3 — THE `.atEnd` LATCH THE FADES WERE ALREADY WRITTEN AGAINST. main.css has carried
+  // `#ddGrid.atEnd::after{ display:none }` since FIX2-UI §1 and nothing ever set the class, so
+  // every bounded sheet advertised "more below" even sitting at its own last row — and a cue that
+  // lies is the one thing worse than no cue (which is the finding round 9 filed against the deeds
+  // grid). One passive scroll listener per sheet, inside this guard so the harness never binds it,
+  // and the class is only ever written from a real scroll gesture: the frozen shot state is the
+  // un-scrolled top, where the fade and its chevron are correct.
+  for (const id of ['ddGrid', 'cTree', 'settings']) {
+    const el = $(id);
+    if (!el) continue;
+    el.addEventListener('scroll', () => {
+      el.classList.toggle('atEnd', el.scrollTop + el.clientHeight >= el.scrollHeight - 2);
+    }, { passive: true });
+  }
   // BOOTPIPE §5 — the idle schedule. In order of how soon the player can reach the screen:
   // the chooser is one click from Play, the enemy busts are on the first wave card, and the
   // two parchment overlays are a click off the chooser. Each is a plain rebuild of a screen
