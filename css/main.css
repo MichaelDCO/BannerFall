@@ -549,26 +549,65 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 @media (min-width:421px){ .pHead .mus b{ display:none; } }
 /* FIX4-UI §1 — THE FILLED GOLD TREATMENT. The muster control wore the same thin outline as
    the panel's close ✕, which is the chrome vocabulary for "dismiss", not for "spend 230 gold
-   to field another tower". It is a struck gold plate now — the only one on the bar — so the
-   bar's one purchasable upgrade is the bar's one filled control. */
-#buildMenu .pHead .mus:not(:disabled){ color:#2b1d05;
-   background-image:var(--noise),linear-gradient(180deg,#ffe6a2,#e8b64c 52%,#b07f22);
+   to field another tower".
+   ══ FIX10-UI §5 — ...AND A STRUCK GOLD SLAB IS TWO STOPS TOO LOUD ═══════════════════════════
+   Round 10: measured on _place / _omens / _champion, the full-saturation gold plate is the
+   BRIGHTEST object in the entire HUD — brighter than any of the eight tower cards 40px below it,
+   which are the bar's real primary action. That is a hierarchy inversion: a standard is a
+   CAPACITY purchase made three or four times in a run, a tower is what the player buys every
+   wave. The control keeps the head's dark-iron body and takes a full-strength 1px gold rule and
+   gold type instead. It is still the only OUTLINED control on the head (the ✕ carries no border
+   at all and the ratio chip is a pill), so it still reads as the one thing here you can buy —
+   it just no longer out-shouts the shop it stands over. */
+#buildMenu .pHead .mus:not(:disabled){ color:#ffe2a2;
+   background-image:var(--noise),linear-gradient(178deg,#332c23,#17140f);
    background-size:180px 180px,100% 100%;
-   border:1px solid rgba(255,240,196,.75);
-   box-shadow:0 3px 11px rgba(0,0,0,.55), 0 0 16px rgba(232,182,76,.26),
-              inset 0 1px 0 rgba(255,252,232,.7), inset 0 -2px 0 rgba(120,82,14,.4);
-   text-shadow:0 1px 0 rgba(255,246,214,.5); }
-#buildMenu .pHead .mus:not(:disabled) b{ color:#2b1d05; text-shadow:none; }
-#buildMenu .pHead .mus:not(:disabled) .mIc{ filter:drop-shadow(0 1px 1px rgba(255,246,214,.6)); }
-#buildMenu .pHead .mus:not(:disabled) .c{ color:#ffe7ab;
-   background:linear-gradient(180deg,rgba(52,36,10,.94),rgba(22,15,5,.94));
-   border-color:rgba(48,32,8,.6); }
-#buildMenu .pHead .mus:not(:disabled):hover{ filter:brightness(1.1);
-   box-shadow:0 3px 13px rgba(0,0,0,.55), 0 0 22px rgba(232,182,76,.5),
-              inset 0 1px 0 rgba(255,252,232,.75), inset 0 -2px 0 rgba(120,82,14,.4); }
-.pHead .mus:disabled{ opacity:.5; cursor:default; }
-.pHead .mus:disabled .c{ color:#e6714f; border-color:rgba(230,113,79,.42); }
-.pHead .mus:disabled .c.cap{ color:#b8a880; border-color:rgba(232,182,76,.25); }
+   border:1px solid rgba(232,182,76,.88);
+   box-shadow:0 3px 11px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.16);
+   text-shadow:0 1px 0 #000; }
+#buildMenu .pHead .mus:not(:disabled) b{ color:#ffe2a2; text-shadow:0 1px 0 #000; }
+#buildMenu .pHead .mus:not(:disabled) .mIc{ filter:drop-shadow(0 1px 1px rgba(0,0,0,.8)); }
+#buildMenu .pHead .mus:not(:disabled) .c{ color:#ffdc8e;
+   background:linear-gradient(180deg,rgba(60,44,16,.92),rgba(24,18,8,.92));
+   border-color:rgba(232,182,76,.5); }
+#buildMenu .pHead .mus:not(:disabled):hover{ filter:brightness(1.16);
+   box-shadow:0 3px 13px rgba(0,0,0,.55), 0 0 18px rgba(232,182,76,.36),
+              inset 0 1px 0 rgba(255,228,178,.22); }
+/* ══ FIX10-UI §5 — THE REFUSAL IS A STATE, NOT A DIMMING ══════════════════════════════════════
+   `opacity:.5` over a gold slab is still a gold slab. At the muster cap and with the purse short
+   the control was pixel-near a live one, so the only feedback the player got was the placement
+   toast fired AFTER a click — and the button that WOULD have fixed the problem was the thing
+   sitting there looking available. Dark iron, a dead rule, muted type, and the REASON printed
+   inside the button (UI.buildMenu writes `.why`): the refusal is legible before the click.
+   `opacity:1` is load-bearing — it is what stops the gold showing through the new plate.
+   #buildMenu-SCOPED, and that is load-bearing too: `#ui button{ color:#f6ecd6 }` is (1,0,1) and a
+   plain `.pHead .mus:disabled` is (0,3,0), so the first cut of this shipped a cream label on a
+   dead plate — measured at the cap and at NEED 170 alike. The enabled rule below has carried the
+   same scope since FIX4-UI §1 for exactly this reason. */
+#buildMenu .pHead .mus:disabled{ opacity:1; cursor:default; color:#8a7a58;
+   background-image:linear-gradient(178deg,#211c15,#191510); background-size:100% 100%;
+   border:1px solid #5a4a2e; box-shadow:0 2px 7px rgba(0,0,0,.45);
+   text-shadow:0 1px 0 rgba(0,0,0,.8); }
+#buildMenu .pHead .mus:disabled b{ color:#8a7a58; text-shadow:none; }
+#buildMenu .pHead .mus:disabled .mIc{ filter:grayscale(.9) brightness(.6); }
+#buildMenu .pHead .mus:disabled .c, #buildMenu .pHead .mus:disabled .c.cap{ color:#8a7a58;
+   border-color:#5a4a2e; background:rgba(10,8,5,.55); }
+/* the inline reason. It replaces the price chip rather than joining it: a price you cannot pay
+   and a cap you cannot pass are both answers to "why is this off", and printing the number
+   beside the sentence would put two of them on one 30px control. */
+.pHead .mus .why{ display:none; }
+#buildMenu .pHead .mus:disabled .why{ display:inline-flex; align-items:center; padding:1px 7px 1px 6px;
+   border-radius:9px; font-size:9.5px; letter-spacing:.13em; text-transform:uppercase;
+   color:#8a7a58; border:1px solid #5a4a2e; background:rgba(10,8,5,.55);
+   /* 21em, not 15: measured at the muster cap, "ALL STANDARDS FIELDED" is 21 characters at .13em
+      tracking and 15em clipped it to "ALL STANDARDS FIELD…" — a refusal that is itself truncated.
+      The head is a flex row with an elastic `.rule`, so the width comes out of the rule rather
+      than out of anything that carries meaning. The ellipsis stays as the backstop for a longer
+      tongue at a narrow window. */
+   max-width:21em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* the numeral opts out of the label's .13em tracking (see .lnum), and the word-space goes with it
+   — measured, "NEED 170" set as one letterspaced run and printed "NEED170". */
+#buildMenu .pHead .mus:disabled .why .lnum{ letter-spacing:.02em; margin-left:3px; }
 
 /* ── targeting doctrine (SPEC3 §F) ─────────────────────────────────── */
 /* FIX5-UI §1 — the standing-order rail no longer lives in the ACTION strip. It was a
@@ -577,8 +616,8 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    labelled element block now (see `#towerMenu .ordR`). The `.tBtn.tgt` / `.tgL` crosshair
    rules that dressed the old plate are gone with it — the row's own label carries the word
    and the hotkey, so there is nothing left for a 16px icon to stand in for. */
-.coarse #omenRow .omK{ display:none; }
-@media (pointer:coarse){ #omenRow .omK{ display:none; } }
+.coarse #omenRow .omK, .coarse #omenRow .omKw{ display:none; }
+@media (pointer:coarse){ #omenRow .omK, #omenRow .omKw{ display:none; } }
 
 /* ── war seed (SPEC3 §E) ───────────────────────────────────────────── */
 /* The run's fingerprint: same seed, same swap slots, same omen draws. It belongs wherever a
@@ -743,7 +782,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    9 read "8 / 8 / 0" as an unlabelled leftover numeral. Same box as the build bar's card keys,
    scaled to the modal and given the pressed-key relief every kbd in this game wears: a top
    highlight and a 2px base shadow, so it is a key and not a badge. */
-#omenRow.mdl .omSide .omK{ grid-column:3; justify-self:end;
+/* FIX10-UI §6 — the track placement moved up to `.omKw`, which is what occupies column 3 now
+   (the cap and its label travel together). */
+#omenRow.mdl .omSide .omK{
    width:23px; height:23px; line-height:22px; font-size:12.5px; border-radius:4px;
    background:linear-gradient(180deg,rgba(40,33,24,.92),rgba(8,6,4,.9));
    box-shadow:inset 0 1px 0 rgba(255,236,186,.22), 0 2px 0 rgba(0,0,0,.55); }
@@ -752,6 +793,36 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    markup still emits it (SIM's contract for the row is `always three cards, always the same
    slots`); it simply is not drawn. */
 #omenRow .omCoin.none{ display:none; }
+/* ══ FIX10-UI §6 — ...BUT NOT IN THE MODAL SPREAD, WHERE THE FOOT RAIL IS A SLOT ═══════════════
+   Round 10 read the three omen footers as three different components, and they were: THIN RANKS
+   showed [coin pill][keycap], SAPPERS showed [coin pill] and nothing else (its keycap is hidden
+   by the TAKEN state), STORM FRONT showed [nothing][keycap] because the rule above deletes a
+   zero delta. In the RAIL that deletion is right — a lozenge saying "±0" in a stack of
+   notifications is noise. In the modal the pill is one of exactly TWO slots inside a bordered
+   foot rail, so its absence is not silence, it is a hole: three 300px cards side by side with
+   their feet laid out differently. A zero delta is also real information here ("this portent
+   costs you nothing" is the reason to take it), so it is drawn — muted to the disabled-iron tone
+   so it reads as a stated zero rather than as a price. */
+#omenRow.mdl .omCoin.none{ display:inline-flex; color:#8a7a58; border-color:rgba(232,182,76,.24);
+   background:linear-gradient(180deg,rgba(34,28,18,.94),rgba(15,12,8,.94)); }
+#omenRow.mdl .omCoin.none em{ color:#8a7a58; }
+#omenRow.mdl .omCoin.none .ic{ opacity:.45; }
+/* ══ FIX10-UI §6 — AND THE KEYCAP SAYS IT IS A KEY ════════════════════════════════════════════
+   FIX6-UI §5 gave the hotkey the build bar's own numbered square, and round 9 and round 10 both
+   still read the "8" / "9" / "0" in it as an unlabelled value ("8 of what?") — because the build
+   bar stamps that exact square on eight cards 100px below with "1"–"8" in it, and beside a coin
+   pill a bare numeral in a box is a quantity until proven otherwise. §5's relief treatment made
+   it a nicer box; it did not give it a noun. One three-letter label in front of it does, at the
+   cost of 26px in a 300px foot rail, and it keeps the square shape reserved for key bindings.
+   `display:contents` outside the modal so the RAIL's own side column is byte-identical. */
+#omenRow .omKw{ display:contents; }
+#omenRow .omKw em{ display:none; }
+#omenRow.mdl .omKw{ display:inline-flex; align-items:center; gap:5px; grid-column:3; justify-self:end; }
+#omenRow.mdl .omKw em{ display:inline; font-style:normal; font-family:var(--sans); font-weight:600;
+   font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:#9b8a63; }
+/* once an omen is taken the whole hint is moot, label included — hidden, never removed, so the
+   right-hand grid track keeps its width and the pill stays centred on the card */
+#omenRow.mdl .omC.on .omKw{ visibility:hidden; }
 #omenRow.mdl .omCoin{ font-size:13px; padding:2px 11px 3px 4px; }
 #omenRow.mdl .omCoin .ic{ width:16px; height:16px; }
 #omenRow.mdl .omCoin em{ font-size:9px; }
@@ -952,7 +1023,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
      NOTHING IS DROPPED. FIX3-UI §1 made this chip the one place the game prints the school in
      words and FIX §6b made the reach chip carry a labelled number; both survive, one line, at a
      size the phone tier already ships smaller than. */
-  #buildMenu .card .tags{ gap:3px; flex-wrap:nowrap; }
+  /* FIX10-UI §1 — gap 2, and the reach pill gives up one more pixel of right padding. Measured in
+     FRENCH: FOUDRE wants 42px of word against 41 available, so `storm` shipped "FOUD…" while the
+     English row had 4px of slack. Two pixels of whitespace buys the longest word in the longer
+     tongue, which is the width this row has to be authored for. */
+  #buildMenu .card .tags{ gap:2px; flex-wrap:nowrap; }
+  #buildMenu .card .tag.rg{ padding-right:2px; }
   /* FIX8-UI §4c — 10.5px, not 9.5. The arithmetic above budgeted 9.5px type because the reach
      chip was carrying a 13px figure as well as a label and a number; §4a deleted the figure, so
      the pair is 15px narrower than it was measured at and the type can come back up a point.
@@ -962,8 +1038,20 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
      school plate stays 14px. Verified by measurement, not by arithmetic: all eight cards' `.tags`
      rows land at 19px / ONE row at a 1584px layout, and the dock measures 219px — inside the ~205
      FIX2-UI §3 fought for plus the eighth card SPEC_8 §F added. */
-  #buildMenu .card .tag{ padding:1px 4px 2px 2px; font-size:10.5px; letter-spacing:.03em; gap:2px; }
-  #buildMenu .card .tag i.sch{ width:14px; height:14px; }
+  /* ══ FIX10-UI §1 — AND THE PAIR HAS TO FIT INSIDE THE FRAME, NOT JUST ON ONE LINE ═════════════
+     The arithmetic above budgeted the row against "the 94 a 104px plate has inside its padding"
+     and the pair has been over it ever since: measured at a 1584px layout the school chip wants
+     ~63px and the reach chip 42, i.e. 108 against a 102px padding box, and `overflow:visible` was
+     quietly letting the difference hang over the card's frame — which is exactly what round 10
+     saw as "both PIERCE pills bleed past their card frames into the neighbouring cell". (The ward
+     tag made it catastrophic; it was never the whole of it.)
+     The row now takes the plate's own side padding back (see .tags, margin:-6px) and the chips
+     give up 6px of WHITESPACE — 1px of padding on each face, a 13px school plate — so the pair
+     lands inside the frame at its authored type size. Nothing is re-cut: 10.5px, .03em, the word
+     and the labelled number all survive, which is the whole point of the two notes above. */
+  #buildMenu .card .tag{ padding:1px 3px 2px 1px; font-size:10.5px; letter-spacing:.03em; gap:2px; }
+  #buildMenu .card .tag i.sch{ width:13px; height:13px; }
+  #buildMenu .card .tag.rg::before{ margin-right:1px; letter-spacing:.03em; }
   /* and the miniature gives back six more: 58 → 52. The plate is 104px wide, so the canvas is
      still 100px across — larger than the 66px the phone grid shows it at and larger than the
      58px the old phone scroller did. */
@@ -1329,7 +1417,30 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 /* ── build-card damage glyphs + effect writ (SPEC2 §A/§B) ──────────── */
 /* Each card says three things at a glance: what it costs, what KIND of harm it does
    (armour matters now), and how far it reaches. The glyph is the fastest of the three. */
-.tags{ display:flex; gap:4px; justify-content:center; margin-top:4px; }
+/* ══ FIX10-UI §1 — THE CHIP ROW IS A TWO-SLOT RAIL IN EVERY STATE ═════════════════════════════
+   Round 10, blocker. The ward badge used to be appended INTO this row as a `::after` on the
+   school chip (the rule that carried it is deleted further down). Measured on _champion.png at
+   3x: the ARCHER's reach chip was crushed to a bare clipped "R" with no pill frame at all, the
+   BALLISTA's read "RNG 1" cut out of "RNG 14", and both PIERCE pills bled past their card frames
+   into the neighbouring cell — while the three unwarded cards beside them (CRUSH/STORM/FIRE) fit
+   with room to spare. So the ward tag alone was the whole overflow.
+   A card's SCHOOL and its REACH are the two values a player compares across cards, so the row
+   they live in must not change width when a wave mutator turns on. Ward state leaves the row
+   entirely (see .card.warded::after) and the row is now exactly [element][5px][reach] in every
+   state, CLIPPED rather than allowed to grow: the school word ellipses inside its own pill
+   before anything can push the reach chip off the plate. `overflow:hidden` is the backstop —
+   UI.buildMenu asserts scrollWidth against the row's own box under the harness (UIWARN).
+   ...AND THE ROW WAS ALREADY OVER BUDGET BEFORE THE WARD TAG GOT THERE. With the tag removed and
+   the row clipped, the school WORD started ellipsing ("PI…", "CR…", "SU…") on cards that had
+   looked fine — because the two pills measure ~131px against a 122px content box and the old
+   `overflow:visible` was simply letting them hang over the card's padding. So the row takes the
+   card's side padding back with a -6px margin (134px of usable rail, 2px inside the frame) and
+   the gap comes to 5: the pair fits with slack, at their authored sizes, with nothing hanging
+   over an edge. `flex-shrink` and the ellipsis stay as the backstop for a longer tongue. */
+.tags{ display:flex; flex-wrap:nowrap; gap:5px; justify-content:center; margin:4px -6px 0; overflow:hidden; }
+.tags .tag.el{ flex:0 1 auto; min-width:0; overflow:hidden; }
+.tags .tag.el .tw{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.tags .tag.rg{ flex:0 0 auto; }
 /* FIX3-UI §1 — the school chip is the worst offender in the game because it is the ONLY
    place the word "SUPPORT" and the word "PIERCE" are printed, and it printed them as
    SUFFORT and FIERCE in every gameplay frame. 11px of condensed grotesque at 0.04em. */
@@ -1389,17 +1500,25 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    so it cannot be told by a weapon; the Warbanner IS the school, and this is its silhouette. */
 .tag i.sch.dg-bnr{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23241c10'><path d='M4.6 3.6h2.8v19.8H4.6z'/><circle cx='6' cy='1.6' r='2'/><path d='M7.4 4.6h14.2l-3.6 4.6 3.6 4.6H7.4z'/></g></svg>"); }
 .tag b{ font-weight:400; color:#e8dcc0; font-variant-numeric:tabular-nums; }
-/* FIX2-UI §2 — a warded school, said on the cards the player buys from */
+/* FIX2-UI §2 — a warded school, said on the cards the player buys from.
+   FIX10-UI §1 — said with a SHIELD IN THE CORNER and a red frame, never with a word inside the
+   chip row (see .tags above for the measured overflow that word caused). The badge also stops
+   being a hard-coded English string in a `content:` property, which is why the French override
+   this rule used to need is gone with it: a glyph needs no translation. */
 .card.warded{ border-color:rgba(226,120,90,.62);
    box-shadow:0 5px 14px rgba(0,0,0,.5), 0 0 16px rgba(200,70,50,.28), inset 0 1px 0 rgba(255,228,178,.11); }
-.card.warded .tag:first-child{ color:#ffc2ad; background:rgba(64,18,11,.9); border-color:rgba(226,120,90,.65); }
-.card.warded .tag:first-child::after{ content:'warded'; font-size:7.5px; letter-spacing:.14em; color:#e8907a; }
-/* SPEC4 §B — this badge was the last hard-coded English word left in the CSS: it printed
-   "PERCE WARDED" on the French build cards (caught in the FR pass of shots\_champion.png).
-   Generated content cannot read the string layer, so it follows the same `html[data-lang]`
-   route #btnReset::after already uses. `garde` is the noun, so it stays correct against
-   both genders of school (Perce/Foudre feminine, Choc/Feu masculine). */
-:root[data-lang="fr"] .card.warded .tag:first-child::after{ content:'garde'; }
+.card.warded .tags .tag.el{ color:#ffc2ad; background:rgba(64,18,11,.9); border-color:rgba(226,120,90,.65); }
+/* THE CORNER. Top-RIGHT, the free mirror of the hotkey chip — with one offset, because top-right
+   is not EMPTY in every state: the trap cards park their school sigil there (.card.trap .tags)
+   and so does every card at <=480px (.card .tags .tag.el). Where the sigil holds the corner the
+   shield steps one slot inboard and stands directly beside it, which is the better read anyway:
+   [shield][school] says "this school is warded" in the corner itself. One corner, one glyph,
+   every width, both rows of the shop — and outside the chip row, so the row's budget is untouched. */
+.card.warded::after{ content:''; position:absolute; right:5px; top:5px; width:14px; height:14px;
+   pointer-events:none; background-repeat:no-repeat; background-position:50% 50%; background-size:100% 100%;
+   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9));
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 1.5l8.6 2.5v7.9c0 5.1-3.5 8.9-8.6 10.1-5.1-1.2-8.6-5-8.6-10.1V4z' fill='%23a42a22' stroke='%23ffd0c2' stroke-width='1.7' stroke-linejoin='round'/><path d='M12 6.6v9.8M7.9 9.9h8.2' stroke='%23ffe4dc' stroke-width='2' stroke-linecap='round'/></svg>"); }
+.card.trap.warded::after{ right:24px; width:12px; height:12px; }
 .dg-bolt{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M13.8 2L5 13.4h5.2L9.4 22l9-12.2h-5.4z' fill='%23bfe8ff' stroke='%235fa8dd' stroke-width='1.1' stroke-linejoin='round'/></svg>"); }
 .dg-flame{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 1.6c4.4 4.6 7.4 7.6 7.4 12.2A7.4 7.4 0 0 1 4.6 13.8c0-2.6 1.4-4.6 3-6.4.2 2 1 3.2 2.2 3.6.6-3.4.6-6.4 2.2-9.4z' fill='%23ff9a2e' stroke='%23c0521a' stroke-width='1'/><path d='M12 21.4a3.6 3.6 0 0 1-3.4-3.6c0-2 1.8-3.2 2.6-5.4 1.2 1.8 4.2 3.2 4.2 5.4a3.4 3.4 0 0 1-3.4 3.6z' fill='%23ffe9a8'/></svg>"); }
 /* FIX4-UI §6c — REACH IS NOT VISION. Two concentric ellipses around a dot is an EYE: on a
@@ -2261,17 +2380,32 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    holds over both the sunlit meadow and the dark packed road without a drop shadow doing the
    work. One soft 3px shade stays, at half its old weight: it grounds the label against a flat
    green field without printing a second silhouette. */
+/* ══ FIX10-UI §3c — THE GRADE, AND A KEYLINE THAT CAN SURVIVE A CRIMSON TABARD ═══════════════
+   Round 10: "all numbers currently render one cream fill with a 1px grey stroke, so nothing is
+   distinguishable". Both halves are here. FIX9-UI §1d cut the ring to 1px at 60% alpha to stop
+   adjacent glyphs' outlines meeting — correct for the pile-up it was fixing, and it left the
+   numeral with almost no separation from the two grounds it actually has to survive (a sunlit
+   meadow at L~175 and a red tabard). The finding's numbers are a 2px stroke at 85% alpha plus a
+   1px down-offset shadow, and the reason that no longer reproduces the round-9 collision is that
+   §3b's merge now guarantees one label per body — the glyphs that used to be tangent are folded
+   into one number before they are ever drawn.
+   And the fill is GRADED: normal #f6efdc, crit #ffd25a at 1.35x, chill #9fd8ff, burn #ff8a3c —
+   the finding's own four values. The stroke is the same near-black in every case, which is what
+   keeps four colours reading as one family instead of as four unrelated UI layers. */
 .fl{ position:absolute; left:0; top:0; z-index:2; opacity:0; font-size:22px; line-height:1; white-space:nowrap;
      font-family:var(--serif); letter-spacing:.02em; font-variant-caps:normal;
      font-variant-numeric:tabular-nums lining-nums; font-weight:600;
-     color:#f2d7a0; will-change:transform,opacity;
-     text-shadow:1px 0 0 rgba(9,7,5,.6), -1px 0 0 rgba(9,7,5,.6), 0 1px 0 rgba(9,7,5,.6), 0 -1px 0 rgba(9,7,5,.6),
-                 .7px .7px 0 rgba(9,7,5,.6), -.7px .7px 0 rgba(9,7,5,.6), .7px -.7px 0 rgba(9,7,5,.6),
-                 -.7px -.7px 0 rgba(9,7,5,.6), 0 2px 3px rgba(0,0,0,.45); }
-.fl.crit{ font-size:32px; font-weight:600; color:#ffe4b0;
-     text-shadow:1px 0 0 rgba(9,7,5,.6), -1px 0 0 rgba(9,7,5,.6), 0 1px 0 rgba(9,7,5,.6), 0 -1px 0 rgba(9,7,5,.6),
-                 .7px .7px 0 rgba(9,7,5,.6), -.7px .7px 0 rgba(9,7,5,.6), .7px -.7px 0 rgba(9,7,5,.6),
-                 -.7px -.7px 0 rgba(9,7,5,.6), 0 0 13px rgba(255,196,80,.6), 0 2px 4px rgba(0,0,0,.5); }
+     color:#f6efdc; will-change:transform,opacity;
+     text-shadow:2px 0 0 rgba(18,13,8,.85), -2px 0 0 rgba(18,13,8,.85), 0 2px 0 rgba(18,13,8,.85), 0 -2px 0 rgba(18,13,8,.85),
+                 1.4px 1.4px 0 rgba(18,13,8,.85), -1.4px 1.4px 0 rgba(18,13,8,.85), 1.4px -1.4px 0 rgba(18,13,8,.85),
+                 -1.4px -1.4px 0 rgba(18,13,8,.85), 0 1px 2px rgba(0,0,0,.62); }
+/* 22 x 1.35 = 30px, the finding's ratio rather than the old flat 32 */
+.fl.crit{ font-size:30px; font-weight:600; color:#ffd25a;
+     text-shadow:2px 0 0 rgba(18,13,8,.85), -2px 0 0 rgba(18,13,8,.85), 0 2px 0 rgba(18,13,8,.85), 0 -2px 0 rgba(18,13,8,.85),
+                 1.4px 1.4px 0 rgba(18,13,8,.85), -1.4px 1.4px 0 rgba(18,13,8,.85), 1.4px -1.4px 0 rgba(18,13,8,.85),
+                 -1.4px -1.4px 0 rgba(18,13,8,.85), 0 0 13px rgba(255,196,80,.55), 0 1px 2px rgba(0,0,0,.62); }
+.fl.chill{ color:#9fd8ff; }
+.fl.burn{ color:#ff8a3c; }
 .fl.gold{ font-size:16px; }
 
 /* ── champion nameplates (SPEC5 §B4) ──────────────────────────────────
@@ -2593,7 +2727,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 .card.trap .cost{ margin-top:3px; padding:1px 7px 1px 3px; font-size:11px; }
 .card.trap .cost .ic{ width:12px; height:12px; }
 .card.trap .kb{ top:3px; left:3px; width:14px; height:14px; line-height:14px; font-size:9px; }
-.card.trap .tags{ display:block; position:absolute; top:3px; right:3px; margin:0; }
+/* FIX10-UI §1 — top:5px right:7px, not 3/3. The card carries a 6px border-radius, so a 12px
+   sigil inset 3px puts its own top-right corner ON the curve of the frame: measured on
+   _champion.png at 5x, POWDER KEG's crush glyph and TAR PIT's flame both read as clipped by the
+   card border. 5/7 clears the arc entirely and the plate closes round the glyph. */
+.card.trap .tags{ display:block; position:absolute; top:5px; right:7px; margin:0; overflow:visible; }
 .card.trap .tags .tag{ padding:0; background:none; border:0; }
 .card.trap .tags .tag+.tag{ display:none; }
 .card.trap .tags .tag .tw{ display:none; }
@@ -2851,7 +2989,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      reads as ornament at that size, so it cannot carry the unit on its own. Three characters of
      copy is cheaper than a meaningless pill. */
   #omenRow .omCoin em{ display:inline; font-size:8.5px; letter-spacing:.06em; }
-  #omenRow .omK{ display:none; }                /* no keyboard to press — the card IS the target */
+  /* no keyboard to press — the card IS the target. FIX10-UI §6: the LABEL goes with the cap, or
+     the phone spread ships the word "KEY" with nothing after it. */
+  #omenRow .omK, #omenRow .omKw{ display:none; }
   /* The phone card is one 54px row, so the TAKEN ribbon in the top-right corner lands on
      the coin pill (measured at 390px: ribbon y201..219 over pill y213..232, both against
      x294..326). The corner belongs to the ribbon — the pill steps down out of its band. */
@@ -3018,6 +3158,14 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      gold treatment below separates it from every outlined control on the bar. */
   .pHead .mus .lg{ display:none; }
   .pHead .mus .lgS{ display:inline; }
+  /* ...AND THE REFUSED CONTROL GIVES THE VERB'S SLOT TO THE REASON (FIX10-UI §5). Measured at a
+     true 390 with the muster at its cap: verb + count + "ALL STANDARDS FIELDED" makes the control
+     302px wide and pushes the panel's own ✕ to x=420 — 30px off the viewport. A control that is
+     refusing is not offering an action, so the verb is the part of it with nothing left to say;
+     the count and the reason are what the player needs in order to act. The note above is about
+     the LIVE control, which keeps its verb at every width and is untouched. */
+  #buildMenu .pHead .mus:disabled .lg, #buildMenu .pHead .mus:disabled .lgS{ display:none; }
+  #buildMenu .pHead .mus:disabled .why{ max-width:18em; font-size:9px; letter-spacing:.08em; }
   /* FIX7-UI §5b — THE STANDING ORDERS ARE A PHONE CONTROL TOO. FIRST / STRONG / CLOSE was in the
      DOM on the phone and simply never on screen: the sheet's 33vh cap (FIX6-UI §3) put the
      element block's third row below the fold behind the sticky action gradient, so the last thing
@@ -3255,7 +3403,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      room, and 8.5px was under the floor at which a condensed 600 face keeps its counters open. */
   .tag{ padding:0 3px 0 1px; font-size:10px; letter-spacing:.02em; border-radius:6px; }
   .tag .tw{ display:none; }                 /* the glyph is the word */
-  .card.warded .tag:first-child::after{ display:none; }   /* 58px has no room for the word */
+  /* FIX10-UI §1 — the phone override for the ward WORD is gone with the word; the chip row
+     carries exactly the element and the reach on a 58px cell too. What the phone DOES need is
+     the badge's inboard slot: at this width every card (tower and trap alike) puts its school
+     sigil in the top-right corner, so the shield stands beside it rather than under it. */
+  .card.warded::after, .card.trap.warded::after{ top:3px; right:20px; width:12px; height:12px; }
   .tag i{ width:12px; height:12px; }
   /* the school sigil takes the card's top-right corner — the same slot, the same size and the
      same unboxed treatment the collapsed rail gives it, so a card looks like itself in both
@@ -3464,8 +3616,15 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      read on, not for the world: 22px is 1.4% of a 1600px frame and 5.6% of a 390px one, so the
      desktop bump §3b made would have landed four times heavier here. 18/25 is the same relative
      weight at phone width, and still clear of the 8-offset outline's own floor. */
+  /* FIX10-UI §3c — the desktop keyline is 2px on a 22px face (9% of the em). At 18px that ring
+     would be 11% per side and would start closing the counters of a 4 or a 9, so the phone runs
+     the same eight offsets at 1.4px: identical weight relative to the glyph. */
+  .fl, .fl.crit{ text-shadow:1.4px 0 0 rgba(18,13,8,.85), -1.4px 0 0 rgba(18,13,8,.85),
+       0 1.4px 0 rgba(18,13,8,.85), 0 -1.4px 0 rgba(18,13,8,.85),
+       1px 1px 0 rgba(18,13,8,.85), -1px 1px 0 rgba(18,13,8,.85), 1px -1px 0 rgba(18,13,8,.85),
+       -1px -1px 0 rgba(18,13,8,.85), 0 1px 2px rgba(0,0,0,.62); }
   .fl{ font-size:18px; }
-  .fl.crit{ font-size:25px; }
+  .fl.crit{ font-size:24px; }
   .fl.gold{ font-size:15px; }
   #tutHint{ width:min(94vw,360px); font-size:11.5px; }
   #endStars i{ width:30px; height:30px; }
@@ -3590,16 +3749,27 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 
 /* a crest. Unwon: the device struck into the sheet, a faint recess, ink type.
    Won: a lit plate with a gold rim, gold leaf on the device, and the date under it. */
+/* ══ FIX10-UI §4 — AN UNWON ROW IS DARKER INK, NOT PALER INK ══════════════════════════════════
+   Measured on _true_deeds_m.png (390x844, true viewport): locked body copy 3.26:1, "NOT YET WON"
+   3.25:1, and the WARDEN OF THE REALM progress read-out 2.00:1 where the sheet's own bottom fade
+   crosses it — a numeral that is not readable at all. The WON rows measure 8.55:1 on the same
+   sheet, so the type system is sound; what was wrong is that "unwon" was being said by walking
+   the ink UP toward the parchment instead of by withholding the gold. The dark-iron council next
+   door already does it the other way round (its locked rows run ~10:1), and this is that pattern
+   brought over: the locked plate takes a DARKER parchment fill of its own instead of a lightening
+   wash, and every string on it goes to full-value ink — see .ddN / .ddD / .ddF below.
+   The won rows are untouched. They win by being LIT, which after this is the only thing on the
+   sheet that is, so the hierarchy is stronger rather than weaker. */
 .ddC{ position:relative; display:grid; grid-template-columns:24px 1fr; grid-auto-rows:min-content;
   gap:1px 7px; padding:5px 7px 6px; border-radius:5px; font-family:var(--serif); color:#33260f;
-  background:linear-gradient(178deg,rgba(255,250,232,.22),rgba(120,88,40,.10));
-  border:1px solid rgba(78,52,18,.34);
+  background:linear-gradient(178deg,#c6b189,#b8a37e);
+  border:1px solid rgba(78,52,18,.42);
   box-shadow:inset 0 1px 0 rgba(255,250,232,.34), 0 1px 3px rgba(60,40,12,.18); }
 .ddC.on{ background:linear-gradient(178deg,rgba(255,236,186,.66),rgba(214,168,74,.28));
   border-color:rgba(173,122,30,.85);
   box-shadow:inset 0 1px 0 rgba(255,252,238,.7), 0 0 0 1px rgba(232,182,76,.42), 0 3px 9px rgba(60,40,12,.30); }
 .ddC .ddI{ grid-row:1 / span 3; align-self:start; margin-top:2px; }
-.ddN{ font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:#5d4718; line-height:1.14;
+.ddN{ font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:#2a2110; line-height:1.14;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
   text-shadow:0 1px 0 rgba(255,250,232,.42); }
 .ddC.on .ddN{ color:#3d2c0d; }
@@ -3610,14 +3780,25 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    one class in the game whose sentence is MOSTLY a number ("Kill 500 with the storm school"),
    so it is the class that must not inherit a numeral treatment by accident. */
 .ddD{ font-size:12.5px; line-height:1.28; letter-spacing:.01em; font-variant-caps:small-caps;
-  font-variant-numeric:lining-nums; color:#7a6231;
+  /* FIX10-UI §4 — #3a2f1e, up from #7a6231 (3.26:1). Full-value ink on the darker locked plate:
+     5.4:1 measured, and it holds >=4.5:1 even under the darkest stop of the sheet's bottom fade,
+     which is what the 2.00:1 reading on "3 / 5" was really about. */
+  font-variant-numeric:lining-nums; color:#3a2f1e;
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .ddC.on .ddD{ color:#5e4818; }
 /* FIX7-UI §3 — the progress read-out is the SAME sentence's number said again, so it is set in
    the same face at the same weight and only a shade quieter. It used to read as a second
    typeface (letterspaced to .16em against the body's .01em, and a stop greyer), which put one
    quantity on one card at two sizes in two voices. */
-.ddF{ margin-top:3px; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:#7d6532;
+/* FIX10-UI §4 — and the PROGRESS NUMERAL is the one string on this sheet that has to be read
+   rather than skimmed ("3 / 5", "41 / 100", "0 / 500"): it is the only thing on a locked card
+   that changes between visits. #1e1608 at full alpha measures 7.3:1 on the plate and 6.6:1 under
+   the bottom fade, against 3.25 / 2.00 before. Same face, same size, same tracking as before —
+   only the value moved, so FIX7-UI §3's "one quantity in one voice" still holds. */
+.ddF{ margin-top:3px; font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:#1e1608;
+  /* the sheet's own ink-on-parchment halo (.ddN and .ddSH span carry the same one). It is what
+     takes the LAST row's numeral — the one the bottom fade crosses — from 5.6:1 to over 7. */
+  text-shadow:0 1px 0 rgba(255,250,232,.5);
   font-variant-numeric:tabular-nums lining-nums; }
 .ddC.on .ddF{ color:#3a2708; padding:1px 7px 2px; border-radius:3px; justify-self:start;
   font-size:11px; letter-spacing:.06em; white-space:nowrap;
@@ -3628,8 +3809,12 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    in nothing and the crest lost the one thing a progress bar is for: how far there is left to
    go. The track is a struck recess now — 5px, .36 fill, a full keyline — and NOT white: this
    plate is parchment, and white on parchment is the same invisibility one value up. */
+/* FIX10-UI §4 — the track is a SOLID struck recess (#6b5a3c), not a .36 wash. On the darker
+   locked plate a translucent track resolved to within a shade of the plate itself, so the
+   unfilled half went back to being invisible — the exact defect FIX7-UI §3 fixed against the
+   lighter plate. A solid tone is immune to whatever the plate under it does next. */
 .ddP{ grid-column:2; display:block; height:5px; border-radius:2.5px; margin-top:4px;
-  background:rgba(78,52,18,.36); box-shadow:inset 0 0 0 1px rgba(78,52,18,.46); overflow:hidden; }
+  background:#6b5a3c; box-shadow:inset 0 0 0 1px rgba(48,32,10,.55); overflow:hidden; }
 .ddP u{ display:block; height:100%; background:linear-gradient(90deg,#a3761a,#e8b64c); }
 #ddHint{ margin-top:7px; font-size:12.5px; letter-spacing:.13em; font-variant-caps:small-caps; color:#b6a488;
   text-shadow:0 1px 4px #000, 0 0 8px rgba(0,0,0,.8); }
