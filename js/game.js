@@ -8757,7 +8757,15 @@ await BOOT.stage('boot.host');
   // ARMIES-FIX7 §3 — a TENTH row, for the two tiles the ironclad needed and never had. Same
   // property the note above records: every UV is derived from AW/AH, so a taller sheet re-maps
   // rows 0-8 to identical texels and no existing unit changes by a pixel.
-  const AGX = 4, AGY = 10, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
+  // ══ v9b ARMIES §E — AN ELEVENTH AND TWELFTH ROW, FOR THE FAMILY PALETTES ════════════════
+  // GAME_SPEC_10 §E retires the all-crimson horde mandate: the roster is dyed BY FAMILY now, and
+  // a family's colour has to live in its CLOTH, not in a whole-body multiply. A multiply cannot
+  // separate a tabard from the skin under it (that is the arithmetic the Risen note records), so
+  // eight new cloth/metal tiles is the only channel this rig has for "russet levy, plum cutpurse,
+  // verdigris caster, teal risen". Rows 0-9 were 37/40 spent, so two rows buy the eight with three
+  // slots left. Every UV is derived from AW/AH — see the note above — so rows 0-9 re-map to
+  // identical texels and no unit that was not deliberately re-dyed changes by a pixel.
+  const AGX = 4, AGY = 12, S = tier === 'mobile' ? 96 : 192, AW = AGX * S, AH = AGY * S, u = S / 192;
   const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
   const [acv, ag] = mkc(AW, AH), [mcv, mg] = mkc(AW, AH), [ecv, eg] = mkc(AW, AH);
   const T = { MAIL: 0, STEEL: 1, RED: 2, BLUE: 3, LEATH: 4, FACE: 5, SHR: 6, SHB: 7, WOOD: 8, BLADE: 9,
@@ -8808,7 +8816,32 @@ await BOOT.stage('boot.host');
               //   RIME  — the Rimeborn troll's crust. Dark slate stone-hide under a bright rime
               //           shell, so it separates from Frostfell's white-blue ground AND from the
               //           frost revenant (who is the PALE cold body — this one is the dark one).
-              SAND: 37, BHIDE: 38, RIME: 39 };
+              SAND: 37, BHIDE: 38, RIME: 39,
+              // ══ v9b ARMIES §E — THE FAMILY DYE TABLE ═══════════════════════════════════════
+              // One row of the horde's new heraldry, and the two free slots row 8 always had.
+              // Each is a FAMILY's cloth, and each was chosen against three things at once: the
+              // ground it is seen on, the defenders' reserved royal blue + gold (§E: no enemy
+              // dominant inside H205-230 at S > 0.35, and no bright gold), and the other families
+              // it shares a wave with.
+              //   RUSS  — madder-russet. The levy's warm mass, and the colour the crimson river
+              //           used to be. Still the largest cloth area in the game by a wide margin,
+              //           so it is what "the horde" now means at a glance.
+              //   DUN   — undyed oatmeal wool. The levy's SECOND lot (§E "russet-leather & undyed
+              //           cloth"): a militia raised from towns that could not all afford madder.
+              //   BRASS — dark bronze. The ironclad's trim and the shaman's rings. Deliberately a
+              //           long way under UI gold (#e8b64c) in both value and chroma: brass is a
+              //           dirty yellow metal, gold is the player's.
+              //   PLUM  — dusk plum. The cutpurse, who used to be a crimson hood like everyone.
+              //   VERDI — verdigris. Both casters. Corroded copper is what a grave-robber's
+              //           vestments do, and it sits beside the green light they already cast.
+              //   TEAL  — cursed teal. The risen and the skeletons, keyed to the same drain the
+              //           RISEN_M lerp puts on a body that stands back up.
+              //   MOSS  — lichen. The rimeborn troll's caparison and the gravemold's cowl.
+              //   SLATE — cold desaturated slate CLOTH (not a metal): the frost kin's surcoat, the
+              //           wyvern's breast band and the ironclad's gunmetal surcoat. It is the one
+              //           new tile that had to be checked against the reserved band by arithmetic
+              //           rather than by eye — at S 0.16 it is out of it by chroma, not by hue.
+              RUSS: 35, DUN: 36, BRASS: 40, PLUM: 41, VERDI: 42, TEAL: 43, MOSS: 44, SLATE: 45 };
   eg.fillStyle = '#000'; eg.fillRect(0, 0, AW, AH);
   const tOX = t => (t % AGX) * S, tOY = t => ((t / AGX) | 0) * S;
   const tile = (t, rough, metal, fn) => {
@@ -9091,10 +9124,15 @@ await BOOT.stage('boot.host');
       bg.addColorStop(0, 'rgba(0,0,0,.30)'); bg.addColorStop(0.34, 'rgba(214,224,236,.16)');
       bg.addColorStop(0.62, 'rgba(0,0,0,.10)'); bg.addColorStop(1, 'rgba(0,0,0,.34)');
       g.fillStyle = bg; g.fillRect(0, 0, S, S); }
-    g.save();                                            // the chevron, painted crimson
-    g.strokeStyle = '#9a2620'; g.lineWidth = 26 * u; g.lineJoin = 'miter';
+    // v9b ARMIES §E §4 — the chevron is BRASS now, not crimson: §E gives this family
+    // "gunmetal+brass" and the board is the largest flat surface the ironclad presents, so it is
+    // where the brass has to be spent. It is still the only warm mark on a cold unit, which is
+    // the whole reason FIX7 §3 painted a chevron here in the first place, and it is two stops
+    // under UI gold so it can never be read as the player's mark.
+    g.save();                                            // the chevron, painted brass
+    g.strokeStyle = '#8a6a22'; g.lineWidth = 26 * u; g.lineJoin = 'miter';
     g.beginPath(); g.moveTo(S * 0.14, S * 0.30); g.lineTo(S * 0.50, S * 0.62); g.lineTo(S * 0.86, S * 0.30); g.stroke();
-    g.strokeStyle = 'rgba(52,10,10,.55)'; g.lineWidth = 5 * u;
+    g.strokeStyle = 'rgba(40,30,6,.55)'; g.lineWidth = 5 * u;
     g.beginPath(); g.moveTo(S * 0.14, S * 0.42); g.lineTo(S * 0.50, S * 0.74); g.lineTo(S * 0.86, S * 0.42); g.stroke();
     g.restore();
     for (const yy of [S * 0.10, S * 0.82]) {             // banded and riveted
@@ -9231,12 +9269,19 @@ await BOOT.stage('boot.host');
       // opposite of the job FIX4 §5 gave them, which was to give that mass a SECOND value, not a
       // hole. #7d1620 is V 0.49: still unmistakably the shade of #a42a22 (one stop under, which is
       // what the two-value read needs) and still off the magenta side FIX6 §5 corrected for.
-      g.fillStyle = '#7d1620'; g.fillRect(0, 0, S, S);
+      // v9b ARMIES §E §4 — PER-FAMILY SHIELD HERALDRY, through the existing shield-paint path.
+      // The round board and the buckler are carried by the grunt and the runner only, i.e. by the
+      // LEVY, so this tile is the levy's heraldry and it is dyed with the levy's cloth. The two
+      // FIX4 §5 / FIX9b §1 constraints that put #7d1620 here are both preserved and both are
+      // about relationships, not about the hue: the board stays exactly ONE stop under the
+      // tabard's value (so the mass reads in two values and the disc is not a hole punched in it),
+      // and the claw sigil stays the shared mark §E asks every family to carry.
+      g.fillStyle = '#5c3018'; g.fillRect(0, 0, S, S);
       const ug = g.createLinearGradient(0, S * 0.42, 0, S);           // deep shade underside
-      ug.addColorStop(0, 'rgba(74,12,16,0)'); ug.addColorStop(1, '#3c0a0d');
+      ug.addColorStop(0, 'rgba(52,26,10,0)'); ug.addColorStop(1, '#2a1408');
       g.fillStyle = ug; g.fillRect(0, S * 0.42, S, S * 0.58);
       for (let i = 0; i < 7; i++) { const x = i * S / 7; g.fillStyle = 'rgba(0,0,0,' + (0.04 + (i & 1) * 0.05) + ')'; g.fillRect(x, 0, S / 14, S); g.fillStyle = 'rgba(255,222,196,.05)'; g.fillRect(x + S / 14, 0, 2 * u, S); }
-      blot(g, 44, '#340609', '#963026', 0.05, 0.14, 6, 30);
+      blot(g, 44, '#241206', '#93613a', 0.05, 0.14, 6, 30);
       g.strokeStyle = 'rgba(28,10,8,.78)'; g.lineCap = 'round';
       for (let i = -1; i <= 1; i++) { g.lineWidth = (15 - Math.abs(i) * 3) * u; g.beginPath(); g.moveTo(S * (0.30 + i * 0.15), S * 0.16); g.quadraticCurveTo(S * (0.52 + i * 0.16), S * 0.52, S * (0.38 + i * 0.16), S * 0.86); g.stroke(); }
       const vg = g.createRadialGradient(S * 0.38, S * 0.32, S * 0.05, S * 0.5, S * 0.5, S * 0.55);
@@ -9280,9 +9325,12 @@ await BOOT.stage('boot.host');
 
   // ── SPEC2 §D tiles ──
   tile(T.PAV, 0.68, 0.10, g => {                       // pavise face: banded planks + boss
-    g.fillStyle = '#982230'; g.fillRect(0, 0, S, S);
+    // v9b ARMIES §E §4 — the shieldbearer is levy, so his board is painted in the levy's madder
+    // over the same banded planks. The horde's claw and the iron bands are untouched: §E's
+    // unifying signature is the SIGIL and the dark iron, and both live on this tile already.
+    g.fillStyle = '#7a4426'; g.fillRect(0, 0, S, S);
     { const ug = g.createLinearGradient(0, S * 0.40, 0, S);
-      ug.addColorStop(0, 'rgba(118,26,32,0)'); ug.addColorStop(1, '#66151c');
+      ug.addColorStop(0, 'rgba(74,40,20,0)'); ug.addColorStop(1, '#42230f');
       g.fillStyle = ug; g.fillRect(0, S * 0.40, S, S * 0.60); }
     for (let i = 0; i < 5; i++) {                      // vertical boards with dark seams
       const x = i * S / 5;
@@ -9290,7 +9338,7 @@ await BOOT.stage('boot.host');
       g.fillStyle = 'rgba(10,5,4,.55)'; g.fillRect(x, 0, 2.6 * u, S);
       g.fillStyle = 'rgba(255,214,186,.07)'; g.fillRect(x + 2.6 * u, 0, 1.8 * u, S);
     }
-    blot(g, 54, '#360810', '#ab4740', 0.06, 0.16, 6, 30);
+    blot(g, 54, '#2a1409', '#a5713f', 0.06, 0.16, 6, 30);
     for (const yy of [S * 0.14, S * 0.84]) {           // iron bands, riveted — warm, not steel
       g.fillStyle = '#42392f'; g.fillRect(0, yy, S, S * 0.070);
       g.fillStyle = 'rgba(240,224,196,.24)'; g.fillRect(0, yy, S, 2.4 * u);
@@ -9335,9 +9383,20 @@ await BOOT.stage('boot.host');
   // frost cue at all. Saturated toward the spec's #9fd8ff rim so the cold survives the sun.
   tile(T.FROST, 0.50, 0.40, g => {
     const gr = g.createLinearGradient(0, 0, 0, S);
-    gr.addColorStop(0, '#9fd8ff'); gr.addColorStop(0.44, '#5f93bd'); gr.addColorStop(1, '#2c4c68');
+    // ══ v9b ARMIES §E — THE ONE TILE THAT WAS WEARING THE DEFENDERS' COLOUR ════════════════
+    // §E makes royal blue RESERVED: no enemy dominant may sit in H205-230 at S > 0.35. Measured
+    // on the ramp this tile shipped with, every stop was inside it — #9fd8ff is H 205 / S 0.38,
+    // #5f93bd is H 208 / S 0.49 and #2c4c68 is H 207 / S 0.58, and the dark blot #1b3752 is
+    // H 210 / S 0.67. A frost revenant was, arithmetically, a body painted in the player's own
+    // hue, which is the one read a TD cannot afford.
+    // §E also says how to fix it rather than just what to avoid: "frost kin glacial pale+ice
+    // (DESATURATED — never defender blue)". So the chroma comes off and the hue rotates a few
+    // degrees to the CYAN side of the reserved band — glacier ice, which is what the unit is —
+    // and every stop now measures S <= 0.30. Value is untouched, so the pale-body-against-snow
+    // read the FIX2 §4 note and the RIMC rim were both built for is exactly as it was.
+    gr.addColorStop(0, '#cfe6ec'); gr.addColorStop(0.44, '#8fa8b2'); gr.addColorStop(1, '#4d626e');
     g.fillStyle = gr; g.fillRect(0, 0, S, S);
-    blot(g, 120, '#1b3752', '#d8f0ff', 0.07, 0.20, 3, 17);
+    blot(g, 120, '#2b3d46', '#e4f2f6', 0.07, 0.20, 3, 17);
     for (let i = 0; i < 46; i++) {                     // rime crystals along the plate edges
       const x = arng() * S, y = arng() * S, l = ar(6, 22) * u, a = ar(-1.2, -0.35);
       g.strokeStyle = 'rgba(232,246,255,' + ar(0.16, 0.44) + ')'; g.lineWidth = ar(1.2, 3.0) * u;
@@ -9403,7 +9462,20 @@ await BOOT.stage('boot.host');
   // findability is his whole contract. Oxblood plum: dark enough to hold a silhouette
   // against the pale road, off the horde's own crimson hue by ~330 degrees of the wheel so
   // he is never a grunt, and inside the same dead-magic family as the green glow he casts.
-  clothTile(T.ROBE, '#54233a', '#220d18', '#8a4460', 0.93);
+  // ══ v9b ARMIES §E — THE ROBE GOES OCHRE, AND THE PLUM MOVES TO THE CUTPURSE ══════════════
+  // §E files the shaman as "bone+ochre+feathers" and the cutpurse as "dusk plum", so the oxblood
+  // this tile has carried since FIX5 §3 belongs to the other unit. The reason FIX5 §3 gave for
+  // leaving ochre in the first place is still live and still the risk — "#6b5a2e is the exact
+  // value and hue family of the dry-grass tufts scattered over the whole map", i.e. the shaman
+  // rendered as a clump of scrub — so this is NOT that ochre. Two things separate it:
+  //   VALUE — #6a4a18 is 0.29 luma against the dry grass's 0.62. The old failure was a mid-value
+  //           tan sitting on a mid-value tan floor.
+  //   CHROMA — S 0.77 against the tufts' 0.47. Dry grass is a desaturated tan; this is a dyed
+  //           wool, and the two only collapse together if the dye is weak.
+  // His ATINT (1.10/1.10/1.02) still lifts the whole body, and his mask stays T.BONE, so the read
+  // is a BONE face and hands over a dark saturated ochre robe — the value sandwich the priority
+  // kill has always needed, now in the family §E assigns him.
+  clothTile(T.ROBE, '#6a4a18', '#2a1c06', '#9c7630', 0.93);
   // ══ SPEC5 §A materials ═══════════════════════════════════════════════════════
   // SCALE: the wyvern's hide. The only COOL-GREEN mass in the horde — the flock has to be
   // separable from the crimson river underneath it in one glance, and it is separable by
@@ -9455,11 +9527,27 @@ await BOOT.stage('boot.host');
   // onto the horde's own crimson at the same values. A dyed skin over dark veins, and still nothing
   // else in the game is this colour: the knights are cold #2e5fa3 and every other cloth in the
   // roster is the tabard's own red at cloth roughness, not a 0.90-rough translucent skin.
+  // ══ v9b ARMIES §E — THE MEMBRANE IS MAP-TINTED ═══════════════════════════════════════════
+  // §E: "wyvern slate+map-tinted membrane". The body is T.SCALE, which is already the cold
+  // slate-violet FIX4 §6 authored; the membrane is where the map gets to speak. The atlas is
+  // painted ONCE at boot and `MAP` is resolved long before ARMIES runs, so a per-map ramp costs
+  // one table lookup at build time and not one byte at run time — no second tile, no material
+  // variant, no branch in the hot loop. A backlit wing is the one surface on this animal that is
+  // read against sky rather than against ground, so tying it to the map's own air is what makes a
+  // flock belong to the valley it is over: amber vellum on the Vale, ice-grey over Frostfell,
+  // ember over the ash, verdigris on the moor, terracotta in the canyon.
+  // Everything the FIX5 §3 finding fixed is untouched — the RADIAL ramp out of the wrist corner,
+  // the corner-fanned veins, the cross-webbing and the tears — because those answered "opaque
+  // brown TIMBER with plank seams", which was never a hue problem.
+  const MEMBC = { 1: ['#96581c', '#5e340e', '#2a1605'], 2: ['#5e6a72', '#3b464e', '#1b2228'],
+                  3: ['#7a3418', '#4e2010', '#240d06'], 4: ['#3e5a48', '#26382c', '#101a14'],
+                  5: ['#8a5a30', '#54341a', '#26160a'] };
+  const MEMBR = MEMBC[(MAP && MAP.id) || 1] || MEMBC[1];
   tile(T.MEMB, 0.90, 0.0, g => {
     const gr = g.createRadialGradient(0, 0, S * 0.04, 0, 0, S * 1.30);
-    gr.addColorStop(0, '#6e1a20'); gr.addColorStop(0.46, '#4a1016'); gr.addColorStop(1, '#26070c');
+    gr.addColorStop(0, MEMBR[0]); gr.addColorStop(0.46, MEMBR[1]); gr.addColorStop(1, MEMBR[2]);
     g.fillStyle = gr; g.fillRect(0, 0, S, S);
-    blot(g, 110, '#1a0509', '#9a4a44', 0.07, 0.20, 6, 46);
+    blot(g, 110, '#140b06', '#9a7a4a', 0.07, 0.20, 6, 46);
     g.lineCap = 'round';
     // veins fan from ONE CORNER, not from a mid-edge point: a fan centred on the tile edge
     // came out as near-parallel stripes under the wing's planar UV and read as wood grain.
@@ -9716,6 +9804,54 @@ await BOOT.stage('boot.host');
       g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
     }
     shade(g, 'rgba(232,246,255,.18)', 'rgba(4,10,16,.46)');
+  });
+  // ══ v9b ARMIES §E — THE FAMILY PALETTES ══════════════════════════════════════════════════
+  // APPENDED LAST, for the reason the beast block above records: `arng` is one build-time stream
+  // consumed in painting order, so a tile inserted anywhere above would re-roll every blot, scar
+  // and crystal painted after it and change units this stage never touched. Eight tiles at the
+  // end cost the existing thirty-nine exactly nothing.
+  //
+  // Every base below is authored AGAINST THE PIPELINE, not as a swatch. The transfer function is
+  // the one FIX6 §5 measured for the crimson: a 5.7-intensity #ffcf8a key over a warm probe, then
+  // ACES, which lifts value by roughly a stop and rolls saturated hues toward orange. So each
+  // family's base is a stop under and a few degrees to the COOL side of the colour it is meant to
+  // render as. Judge these in shots\_bestiary.png, never in a swatch — the same instruction the
+  // crimson tile has carried since FIX4 §5.
+  // ROUND 2, measured on shots\closeup.png at 3x: the first cut rendered a mid TERRACOTTA at
+  // rgb(150,96,62) — a stop too light and ~10 degrees too far round toward orange, which is the
+  // exact failure FIX4 §5 recorded for the crimson (ACES rolls a saturated warm hue toward orange
+  // as it clips, and the #ffcf8a key puts +30 of green over blue into every lit pixel before that).
+  // Madder is a RED-brown, so the base is deepened a stop and the green channel comes down under
+  // the debt the key is about to add.
+  clothTile(T.RUSS,  '#63281a', '#260c05', '#7e3c26', 0.88, 0.05);
+  // ROUND 2, and this was the blocker: at #7a6c50 the undyed lot rendered rgb(196,176,138) —
+  // BRIGHTER than the dirt road it marches on and inside the road's own hue band, i.e. the levy's
+  // lower half was camouflage at gameplay zoom. It is the same trap T.DIRT fell into in FIX2 §2
+  // ("the BRIGHTEST value on the whole model ... every figure read as two pale sticks"), and the
+  // answer is the same one: undyed wool is a DIRTY oatmeal, not a bleached one. Down two stops and
+  // pulled off yellow toward grey, with the sheen cut so the vignette stops floating it back up.
+  clothTile(T.DUN,   '#4c4534', '#201c12', '#6b6250', 0.90, 0.04);
+  clothTile(T.PLUM,  '#4a2a44', '#1e0f1c', '#6e4466', 0.90, 0.06);
+  clothTile(T.VERDI, '#2e5248', '#12241f', '#4c7a68', 0.89, 0.07);
+  clothTile(T.TEAL,  '#1f4a4a', '#0a1e1e', '#3d7a76', 0.90, 0.06);
+  clothTile(T.MOSS,  '#46512e', '#1c2211', '#6b7846', 0.91, 0.07);
+  clothTile(T.SLATE, '#454b52', '#1e2126', '#6b727a', 0.88, 0.08);
+  // BRASS is the one family tile that is not cloth. It is held INSIDE r10's material law
+  // (metalness <= 0.46, roughness >= 0.45) so a roster-wide metal tint cannot reopen the chrome
+  // finding, and its lit end stops well under UI gold: #b08a3c against #e8b64c is a stop and a
+  // half of value and a third of the chroma, which is what keeps §E's gold reservation honest on
+  // the one enemy surface that is a yellow metal at all.
+  tile(T.BRASS, 0.56, 0.42, g => {
+    const gr = g.createLinearGradient(0, 0, 0, S);
+    gr.addColorStop(0, '#b08a3c'); gr.addColorStop(0.40, '#7a5c22'); gr.addColorStop(1, '#402d0e');
+    g.fillStyle = gr; g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 46; i++) {                       // hammer planish, same vocabulary as CIRON
+      const y = arng() * S;
+      g.strokeStyle = rgba(arng() < 0.5 ? 208 : 40, arng() < 0.5 ? 172 : 30, arng() < 0.5 ? 96 : 10, ar(0.05, 0.15));
+      g.lineWidth = ar(1, 3.0) * u; g.beginPath(); g.moveTo(0, y); g.lineTo(S, y + ar(-5, 5) * u); g.stroke();
+    }
+    blot(g, 40, '#2a1d08', '#c9a457', 0.05, 0.14, 4, 18);
+    shade(g, 'rgba(255,236,190,.14)', 'rgba(0,0,0,.42)');
   });
 
   const albedo = new THREE.CanvasTexture(acv); albedo.colorSpace = THREE.SRGBColorSpace; albedo.anisotropy = 8;
@@ -10141,11 +10277,11 @@ await BOOT.stage('boot.host');
       dome(K(0.150), 1.04, HT, yCrn - K(0.078), HTI);
       ridge(K(0.150), yCrn + K(0.046), T.IRON);
       aventail(K(0.155), K(0.196), yCrn - K(0.145), K(0.235), T.MAIL);
-      A(uvAll(new THREE.CylinderGeometry(K(0.152), K(0.160), K(0.050), C.seg + 2 || 10), T.RED), trs(0, yCrn - K(0.128), 0), 7, hp, null, null, 1.06);
+      A(uvAll(new THREE.CylinderGeometry(K(0.152), K(0.160), K(0.050), C.seg + 2 || 10), T.RUSS), trs(0, yCrn - K(0.128), 0), 7, hp, null, null, 1.06);
       A(boxA(K(0.032), K(0.130), K(0.036), [T.IRON]), trs(0, yCrn - K(0.208), K(0.114)), 7, hp, null, null, 1.0);
       for (const s of [-1, 1])                            // red cheek scales flanking the face
-        A(boxA(K(0.030), K(0.140), K(0.090), [T.RED]), trs(s * K(0.134), yCrn - K(0.212), K(0.070)), 7, hp, null, null, 1.02);
-      A(boxA(K(0.030), K(0.086), K(0.030), [T.RED]), trs(0, yCrn + K(0.104), 0), 7, hp, null, null, 1.08);
+        A(boxA(K(0.030), K(0.140), K(0.090), [T.RUSS]), trs(s * K(0.134), yCrn - K(0.212), K(0.070)), 7, hp, null, null, 1.02);
+      A(boxA(K(0.030), K(0.086), K(0.030), [T.RUSS]), trs(0, yCrn + K(0.104), 0), 7, hp, null, null, 1.08);
     } else if (C.helm === 'kettleR') {
       // ARMIES-FIX3 §2.1 — THE RANK-AND-FILE HEAD. It was a smooth olive-brown ovoid with a
       // red collar: no brim, no visor, no value break from the tabard, and at the closest
@@ -10206,22 +10342,22 @@ await BOOT.stage('boot.host');
       for (const s of [-1, 1])
         A(uvAll(new THREE.SphereGeometry(K(0.018), 5, 4), HT), trs(s * K(0.104), yCrn - K(0.046), K(0.082)), 7, hp, null, null, 1.14);
       // and the paint stays on the head: a crimson band under the brim + the red cheek scales
-      A(uvAll(new THREE.CylinderGeometry(K(0.160), K(0.168), K(0.042), (C.seg || SEG) + 2), T.RED), trs(0, yCrn - K(0.226), 0), 7, hp, null, null, 1.06);
+      A(uvAll(new THREE.CylinderGeometry(K(0.160), K(0.168), K(0.042), (C.seg || SEG) + 2), T.RUSS), trs(0, yCrn - K(0.226), 0), 7, hp, null, null, 1.06);
       for (const s of [-1, 1])
-        A(boxA(K(0.028), K(0.120), K(0.084), [T.RED]), trs(s * K(0.130), yCrn - K(0.268), K(0.066)), 7, hp, null, null, 1.02);
-      A(boxA(K(0.028), K(0.078), K(0.028), [T.RED]), trs(0, yCrn + K(0.140), 0), 7, hp, null, null, 1.08);
+        A(boxA(K(0.028), K(0.120), K(0.084), [T.RUSS]), trs(s * K(0.130), yCrn - K(0.268), K(0.066)), 7, hp, null, null, 1.02);
+      A(boxA(K(0.028), K(0.078), K(0.028), [T.RUSS]), trs(0, yCrn + K(0.140), 0), 7, hp, null, null, 1.08);
       // ARMIES-FIX9 §6 — the head's share of the kit spread. Two crests keyed to the same slot the
       // shield is: a TRANSVERSE crimson comb on kit 2 (the one surface a 55-degree lens sees on a
       // helmet, so it is the head variation that actually reads from the game's own camera) and a
       // low fore-and-aft ridge on kit 3. Kit 1 keeps the bare bowl that shipped.
       if (C.kitVar) {
-        A(tbox(K(0.300), K(0.070), K(0.052), [T.RED], 1.0, 0.62), trs(0, yCrn + K(0.086), 0), 7, hp, null, null, 1.10, 2);
-        A(boxA(K(0.046), K(0.086), K(0.290), [T.CRIM]), trs(0, yCrn + K(0.092), -K(0.010)), 7, hp, null, null, 1.04, 3);
+        A(tbox(K(0.300), K(0.070), K(0.052), [T.RUSS], 1.0, 0.62), trs(0, yCrn + K(0.086), 0), 7, hp, null, null, 1.10, 2);
+        A(boxA(K(0.046), K(0.086), K(0.290), [T.DUN]), trs(0, yCrn + K(0.092), -K(0.010)), 7, hp, null, null, 1.04, 3);
       }
     } else if (C.helm === 'wrap') {                          // skirmisher hood + headband
-      dome(K(0.147), 0.98, T.CRIM, yCrn - K(0.086), 1.05);
-      A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.154), K(0.046), C.seg + 2 || 10), T.RED), trs(0, yCrn - K(0.140), 0), 7, hp, null, null, 1.08);
-      A(plateGeo([[-K(0.032), 0], [K(0.032), 0], [K(0.060), -K(0.26)], [-K(0.022), -K(0.31)]], K(0.014), T.RED, T.CRIM),
+      dome(K(0.147), 0.98, T.DUN, yCrn - K(0.086), 1.05);
+      A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.154), K(0.046), C.seg + 2 || 10), T.RUSS), trs(0, yCrn - K(0.140), 0), 7, hp, null, null, 1.08);
+      A(plateGeo([[-K(0.032), 0], [K(0.032), 0], [K(0.060), -K(0.26)], [-K(0.022), -K(0.31)]], K(0.014), T.RUSS, T.DUN),
         trs(-K(0.10), yCrn - K(0.16), -K(0.06), 0.5), 8, null, null, (x, y) => clamp((yCrn - K(0.16) - y) / K(0.31), 0, 1), 1.0);
     } else if (C.helm === 'horned') {
       dome(K(0.160), 1.06, T.IRON, yCrn - K(0.086), 1.05);
@@ -11358,10 +11494,10 @@ await BOOT.stage('boot.host');
     // the haunch, the spine ridge and the spiked collar — every one of ARMIES-FIX5 §3's four
     // reads plus the collar — are untouched, so what identifies the animal is exactly what it
     // was and only its colour has joined the rest of the army.
-    A(boxA(K(0.300), K(0.040), K(0.560), [T.RED]), trs(0, K(0.752), -K(0.030)), 0, null, null, null, 1.04);
+    A(boxA(K(0.300), K(0.040), K(0.560), [T.RUSS]), trs(0, K(0.752), -K(0.030)), 0, null, null, null, 1.04);
     for (const s of [-1, 1])
       A(plateGeo([[-K(0.250), 0], [K(0.250), 0], [K(0.250), -K(0.230)], [K(0.060), -K(0.290)],
-                  [-K(0.220), -K(0.250)]], K(0.020), T.RED, T.CRIM),
+                  [-K(0.220), -K(0.250)]], K(0.020), T.RUSS, T.DUN),
         trs(s * K(0.150), K(0.744), -K(0.030), s * 1.5708), 0, null, null, null, 0.92);
     // and the hem strap that says the blanket is buckled on rather than draped
     A(boxA(K(0.320), K(0.036), K(0.056), [T.LEATH]), trs(0, K(0.700), K(0.170)), 0, null, null, null, 0.86);
@@ -11568,7 +11704,11 @@ await BOOT.stage('boot.host');
       // that has no feature, so the barrel reads as rib cage THEN strap THEN haunch instead of as
       // one length of pipe — and it is more of this body's faction colour, on the surface a
       // 55-degree lens actually sees.
-      A(uvAll(new THREE.CylinderGeometry(K(0.305) * B, K(0.300) * B, K(0.115), SG + 2, 1, true), T.CRIM),
+      // v9b ARMIES §E — "charger tawny hide". The girth, the caparison and the frontlet are the
+      // levy's own russet leather-and-cloth (a war beast wears the barding of the men who lead it),
+      // and the hide itself goes tawny in ATINT. Every geometry decision FIX9b §3 argued for — the
+      // wrap instead of the table, the 0.44-rad frontlet, the poll plate — is untouched.
+      A(uvAll(new THREE.CylinderGeometry(K(0.305) * B, K(0.300) * B, K(0.115), SG + 2, 1, true), T.DUN),
         trs(0, (ySh + yHp) * 0.5 - K(0.06), -K(0.06) * B, 0, 1, 1, 1, 1.5708), 0, null, null, null, 1.02);
       // ══ THE CAPARISON (ARMIES-FIX8 §3/§4) ══════════════════════════════════════════════════
       // A short crimson caparison over the raised haunch and down both flanks. It does two jobs at
@@ -11584,12 +11724,12 @@ await BOOT.stage('boot.host');
       // that is 0.325 B there — which cannot float, because every part of it is the same distance
       // off the hide. The hanging flank skirts stay (they are what makes the rump read as rump from
       // the side) but they hang from the wrap's own lower edge instead of from the vanished slab.
-      A(uvAll(new THREE.CylinderGeometry(K(0.345) * B, K(0.322) * B, K(0.54), SG + 2, 1, true), T.RED),
-        trs(0, yHp + K(0.02), -K(0.40) * B, 0, 1, 1, 1, 1.5708), 0, null, null, null, 1.06);
+      A(uvAll(new THREE.CylinderGeometry(K(0.345) * B, K(0.322) * B, K(0.54), SG + 2, 1, true), T.RUSS),
+        trs(0, yHp + K(0.02), -K(0.40) * B, 0, 1, 1, 1, 1.5708), 0, null, null, null, 0.80);
       for (const cs of [-1, 1])
         A(plateGeo([[-K(0.240), 0], [K(0.240), 0], [K(0.230), -K(0.220)], [K(0.030), -K(0.300)],
-                    [-K(0.215), -K(0.250)]], K(0.022), T.RED, T.CRIM),
-          trs(cs * K(0.318) * B, yHp + K(0.10), -K(0.40) * B, cs * 1.5708), 0, null, null, null, 0.94);
+                    [-K(0.215), -K(0.250)]], K(0.022), T.RUSS, T.DUN),
+          trs(cs * K(0.318) * B, yHp + K(0.10), -K(0.40) * B, cs * 1.5708), 0, null, null, null, 0.84);
       //   NECK      it TAPERS now: 0.28 B where it leaves the withers down to 0.17 B at the poll,
       //             against a skull 0.26 B across. A neck as thick as the head it carries is what
       //             welded the two into one tube; a neck thinner than both reads as a join.
@@ -11644,15 +11784,15 @@ await BOOT.stage('boot.host');
       // the one crimson surface on the front of this animal is ever going to be seen.
       A(plateGeo([[-K(0.300), K(0.250)], [K(0.300), K(0.250)], [K(0.330), -K(0.070)],
                   [K(0.150), -K(0.480)], [-K(0.150), -K(0.480)], [-K(0.330), -K(0.070)]],
-                 K(0.030), T.RED, T.CRIM),
-        trs(0, HD[1] + K(0.15) * B, HD[2] + K(0.16) * B, 0, 1, 1, 1, 0.44), 7, HD, null, null, 1.16);
+                 K(0.030), T.RUSS, T.DUN),
+        trs(0, HD[1] + K(0.15) * B, HD[2] + K(0.16) * B, 0, 1, 1, 1, 0.44), 7, HD, null, null, 1.00);
       // a raised crimson boss up the centre of the mask, so the plate has an outline of its own and
       // does not read as a flat decal when the sun is behind the animal
-      A(tbox(K(0.090), K(0.560), K(0.055), [T.CRIM], 1.0, 0.62),
+      A(tbox(K(0.090), K(0.560), K(0.055), [T.DUN], 1.0, 0.62),
         trs(0, HD[1] + K(0.13) * B, HD[2] + K(0.20) * B, 0, 1, 1, 1, 0.24), 7, HD, null, null, 1.02);
       // the cheek straps that hold it on
       for (const cs of [-1, 1])
-        A(boxA(K(0.036), K(0.030), K(0.26) * B, [T.CRIM]),
+        A(boxA(K(0.036), K(0.030), K(0.26) * B, [T.LEATH]),
           trs(cs * K(0.170) * B, HD[1] + K(0.010) * B, HD[2] + K(0.14) * B), 7, HD, null, null, 0.86);
       // ...and the POLL PLATE, over the top of the skull between the horn roots. The mask above is a
       // front read and this game's lens is never in front of anything: at 45-55 degrees of pitch the
@@ -11660,7 +11800,7 @@ await BOOT.stage('boot.host');
       // crown. This is the same crimson on that surface, so the animal has faction colour from the
       // one bearing it is actually played at.
       A(plateGeo([[-K(0.185), K(0.130)], [K(0.185), K(0.130)], [K(0.150), -K(0.230)],
-                  [-K(0.150), -K(0.230)]], K(0.024), T.RED, T.CRIM),
+                  [-K(0.150), -K(0.230)]], K(0.024), T.RUSS, T.DUN),
         trs(0, HD[1] + K(0.135) * B, HD[2] - K(0.010) * B, 0, 1, 1, 1, 1.52), 7, HD, null, null, 1.10);
       A(tbox(K(0.30) * B, K(0.13) * B, K(0.24) * B, [C.coat], 1.0, 0.72),
         trs(0, HD[1] + K(0.11) * B, HD[2] + K(0.02) * B, 0, 1, 1, 1, -0.16), 7, HD, null, null, 1.14);  // brow ridge
@@ -11843,10 +11983,13 @@ await BOOT.stage('boot.host');
       // the whole silhouette and the only dorsal outline in the game), so it fills the valley
       // between them instead — the one place on this animal that faces the sky, which is also the
       // only face the game's lens ever sees of a thing this low.
+      // v9b ARMIES §E — "stalker dune sand". The war-rag between the keels takes the undyed lot:
+      // sun-bleached cloth on a burrower, which is the one dressing that does not fight the dark
+      // carapace the whole silhouette depends on.
       A(plateGeo([[-K(0.230) * B, K(0.020)], [K(0.230) * B, K(0.020)], [K(0.280) * B, -K(0.290)],
-                  [0, -K(0.360)], [-K(0.280) * B, -K(0.290)]], K(0.018), T.RED, T.CRIM),
+                  [0, -K(0.360)], [-K(0.280) * B, -K(0.290)]], K(0.018), T.DUN, T.RUSS),
         trs(0, ySh + K(0.16), K(0.10) * B, 0, 1, 1, 1, 1.28), 0, null, null, null, 1.08);
-      A(boxA(K(0.44) * B, K(0.030), K(0.070), [T.CRIM]),
+      A(boxA(K(0.44) * B, K(0.030), K(0.070), [T.RUSS]),
         trs(0, ySh - K(0.02), K(0.30) * B), 0, null, null, null, 0.88);
       // long whip tail on the cloth bone: half again the body's own length, so the thing reads
       // as something that came out of the ground rather than something that walks on it
@@ -11902,25 +12045,29 @@ await BOOT.stage('boot.host');
         // this thing in strips and a third of those strips are the army's cloth, dyed and rotting.
         // The shroud itself stays the darkest value on the road, which is what keeps the two ember
         // coals in the hood as the only thing the eye lands on — the read is unchanged.
-        const rt = (j % 3) === 1 ? T.CRIM : T.SHROUD;
+        // v9b ARMIES §E — "ashwraith charcoal+ember". Every third strip is T.EMBER, whose cracks
+        // are painted into the emissive sheet as well, so the rags this thing sheds actually glow
+        // at the tips. Same count, same weights, same drift: only the dye lot moved, and it moved
+        // onto the material the species is named for.
+        const rt = (j % 3) === 1 ? T.EMBER : T.SHROUD;
         A(plateGeo([[-K(0.062), 0], [K(0.062), 0], [K(0.030), -L], [-K(0.040), -L * 1.30]], K(0.011), rt, rt),
           trs(Math.cos(a) * rr, yTop - hgt, Math.sin(a) * rr, -a, 1, 1, 1, 0.06), 8, null, null, () => 1.5,
-          rt === T.CRIM ? 1.06 : 0.44);
+          rt === T.EMBER ? 1.10 : 0.44);
       }
     }
     // ARMIES-FIX8 §3 — and a crimson mantle over the hard shoulder. It is the one horizontal edge
     // on the model (see above) and therefore the one place a colour can be read at 24 px.
-    A(uvAll(new THREE.CylinderGeometry(K(0.392), K(0.330), K(0.150), SG + 4, 1, true), T.RED),
-      trs(0, ySh - K(0.02), -K(0.02), 0, 1.10, 1, 0.94), 0, null, null, null, 1.04);
+    A(uvAll(new THREE.CylinderGeometry(K(0.392), K(0.330), K(0.150), SG + 4, 1, true), T.EMBER),
+      trs(0, ySh - K(0.02), -K(0.02), 0, 1.10, 1, 0.94), 0, null, null, null, 1.06);
     // ragged hem: twelve long tapered strips whose weight rises to the tip, so the bottom
     // of the wraith is always drifting even when the sim has it standing still
     for (let i = 0; i < 12; i++) {
       const a = i / 12 * TAU, rr2 = K(0.305), L = K(0.34 + (i % 4) * 0.16);
       const x = Math.cos(a) * rr2, z = Math.sin(a) * rr2;
-      const ht = (i % 3) === 1 ? T.CRIM : T.SHROUD;              // ARMIES-FIX8 §3
+      const ht = (i % 3) === 1 ? T.EMBER : T.SHROUD;             // ARMIES-FIX8 §3, v9b §E dye
       A(plateGeo([[-K(0.070), 0], [K(0.070), 0], [K(0.040), -L], [-K(0.026), -L * 1.22]], K(0.012), ht, ht),
         trs(x, yHem + K(0.05), z, -a, 1, 1, 1, 0.05), 8, null, null, (xx, yy) => clamp((yHem + K(0.05) - yy) / L, 0, 1) * 1.8,
-        ht === T.CRIM ? 1.08 : 0.58);
+        ht === T.EMBER ? 1.12 : 0.58);
     }
     // hood + face void + two ember coals (bone 7 so the head turns). The hood is a CONE,
     // not a dome: a rounded skull on a shroud reads as a monk, a peak reads as a wraith.
@@ -12052,8 +12199,21 @@ await BOOT.stage('boot.host');
     // And it is no longer a bare quad: five plank battens per panel in the same timber the frame is
     // built from, plus the ridge beam above (which was always here), so the roof has a direction and
     // a set of highlights instead of one flat field.
-    for (const s of [-1, 1]) {                               // two canvas panels pitched off the ridge
-      A(boxA(K(1.02), K(0.055), K(2.16), [T.CRIM]), trs(s * K(0.44), yTop - K(0.20), 0, 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 1.04);
+    // ══ v9b ARMIES §E — "ram raw timber+iron (fixes 'loudest roof' too)" ═══════════════════
+    // FIX9 §7 measured the panels at #cb5547 / S 0.65 and answered by taking the LIGHT red down
+    // to T.CRIM, which halved the problem and kept its cause: a siege engine was still the most
+    // saturated object in the frame, and a machine out-shouting the army is the wrong value
+    // hierarchy however dark you make it. §E cuts the cause instead. Unpainted hide over a timber
+    // frame is what a battering ram is, so the panel takes the frame's OWN tile at 0.96 — one
+    // material, one hue, direction carried by the battens and the ridge beam that were already
+    // here, and zero saturated pixels on the wagon at all.
+    for (const s of [-1, 1]) {                               // two hide panels pitched off the ridge
+      // ROUND 3, measured: at 0.96 the hide panels became the brightest plane in the corner of
+      // `_bestiary` they sit in — the FIX9 §7 finding with the saturation removed but the value
+      // hierarchy still inverted. 0.72 is a weathered hide over a lit timber frame: the FRAME and
+      // the battens are now the light half and the roof is the dark one, which is the order a
+      // covered machine actually has and the order that stops it out-reading the army.
+      A(boxA(K(1.02), K(0.055), K(2.16), [T.WOOD]), trs(s * K(0.44), yTop - K(0.20), 0, 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 0.72);
       A(boxA(K(1.02), K(0.035), K(0.10), [T.WOOD]), trs(s * K(0.44), yTop - K(0.16), K(1.06), 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 0.94);
       A(boxA(K(1.02), K(0.035), K(0.10), [T.WOOD]), trs(s * K(0.44), yTop - K(0.16), -K(1.06), 0, 1, 1, 1, 0, -s * 0.46), 0, null, null, null, 0.94);
       for (let i = -2; i <= 2; i++)                          // plank battens across the panel
@@ -12092,7 +12252,7 @@ await BOOT.stage('boot.host');
     // still close enough to the sill to read as pushing it.
     for (const s of [-1, 1]) for (const zf of [0, 1]) {
       const cx = s * (HW + K(0.69)), cz = -K(0.72) - zf * K(0.62);
-      A(tbox(K(0.30), K(0.62) * CY, K(0.23), [T.CRIM], 1.0, 0.86), trs(cx, K(0.94) * CY, cz, 0, 1, 1, 1, 0.34), 0, null, null, null, 0.94);
+      A(tbox(K(0.30), K(0.62) * CY, K(0.23), [T.DUN], 1.0, 0.86), trs(cx, K(0.94) * CY, cz, 0, 1, 1, 1, 0.34), 0, null, null, null, 0.94);
       A(uvAll(new THREE.SphereGeometry(K(0.14), 7, 5), T.IRON), trs(cx, K(1.30) * CY, cz + K(0.09)), 0, null, null, null, 1.02);
       A(boxA(K(0.26), K(0.26), K(0.09), [T.FACE]), trs(cx, K(1.26) * CY, cz + K(0.18)), 0, null, null, null, 0.92);
       // legs ride bones 1/2 and arms 5/6 — the same channels the wheels and the log use, so
@@ -12186,11 +12346,15 @@ await BOOT.stage('boot.host');
     // so its faction colour is a crimson breast-band and a crimson panel between the wing roots,
     // not a tabard. The membrane, the thrown-forward neck and the thrown shadow are the reads and
     // none of them moves.
-    A(boxA(K(0.230), K(0.030), K(0.330), [T.RED]), trs(0, K(0.790), K(0.020)), 0, null, null, null, 1.06);
-    A(boxA(K(0.220), K(0.034), K(0.300), [T.RED]), trs(0, K(0.462), K(0.020)), 0, null, null, null, 1.02);
+    // v9b ARMIES §E — "wyvern slate+map-tinted membrane". The band and the wing-root panels are
+    // the same cold slate cloth the frost kin wear, so the animal is slate from nose to tail and
+    // the ONLY colour on it is the span — which is the surface the map now tints, and the surface
+    // that owns ~70% of its projected area from every bearing this game's camera has.
+    A(boxA(K(0.230), K(0.030), K(0.330), [T.SLATE]), trs(0, K(0.790), K(0.020)), 0, null, null, null, 1.06);
+    A(boxA(K(0.220), K(0.034), K(0.300), [T.SLATE]), trs(0, K(0.462), K(0.020)), 0, null, null, null, 1.02);
     for (const bs of [-1, 1])
       A(plateGeo([[-K(0.130), 0], [K(0.130), 0], [K(0.105), -K(0.190)], [-K(0.105), -K(0.190)]],
-                 K(0.014), T.CRIM, T.CRIM),
+                 K(0.014), T.SLATE, T.SLATE),
         trs(bs * K(0.145), K(0.700), K(0.020), bs * 1.5708), 0, null, null, null, 0.96);
     // ── neck + head (bone 7): thrown FORWARD, which is half of what says "flying" from
     // above — every ground unit's head sits directly over its feet.
@@ -12297,8 +12461,12 @@ await BOOT.stage('boot.host');
     // touching the lopsided lumpy outline UNITS §1 built the identity out of.
     for (const [rx, ry, rz, rw, rr] of [[-0.16, 0.86, 0.16, 0.330, 0.60], [0.34, 0.58, 0.10, 0.300, -1.05],
                                         [0.02, 0.38, 0.30, 0.265, 0.20], [-0.30, 0.52, -0.18, 0.245, 2.10]])
+      // v9b ARMIES §E — these four ARE the shared war-banner, so they take the banner tile
+      // itself: sigil, gold-thread border, rot and all. FIX8 §3 wrote them as "three shreds of
+      // crimson standard half-swallowed by the flesh"; now they read as literally that, and they
+      // are one of the two places §E's unifying signature is actually spent on a body.
       A(plateGeo([[-K(rw), K(0.030)], [K(rw), 0], [K(rw * 0.82), -K(rw * 1.5)], [0, -K(rw * 1.9)],
-                  [-K(rw * 0.90), -K(rw * 1.4)]], K(0.016), T.RED, T.CRIM),
+                  [-K(rw * 0.90), -K(rw * 1.4)]], K(0.016), T.BANN, T.BANN),
         trs(K(rx), K(ry), K(rz), rr, 1, 1, 1, 0.42), 0, null, null, null, 1.06);
     A(uvAll(new THREE.CylinderGeometry(K(0.026), K(0.030), K(0.72), 5), T.WOOD),
       trs(-K(0.190), K(0.860), K(0.140), 0, 1, 1, 1, 0.30, 0.16), 0, null, null, null, 0.84);
@@ -12379,12 +12547,19 @@ await BOOT.stage('boot.host');
     {
       // the cowl: a shell from the crown down over the brow, open at the face, plus a torn hem in
       // the darker lot so the cloth has an edge against the flesh under it.
-      A(uvAll(new THREE.CylinderGeometry(K(0.080), K(0.240), K(0.300), SG + 3, 1, true), T.RED),
+      // ROUND 4 — russet was tried here (round 3, on a camouflage argument: warm cloth on a cold
+      // green body over a green floor) and re-shot worse. It made the splitter the twelfth brown
+      // body in a roster whose whole problem §E is fixing was that everything was one colour, and
+      // the camouflage it was defending against does not happen: the mold's tile is DARK (FIX6 §6
+      // took it to value 0.29 precisely so it separates from grass by VALUE) and this unit is read
+      // on a road, not on a lawn. Lichen it is — and the torn hem stays in the undyed lot, which
+      // gives the cowl the value edge against the flesh that the two-tile version was for.
+      A(uvAll(new THREE.CylinderGeometry(K(0.080), K(0.240), K(0.300), SG + 3, 1, true), T.MOSS),
         trs(0, K(0.700), K(0.150), 0, 1.14, 1, 1.02), 7, HD, null, null, 1.16);
-      A(uvAll(new THREE.SphereGeometry(K(0.104), SG, 5), T.CRIM), trs(0, K(0.856), K(0.140)), 7, HD, null, null, 1.02);
+      A(uvAll(new THREE.SphereGeometry(K(0.104), SG, 5), T.MOSS), trs(0, K(0.856), K(0.140)), 7, HD, null, null, 1.02);
       for (let i = 0; i < 7; i++) {                     // torn hem, hanging further at the flanks
         const a = -1.05 + i * 0.35, hl = 0.088 + (i === 0 || i === 6 ? 0.058 : 0.018);
-        A(plateGeo([[-K(0.054), 0], [K(0.054), 0], [K(0.042), -K(hl)], [0, -K(hl * 1.45)], [-K(0.048), -K(hl * 0.90)]], K(0.012), T.CRIM, T.CRIM),
+        A(plateGeo([[-K(0.054), 0], [K(0.054), 0], [K(0.042), -K(hl)], [0, -K(hl * 1.45)], [-K(0.048), -K(hl * 0.90)]], K(0.012), T.DUN, T.DUN),
           trs(Math.sin(a) * K(0.232), K(0.556), K(0.150) + Math.cos(a) * K(0.232), a, 1, 1, 1, 0.20), 7, HD, null, null, 1.00);
       }
       // the eye slit: a near-black bar sunk into the brow under the hood, with two pale cores in it
@@ -12394,9 +12569,9 @@ await BOOT.stage('boot.host');
         A(boxA(K(0.050), K(0.020), K(0.014), [T.RUNE]), trs(K(ex), K(0.634), K(0.332), 0, 1, 1, 1, -0.12), 7, HD, null, null, 1.26);
       // the mantle: a crimson cape thrown over the shoulder hump, so the crimson is a MASS and not
       // a trim. Rides the cloth bone with the crown, so it sways with the shamble.
-      A(uvAll(new THREE.CylinderGeometry(K(0.330), K(0.560), K(0.420), SG + 4, 1, true), T.RED),
+      A(uvAll(new THREE.CylinderGeometry(K(0.330), K(0.560), K(0.420), SG + 4, 1, true), T.MOSS),
         trs(-K(0.030), K(0.730), -K(0.040), 0, 1.20, 1, 1.08, 0.16), 8, null, null, () => 0.42, 1.12);
-      A(uvAll(new THREE.CylinderGeometry(K(0.568), K(0.578), K(0.062), SG + 4, 1, true), T.CRIM),
+      A(uvAll(new THREE.CylinderGeometry(K(0.568), K(0.578), K(0.062), SG + 4, 1, true), T.DUN),
         trs(-K(0.030), K(0.524), -K(0.040), 0, 1.20, 1, 1.08, 0.16), 8, null, null, () => 0.42, 1.02);
     }
     // ── two stub legs (bones 1/2), one root arm and one CLEAVER arm (5/6) ──
@@ -12919,26 +13094,46 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // are red". True, and it is how the roster grew: every species since SPEC3 was authored to
     // be TOLD APART from the sixteen already on the road, and the cheapest axis to separate on
     // is hue. Twenty-three separations later the army has no colour of its own.
-    // The floor this pass enforces: every body reserves a quarter of its silhouette for cloth
-    // in the horde's two reds (T.RED #a42a22 / T.CRIM #7e1e18), and its species identity is
-    // carried by SHAPE plus ONE secondary accent. Nothing about the shapes changes — the
+    // ══ v9b ARMIES §E — THE FLOOR SURVIVES; THE COLOUR IT IS PAID IN DOES NOT ════════════════
+    // GAME_SPEC_10 §E: "we can give up the all red colour from units too to diversify them and
+    // make them prettier." Every AREA decision below is kept exactly as it was — the same quarter
+    // of every silhouette is faction cloth, the same tabW / capeF / skirtL numbers, the same
+    // caparisons, rags and surcoats on the bodies that had none. What moves is the DYE: each
+    // family is now painted in its own lore colour, and the three things that hold the army
+    // together are (1) the dark-iron metal family every body still shares, (2) the ragged war
+    // banner with the claw sigil (T.BANN, and it is now the ONLY place the old crimson is spent
+    // outside the warlord himself), and (3) the red health bars, which are untouched.
+    // The floor this pass enforces: every body reserves a quarter of its silhouette for FAMILY
+    // cloth, and its species identity is carried by SHAPE plus ONE secondary accent. Nothing about the shapes changes — the
     // legless shroud, the horizontal skull, the antlers, the dorsal keels, the wheeled machine
     // are all untouched — and no accent grows. What changes is that the shroud now has crimson
     // rags on it, the bone-plate revenant a crimson surcoat, the skeleton a crimson rag, the
     // beasts a crimson caparison. Read the roster in `_bestiary.png`: one army, twenty-three
     // silhouettes, instead of twenty-three colours.
-    // FACTION LAW: red-army units carry NO T.STEEL and NO T.BLUE anywhere. Their metal is
-    // T.IRON (warm, half-metallic) and their value mass is T.RED/#a42a22 tabard + skirt +
-    // shield face, with T.CRIM/#7e1e18 as the shade. Steel and blue belong to the knights,
-    // and that is the only thing keeping the two armies apart at gameplay zoom.
+    // FACTION LAW (v9b): horde units carry NO T.STEEL and NO T.BLUE anywhere, and — new with §E —
+    // no dominant inside the defenders' royal-blue band (H 205-230 at S > 0.35) and no bright
+    // gold. Their metal is the dark-iron family (T.IRON warm / T.CIRON cold / T.HELM / T.PLATE /
+    // T.BRASS), and their value mass is their FAMILY's cloth. Steel and royal blue belong to the
+    // knights; crimson belongs to the warlord and to the standard. Two meters police this:
+    // tools/d_foeread.py (no enemy pixel in the reserved band) and its --var mode (§E §5, the
+    // one-mass read at overview).
     // ARMIES-FIX6 §5 — CRIMSON LIVES ON THE TABARD AND THE SHIELD, NOWHERE ELSE.
     // `shin: T.CRIM` put the horde's own paint on the lower LEG of every levyman, so a body
     // read as dark-maroon thighs over bright shins and the shins read as bare flesh in
     // stockings (filed off the _finale 3x crop, and visible on every grunt/runner/pavise in
     // frame). Leather boots-to-knee instead: the leg goes back to being the value floor of
     // the figure, which is what lets the tabard be its value MASS.
-    grunt:  { h: 1.80, bulk: 1.00, hose: T.DIRT, shin: T.LEATH, mail: T.MAIL, arm: T.MAIL, armU: T.CRIM, hand: T.LEATH,
-              pauld: T.RED, skirt: T.RED, tabard: T.RED, tabW: 1.32, chest: -1, face: T.FACE, helm: 'kettleR',
+    // ══ v9b ARMIES §E — THE LEVY. Russet over undyed wool. ═══════════════════════════════
+    // The levyman is 60-70% of every wave, so whatever he wears IS what "the horde" means, and
+    // §E moves that from one crimson to a two-lot militia livery: madder-russet for the tabard,
+    // cloak and pauldron, undyed oatmeal for the skirt and sleeve. It costs the FACTION FLOOR
+    // nothing — the areas FIX9/FIX9b grew (tabW 1.32, capeF 0.94, skirtL 1.55, capeW 1.30) are
+    // untouched to the decimal, so the same fraction of every body is faction cloth. What
+    // changes is that the cloth is now a colour a levy could actually afford, which is the whole
+    // of §E's "give up the all red colour to diversify them and make them prettier", and it
+    // frees crimson to mean WARLORD instead of meaning everyone.
+    grunt:  { h: 1.80, bulk: 1.00, hose: T.DIRT, shin: T.LEATH, mail: T.MAIL, arm: T.MAIL, armU: T.DUN, hand: T.LEATH,
+              pauld: T.RUSS, skirt: T.DUN, tabard: T.RUSS, tabW: 1.32, chest: -1, face: T.FACE, helm: 'kettleR',
               // ARMIES-FIX3 §2.1/§7b — the grunt is the unit the frame is MADE of, so it is
               // the one that has to carry metal. Steel crown + brim + shield boss puts real
               // specular on ~10% of his screen area; the tabard keeps the value mass.
@@ -12967,7 +13162,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // crimson. So the cloak grows from 0.74 of a full-length cape to 0.94 and the tabard
               // from 1.14 to 1.32 of the torso: on the one archetype the frame is made of, that is
               // the largest area change available without touching a single balance number.
-              cape: true, capeT: T.RED, capeF: 0.94,
+              cape: true, capeT: T.RUSS, capeF: 0.94,
               // ARMIES-FIX9b §1/§5 — the levyman is 60-70% of every wave, so his silhouette IS the
               // coverage statistic: a knee-length crimson tunic (skirtL) and a cloak wide enough to
               // be seen past his own ribs (capeW). See the two notes in buildSoldier.
@@ -12982,19 +13177,19 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // half is bare leather at every zoom" — FIX8 §3 says so one line down), and he is a
               // third of every early wave. A short crimson kilt, not the levyman's tunic: his read
               // is a lean fast body and skirtL stays near 1 so the outline keeps its legs.
-              pauld: T.RED, skirt: T.CRIM, skirtL: 1.15, capeW: 1.20,
-              tabard: T.RED, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
+              pauld: T.RUSS, skirt: T.DUN, skirtL: 1.15, capeW: 1.20,
+              tabard: T.RUSS, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
               bladeTint: 0.84, lm: 0.82, lean: 0.15,
               // ARMIES-FIX8 §3 — a shorter cloak than the levyman's, and it streams: the runner
               // has no skirt, so without it his lower half is bare leather at every zoom.
-              cape: true, capeT: T.CRIM, capeF: 0.62,
+              cape: true, capeT: T.DUN, capeF: 0.62,
               shield: 'buckler', weapon: 'sword', knee: false, gait: 3.05, jit: 0.11, aim: 0.90, bracer: true },
     brute:  { h: 2.52, bulk: 1.42, hose: T.FUR, shin: T.LEATH, mail: T.IRON, arm: T.SKIN, hand: T.SKIN,
               // ARMIES-FIX8 §3 — a crimson chest-wrap over the pelt. The brute's read is the
               // horns and the two-handed axe; neither of them is a colour, so the paint costs
               // him nothing in identity.
               tabW: 0.94,
-              pauld: T.FUR, skirt: T.CRIM, tabard: T.RED, chest: T.CRIM, face: T.FACE, helm: 'horned',
+              pauld: T.FUR, skirt: T.DUN, tabard: T.RUSS, chest: T.DUN, face: T.FACE, helm: 'horned',
               shield: 'none', weapon: 'axe2h', knee: true, gait: 0.98, jit: 0.07, aim: 1.55, pelt: true,
               // ARMIES-FIX5 §1: the off hand rides the haft at 0.34 of its length instead of
               // closing on empty air beside the hip (the round-5 blocker, verified at 8x in
@@ -13040,9 +13235,9 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // one loud shape: a wall (pavise), a low four-legged blur (hound), a hood and a bow
     // (marauder) and sheer mass with tusks (ogre).
     shield: { h: 1.86, bulk: 1.16, hose: T.DIRT, shin: T.LEATH, mail: T.MAIL, arm: T.MAIL, hand: T.LEATH,
-              pauld: T.RED, skirt: T.CRIM, tabard: T.RED, tabW: 1.04, chest: T.IRON, face: T.FACE, helm: 'kettle',
+              pauld: T.RUSS, skirt: T.DUN, tabard: T.RUSS, tabW: 1.04, chest: T.IRON, face: T.FACE, helm: 'kettle',
               bladeTint: 0.82, lm: 0.82,
-              cape: true, capeT: T.CRIM, capeF: 0.70,     // ARMIES-FIX8 §3
+              cape: true, capeT: T.DUN, capeF: 0.70,      // ARMIES-FIX8 §3, v9b §E dye
               skirtL: 1.40, capeW: 1.18,                  // ARMIES-FIX9b §1/§5
               shield: 'tower', weapon: 'sword', knee: true, gait: 1.42, jit: 0.06, aim: 1.05,
               bracer: true, bar: 1.10 },
@@ -13052,8 +13247,8 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // ARMIES-FIX8 §3 — the tabard was 0.72 of the torso, a ribbon; the hood is what
               // identifies him, and a hood is a shape. 1.00 plus a crimson hood puts him in the
               // livery without touching the outline the bow and the cowl already carry.
-              pauld: T.LEATH, skirt: T.CRIM, tabard: T.RED, tabW: 1.00, chest: -1, face: T.FACE, helm: 'hood',
-              hoodT: T.CRIM, skirtL: 1.32,                // ARMIES-FIX9b §1/§5
+              pauld: T.LEATH, skirt: T.DUN, tabard: T.RUSS, tabW: 1.00, chest: -1, face: T.FACE, helm: 'hood',
+              hoodT: T.RUSS, skirtL: 1.32,                // ARMIES-FIX9b §1/§5, v9b §E dye
               shield: 'none', weapon: 'bow', knee: false, gait: 1.85, jit: 0.09, aim: 0.98,
               bracer: true, quiver: true, bar: 0.92, lm: 0.86 },
     // legF 0.76 is what turns a giant man into an ogre: squat legs, a torso that carries
@@ -13062,7 +13257,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // ARMIES-FIX8 §3 — the tabard was T.DIRT: a sack, in the ground's own colour, on
               // the biggest mass in a mid-campaign wave. It is the horde's red now; the tusks
               // and the 1.5x skull are what say OGRE and neither is a hue.
-              arm: T.HIDE, hand: T.HIDE, pauld: T.IRON, skirt: T.CRIM, tabard: T.RED, tabW: 1.06,
+              arm: T.HIDE, hand: T.HIDE, pauld: T.IRON, skirt: T.DUN, tabard: T.RUSS, tabW: 1.06,
               chest: -1, face: T.HIDE, skin: T.HIDE, hair: T.HIDE,
               headS: 1.50, helm: 'tusk', shield: 'none', weapon: 'club', knee: true, gait: 0.60,
               jit: 0.05, aim: 2.00, plates: true, seg: tier === 'mobile' ? 7 : 10, bar: 1.95,
@@ -13085,7 +13280,13 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // claim and rejected it. The surcoat is the period answer and it costs nothing he
               // is identified by: his read is the flat-topped great helm behind a pavise wall,
               // and the cold #3a3f45 plate stays visible on every limb as the secondary accent.
-              pauld: T.CIRON, skirt: T.CRIM, tabard: T.RED, tabW: 0.98, chest: T.CIRON, face: T.EYES,
+              // v9b ARMIES §E — "ironclad gunmetal+brass". The crimson surcoat FIX8 §3 put here
+              // to pay the faction floor becomes a GUNMETAL one (T.SLATE, cloth, not a second
+              // metal) and the hip band becomes brass. His #3a3f45 plate was already the filed
+              // gunmetal; the family is now stated by the cloth as well, and his board carries
+              // the brass chevron. See the ATINT note for the reserved-band arithmetic that also
+              // had to move on this unit.
+              pauld: T.CIRON, skirt: T.BRASS, tabard: T.SLATE, tabW: 0.98, chest: T.CIRON, face: T.EYES,
               skin: T.CIRON, hair: T.CIRON, helm: 'great', helmT: T.CIRON,
               shield: 'tower', shieldS: 1.34, shieldT: T.IPAV, shieldRimT: T.CIRON, pavRect: true, weapon: 'sword', knee: true, kneeT: T.CIRON,
               gait: 0.88, jit: 0.05, aim: 1.40, plates: true, noSpikes: true, bracer: true, bladeTint: 0.78,
@@ -13098,15 +13299,23 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // species read is the ICE: six spurs through the armour and a rimed helm, and a
               // frost body against Frostfell's white ground needs a DARK mass to be seen against
               // it at all — which the shroud-grey cloak was never going to be.
-              hand: T.BONE, pauld: T.FROST, skirt: T.CRIM, tabard: T.CRIM, tabW: 0.96, chest: T.FROST, face: T.BONE,
+              // v9b ARMIES §E — "frost kin glacial pale+ice (DESATURATED — never defender blue)".
+              // The crimson surcoat and cloak go cold slate. The FIX8 §3 argument for putting a
+              // DARK mass on this body is unchanged and is why the cloth is slate rather than more
+              // ice: a pale body on a snowfield needs something to be seen against, and T.SLATE at
+              // luma 0.29 under T.FROST's 0.74 is that, at S 0.16 rather than the reserved band.
+              hand: T.BONE, pauld: T.FROST, skirt: T.SLATE, tabard: T.SLATE, tabW: 0.96, chest: T.FROST, face: T.BONE,
               skin: T.BONE, hair: T.FROST, helm: 'rime', shield: 'none', weapon: 'gsword',
               knee: true, kneeT: T.FROST, gait: 1.28, jit: 0.07, aim: 1.12, bracer: true, twoHand: 0.26,
-              rime: true, cape: true, capeT: T.CRIM, capeF: 0.86, bladeTint: 1.14, bladeT: T.FROST, bar: 1.04 },
+              rime: true, cape: true, capeT: T.SLATE, capeF: 0.86, bladeTint: 1.14, bladeT: T.FROST, bar: 1.04 },
     warshaman: { h: 1.74, bulk: 0.92, hose: T.ROBE, shin: T.ROBE, mail: T.ROBE, arm: T.ROBE,
               // ARMIES-FIX8 §3 — the robe keeps the sleeves and the hem (the swing is the read);
               // the mantle over it and the skirt are the horde's crimson. The bone mask and the
               // totem standing a head above the skyline are what make him the priority kill.
-              hand: T.LEATH, pauld: T.RED, skirt: T.CRIM, tabard: T.RED, tabW: 0.94, chest: -1,
+              // v9b ARMIES §E — "warshaman bone+ochre+feathers". Mantle and skirt are the robe's
+              // own ochre wool now (one cloth, three cuts, which is what a shaman's dress is), and
+              // the pauldron is the brass ring that says the ochre is a vestment and not a sack.
+              hand: T.LEATH, pauld: T.BRASS, skirt: T.ROBE, tabard: T.ROBE, tabW: 0.94, chest: -1,
               face: T.BONE, skin: T.SKIN, helm: 'mask', shield: 'none', weapon: 'totem',
               // UNITS §1 — a floor-length ROBE on the cloth bone. The mantle and skirt are
               // both root-bone geometry and so the shaman marched as a rigid cone; the cape
@@ -13131,17 +13340,26 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     necromancer: { h: 1.86, bulk: 0.92, hose: T.SHROUD, shin: T.SHROUD, mail: T.SHROUD, arm: T.SHROUD,
               // ARMIES-FIX8 §3 — crimson mantle and cloak over the black shroud. His read is the
               // GREEN light in his hands, the only green in the game, and the cowl; both survive.
-              hand: T.BONE, pauld: T.CRIM, skirt: T.SHROUD, tabard: T.CRIM, tabW: 0.92, chest: -1,
+              // v9b ARMIES §E — "necromancer bone+verdigris". Corroded copper over the black
+              // shroud: the same family as the green light in his hands, which is what makes the
+              // one green light in the game read as HIS rather than as an effect parked on him.
+              hand: T.BONE, pauld: T.VERDI, skirt: T.SHROUD, tabard: T.VERDI, tabW: 0.92, chest: -1,
               face: T.BONE, skin: T.BONE, hair: T.SHROUD, helm: 'cowl', shield: 'none', weapon: 'nstaff',
               knee: false, gait: 1.44, jit: 0.07, aim: 1.10, glow: true, glowT: T.RUNE, bar: 0.96,
-              armTint: 0.80, cape: true, capeT: T.CRIM, capeF: 0.90, seg: tier === 'mobile' ? 6 : 9 },
+              armTint: 0.80, cape: true, capeT: T.VERDI, capeF: 0.90, seg: tier === 'mobile' ? 6 : 9 },
     // legF/headDrop/shF are the same three dials that turn a tall man into an ogre; here
     // they turn him into a WALL of quarried stone with no neck and a horizontal skull.
     wardedone:{ h: 2.36, bulk: 1.52, legF: 0.78, hose: T.GRAV, shin: T.GRAV, mail: T.GRAV, arm: T.GRAV,
               // ARMIES-FIX8 §3 — a crimson banner-cloth strapped across the stone. The read is the
               // horizontal skull on a 1.44 shoulder line over 0.78 legs; the granite sigils stay
               // as the secondary accent on every limb.
-              hand: T.IRON, pauld: T.GRAV, skirt: T.CRIM, tabard: T.RED, tabW: 0.92, chest: T.GRAV,
+              // v9b ARMIES §E — this one keeps its cloth crimson, and on purpose: FIX8 §3 already
+              // calls it "a crimson banner-cloth strapped across the stone", and §E's UNIFYING
+              // signature is exactly "ragged war-banners with a shared sigil". So the strap is the
+              // banner tile itself — sigil, gold-thread border and all — and the hip band is brass.
+              // One body in the roster wearing the standard is a colour guard; twenty-three of them
+              // was the mandate §E retires.
+              hand: T.IRON, pauld: T.GRAV, skirt: T.BRASS, tabard: T.BANN, tabW: 0.92, chest: T.GRAV,
               face: T.SHROUD, skin: T.GRAV, hair: T.GRAV, headS: 1.20, helm: 'slab',
               shield: 'none', weapon: 'maul', knee: true, kneeT: T.GRAV, twoHand: 0.30,   // FIX5 §1
               gait: 0.86, jit: 0.04, aim: 1.45, greave: true, greaveT: T.GRAV,
@@ -13153,19 +13371,24 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     cutpurse:{ h: 1.56, bulk: 0.80, hose: T.SHROUD, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN,
               // ARMIES-FIX8 §3 — the cloak carries the crimson; the hood, the sack of gold and the
               // 40% forward lean are what make him the cutpurse, and all three are untouched.
-              hand: T.SKIN, pauld: T.CRIM, skirt: -1, tabard: T.CRIM, tabW: 0.84, chest: -1, face: T.FACE,
-              helm: 'hood', hoodT: T.CRIM, shield: 'none', weapon: 'dagger', knee: false,
+              // v9b ARMIES §E — "cutpurse dusk plum". The hood, the sack of gold and the 40%
+              // forward lean are still the read; the cloth is the oxblood the war shaman gave up.
+              hand: T.SKIN, pauld: T.PLUM, skirt: -1, tabard: T.PLUM, tabW: 0.84, chest: -1, face: T.FACE,
+              helm: 'hood', hoodT: T.PLUM, shield: 'none', weapon: 'dagger', knee: false,
               gait: 3.60, jit: 0.12, aim: 0.85, bracer: true, sack: true, cape: true, lean: 0.40,
-              capeT: T.CRIM, capeF: 0.78, bladeTint: 0.86, bar: 0.80 },
+              capeT: T.PLUM, capeF: 0.78, bladeTint: 0.86, bar: 0.80 },
     // The cheapest rig in the game, and it should look it: bone, a rag and a rusted blade.
     skeleton:{ h: 1.66, bulk: 0.70, hose: T.BONE, shin: T.BONE, mail: T.BONE, arm: T.BONE,
               // ARMIES-FIX8 §3 — a crimson rag over the ribs and a crimson cloak in tatters. Bare
               // bone is still the read (it is the only skeleton in the game); the rag is what says
               // it was raised out of THIS army rather than wandering in from another one.
-              hand: T.BONE, pauld: T.CRIM, skirt: -1, tabard: T.CRIM, tabW: 0.86, chest: -1, face: T.BONE,
+              // v9b ARMIES §E — "skeletons/risen keep the cursed teal". The rag and the tattered
+              // cloak are the same drained teal the RISEN_M lerp puts on any body that stands back
+              // up, so a raised levyman and a walking skeleton are visibly the same magic.
+              hand: T.BONE, pauld: T.TEAL, skirt: -1, tabard: T.TEAL, tabW: 0.86, chest: -1, face: T.BONE,
               skin: T.BONE, hair: T.BONE, helm: 'skull', shield: 'none', weapon: 'sword',
               knee: false, gait: 1.96, jit: 0.13, aim: 0.90, bladeTint: 0.66, bar: 0.82,
-              cape: true, capeT: T.CRIM, capeF: 0.66,
+              cape: true, capeT: T.TEAL, capeF: 0.66,
               seg: tier === 'mobile' ? 5 : 7 },
     // ══ SPEC6 §E: the twentieth silhouette ══════════════════════════════════════
     // THE HEXBINDER. The hard problem here is not "make a sorcerer" — it is "make a sorcerer
@@ -13187,11 +13410,15 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // ARMIES-FIX8 §3 — mantle, tabard and cloak in crimson. All four of his reads are
               // untouched: the 1.98 height, the empty skyline over him, the antler rack and the
               // iron chain swags — which are also his secondary accent.
-              hand: T.BONE, pauld: T.CRIM, skirt: T.SHROUD, tabard: T.CRIM, tabW: 0.90, chest: -1,
+              // v9b ARMIES §E — the roster's other caster takes the same verdigris, and is kept
+              // apart from the chanter the way SPEC6 §E always kept them apart: by VALUE and by
+              // silhouette (the antler rack, the empty skyline, the chains), never by hue. His
+              // ATINT already runs a stop and a half over the necromancer's.
+              hand: T.BONE, pauld: T.VERDI, skirt: T.SHROUD, tabard: T.VERDI, tabW: 0.90, chest: -1,
               face: T.BONE, skin: T.BONE, hair: T.SHROUD, helm: 'antler', shield: 'none',
               weapon: 'grimoire', knee: false, gait: 1.10, jit: 0.05, aim: 1.24,
               glow: true, glowT: T.RUNE, bar: 1.34, armTint: 0.86, chains: true,
-              cape: true, capeT: T.CRIM, capeF: 0.88, seg: tier === 'mobile' ? 6 : 9 },
+              cape: true, capeT: T.VERDI, capeF: 0.88, seg: tier === 'mobile' ? 6 : 9 },
     // ══ SPEC_8 §F: the twenty-first, -second and -third silhouettes ══════════════════════════
     // Twenty bodies were already on the road, so "different from a grunt" stopped being the bar
     // several stages ago. Each of these three owns a property NOTHING ELSE in the game has:
@@ -13220,7 +13447,10 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // ARMIES-FIX8 §3 — a crimson caparison lashed over the stone-hide. The read is the
               // STOOP (legF 0.70 under shF 1.42, skull between the shoulder blades) and the rime
               // crust, and the crust is the brighter of the two masses either way.
-              pauld: T.RIME, skirt: T.CRIM, tabard: T.RED, tabW: 0.98, chest: T.RIME,
+              // v9b ARMIES §E — "troll moss/rime". The caparison is lichen, which is what grows
+              // on a thing that has stood still in a snowfield, and it is the one warm-ish mass on
+              // a body whose read is the STOOP and the pale crust.
+              pauld: T.RIME, skirt: T.MOSS, tabard: T.MOSS, tabW: 0.98, chest: T.RIME,
               face: T.EYES, skin: T.RIME, hair: T.RIME,
               headS: 1.42, helm: 'tusk', shield: 'none', weapon: 'club', knee: true, kneeT: T.RIME,
               twoHand: 0.28, gait: 0.66, jit: 0.04, aim: 1.66,
@@ -13320,7 +13550,22 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   // and the ironclad's own tile goes cool with it (T.CIRON), because no multiply this side of
   // black can pull a warm forged-iron tile to neutral on its own.
   const ATINT = {
-    ironclad:  [0.34, 0.42, 0.72],
+    // ══ v9b ARMIES §E — THE RESERVED-BAND TEST IS A RENDERED TEST, NOT AN ALBEDO ONE ═════════
+    // §E reserves royal blue: no enemy dominant inside H 205-230 at S > 0.35. The first cut of this
+    // pass ran that test on the ALBEDO — tile colour times this multiply — and duly convicted two
+    // rows (ironclad [0.34,0.42,0.72] on #3a3f45 computes to H 226 / S 0.60; the troll's row to
+    // H 216 / S 0.52), then de-chromed both. The re-shot frames rejected it, and the reason is the
+    // same one ARMIES-FIX7 §3 wrote at the top of this table and this pass forgot: A MULTIPLY IS
+    // NOT A COLOUR. Between the albedo and the PNG stand a 5.7-intensity #ffcf8a key, a warm probe
+    // and an ACES curve, and all three drag a cool albedo back toward neutral-warm. Measured with
+    // tools/d_foeread.py on the SHIPPED pixels, the cool rows never entered the band at all
+    // (reserved-blue coverage over the ironclad's own crop: 0.078% of frame, i.e. the noise floor
+    // of sky showing between bodies), while the de-chromed rows rendered the beige mini-boss FIX7
+    // §3 spent a whole round eliminating.
+    // So both rows go back cool, trimmed only enough to leave headroom against the band, and the
+    // reserved-colour contract is policed where it is actually observable: on the rendered frame,
+    // by the meter, which is the number reported for this stage.
+    ironclad:  [0.34, 0.42, 0.66],
     hound:     [0.51, 0.44, 0.36],
     // r10-ARMIES §6 — "drop its body value 15% below the rock palette so it separates from
     // scenery". The mold's flesh is the one mass on the road that shares a hue family with
@@ -13360,12 +13605,85 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // 14% and pushed COOL of the terracotta the note above already identifies as the requirement —
     // the blue channel now sits level with the green instead of a stop under it — so the beast is a
     // cold slate mass on a warm floor and the ladder gap to the hound (76) is wider, not narrower.
-    charger:       [0.50, 0.46, 0.46],
+    // v9b ARMIES §E — "charger tawny hide". This row was pushed COOL in FIX9b §3 for a reason that
+    // is still true (a body that differs from its terracotta floor in value alone is camouflage),
+    // and §E overrides the HUE half of it. Both survive: the hue goes tawny as ordered, and the
+    // luminance stays at 0.480 against 0.472 — i.e. the beast is still a full stop under the lit
+    // sand it walks on, and the value break FIX9b bought is untouched. What pays for the hue move
+    // is the barding: the caparison, girth and frontlet are the levy's russet now, so the animal
+    // is tawny-plus-russet against a plain floor instead of one tan mass on another.
+    // ROUND 4, measured on `_charger.png`: at [0.58,0.46,0.31] the hide rendered a lit tan within a
+    // few points of the Shattered Pass's own floor, i.e. FIX9b §3's finding reopened by §E's hue
+    // order. The hue stays tawny as §E asks and the VALUE pays for it — luma 0.385 against the
+    // 0.472 that row was solved at, which puts the beast a clear stop under lit sand and a clear
+    // stop under the hound it shares no map with anyway. The russet barding is the light half.
+    charger:       [0.46, 0.37, 0.26],
     dunestalker:   [0.70, 0.68, 0.62],
     // r10-ARMIES §6 — "lift body luminance from ~L35 to L70-90 so the bulk reads against the
     // dirt road instead of dissolving into it". The RATIOS are r9's (cool at R-B < 0, ~10% clear
     // of the ironclad); only the level moves, and the pale rime shell now sits a long way over it.
-    rimeborntroll: [0.70, 0.84, 1.06],
+    // The troll keeps his cold slate body — §E's "moss/rime" is carried by the MOSS caparison the
+    // CFG now gives him, and the rime shell over it, exactly as the two halves of that name imply.
+    rimeborntroll: [0.72, 0.85, 1.00],
+    // v9b ARMIES §E — "cutpurse dusk plum". A faint cool-magenta cast under the plum cloth, so the
+    // leather and the skin belong to the same body as the hood. Luma 0.919: he is the smallest man
+    // on the road and nothing in the ladder sits within 15% of him.
+    cutpurse:      [0.96, 0.88, 1.02],
+  };
+  // ══ v9b ARMIES §E — THE FAMILY DYE TABLE ═════════════════════════════════════════════════
+  // This is the table that replaces the all-crimson horde dye. Three rows per family, all of them
+  // MULTIPLIES on the per-instance colour, i.e. all of them free: no attribute, no draw, no
+  // material variant, and every selector is an existing per-id hash, so the sim is untouched and
+  // no rng call is added anywhere.
+  //   fd  — the DISTANCE LIVERY. See the FDYE note in syncVisuals for why this mechanism exists at
+  //         all: the atlas is mip-filtered, a tabard four pixels tall samples the MEAN OF THE
+  //         SHEET, and the per-instance colour is the one channel minification cannot touch. It
+  //         used to be one crimson multiply for the whole army, which is precisely the mandate §E
+  //         retires; now each family restores its OWN chroma as it recedes.
+  //   lot — the SECOND DYE LOT, on a quarter of each family's bodies (FIX7 §2b's mechanism, which
+  //         only ever ran on the crimson wearers). A militia raised from two towns.
+  //   acc — the CLOTH ACCENT TRIM, on an eighth of them: the lot that came out of the vat light,
+  //         or with a contrast trim at the hem. §E's "prettier" lever, and the cheapest one there
+  //         is — one branch and three multiplies on 12% of the bodies.
+  // Rows are per ARCHETYPE and grouped by family; `L` is the levy, which is 60-70% of every wave
+  // and therefore what the word "horde" now means.
+  //   sig — §E's LAST LINE: "each boss gets a saturated signature accent so finales still pop."
+  //         It runs on the bodies the game itself already calls elite (ENEMY_DEFS.elite), on any
+  //         champion, and on the warlord. It is a CHROMA GAIN about the body's own luminance,
+  //         biased per channel toward the family's hue — so a mini-boss is the most saturated
+  //         member of its own family rather than a different colour from it, which is the only
+  //         version of "signature accent" that does not cost the family read it is signing. Value
+  //         is untouched by construction (the gain is applied around luma), so the silhouette
+  //         ladder, the health bars and the contact shadows are all exactly where they were.
+  const L_ = { fd: [1.42, 0.86, 0.56], lot: [0.80, 0.74, 0.66], acc: [1.14, 1.06, 0.88], sig: [1.30, 1.16, 1.06] };
+  const V_ = { fd: [0.72, 1.14, 0.98], lot: [0.80, 0.86, 0.82], acc: [0.92, 1.16, 1.06], sig: [1.06, 1.32, 1.20] };
+  const FAM = {
+    grunt: L_, runner: L_, shield: L_, marauder: L_, ogre: L_, brute: L_, hound: L_,
+    necromancer: V_, hexbinder: V_,
+    // The knights are not horde (`A.horde` is false, so `fd` is never read on them) but they DO
+    // run the lot/trim selector, and a blue column of one paint has exactly the barcode problem
+    // FIX7 §2b filed against the crimson one. Their two lots are the spec's own #2e5fa3 deepened
+    // and lifted: a retinue of household troops and a retinue of levied town men, still one blue.
+    knight:        { fd: [1.00, 1.00, 1.00], lot: [0.86, 0.88, 0.96], acc: [1.06, 1.08, 1.14], sig: null },
+    ironclad:      { fd: [0.88, 0.96, 1.06], lot: [0.86, 0.88, 0.92], acc: [1.10, 1.02, 0.86], sig: [1.06, 1.16, 1.38] },
+    ashwraith:     { fd: [1.30, 0.74, 0.46], lot: [0.78, 0.72, 0.70], acc: [1.22, 0.94, 0.66], sig: [1.34, 1.14, 0.98] },
+    frostrevenant: { fd: [0.96, 1.04, 1.06], lot: [0.86, 0.90, 0.94], acc: [1.08, 1.10, 1.10], sig: [1.02, 1.16, 1.26] },
+    warshaman:     { fd: [1.34, 1.10, 0.58], lot: [0.84, 0.78, 0.62], acc: [1.12, 1.08, 0.92], sig: [1.32, 1.18, 0.98] },
+    cutpurse:      { fd: [1.22, 0.74, 1.10], lot: [0.80, 0.70, 0.80], acc: [1.10, 0.90, 1.16], sig: [1.26, 1.04, 1.30] },
+    skeleton:      { fd: [0.66, 1.12, 1.10], lot: [0.82, 0.88, 0.88], acc: [0.94, 1.12, 1.12], sig: [1.02, 1.24, 1.24] },
+    wyvern:        { fd: [0.92, 0.94, 1.14], lot: [0.84, 0.86, 0.92], acc: [1.04, 1.00, 1.14], sig: [1.08, 1.10, 1.32] },
+    rimeborntroll: { fd: [0.94, 1.10, 0.84], lot: [0.84, 0.88, 0.82], acc: [1.02, 1.12, 0.90], sig: [1.04, 1.26, 1.16] },
+    charger:       { fd: [1.46, 1.02, 0.58], lot: [0.82, 0.74, 0.64], acc: [1.14, 1.02, 0.82], sig: [1.36, 1.16, 0.98] },
+    dunestalker:   { fd: [1.30, 1.14, 0.80], lot: [0.82, 0.78, 0.70], acc: [1.12, 1.08, 0.94], sig: [1.28, 1.18, 1.02] },
+    ram:           { fd: [1.34, 1.12, 0.82], lot: [0.86, 0.80, 0.72], acc: [1.10, 1.04, 0.92], sig: [1.30, 1.18, 1.02] },
+    gravemold:     { fd: [0.86, 1.12, 0.76], lot: [0.82, 0.88, 0.78], acc: [1.00, 1.14, 0.86], sig: [1.10, 1.28, 1.00] },
+    wardedone:     { fd: [1.16, 1.00, 0.80], lot: [0.86, 0.84, 0.80], acc: [1.08, 1.00, 0.88], sig: [1.30, 1.16, 1.00] },
+    // THE WARLORD KEEPS THE CRIMSON, and this row is the reason the retirement of the mandate
+    // does not cost the game its finale. §E's last line asks for "a saturated signature accent"
+    // per boss; crimson is now unique to him, his kits and the war banners, so the one body the
+    // wave is named after is the one body wearing the army's old colour. His far-dye is the exact
+    // multiply ARMIES-FIX9b §1/§5 swept and closed, unchanged to the last decimal.
+    boss:          { fd: [1.92, 0.45, 0.34], lot: null, acc: null, sig: [1.42, 1.14, 1.04] },
   };
   // UNITS §1 — WHICH WEAPONS ARE POLES. `uPole` (FIX4 §7) swapped the marching arm variants
   // from +-62 degrees of pitch to +-6 for spear carriers, and was keyed on the literal string
@@ -13412,9 +13730,25 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     AM[key] = { mesh, anim, cap, n: 0, h: C.hv || C.h, gait: C.gait, jit: C.jit, key,
                 bar: C.bar || 0.92, quad: !!C.quad, fly: !!C.wyv, ward, wardA, rim: RIMC[key] || null,
                 t3: ATINT[key] || null,               // ARMIES-FIX6 §6
-                // ARMIES-FIX7 §2b — does this archetype wear the horde's crimson? Only those
-                // bodies are eligible for the dark dye lot; the boss is out by name.
-                crim: key !== 'boss' && (C.tabard === T.RED || C.skirt === T.RED),
+                // ══ v9b ARMIES §E — the family's dye rows, resolved once per archetype ══════════
+                // `crim` (FIX7 §2b: "does this body wear T.RED, and is it therefore eligible for
+                // the dark dye lot") is retired with the mandate it belonged to — after §E no body
+                // but the warlord wears T.RED, so the test would answer false for the whole army
+                // and the second-lot variation the finding asked for would simply stop happening.
+                // It is replaced by the family row: every family has a lot and a trim now, which
+                // is strictly more variation than the crimson wearers ever had.
+                fd:  (FAM[key] || L_).fd,
+                lot: (FAM[key] || L_).lot,
+                acc: (FAM[key] || L_).acc,
+                sig: (FAM[key] || L_).sig,
+                // §E §4 — the per-instance HUE JITTER. `wv` has run at 0.065 since FIX6 §5, where
+                // it was HALVED because a magenta-rotated crimson albedo split the column into
+                // orange bodies and violet bodies. That albedo is gone: the families are authored
+                // on the hue they render at, so the jitter no longer rides a pre-compensation and
+                // can go back up to the +-6 degrees §E specifies. The boss is held at the old
+                // value — a finale figure whose livery is the army's signature is not a dye-lot
+                // statistic, which is the same argument FIX7 §2b made for excluding him.
+                hj: key === 'boss' ? 0.050 : 0.084,
                 // ARMIES-FIX8 §1 — is this body one of the HORDE's, i.e. does the distance
                 // livery apply to it? Everything on the road except the player's own knights.
                 // Written as a name test rather than a colour test on purpose: the flag has to
@@ -14233,7 +14567,13 @@ const WARDS = { pierce: [0.30, 0.62, 1.00], crush: [0.50, 0.50, 0.56],
 // lerp turns the WHOLE unit corpse-coloured instead of just the parts someone remembered.
 // 0.88 rather than 1.0 keeps a whisper of what the man was wearing, which is what makes a
 // risen levyman still legible as a levyman when he stands back up.
-const RISEN_M = [0.72, 1.14, 0.88];
+// v9b ARMIES §E — "skeletons/risen keep the cursed teal". The drain was a MINT (blue a stop under
+// green), which was the right family and the wrong end of it now that the skeleton's rag is an
+// authored teal: two flavours of dead in one wave is one flavour too many. Blue comes up level with
+// green, which is teal by definition, and the luminance of the re-tint is unchanged to two decimals
+// (0.30*0.68 + 0.59*1.12 + 0.11*1.06 = 0.982 against 0.980) — so nothing about how a risen body
+// reads against the moor at night moves, only its hue.
+const RISEN_M = [0.68, 1.12, 1.06];
 const RISEN_K = 0.88;
 // ══ ARMIES-FIX8 §1 — THE LIVERY HAS TO SURVIVE THE MIP CHAIN ═════════════════════════════
 // Round 8's blocker reads "the crimson horde is not crimson at any scale above closeup", with
@@ -14290,6 +14630,82 @@ const FDYE_R = (P.get('fdyer') || '').split(',').map(Number);
 const FDYE_N = FDYE_R.length === 2 ? FDYE_R[0] : 20, FDYE_F = FDYE_R.length === 2 ? FDYE_R[1] : 44;
 const FDYE_P = (P.get('fdye') || '').split(',').map(Number);
 const FDYE = FDYE_P.length === 3 ? FDYE_P : [1.92, 0.45, 0.34];
+// ══ v9b ARMIES §E — THE LIVERY IS PER FAMILY NOW, AND THE MASS STILL HAS TO BE ONE MASS ══════
+// Everything the note above says about WHY a distance livery exists is unchanged and is the whole
+// reason this can be done at all: the per-instance colour is the one channel the mip chain cannot
+// eat, so it is the only place a family's chroma can be defended at range. What changes is that
+// there is no longer ONE multiply. `A.fd` is the family's own row out of FAM, and the crimson
+// literal above survives as exactly one thing — the warlord's (see FAM.boss) — plus the
+// `&fdye=r,g,b` calibration override, which still sweeps the levy's row from the shell.
+//
+// §E §5 IS THE HARD HALF. Thirteen families diverging by hue is thirteen chances for the overview
+// camera to stop reading a horde and start reading a parade, and "the horde must still read as ONE
+// hostile mass" is a harder constraint than any single family's colour. The answer is the one the
+// eye already applies to a real column at half a kilometre: aerial perspective takes CHROMA away
+// long before it takes value, so past MASS_N every family is progressively collapsed toward its
+// own luminance re-tinted through one shared dust-iron cast. Value survives intact — which is what
+// keeps the silhouette ladder, the road contrast and the health bars exactly where they were — and
+// the families stop being individually legible at roughly the distance they stop being individually
+// AIMABLE, which is the only distance at which telling them apart was ever worth anything.
+// Measured with tools/d_foeread.py --var, chroma-weighted circular hue SD over the `_thousand`
+// overview's own horde ribbon (crop 990,455-1350,720, 1001 bodies on the road):
+//     mass=0,1,0     (term off)   hueSD 23.9   meanS 0.564
+//     mass=44,96,.52 (shipped)    hueSD 23.2   meanS 0.559
+//     mass=18,58,1.0 (full)       hueSD 22.6   meanS 0.555
+// Monotone, and deliberately gentle at the shipped setting, because the same meter answered the
+// question §E actually poses ("check a desaturation-at-distance term IF families get noisy") in
+// the negative: family hue spread FALLS with distance rather than rising — battle4's 276-body
+// block measures hueSD 43.6 in the near rank against 31.0 in the far one — since each family's
+// own `fd` row already pulls it toward its dominant as the mip chain flattens it. So this is a
+// guard that is armed and measurable rather than a correction that is currently needed, and the
+// numbers above are what a future round should re-run before touching MASS_K. (The crops include
+// the road and grass the bodies stand on; there is no body mask, so treat the absolute value as
+// a relative instrument only.)
+// `&mass=near,far,k` overrides the three from the command line, the same opt-in calibration idiom
+// `&fdye=` and `&fdyer=` use above and for the same reason: the target is a measured statistic on a
+// rendered frame (hue spread over a horde crop, tools/d_foeread.py --var), and the transfer function
+// from a lerp to that statistic runs through the mip chain, the key and ACES. Sweep from the shell,
+// write the winner back here as the literal. `&mass=0,1,0` turns the term off for an A/B.
+const MASS_P = (P.get('mass') || '').split(',').map(Number);
+const MASS_N = MASS_P.length === 3 ? MASS_P[0] : 44;
+const MASS_F = MASS_P.length === 3 ? MASS_P[1] : 96;
+const MASS_K = MASS_P.length === 3 ? MASS_P[2] : 0.52;
+const MASS_M = [1.14, 1.00, 0.80];
+// The three dye helpers. `dyeLot` and `dyeDist` are called from the leader path AND the retinue
+// path, which is the point: r10 §4's retinue re-implemented the whole chain inline and the two
+// copies had already drifted once. (`dyeSig` is leader-only — a mini-boss has no retinue.)
+// Nothing here allocates and nothing here hashes anything the walk cycle does not hash already.
+const dyeLot = (c, A, id) => {
+  // §E §4 — two dye lots and a cloth accent trim, selected off the id hash FIX7 §2b already used.
+  // 25% deep lot / 12% light trim / 63% the family's own paint: enough that no two neighbours in a
+  // rank are the same cloth, far short of the point where a family stops being a family.
+  const h = H1(id * 29 + 3);
+  const M = h < 0.25 ? A.lot : (h > 0.88 ? A.acc : null);
+  if (M) c.setRGB(c.r * M[0], c.g * M[1], c.b * M[2]);
+};
+const dyeSig = (c, A) => {
+  // §E's boss/mini-boss accent. One branch, one luma, three lerps, and only on bodies the sim
+  // already flags — a wave of a hundred levymen pays a property read and nothing else.
+  const K = A.sig;
+  if (!K) return;
+  const y = c.r * 0.30 + c.g * 0.59 + c.b * 0.11;
+  c.setRGB(y + (c.r - y) * K[0], y + (c.g - y) * K[1], y + (c.b - y) * K[2]);
+};
+const dyeDist = (c, A, dx, dy, dz) => {
+  const D = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const fd = clamp((D - FDYE_N) / (FDYE_F - FDYE_N), 0, 1);
+  if (fd > 0) {
+    const F = A.fd;
+    c.setRGB(c.r * (1 + (F[0] - 1) * fd), c.g * (1 + (F[1] - 1) * fd), c.b * (1 + (F[2] - 1) * fd));
+  }
+  const md = clamp((D - MASS_N) / (MASS_F - MASS_N), 0, 1) * MASS_K;
+  if (md > 0) {
+    const y = c.r * 0.30 + c.g * 0.59 + c.b * 0.11;
+    c.setRGB(c.r + (y * MASS_M[0] - c.r) * md,
+             c.g + (y * MASS_M[1] - c.g) * md,
+             c.b + (y * MASS_M[2] - c.b) * md);
+  }
+};
 const _YAX = new THREE.Vector3(0, 1, 0);
 const _v3s = new THREE.Vector3();
 let _lastTick = -1, _wardWas = false;
@@ -14687,7 +15103,7 @@ Armies.syncVisuals = (vtNow) => {
     // a brown monotone at bestiary scale because nine bodies shared one hue AND one value,
     // and this is the cheapest lever that separates them without a tile per species. It
     // composes with the map's own `def.tint` rather than replacing it.
-    const l = (0.66 + h2 * 0.26) * A.lm, wv = (h1 - 0.5) * 0.065, tnt = e.def.tint, t3 = A.t3;
+    const l = (0.66 + h2 * 0.26) * A.lm, wv = (h1 - 0.5) * A.hj, tnt = e.def.tint, t3 = A.t3;
     if (tnt) _acol.setRGB(l * (1 + wv) * tnt[0], l * tnt[1], l * (1 - wv * 1.5) * tnt[2]);
     else _acol.setRGB(l * (1 + wv), l, l * (1 - wv * 1.5));
     if (t3) _acol.setRGB(_acol.r * t3[0], _acol.g * t3[1], _acol.b * t3[2]);
@@ -14702,17 +15118,9 @@ Armies.syncVisuals = (vtNow) => {
     // deeper as well as value — a militia raised from two towns, not one town under two lamps.
     // Hashed off the unit id, so a body never changes lot mid-march, and the boss is excluded
     // (a finale figure whose crimson is 40% of his surface is not a dye-lot statistic).
-    if (A.crim && H1(e.id * 29 + 3) < 0.25) {
-      _acol.setRGB(_acol.r * 0.80, _acol.g * 0.70, _acol.b * 0.68);
-    }
-    // ARMIES-FIX8 §1 — the distance livery. See FDYE above for why this exists at all.
-    if (A.horde) {
-      const ddx = _v3.x - cpx, ddy = _v3.y - cpy, ddz = _v3.z - cpz;
-      const fd = clamp((Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz) - FDYE_N) / (FDYE_F - FDYE_N), 0, 1);
-      if (fd > 0) _acol.setRGB(_acol.r * (1 + (FDYE[0] - 1) * fd),
-                               _acol.g * (1 + (FDYE[1] - 1) * fd),
-                               _acol.b * (1 + (FDYE[2] - 1) * fd));
-    }
+    dyeLot(_acol, A, e.id);
+    if (e.def.elite || e.champ || e.type === 'boss' || e.def.art === 'boss') dyeSig(_acol, A);
+    if (A.horde) dyeDist(_acol, A, _v3.x - cpx, _v3.y - cpy, _v3.z - cpz);
     const WS = e.ward && WARDS[e.ward];
     if (e.ward) {                                  // SPEC3 §D — the warded wave shimmers
       const W = WARD_K > 0 && WARDC[e.ward];
@@ -14982,18 +15390,12 @@ Armies.syncVisuals = (vtNow) => {
         A.mesh.setMatrixAt(A.n, _rm4);
         // the same dye chain the leader ran, re-hashed on the retinue's own id: value jitter,
         // the archetype's hue key, the second dye lot and the distance livery.
-        const rlm = (0.66 + hr2 * 0.26) * A.lm, rwv = (hr1 - 0.5) * 0.065;
+        const rlm = (0.66 + hr2 * 0.26) * A.lm, rwv = (hr1 - 0.5) * A.hj;
         if (tnt) _rcol.setRGB(rlm * (1 + rwv) * tnt[0], rlm * tnt[1], rlm * (1 - rwv * 1.5) * tnt[2]);
         else _rcol.setRGB(rlm * (1 + rwv), rlm, rlm * (1 - rwv * 1.5));
         if (t3) _rcol.setRGB(_rcol.r * t3[0], _rcol.g * t3[1], _rcol.b * t3[2]);
-        if (A.crim && H1(rid * 29 + 3) < 0.25) _rcol.setRGB(_rcol.r * 0.80, _rcol.g * 0.70, _rcol.b * 0.68);
-        if (A.horde) {
-          const rdx = _rv3.x - cpx, rdy = _rv3.y - cpy, rdz = _rv3.z - cpz;
-          const rfd = clamp((Math.sqrt(rdx * rdx + rdy * rdy + rdz * rdz) - FDYE_N) / (FDYE_F - FDYE_N), 0, 1);
-          if (rfd > 0) _rcol.setRGB(_rcol.r * (1 + (FDYE[0] - 1) * rfd),
-                                    _rcol.g * (1 + (FDYE[1] - 1) * rfd),
-                                    _rcol.b * (1 + (FDYE[2] - 1) * rfd));
-        }
+        dyeLot(_rcol, A, rid);
+        if (A.horde) dyeDist(_rcol, A, _rv3.x - cpx, _rv3.y - cpy, _rv3.z - cpz);
         A.mesh.setColorAt(A.n, _rcol);
         if (A.ward) A.ward[A.n * 4 + 3] = 0;   // no ward shell, no champion rim: retinue is rabble
         const ro = A.n * 4;
