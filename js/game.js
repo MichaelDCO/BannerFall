@@ -3365,6 +3365,174 @@ scene.background = new THREE.Color(WPAL.bg);
 scene.fog = new THREE.Fog(C_HAZE, 214, 690);
 G.scene = scene;
 
+// ══ GAME_SPEC_10 §B — THE BAKED DETAIL TILES ══════════════════════════════════════════════
+// Round 10's blocker was structural, not tonal: the world is shaded ENTIRELY by analytic
+// in-shader noise, and three named defects fall straight out of that one fact — every steep
+// face is "airbrushed vertical flutes" (an xz-projected octave is CONSTANT down a wall), no
+// analytic term gives stone horizontal BEDDING, and there is no detail octave below ~1.5 u at
+// gameplay-close camera. §B's answer is a small set of seeded, procedurally BAKED, tileable
+// detail maps (tools/tilegen.mjs, committed under textures/) sampled TRI-PLANARLY here and
+// blended by the masks this shader already computes. The procedural identity is untouched:
+// the masks still decide WHICH tile a fragment is, and the tile only MODULATES the colour the
+// palette already produced (§B, verbatim: "detail albedo modulates the procedural base color,
+// it does not replace it").
+//
+// WHICH TILES THIS MAP LOADS. Seven kinds are baked; a map can only ever reach four of them,
+// so four is what it fetches — the ground tile its own palette implies, the road, the bedded
+// strata for steep faces, and the granite the crag/boulder instances take. That is ~800 KB
+// against 1.5 MB for the set, and it is the difference between a boot cost you can measure
+// and one you cannot. It is also what keeps the terrain program inside the fragment sampler
+// budget: three pairs plus the prop-AO stamp, the shadow map and the environment.
+const TILE_KIND = WPAL.snow > 0 ? 'snow' : MAP.moor ? 'moor_heath'
+                : (MAP.canyon || WPAL.lava) ? 'sand' : 'grass';
+const TILE_MISS = [], TILE_LOADS = [], TILES = {};
+{
+  const ldr = new THREE.TextureLoader();
+  // §B item 1: anisotropy 4 on ultra/high. A detail tile is seen at a grazing angle down the
+  // whole length of a road, which is the one case bilinear mip filtering blurs to nothing.
+  const ANISO = tier === 'mobile' ? 1 : 4;
+  const one = (kind, sfx, srgb) => {
+    let done;
+    TILE_LOADS.push(new Promise(r => { done = r; }));
+    // Resolved against the MODULE, not the document: '../textures/' from js/game.js is the
+    // same URL sw.js pre-caches, on a root deploy and on a project sub-path alike.
+    const url = new URL('../textures/' + kind + sfx + '.png', import.meta.url).href;
+    const tx = ldr.load(url, () => done(1), undefined, () => { TILE_MISS.push(kind + sfx); done(0); });
+    tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+    // Albedo is sRGB (it is colour); the normal map is DATA and must stay linear. Getting that
+    // second one backwards is the classic silent bug — an sRGB-decoded normal map still looks
+    // plausible, it just lights at the wrong angle everywhere.
+    tx.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    tx.generateMipmaps = true;
+    tx.minFilter = THREE.LinearMipmapLinearFilter;
+    tx.magFilter = THREE.LinearFilter;
+    tx.anisotropy = ANISO;
+    return tx;
+  };
+  // Albedo is 512 square, normal is 256 square. They are NOT the same texel grid and nothing
+  // here assumes they are: both tile seamlessly, so RepeatWrapping and a full mip chain are
+  // correct on both, and each is sampled by its own normalised UV.
+  for (const k of [TILE_KIND, 'road_dirt', 'rock_strata', 'granite'])
+    if (!TILES[k]) TILES[k] = { a: one(k, '_a', true), n: one(k, '_n', false) };
+}
+// A read-only handle beside G.WPAL: this is how a shipped build's mip chain, colour space and
+// anisotropy get checked from the console (or from tools/measure.mjs) instead of by eye.
+G.TILES = TILES;
+// §B item 5 — THE QUALITY TIER IS A UNIFORM, NEVER A VARIANT. Both knobs are read by the
+// terrain AND the granite program, so `low` is half strength on one compiled shader rather
+// than a second one; the v7 program contract (<= 60) does not move by a single entry.
+const U_TILEK = { value: tier === 'mobile' ? 0.5 : 1.0 };
+const U_TILEN = { value: tier === 'mobile' ? 0.5 : 1.0 };
+// §B item 4 — ROAD ALBEDO AUTHORITY, and WHICH maps need it. Round 10 measured road-vs-adjacent
+// -ground ΔL* at 1.1-2.3 on maps 3 and 5 against a target of 8. Those are exactly the two maps
+// whose ground is pale sand/ash: on grass, snow or heather the road's own brown carries the
+// contrast for free, and on a bleached basin it has no value authority at all. Keyed on the
+// ground TILE rather than on a map id, so the rule states its own reason.
+const TILE_ROADAUTH = TILE_KIND === 'sand' ? 0.700 : 0;
+// ── the shared GLSL, injected into the two EXISTING onBeforeCompile patches ────────────────
+// Tri-planar with EXPLICIT GRADIENTS. Every sample below sits behind a mask test ("is this
+// fragment rock", "is this fragment road"), i.e. inside divergent control flow, where an
+// implicit-derivative fetch is undefined by the GLSL ES spec and shows up as quad-shaped
+// garbage along every mask edge. textureGrad takes the derivative of the WORLD position,
+// computed once in uniform flow, and is legal anywhere — which is also what lets the
+// per-plane weight tests skip the two taps a wall does not need.
+const TILE_GLSL = `
+uniform float uTileK;
+uniform float uTileN;
+// Two tiling scales, ~1.5 u and ~6 u. SPEC_10 B item 3: detail is NEVER gated off at gameplay
+// distance (the r9 fNear lesson) — the two scales are cross-faded by distance so the near tile
+// can dissolve into its own mip mean while the far one is still fully resolved, which keeps
+// detail energy continuous instead of switching it off at 78 units.
+#define TILE_SN 0.6667
+#define TILE_SF 0.1667
+// The tiles are DETAIL maps: mean luma 128 by construction, so a modulation built from them
+// has zero DC and cannot shift a map's exposure. Sampled through an sRGB texture that mean
+// arrives as 0.2159 LINEAR, and a modulation centred on 0.5 would then darken every surface
+// in the game by a third. sqrt() is a gamma-2.0 inverse: it puts the sample back in the domain
+// the tile was authored in, where the mean is 0.4646 and (d - mean) is a signed, DC-free
+// detail. One sqrt per tile kind, taken AFTER the taps are blended, not per tap.
+#define TILE_DC 0.4646
+// 1 / (the anisotropy the tiles were uploaded with). See tileAniso below.
+#define TILE_ANIN 0.25
+// THE ANISOTROPY CLAMP, and it is the difference between this pass and a 1 px herringbone that
+// crawls. A sampler at anisotropy N takes at most N taps along the MAJOR axis of the pixel
+// footprint and reads its LOD off the MINOR one, so a footprint at 16:1 — sand or a mesa wall
+// under a battle camera — is covered four times too sparsely and returns aliasing rather than
+// blur. (Probed: a flat +2 LOD bias removes it exactly, i.e. undersampling by precisely 4x.)
+// The minor axis is NOT min(|ddx|,|ddy|). At a grazing angle both screen derivatives point
+// mostly ALONG the view, so the pair is nearly parallel: similar lengths, and a parallelogram
+// that is a sliver. Area over major is the honest minor axis, and it is the one the LOD follows.
+// Scaling BOTH gradients by need/minor leaves the ratio — and so the tap count the hardware
+// picks — untouched while raising the LOD by exactly log2(need/minor), so N taps tile the major
+// axis exactly once. The surface goes soft along the one axis the hardware cannot resolve, and
+// sharp along the one it can, which is what anisotropic filtering is for. Six stops is the cap,
+// so a fragment at a true silhouette asks for a mip level that exists.
+// The gradient scale one projection needs, measured IN that projection. hi is the major axis
+// of the footprint parallelogram and its area over hi is the minor one; min(|gx|,|gy|) is not,
+// because at a grazing angle both screen derivatives point along the view and the pair is
+// nearly parallel — similar lengths, sliver of an area. k is scale-invariant (hi and the area
+// over hi both scale with the tiling frequency), so one k serves both taps of a two-scale
+// fetch. 64 is six stops, the point past which the mip chain has nothing left to give.
+float tileK2(vec2 gx, vec2 gy) {
+  float hi = max(max(length(gx), length(gy)), 1e-7);
+  float lo = abs(gx.x*gy.y - gx.y*gy.x) / hi;
+  return max(min((hi * TILE_ANIN) / max(lo, 1e-7), 64.0), 1.0);
+}
+// ...and the three of them a tri-planar fetch needs. A wall's XZ projection is degenerate by
+// construction (a vertical face barely moves in XZ), and this is what turns that into a mip
+// level instead of into a stretched, aliasing sliver of tile.
+vec3 tileK3(vec3 dx, vec3 dy) {
+  return vec3(tileK2(dx.zy, dy.zy), tileK2(dx.xz, dy.xz), tileK2(dx.xy, dy.xy));
+}
+vec3 tileMod(vec3 lin, float k) {
+  vec3 d = sqrt(max(lin, 0.0));
+  float l = dot(d, vec3(0.2126,0.7152,0.0722));
+  // 35% of the tile's own hue survives and the rest is pure value. A detail map may give a
+  // surface grain; it may not decide what colour the map is. (WORLD-FIX6 1a collapsed five
+  // competing hue authorities on the rock — this is that ruling applied before a sixth exists.)
+  return 1.0 + (mix(vec3(l), d, 0.35) - TILE_DC) * k;
+}
+// pow-4 weights, the same sharpening the triplanar granite has used since WORLD-FIX6 1c: it
+// drives the two non-dominant planes toward zero so a box face cannot draw the closed contour
+// rings that read as sliced-log end grain — and it is what makes the tap tests below pay.
+vec3 triW(vec3 n) { vec3 a = abs(n); a = a*a; a = a*a; return a / (a.x + a.y + a.z + 1e-4); }
+vec3 tileP(sampler2D T, vec2 q, vec2 gx, vec2 gy, float f) {
+  return mix(textureGrad(T, q*TILE_SN,        gx*TILE_SN, gy*TILE_SN).rgb,
+             textureGrad(T, q*TILE_SF + 0.37, gx*TILE_SF, gy*TILE_SF).rgb, f);
+}
+// Single scale, unlike the albedo pair above. Relief is a LIGHTING term: at the 6 u far
+// period a perturbation is shape, and this shader already carries three octaves of analytic
+// shape (1.85/5.20/13.0 plus the 0.30 coarse field). What only a tile can supply is sub-metre
+// grain, so the near tap is the whole of what is worth fetching here.
+vec2 tilePN(sampler2D T, vec2 q, vec2 gx, vec2 gy) {
+  return textureGrad(T, q*TILE_SN, gx*TILE_SN, gy*TILE_SN).xy*2.0 - 1.0;
+}
+// The Y plane takes (x,z); the two VERTICAL planes take (z,y) and (x,y), so the tile's V axis
+// IS world Y on every wall. That is what locks rock_strata's bedding horizontal: the bands
+// vary along the tile's V (measured on the bake: row-mean SD 22.4 against column-mean SD 1.5),
+// so on a face of any bearing they lie flat. No warp and no amplitude was needed to make them.
+vec3 tileT(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, float s) {
+  return textureGrad(T, p.zy*s, dx.zy*(s*k.x), dy.zy*(s*k.x)).rgb * w.x
+       + textureGrad(T, p.xz*s, dx.xz*(s*k.y), dy.xz*(s*k.y)).rgb * w.y
+       + textureGrad(T, p.xy*s, dx.xy*(s*k.z), dy.xy*(s*k.z)).rgb * w.z;
+}
+// UDN blend: each plane's tangent XY is projected onto that plane's two world axes and the sum
+// perturbs the base normal. The tile's Z is discarded on purpose — a full RNM reconstruct on
+// three near-orthogonal planes fights itself at the blend, and UDN cannot swing a normal past
+// the silhouette, which is the failure WORLD-FIX5 5b had to bound on the boulder bump.
+vec3 tileTN(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, float s) {
+  vec2 a = textureGrad(T, p.zy*s, dx.zy*(s*k.x), dy.zy*(s*k.x)).xy*2.0-1.0;
+  vec2 b = textureGrad(T, p.xz*s, dx.xz*(s*k.y), dy.xz*(s*k.y)).xy*2.0-1.0;
+  vec2 c = textureGrad(T, p.xy*s, dx.xy*(s*k.z), dy.xy*(s*k.z)).xy*2.0-1.0;
+  return vec3(0.0, a.y, a.x)*w.x + vec3(b.x, 0.0, b.y)*w.y + vec3(c.x, c.y, 0.0)*w.z;
+}
+// The far scale is offset in WORLD SPACE, not in UV: at a 4x period ratio an unshifted pair
+// beats against itself every 6 units, which is a visible plaid at overview framing.
+vec3 tileTri2(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, float f) {
+  return mix(tileT(T, p, dx, dy, k, w, TILE_SN), tileT(T, p + 12.7, dx, dy, k, w, TILE_SF), f);
+}
+`;
+
 const WT = { value: 0 };                            // shared render-only time uniform
 const sstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
 // Dedicated deterministic stream for world scatter — keeps G.rng()'s sim stream untouched
@@ -4043,6 +4211,16 @@ function graniteMat(o) {
     // highlight. Tighter and weaker than timber — stone is rough, but a weathered cap is polished.
     specPatch(sh, 0.90, 15, 0.070, false);
     sh.uniforms.uSunDirR = { value: SUNDIR };
+    // GAME_SPEC_10 §B — ONE tile pair on the crags and boulders. The bedded strata tile is
+    // deliberately not here: this shader already carries the analytic bedding ladder rounds 7
+    // and 8 spent two passes tuning, and stacking a second period of courses on top of it
+    // would re-open the barcode those passes closed. What §A says the stone lacks is GRAIN at
+    // 20 cm, and granite_a is exactly that. The heightfield's cliff and gorge walls — the
+    // surfaces with no analytic bedding of their own — get rock_strata in terrainMat instead.
+    sh.uniforms.uTQ_A = { value: TILES.granite.a };
+    sh.uniforms.uTQ_N = { value: TILES.granite.n };
+    sh.uniforms.uTileK = U_TILEK;
+    sh.uniforms.uTileN = U_TILEN;
     sh.vertexShader = 'varying vec3 vRP;\nvarying vec3 vRN;\nvarying float vRPh;\nvarying float vRSc;\n' +
       sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       {
@@ -4058,7 +4236,8 @@ function graniteMat(o) {
         vRP = (modelMatrix * _rp).xyz;
         vRN = normalize(mat3(modelMatrix) * _rn);
       }`);
-    sh.fragmentShader = 'uniform vec3 uSunDirR;\nvarying vec3 vRP;\nvarying vec3 vRN;\nvarying float vRPh;\nvarying float vRSc;\nfloat vRelief;\nfloat vDfs;\n' + NOISE_GLSL +
+    sh.fragmentShader = 'uniform vec3 uSunDirR;\nvarying vec3 vRP;\nvarying vec3 vRN;\nvarying float vRPh;\nvarying float vRSc;\nfloat vRelief;\nfloat vDfs;\n' +
+      'uniform sampler2D uTQ_A;\nuniform sampler2D uTQ_N;\nvec3 gTileR;\n' + TILE_GLSL + NOISE_GLSL +
       sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
       {
         // WORLD-FIX6 §1c. THE WOOD-GRAIN END-RINGS, found. overview3's boulder blocks came
@@ -4244,6 +4423,29 @@ function graniteMat(o) {
         // lilac. Granite next to a saturated meadow has to be authored WARM, not neutral,
         // to be SEEN as neutral. This lands the rock near hue 45-55 at S ~0.22.
         diffuseColor.rgb *= ` + v3s(WPAL.rockComp) + `;
+        // ══ GAME_SPEC_10 B — THE DETAIL TILES ON THE STONE ═════════════════════════════════
+        // Everything above this line is analytic, and round 10's verdict on analytic stone is
+        // that a steep face becomes "airbrushed vertical flutes... brushed wood". The tile pair
+        // is the structural answer: baked grain, sampled tri-planarly in WORLD space at two
+        // periods, so a boulder and the crag beside it share one stone rather than each
+        // carrying a slice of a field scaled to its own size.
+        // WHY THE WORLD SCALE IS NOT MULTIPLIED BY dfs. Every analytic frequency in this shader
+        // rides dfs because FLORA 4a found a 1 u boulder was rendering a fifth of one bedding
+        // course. That reasoning is right for STRUCTURE (a boulder needs its own bedding) and
+        // wrong for GRAIN: real stone grain is the same size on a pebble and on a cliff, and
+        // scaling it per instance is exactly what makes a scatter field read as a set of
+        // shrunk copies. The strata ladder above carries the structure; this carries surface.
+        gTileR = vec3(0.0);
+        if (uTileK > 0.0) {
+          vec3 gDx = dFdx(vRP), gDy = dFdy(vRP);
+          vec3 gW  = triW(vRN);
+          vec3 gK  = tileK3(gDx, gDy);
+          float gRel = 1.0 - smoothstep(0.050, 0.190, sqrt(length(cross(gDx, gDy))));
+          float gFar = smoothstep(30.0, 145.0, distance(cameraPosition, vRP));
+          vec3 dq = tileTri2(uTQ_A, vRP, gDx, gDy, gK, gW, gFar);
+          gTileR = tileTN(uTQ_N, vRP, gDx, gDy, gK, gW, TILE_SN) * (0.42*gRel);
+          diffuseColor.rgb *= mix(vec3(1.0), tileMod(dq, 1.200), uTileK);
+        }
       }`)
       // FLORA §4f. THE RIM VOIDS. The "geometry holes / black voids at the plateau-to-cliff
       // rim" are not holes — a void-cluster scan puts them on the CRAGS standing in the cliff
@@ -4335,6 +4537,15 @@ function graniteMat(o) {
           float _pl = length(_pert);
           if (_pl > 0.40) _pert *= 0.40 / _pl;
           vec3 _nB = normalize(_nW - _pert);
+          // GAME_SPEC_10 B — the tile's own relief, on top of the analytic bump. Same
+          // construction as the terrain's: project onto the surface, clamp the length, then
+          // perturb. gTileR was accumulated in the albedo pass, so colour and shading agree.
+          if (uTileN > 0.0) {
+            vec3 _tp = gTileR * uTileN;
+            _tp -= _nB * dot(_tp, _nB);
+            float _tl = length(_tp); if (_tl > 0.34) _tp *= 0.34/_tl;
+            _nB = normalize(_nB + _tp);
+          }
           normal = normalize((viewMatrix * vec4(_nB, 0.0)).xyz);
         }
       }`);
@@ -5462,6 +5673,26 @@ const TERRAIN_ALBEDO = `
       vg *= min(1.0, sL / max(vL, 1e-4));            // hue may move; value may only fall
       soil = mix(soil, vg, smoothstep(0.02,0.40,vRD.x));
     }
+    // ══ GAME_SPEC_10 §B item 4 — ROAD ALBEDO AUTHORITY ═════════════════════════════════════
+    // Round 10: road-vs-adjacent-ground delta-L* 1.1-2.3 on maps 3 and 5, target 8. The road is
+    // painted correctly — three bands, two rut pairs, a packed centreline — and every one of
+    // those is a RATIO applied to the dirt colour, so on a map whose dirt and whose sand start
+    // life at the same value the whole profile lands inside two levels of the ground beside it.
+    // No amount of rut depth can fix that, because the fault is the base and not the pattern.
+    // So this is a GUARANTEE rather than a tuned constant, written the same way as the verge
+    // clamp above: the road's albedo may sit at most roadAuth of the soil THIS fragment would
+    // otherwise have been. It compares the two candidate colours the shader has already built
+    // at the same point, so it is literally "road versus adjacent ground"; it can only ever
+    // DARKEN the lane, so a map whose road already reads (1, 2 and 4, where the clause is not
+    // even emitted) is untouched by construction; and it scales the whole dirt chain, so the
+    // ruts, the crown and the gravel come down WITH it instead of being flattened by it.
+` + (TILE_ROADAUTH ? `
+    {
+      float _rsL = dot(soil, vec3(0.2126,0.7152,0.0722));
+      float _rdL = dot(dirt, vec3(0.2126,0.7152,0.0722));
+      float _rwa = _rsL * ${TILE_ROADAUTH.toFixed(3)};
+      if (_rdL > _rwa) dirt *= _rwa / max(_rdL, 1e-5);
+    }` : '') + `
     vec3 alb = mix(soil, dirt, tRoad);
 
     // ── layered granite, TRIPLANAR (an xz-only projection smears on vertical cliff faces) ──
@@ -5622,6 +5853,60 @@ const TERRAIN_ALBEDO = `
     // scree / dust apron where the slope steepens but rock hasn't taken over
     alb = mix(alb, mix(` + v3s(WPAL.scree) + `, alb, 0.50), smoothstep(0.16,0.34,slope)*(1.0-tRock)*0.60);
 ` + SNOW_GLSL + LAVA_GLSL + `
+    // ══ GAME_SPEC_10 B — THE TRI-PLANAR DETAIL TILES, APPLIED ══════════════════════════════
+    // Placed HERE, after the dry/soil/road/rock/snow/lava mixes, for the reason the WORLD-FIX9
+    // 4 note below already establishes: every fine octave written before this point lives
+    // inside one branch or another, so the gorge walls, the Frostfell snowfield and the lane
+    // have historically received none of them. A term applied to the FINAL albedo reaches
+    // every surface in the frame, which is the only place a detail pass belongs.
+    //
+    // The masks still choose the tile — that is the whole design. Steep rock takes the bedded
+    // strata tri-planarly (so a wall gets grain ACROSS its bedding instead of down it, which
+    // is the projection fault no amplitude could ever pay); everything else takes the map's
+    // own ground tile, cross-faded into road_dirt by the same tRoad the paint above uses.
+    // Nothing here is gated on dDet or fDet: a real mip chain plus anisotropy is a correct
+    // answer to aliasing and a distance fade is not, which is r9 4's entire finding.
+    gTileP = vec3(0.0);
+    if (uTileK > 0.0) {
+      // ONE derivative pair, taken in uniform control flow, feeds every textureGrad below.
+      vec3 tDx = dFdx(vWP), tDy = dFdy(vWP);
+      float tFar   = smoothstep(30.0, 145.0, distance(cameraPosition, vWP));
+      // RELIEF FADE. The geometric mean of the footprint's two axes is the honest isotropic
+      // size of a pixel on this surface; the major axis alone would fade the closeup road,
+      // which is the one surface this pass exists for. Full relief while a pixel covers under
+      // 5 cm of ground, gone by 19 cm — the tile's normal is 256 texels over 1.5 u, so past
+      // that a "bump" is smaller than the pixel lighting it and can only stipple.
+      float tPx  = sqrt(length(cross(tDx, tDy)));
+      float tRel = 1.0 - smoothstep(0.050, 0.190, tPx);
+      // Steepness, on the same stops the strata ladder uses. A cap or a bench takes the ground
+      // tile (an XZ projection is correct where the surface faces up); a wall takes the strata.
+      float tSteep = smoothstep(0.70, 0.32, abs(vWN.y));
+      float tWS    = tSteep * tRock;
+      float tWG    = 1.0 - tWS;
+      if (tWG > 0.004) {
+        // The XZ pair, clamped in its own projection: on a bank steep enough to still carry
+        // some ground tile this is what stops it stretching into an aliasing sliver.
+        float kG = tileK2(tDx.xz, tDy.xz);
+        vec2 gx = tDx.xz*kG, gy = tDy.xz*kG;
+        vec3 dg = tileP (uTG_A, wxz, gx, gy, tFar);
+        vec2 ng = tilePN(uTG_N, wxz, gx, gy);
+        if (tRoad > 0.004) {
+          dg = mix(dg, tileP (uTR_A, wxz, gx, gy, tFar), tRoad);
+          ng = mix(ng, tilePN(uTR_N, wxz, gx, gy), tRoad);
+        }
+        alb *= mix(vec3(1.0), tileMod(dg, 1.150), tWG*uTileK);
+        gTileP += vec3(ng.x, 0.0, ng.y) * (tWG*0.38*tRel);
+      }
+      if (tWS > 0.004) {
+        vec3 tW = triW(vWN);
+        vec3 tK = tileK3(tDx, tDy);
+        alb *= mix(vec3(1.0), tileMod(tileTri2(uTS_A, vWP, tDx, tDy, tK, tW, tFar), 1.250), tWS*uTileK);
+        // The detail NORMAL is taken at the near scale only. Relief is a lighting term: at the
+        // far scale its features are under a pixel, where a perturbation buys sparkle rather
+        // than shape (the same Nyquist argument FLORA 4e's taper makes on the crag bump).
+        gTileP += tileTN(uTS_N, vWP, tDx, tDy, tK, tW, TILE_SN) * (tWS*0.42*tRel);
+      }
+    }
     // WORLD-FIX7 §8a. The top albedo octave measured a high-frequency luminance RMS of 13.6 on
     // Vale grass (against 1.8 on Frostfell snow) — at ~+/-14 L per pixel a micro-noise reads as
     // camouflage blotch or video static, and it crawls in motion. Cut to ~+/-5 L, and it now fades
@@ -5765,10 +6050,22 @@ terrainMat.onBeforeCompile = (sh) => {
   sh.uniforms.uWT = WT;                        // render-only clock (lava crawl, WORLD-FIX3 §4)
   sh.uniforms.uSW = U_SW;
   sh.uniforms.uSunDirT = { value: SUNDIR };    // WORLD-FIX8 §1c: the rock-cap sheen below
+  // GAME_SPEC_10 §B — three tile pairs is everything the terrain can reach: the map's ground,
+  // the road, and the bedded strata for steep faces. Six samplers, added to the EXISTING
+  // patch — the cache key is still the constant 'bf_terrain', so this is the same program.
+  sh.uniforms.uTG_A = { value: TILES[TILE_KIND].a };
+  sh.uniforms.uTG_N = { value: TILES[TILE_KIND].n };
+  sh.uniforms.uTR_A = { value: TILES.road_dirt.a };
+  sh.uniforms.uTR_N = { value: TILES.road_dirt.n };
+  sh.uniforms.uTS_A = { value: TILES.rock_strata.a };
+  sh.uniforms.uTS_N = { value: TILES.rock_strata.n };
+  sh.uniforms.uTileK = U_TILEK;
+  sh.uniforms.uTileN = U_TILEN;
   sh.vertexShader = 'attribute vec2 aRoad;\nattribute float aAO;\nvarying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\n' +
     sh.vertexShader.replace('#include <begin_vertex>',
       '#include <begin_vertex>\n vWP = (modelMatrix*vec4(transformed,1.0)).xyz;\n vWN = normalize(mat3(modelMatrix)*normal);\n vRD = aRoad;\n vAOf = aAO;');
-  sh.fragmentShader = 'varying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\nuniform sampler2D uPAO;\nuniform float uWT;\nuniform float uSW;\nuniform vec3 uSunDirT;\n' + NOISE_GLSL +
+  sh.fragmentShader = 'varying vec3 vWP;\nvarying vec3 vWN;\nvarying vec2 vRD;\nvarying float vAOf;\nuniform sampler2D uPAO;\nuniform float uWT;\nuniform float uSW;\nuniform vec3 uSunDirT;\n' +
+    'uniform sampler2D uTG_A;\nuniform sampler2D uTG_N;\nuniform sampler2D uTR_A;\nuniform sampler2D uTR_N;\nuniform sampler2D uTS_A;\nuniform sampler2D uTS_N;\nvec3 gTileP;\n' + TILE_GLSL + NOISE_GLSL +
     sh.fragmentShader
       .replace('#include <map_fragment>', TERRAIN_ALBEDO)
       .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = roughness * mix(1.0, 0.74, tRock) * mix(1.0, 0.84, tRoad);')
@@ -6022,6 +6319,19 @@ terrainMat.onBeforeCompile = (sh) => {
           // here and is a better-conditioned signal at this mesh density; the strength goes to the
           // number asked. It is gated on tRock, so no ground surface moves.
           diffuseColor.rgb *= 1.0 - 0.25*tRock*smoothstep(0.62, 0.20, h0);
+        }
+        // ══ GAME_SPEC_10 B — THE DETAIL NORMAL ═════════════════════════════════════════════
+        // Albedo grain alone reads as PRINT; what makes gravel read as gravel, and a bedding
+        // ledge read as a ledge, is that each feature has a lit side. gTileP is the world-space
+        // UDN sum accumulated during the albedo pass (ground/road on XZ, strata tri-planar), so
+        // the shading and the colour agree about where the grains are.
+        // Projected onto the surface and length-clamped for the reason WORLD-FIX5 5b gives: an
+        // unbounded perturbation stops perturbing a normal and starts replacing it.
+        if (uTileN > 0.0) {
+          vec3 tp = gTileP * uTileN;
+          tp -= wn * dot(tp, wn);
+          float tl = length(tp); if (tl > 0.34) tp *= 0.34/tl;
+          wn = normalize(wn + tp);
         }
         normal = normalize((viewMatrix*vec4(wn,0.0)).xyz);
       }`);
@@ -7933,6 +8243,29 @@ scene.onBeforeRender = () => {
 };
 // ══════════════════════ END SECTION: WORLD ══════════════════════
 
+// ══ GAME_SPEC_10 §B item 1 — THE TILE FETCHES, JOINED ═════════════════════════════════════
+// The eight requests were issued at the TOP of this section, before a single canvas was drawn,
+// and they have had the whole of WORLD's generation to overlap with — which is why joining
+// them here costs a settled promise rather than a round trip. Same reasoning as BOOTPIPE §3's
+// modulepreload hints: a fetch is free if it is started before the work that hides it and
+// expensive if it is started after.
+// `BOOT.wait` rather than a bare await, so the slice census keeps measuring WORK: a thread
+// that is idle on the network must not be billed to the chunk that ran before it.
+// A tile that does not arrive is not a boot failure. Both strengths go to zero, every
+// modulation collapses to an exact 1.0, and the map renders the procedural shading it always
+// did — so an offline first load or a stripped deploy loses detail and nothing else.
+if (TILE_LOADS.length) {
+  await BOOT.wait(Promise.all(TILE_LOADS));
+  if (TILE_MISS.length) {
+    U_TILEK.value = 0; U_TILEN.value = 0;
+    console.log('TILEWARN detail tiles unavailable (' + TILE_MISS.join(',') +
+      ') — world falls back to procedural shading');
+  } else {
+    console.log('TILELOG kind=' + TILE_KIND + ' pairs=' + Object.keys(TILES).length +
+      ' aniso=' + TILES[TILE_KIND].a.anisotropy + ' k=' + U_TILEK.value +
+      ' roadAuth=' + TILE_ROADAUTH);
+  }
+}
 await BOOT.sub(0.95);   // BOOTPIPE: the vale's cloth is woven; the road spline is next
 // ══════════════════════ SECTION: PATH (owner: WORLD builder) ══════════════════════
 // Road spline + arc-length tables. The control points come from the ACTIVE map (CORE's
