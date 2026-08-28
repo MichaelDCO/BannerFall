@@ -1911,6 +1911,14 @@ const MAPS = [
       shdDS: 0.36, shdRot: [1.180, 1.000, 0.840],
       granite: [0.1780, 0.1900, 0.2080],   // §9: cool granite, still inside the yellow-grey band
       sunEl: 40, hfK: 1.0, hfAlb: 2.30, macroK: 1.0,   // §4: snow measured 3.98 detail energy
+      // DRESSING, map 2. Snow's failure mode is the opposite of every other map's: it renders
+      // near-white at L 69 in the field and L 205 in the drifts, so a unit of albedo modulation
+      // buys twice the L a mid-tone surface would and reads as SPARKLE — the r7 finding about a
+      // low-chroma surface needing more tooth does not extend to one that is already at the top
+      // of the value range. hfAlb 2.30 is already doing that work analytically. So the tile is
+      // held BELOW the shipped strength, and the wall knobs stay at 1: the Frostfell basin's
+      // rim is granite crag, not a bedded scarp, and laminating it would be a lie about the map.
+      bedK: 1.0, bedA: 1.0, bedM: 1.0, tileG: 0.82, tileR: 1.25,
       snowN: 1.75,           // §2.3: drift + sastrugi relief — the surface the field never had
       // §1: the air has to stay ABOVE the snowfield or the value hierarchy inverts on the one map
       // whose ground is near-white. Snow renders ~L 205 lit, so the haze goes to ~L 217.
@@ -2167,6 +2175,13 @@ const MAPS = [
       // pale-warm field, instead of the chalk-on-ember it was.
       granite: [0.2100, 0.1720, 0.1400],
       sunEl: 42, hfK: 1.0, macroK: 1.0, snowN: 0,   // §1: SPEC §3's elevation, 2 low for the ash haze
+      // DRESSING, map 3. The back scarp measured bed 0.70 — the only rect in the set where the
+      // vertical component out-measures the horizontal by half again, i.e. r10's "brushed wood"
+      // verdict is still literally true here. It gets the strongest bedding gain and the
+      // strongest lamination. The road pair is at dL 13.5 and must stay there: the road tile
+      // gain is a MODULATION with zero DC, so it cannot move the pair's means, but it is kept
+      // moderate anyway because a scorched lane's read comes from its value, not its grain.
+      bedK: 1.55, bedA: 2.90, bedM: 2.65, tileG: 1.20, tileR: 1.35,
       // Weighted hard toward dark olive conifers (58%, was 26%): a wood of bright orange
       // autumn canopies sat in exactly the same hue wedge as the sand AND the enemy
       // tabard, so the horde had nowhere to read. The remaining broadleaves go deep
@@ -2331,6 +2346,14 @@ const MAPS = [
       // WORLD-FIX9 §4: hfK (the NORMAL relief, which is what §12a's stipple was) stays at 0.42 —
       // that finding is still correct. hfAlb buys back the albedo tooth §4 wants without re-opening it.
       hfK: 0.42, hfAlb: 1.85, macroK: 1.85, snowN: 0,
+      // DRESSING, map 4. hfK 0.42 is a standing ruling — WORLD-FIX6 12a took the fine octaves
+      // off this map because a moor has FORM, not speckle, and r9 only bought the albedo tooth
+      // back (hfAlb 1.85) without reopening the relief. A detail TILE at full strength would
+      // reopen it by the back door, so the ground tile is held under 1 here as it is on the
+      // snow. The moor's other standing hazard is chromatic: its heather bloom sits next to the
+      // magenta wedge, and the tile modulation keeps only 35% of the tile's own hue (TILE_GLSL
+      // tileMod), so a smaller gain is also a smaller hue excursion. No wall claim on this map.
+      bedK: 1.0, bedA: 1.0, bedM: 1.0, tileG: 0.88, tileR: 1.20,
       // dusk shade is COOL. The warm shadow grade is the Vale's alone (INTEGRATE §1).
       shdWarm: 0.0,
       shdDS: 0.26, shdRot: [1.180, 1.000, 0.840],
@@ -2715,6 +2738,13 @@ const MAPS = [
       // high sun on a fine-relief floor really does fizz; hfAlb buys the albedo tooth instead, and the
       // post-rock-mix micro octave (see TERRAIN_ALBEDO) carries it onto the walls as well.
       hfK: 0.88, hfAlb: 3.00, macroK: 1.20, snowN: 0,
+      // DRESSING, map 5. Three of the four wall rects in this pass are on this map and it holds
+      // the worst of them: battle5's mesa at hpSD 2.09 and bed 0.48, overview5's back scarp at
+      // 4.50/0.89, `_gorge`'s at 2.32/1.36. The walls ARE this map — 45% of `_gorge`'s frame by
+      // the r8 count — so it takes map 3's bedding gain and a little more lamination again.
+      // Ground stays near the shipped strength: hfAlb is already 3.00 here, the highest on any
+      // map, and the sand's problem was never that it had no analytic octave.
+      bedK: 1.55, bedA: 3.10, bedM: 2.65, tileG: 1.15, tileR: 1.30,
       // Aerial perspective: warm sand-dust, and thicker than the Vale's. A canyon system seen
       // from above is mostly its own haze, and this is what separates the near walls from the far.
       // WORLD-FIX8 §1a §2d. Round 8 sampled overview5's sky at (153,141,126) and `_gorge`'s at
@@ -3114,6 +3144,32 @@ const WPAL_BASE = {
   // whole §12a finding was a normal-relief stipple, and a map must be able to ask for more albedo
   // tooth without asking for more relief.
   hfAlb: 1.0,
+  // ══ SPEC_10 §B, DRESSING — the four per-map detail knobs ═════════════════════════════════
+  // Each is a MULTIPLIER on a named term, never a new term (so: no new taps, no new programs,
+  // and a map's dressing is one line you can read against its brief):
+  //  bedK  gain on the wall's two bedding scales (the ~0.95 u courses and the 0.24 u grain)
+  //        and on the strata detail tile, which is the most bedded thing in the frame;
+  //  bedA  how far the 0.24 u wall grain is stretched along BEARING — 1 is isotropic speckle,
+  //        2.6 is laminae. This is the knob that moves rowSD/colSD (bedding READS) rather than
+  //        raising both axes together (the wall merely gets busier), and it costs nothing:
+  //        the octave was already sampled on (bearing, height), it is only being scaled.
+  //  tileG gain on the ground detail tile's albedo modulation;
+  //  tileR the same for the road tile, kept separate because the road is what the gameplay
+  //        camera stares at and r10 named it as mush on its own.
+  // THESE FOUR ARE MAP 1's VALUES, not neutral ones. The Vale's cliff ring is the least broken
+  // of the three gorge walls (measured bed 1.12 on the shadow side, 1.66 on the lit one), so
+  // its bedding gain is the modest one; what map 1 fails is its own `closeup` preset, where the
+  // lane under the lens measured hpSD 2.40 and the near/far band ratio 0.54 — the surface the
+  // player is nose-to-nose with carried HALF the detail of the same surface forty units out.
+  // That is a tile-WEIGHT problem, not a projection one, so the two tile gains carry map 1's
+  // fix and the road's goes furthest.
+  //  bedM  the MID-BAND bedding knob, and the one the r10 wall target actually turns. It
+  //        raises the 2.13 u second course's contrast and, by the same factor, DIVIDES the
+  //        fine phase jitter that was shredding it (see tools/d_dress10b.py for the band
+  //        inventory that identifies this as the only term in the 4-16 px window — the window
+  //        bedding READS in at the default camera). At 1.0 every expression it appears in is
+  //        the byte that shipped, which is what the two maps with no wall claim are set to.
+  bedK: 1.30, bedA: 2.60, bedM: 1.90, tileG: 1.45, tileR: 1.85,
   // WORLD-FIX6 §2.3. Drift/sastrugi relief gain on the snow splat (0 = no snow on this map).
   snowN: 0,
   // Aerial perspective is COOL (SPEC §3 haze #cfe0ee). This was a warm oatmeal, and since
@@ -5752,7 +5808,7 @@ const TERRAIN_ALBEDO = `
       float bs  = smoothstep(0.14,0.42,bnd)*smoothstep(0.96,0.62,bnd);
       bs = mix(bs, floor(bs*3.0 + 0.5)/3.0, 0.70);         // three discrete courses
       float joint = clamp(smoothstep(0.060,0.0,bnd) + smoothstep(0.940,1.0,bnd), 0.0, 1.0);
-      float bn2 = fract((bandY + bWarp)*0.470 + warp*2.6 + (d3-0.5)*0.55);
+      float bn2 = fract((bandY + bWarp)*0.470 + warp*${(2.6 / (WPAL.bedM != null ? WPAL.bedM : 1)).toFixed(4)} + (d3-0.5)*${(0.55 / (WPAL.bedM != null ? WPAL.bedM : 1)).toFixed(4)});
       float bs2 = smoothstep(0.16,0.50,bn2)*smoothstep(0.96,0.58,bn2);
       // The dark course keeps its per-map value ratio to the exposed one; only its HUE is gone.
       float rLo = dot(` + v3s(WPAL.rockA) + `, vec3(0.2126,0.7152,0.0722));
@@ -5763,7 +5819,8 @@ const TERRAIN_ALBEDO = `
       // courses, which is all a viewer needs to read bedding; what is gone is the amplitude that
       // made the ordering shout.
       float rv = mix(rLo, rHi, 0.70 + 0.30*bs) / max(rHi, 1e-4);
-      rv *= 0.94 + 0.11*bs2;                                            // fine bedding
+      rv *= 0.94 + 0.11*bs2                                             // fine bedding
+                 + (bs2 - 0.440)*${(0.110 * ((WPAL.bedM || 1) - 1.0)).toFixed(4)};   // ...+ bedM, DC-neutral
       rv *= 1.0 - 0.12*joint;                                           // dark bedding planes
       rv *= 0.84 + 0.31*w0;                                             // buttress-scale masses
       rv *= 0.87 + 0.25*d1;
@@ -5808,7 +5865,21 @@ const TERRAIN_ALBEDO = `
       float fbY = vWP.y*1.055 + (fbm2(vWP.xz*0.118 + 401.0) - 0.5)*0.70;
       float fbn = fract(fbY);
       float fbs = smoothstep(0.08,0.38,fbn)*smoothstep(0.98,0.54,fbn);
-      rv *= 1.0 + (fbs - 0.5)*0.290*stp;
+      // The shipped term, plus a DC-NEUTRAL increment for bedK. fbs averages 0.530 over a
+      // uniform phase (it is a product of two smoothsteps, not a sine), so scaling the shipped
+      // form — which is centred on 0.5 — would scale its DC error too and darken the wall.
+      rv *= 1.0 + (fbs - 0.5)*0.290*stp
+                + (fbs - 0.530)*${(0.290 * ((WPAL.bedK || 1) - 1.0)).toFixed(4)}*stp;
+` + ((WPAL.bedM || 1) > 1 ? `
+      // SPEC_10 DRESSING 3 — THE ~4.1 u COURSE, i.e. 12-13 px at the default camera. The two
+      // ladders around it sit at 2.13 u (6-7 px, the bottom of the window bedding reads in) and
+      // 6.7-16 u (21-50 px, above it); this fills the hole between them, and it is the scale a
+      // storey of sandstone actually beds at. No new noise tap: bandY, bWarp and warp are all
+      // already in registers for the ladders above.
+      float bn3 = fract((bandY + bWarp*0.60)*0.245 + warp*0.90);
+      float bs3 = smoothstep(0.14,0.46,bn3)*smoothstep(0.97,0.60,bn3);
+      rv *= 1.0 + (bs3 - 0.485)*${(0.170 * ((WPAL.bedM || 1) - 1.0)).toFixed(4)}*stp;
+` : '') + `
       // §4b. The surviving vertical component gets HARD-EDGED breaks instead of a smooth ramp: a
       // ~3 u cell noise stepped, so the flutes are interrupted by joint faces the way a real cleaved
       // wall is, rather than running 400-700 px unbroken as §4 measures them.
@@ -5822,8 +5893,8 @@ const TERRAIN_ALBEDO = `
       // inside the grass branch or on an XZ projection that is constant down a vertical face. This
       // one is sampled on (horizontal bearing, height), so it varies fastest exactly where the smear
       // is. Faded with dDet so the far rim does not fizz.
-      rv *= 1.0 + (vn2(vec2(dot(wxz, vec2(0.8660,0.5000)), vWP.y)*4.20 + 61.0) - 0.5)
-                  *0.230*stp*mix(0.35, 1.0, dDet);
+      rv *= 1.0 + (vn2(vec2(dot(wxz, vec2(0.8660,0.5000))*${(4.20 / (WPAL.bedA != null ? WPAL.bedA : 1)).toFixed(4)}, vWP.y*4.20) + 61.0) - 0.5)
+                  *${(0.230 * (WPAL.bedK != null ? WPAL.bedK : 1)).toFixed(4)}*stp*mix(0.35, 1.0, dDet);
       // §6C: compressing the value chain above raises its MEAN as it narrows its range (a chain
       // of 0.5..1.5 terms sits near 1.0 either way, but the strata ramp itself now starts at 0.56
       // of the rLo->rHi span rather than 0.20). The gain comes down to hold the wall's exposure
@@ -5878,6 +5949,21 @@ const TERRAIN_ALBEDO = `
       // that a "bump" is smaller than the pixel lighting it and can only stipple.
       float tPx  = sqrt(length(cross(tDx, tDy)));
       float tRel = 1.0 - smoothstep(0.050, 0.190, tPx);
+      // ...and the WALL's own, which is tRel TIMES a fade on how squarely the wall faces the
+      // lens. Two footprint windows were tried on this defect and both returned the capture
+      // byte-for-byte, which is the finding: battle5's mesa is INSIDE both, i.e. it is close and
+      // correctly sampled, and its 1 px fabric weave (isolated by forcing uTileN to 0) is
+      // therefore not aliasing. It is the other half of d_tile9h's rule. That note bounded the
+      // tile's 12-degree RMS tangent slope against the SUN's 23-degree rake and stopped there;
+      // the view matters as much, because at a grazing view every perturbed facet either catches
+      // the key or hides from it with nothing between, the shading decision goes binary, and the
+      // pattern of that decision is the tile's own weave. Square-on it is grain; edge-on it is
+      // corduroy. So: full relief while the wall is turned toward the lens, gone as it goes
+      // edge-on. The _gorge wall, the framing where wall relief is worth having, sits at the top
+      // of this window; a mesa flank crossed at battle framing sits at the bottom of it.
+      // (No backticks in this comment on purpose: it lives inside a template literal.)
+      float tNV   = abs(dot(normalize(vWN), normalize(cameraPosition - vWP)));
+      float tRelW = tRel * smoothstep(0.22, 0.66, tNV);
       // Steepness, on the same stops the strata ladder uses. A cap or a bench takes the ground
       // tile (an XZ projection is correct where the surface faces up); a wall takes the strata.
       float tSteep = smoothstep(0.70, 0.32, abs(vWN.y));
@@ -5894,17 +5980,17 @@ const TERRAIN_ALBEDO = `
           dg = mix(dg, tileP (uTR_A, wxz, gx, gy, tFar), tRoad);
           ng = mix(ng, tilePN(uTR_N, wxz, gx, gy), tRoad);
         }
-        alb *= mix(vec3(1.0), tileMod(dg, 1.150), tWG*uTileK);
+        alb *= mix(vec3(1.0), tileMod(dg, mix(${(1.150 * (WPAL.tileG != null ? WPAL.tileG : 1)).toFixed(4)}, ${(1.150 * (WPAL.tileR != null ? WPAL.tileR : 1)).toFixed(4)}, tRoad)), tWG*uTileK);
         gTileP += vec3(ng.x, 0.0, ng.y) * (tWG*0.38*tRel);
       }
       if (tWS > 0.004) {
         vec3 tW = triW(vWN);
         vec3 tK = tileK3(tDx, tDy);
-        alb *= mix(vec3(1.0), tileMod(tileTri2(uTS_A, vWP, tDx, tDy, tK, tW, tFar), 1.250), tWS*uTileK);
+        alb *= mix(vec3(1.0), tileMod(tileTri2(uTS_A, vWP, tDx, tDy, tK, tW, tFar), ${(1.250 * (WPAL.bedK != null ? WPAL.bedK : 1)).toFixed(4)}), tWS*uTileK);
         // The detail NORMAL is taken at the near scale only. Relief is a lighting term: at the
         // far scale its features are under a pixel, where a perturbation buys sparkle rather
         // than shape (the same Nyquist argument FLORA 4e's taper makes on the crag bump).
-        gTileP += tileTN(uTS_N, vWP, tDx, tDy, tK, tW, TILE_SN) * (tWS*0.42*tRel);
+        gTileP += tileTN(uTS_N, vWP, tDx, tDy, tK, tW, TILE_SN) * (tWS*0.42*tRelW);
       }
     }
     // WORLD-FIX7 §8a. The top albedo octave measured a high-frequency luminance RMS of 13.6 on
