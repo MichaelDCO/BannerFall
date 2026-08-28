@@ -1,6 +1,7 @@
 // Bannerfall service worker — offline-capable PWA cache.
 // Strategy: network-first for app shell/code (always fresh online, cache fallback offline);
-// cache-first for the pinned vendor bundle (immutable at three@0.170.0).
+// cache-first for immutable payload — the pinned vendor bundle (three@0.170.0) and the baked
+// detail tiles (seeded bake, content changes only when the tool is re-run under a new seed).
 const VERSION = 'bannerfall-__BUILD__';
 const SHELL = [
   './', 'index.html', 'css/main.css?v=__BUILD__', 'js/game.js?v=__BUILD__', 'manifest.webmanifest',
@@ -17,9 +18,22 @@ const VENDOR = [
   'js/vendor/addons/shaders/CopyShader.js',
   'js/vendor/addons/shaders/LuminosityHighPassShader.js',
 ];
+// GAME_SPEC_10 §B — the baked tri-planar detail tiles. Listed bare, exactly like VENDOR and
+// unlike SHELL: pages.yml stamps `__BUILD__` into index.html and sw.js only, so a `?v=` on
+// these would be a cache-buster on content that is immutable by construction. They ride the
+// VERSION cache name instead, which already turns over on every deploy.
+const TEXTURES = [
+  'textures/rock_strata_a.png', 'textures/rock_strata_n.png',
+  'textures/granite_a.png', 'textures/granite_n.png',
+  'textures/grass_a.png', 'textures/grass_n.png',
+  'textures/snow_a.png', 'textures/snow_n.png',
+  'textures/sand_a.png', 'textures/sand_n.png',
+  'textures/road_dirt_a.png', 'textures/road_dirt_n.png',
+  'textures/moor_heath_a.png', 'textures/moor_heath_n.png',
+];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll([...SHELL, ...VENDOR])).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll([...SHELL, ...VENDOR, ...TEXTURES])).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
@@ -29,8 +43,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin || e.request.method !== 'GET') return;
-  const isVendor = url.pathname.includes('/js/vendor/');
-  if (isVendor) {
+  const isImmutable = url.pathname.includes('/js/vendor/') || url.pathname.includes('/textures/');
+  if (isImmutable) {
     e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then((r) => {
       const copy = r.clone(); caches.open(VERSION).then((c) => c.put(e.request, copy)); return r;
     })));
