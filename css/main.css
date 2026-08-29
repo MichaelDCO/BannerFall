@@ -893,6 +893,11 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 
 /* ── wave banner ───────────────────────────────────────────────────── */
 #msg{ position:absolute; top:13%; left:0; right:0; z-index:0; text-align:center; opacity:0; transition:opacity .35s; }
+/* FIX12-UI §2 — the WAVE announcement's exit is slow where its entrance is quick: .35s in at
+   t=0, .7s out from t=1.8 to t=2.5, so the banner reads as a herald withdrawing rather than a
+   label being switched off. The duration is DIRECTIONAL, which a single declaration cannot say —
+   UI.msg writes `transitionDuration` inline on each edge instead. This rule is the base the
+   inline value overrides, and the harness's freeze stylesheet outranks both. */
 #msg .mT{ display:inline-block; font-size:min(6.2vw,42px); letter-spacing:.19em; text-transform:uppercase;
           padding:0 .4em; color:#ffe7ab;
           text-shadow:0 0 1px #6d4a10,0 2px 0 #4a3208,0 3px 0 #332104,0 6px 20px rgba(0,0,0,.85),0 0 40px rgba(232,182,76,.35); }
@@ -2534,7 +2539,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    shrinking it slides the plate down the line rather than detaching it from the man.
    layoutPlates() writes it; everything below reads it. */
 .cnp{ position:absolute; left:0; top:0; z-index:1; opacity:0; pointer-events:none; will-change:transform,opacity;
-   --so:40px;
+   --so:36px;
    transform:translate3d(0,0,0) translate(-50%,-100%); margin-top:calc(0px - var(--so));
    transition:opacity .18s linear; }
 /* FIX4-UI §2 — THE PLATE IS BUILT FROM THE WAVE CARD'S OWN MATERIAL. It used to be a flat
@@ -2543,9 +2548,24 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    Same dark-iron grain, same gold filigree hairline, same gold corner studs and the same
    letterspaced small-caps voice as the Garrison sheet and the build-card flyout; the
    champion's hue survives as the enamel bar and the leader line's tint only. */
-.cnp::after{ content:''; position:absolute; left:50%; top:100%; margin-left:-1px; width:2px; height:var(--so);
-   background:linear-gradient(180deg, var(--gold), rgba(232,182,76,.10));
+/* ══ FIX12-UI §3 — THE LEADER LINE LANDS, AND IT LEANS ═══════════════════════════════════════
+   Two defects in one 3-line rule. It faded to 10% alpha at the BOTTOM — i.e. it dissolved at the
+   exact end that is supposed to be touching the champion, so what a reader saw was a plate with a
+   nub under it and nothing at the far end; round 12 filed that as "no anchor, no tether". And it
+   was rigid: `height:var(--so)` straight down, which cannot reach a body the plate has been
+   X-clamped away from. Now it is brightest where it lands, it rotates about its own top end so it
+   still meets the body after a clamp (layoutPlates writes `--ll`/`--la`), and it ends in a solid
+   arrowhead ON the crown — the one mark that says "this one, here". */
+.cnp::after{ content:''; position:absolute; left:50%; top:100%; margin-left:-1px; width:2px;
+   height:var(--ll,var(--so)); transform-origin:50% 0; transform:rotate(var(--la,0deg));
+   background:linear-gradient(180deg, rgba(232,182,76,.45), var(--gold) 62%, var(--gold));
    box-shadow:0 0 0 1px rgba(0,0,0,.55); }
+/* the arrowhead at the far end of that line, riding the same rotation so it stays on the body */
+.cnp::before{ content:''; position:absolute; left:50%; top:100%; width:0; height:0;
+   margin-left:-1px; transform-origin:50% 0; z-index:1;
+   transform:rotate(var(--la,0deg)) translate(-4px,calc(var(--ll,var(--so)) - 1px));
+   border-left:5px solid transparent; border-right:5px solid transparent;
+   border-top:7px solid var(--gold); filter:drop-shadow(0 0 1px rgba(0,0,0,.85)); }
 .cnp u{ display:block; position:relative; font-style:normal; text-decoration:none;
    padding:3px 11px 4px; border-radius:4px; text-align:center; white-space:nowrap;
    background-image:
@@ -3120,11 +3140,119 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      overflow:hidden; text-overflow:ellipsis; }
   #leftRail.sheet #wavePrev .wpRow, #leftRail.sheet #wavePrev .bar,
   #leftRail.sheet #wavePrev .wpG,   #leftRail.sheet #wavePrev .wpCz,
-  #leftRail.sheet #wavePrev .wpHx,  #leftRail.sheet #wavePrev .wpOm{ display:none; }
+  #leftRail.sheet #wavePrev .wpHx,  #leftRail.sheet #wavePrev .wpOm,
+  /* FIX12-UI §1b — and the tail goes with them: the collapsed card is ONE flex row of two
+     items by construction, and a third would break the baseline FIX9-UI §5 measured. */
+  #leftRail.sheet #wavePrev .wpTail{ display:none; }
   /* and the centre banner does not repeat the card's own sentence over the horde
      (the dispatch lives inside #leftRail since SPEC3 §D put the omens above it) */
   #leftRail:has(#wavePrev:not(.hidden)) ~ #msg.wv{ opacity:0 !important; }
+  /* ══ FIX12-UI §1b/§1c — THE CARD'S RIGHT-HAND TAIL ═══════════════════════════════════════
+     The clock and the omen riding the wave used to be two separate plates stacked above this
+     card (#omenRow's .omHead and its .omC/.omBan), which on a 390x844 phone cost 100px of top
+     stack to say two things the card itself has room for. They are one trailing row now, and the
+     two plates are dropped just below. Grid column 1 so it spans the card's own measure; the
+     badge takes the rail and the clock docks right, which is where round 12 asked for the 0:09. */
+  #wavePrev .wpTail{ display:flex; align-items:center; gap:7px; margin-top:4px; min-width:0; }
+  /* CHARCOAL, like every other plate in the battle HUD (see the re-ink block at #wavePrev .wpT):
+     the badge is a recessed slate chip on the card's own iron, its heading is CREAM like every
+     heading in the game, and challenge-or-boon is carried by the KEYLINE — crimson or heraldic
+     blue — exactly the way FIX6-UI §5 settled it for the omen cards' wax seals. */
+  #wavePrev .wpOb{ display:flex; align-items:center; gap:5px; min-width:0; flex:1 1 auto;
+     padding:2px 6px 3px; border-radius:3px;
+     background:linear-gradient(180deg,rgba(38,51,59,.55),rgba(28,26,22,.62));
+     box-shadow:inset 0 0 0 1px rgba(127,168,221,.55), inset 0 1px 0 rgba(255,228,178,.08); }
+  #wavePrev .wpOb.chal{ background:linear-gradient(180deg,rgba(60,26,20,.62),rgba(34,20,16,.66));
+     box-shadow:inset 0 0 0 1px rgba(224,87,74,.58), inset 0 1px 0 rgba(255,228,178,.08); }
+  #wavePrev .wpOb .omSig{ width:15px; height:15px; flex:0 0 auto; }
+  #wavePrev .wpOb b{ font-weight:400; font-size:10px; letter-spacing:.09em; text-transform:uppercase;
+     color:#f2e5c6; text-shadow:0 1px 0 #000;
+     min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #wavePrev .wpOb .omCoin{ flex:0 0 auto; font-size:9px; padding:0 5px 1px 2px; }
+  #wavePrev .wpOb .omCoin .ic{ width:11px; height:11px; }
+  /* the countdown: the most time-critical number on the phone, so it is set in lining figures at
+     the card's own ink value and never wraps */
+  #wavePrev .wpCd{ flex:0 0 auto; display:flex; align-items:baseline; gap:5px; white-space:nowrap; }
+  #wavePrev .wpCd em{ font-style:normal; font-family:var(--sans); font-weight:600; font-size:8px;
+     letter-spacing:.16em; text-transform:uppercase; color:#b6a488; text-shadow:0 1px 0 #000; }
+  /* the same crimson the omen panel's own clock uses (#omenRow .omCk b) - this IS that clock, in
+     its new home, and a countdown that changed colour on moving would read as a different thing */
+  #wavePrev .wpCd b{ font-weight:400; font-size:13px; letter-spacing:.04em; color:#e0574a;
+     text-shadow:0 1px 0 #000; font-variant-numeric:tabular-nums lining-nums; }
+  /* …and the two plates the tail replaces. The offer SPREAD is untouched — that is a decision
+     surface and it keeps its modal. What goes is the residue AFTER the decision: the header bar
+     whose only live content was the clock, and the ribbon whose only live content was the name.
+     The offer is over the moment one is taken, and the card that was chosen is now the badge on
+     the wave card's tail, so the whole taken state leaves the rail. */
+  #omenRow.mdl.taken{ display:none; }
+  /* the riding-omen state is the whole row: hiding the ribbon alone would leave an empty grid
+     item and its gap in the rail. `.mdl` is exactly "the offer is on the table", which is the
+     one state of this row the phone still wants. */
+  #omenRow:not(.mdl){ display:none; }
+  /* ...EXCEPT while the garrison sheet is up, which is the one state that suppresses the card's
+     tail as well (see #leftRail.sheet .wpTail). The omen is a rule the player is playing against
+     for the whole wave, so it may not be invisible in ANY state; here it goes back to the 30px
+     ribbon it wore before this fix, and it costs that 30px only while a sheet the player opened
+     is standing. */
+  #leftRail.sheet #omenRow:not(.mdl){ display:grid; }
   #hint{ display:none; }
+  /* ══ FIX12-UI §1a — AND THE OPEN SHEET SAYS IT CAN BE SHUT ═══════════════════════════════
+     A door with no handle is a wall. The collapsed strip advertises itself with an up-chevron
+     (below); the OPEN sheet needs the matching down-chevron, or the 280px of world band the
+     collapse buys is only ever reachable by accident. Same 16px mark, same head, pointing the
+     other way — and the head is the tap target either way (UI.buildMenu binds it), so one
+     affordance covers both directions. Scoped to the shop: the garrison sheet is dismissed with
+     its own ✕ and does not collapse. */
+  #buildMenu .pHead::after{ content:''; flex:0 0 auto; width:16px; height:16px; opacity:.7;
+     background:50% 50%/100% 100% no-repeat;
+     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 9l7 7 7-7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+  /* ══ FIX12-UI §1a — THE COLLAPSED SHOP IS AN ICON STRIP, NOT A CLOSED DOOR ═══════════════
+     The desktop `.min` (FIX7-UI §2) is a 56px tab: correct there, because a 1600px frame has the
+     room to open the shop the moment you want it and the tab exists to keep a marketing frame
+     clean. On a phone the collapse is not cosmetic — it is 280px of world band, taken while a
+     wave is running — so what is left has to still BE the shop. Portrait and price for all eight,
+     eight across in ONE row with no scroller, each armable with a single tap; the traps rail, the
+     muster CTA and the stat flyouts are behind the chevron on the head. Every rule below is an
+     override of the desktop
+     `.min` tab, which is why they are all stated at `#buildMenu.min` rather than inherited. */
+  #buildMenu.min{ display:block; width:100%; min-height:0;
+     padding:2px 6px max(6px, env(safe-area-inset-bottom)); border-width:9px 9px 0;
+     border-radius:12px 12px 0 0; }
+  #buildMenu.min::before, #buildMenu.min::after{ display:none; }   /* the tab's standard + chevron */
+  #buildMenu.min .pBody{ display:block; }
+  #buildMenu.min .tBlk{ display:none; }
+  /* EIGHT ACROSS, one row, no scroller. The full sheet's 4x2 grid is right for a sheet and wrong
+     for a strip: a strip that scrolls hides half the shop behind a gesture nothing advertises.
+     At a true 390 the cells come out (390 - 12 padding - 18 border - 7x3 gap)/8 = 42.4px, which
+     is under the 44px thumb floor on the horizontal axis alone — so the CELL is 42 and the TAP
+     TARGET is the full 48px-tall card, which clears the floor on the axis a thumb actually
+     misses on. Arming is also recoverable in one tap (the writ's cancel), unlike the irreversible
+     controls the 44px rule was written for. */
+  #buildMenu.min .cRail .cards{ display:grid; grid-template-columns:repeat(8,minmax(0,1fr));
+     gap:3px; overflow:visible; }
+  #buildMenu.min .cRail::after{ display:none; }   /* no swipe fade: nothing is off the rail */
+  /* the head becomes a 30px grab rail with the chevron on it — it is the tap target that opens
+     the sheet (UI.buildMenu binds the handler), so it keeps a real 30px of height rather than
+     collapsing to the height of 9px type */
+  #buildMenu.min .pHead{ display:flex; align-items:center; gap:8px; margin:0 0 2px; min-height:30px; }
+  #buildMenu.min .pHead .pT{ font-size:9px; letter-spacing:.24em; }
+  #buildMenu.min .pHead .rule{ display:block; flex:1 1 auto; }
+  #buildMenu.min .pHead::after{ content:''; flex:0 0 auto; width:16px; height:16px; opacity:.85;
+     background:50% 50%/100% 100% no-repeat;
+     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 15l7-7 7 7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+  /* the card, stripped to what a strip can carry: the silhouette and the price. The name, the
+     school chip, the reach tag and the hotkey are all in the sheet one tap away, and none of them
+     is legible at 46px anyway — printing them smaller is the exact subtraction FIX7-UI §2 threw
+     the old 55% clone out for. */
+  #buildMenu.min .card{ width:auto; min-width:48px; padding:3px 5px 4px; }
+  #buildMenu.min .card .kb, #buildMenu.min .card .nm, #buildMenu.min .card .nmS,
+  #buildMenu.min .card .tags, #buildMenu.min .card .fly{ display:none; }
+  /* the miniature gets the width back the 8-up cell takes off it: at 42px of cell a 62%-wide
+     portrait (the sheet's rule) is a 26px tower, which is a smudge. Full-bleed and 38 tall is
+     the biggest silhouette this strip can carry, and the silhouette is the whole content. */
+  #buildMenu.min .card .por{ width:100%; height:38px; margin:0 0 2px; }
+  #buildMenu.min .card .cost{ margin-top:0; padding:0 5px 1px 2px; font-size:11px; }
+  #buildMenu.min .card .cost .ic{ width:12px; height:12px; }
   /* 44px thumb targets on every new control (SPEC3 §C/§D) */
   #omenRow .omC{ min-height:52px; padding:3px 7px 4px; gap:7px; }
   #omenRow .omSig{ width:26px; height:26px; }
@@ -3250,6 +3378,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      queries keep it under on shorter frames) plus the resource bar's, so the centring solves for
      the band the player can actually see the world through: measured 95..445 of 844, clear. */
   #omenRow.mdl:not(.taken){ padding:7vh 7px 42vh; gap:7px; grid-template-columns:minmax(0,1fr); }
+  /* FIX12-UI §1a — and the reserved band follows the shop's actual shape. The 42vh above is the
+     FULL sheet's measure; when the shop is standing down to its strip (which is its resting state
+     during a countdown now) reserving 42vh centres the spread a quarter of the frame too high for
+     no reason. The `:has()` idiom is the same one #msg.wv is arbitrated with a few rules up. */
+  #ui:has(#buildMenu.min) #omenRow.mdl:not(.taken){ padding-bottom:20vh; }
   #omenRow.mdl:not(.taken)::before{ background:rgba(8,6,4,.85); }
   /* the horizontal card: 44px seal, the body taking the rail, the price docked right. `min-height`
      is FIXED so the TAKEN ring and ribbon change the card's border and nothing else — the round-8
@@ -3943,11 +4076,35 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    wash, and every string on it goes to full-value ink — see .ddN / .ddD / .ddF below.
    The won rows are untouched. They win by being LIT, which after this is the only thing on the
    sheet that is, so the hierarchy is stronger rather than weaker. */
-.ddC{ position:relative; display:grid; grid-template-columns:24px 1fr; grid-auto-rows:min-content;
+/* ══ FIX12-UI §6 — A DEED YOU HAVE STARTED MUST NOT LOOK LIKE ONE YOU HAVE NOT ════════════════
+   Round 12, finding 6, measured on _deeds.png with tools/d_r12deeds.py: won body L=197.1,
+   not-started L=163.5, IN-PROGRESS L=162.3. The middle state was 1.1 luminance units off the
+   state it is furthest from in meaning — 96/150 through a deed looked exactly like never having
+   touched it, and the only cue was a 4px hairline rail that FIX10-UI §4 had already had to
+   rescue once from invisibility. A hairline is the wrong instrument: progress is the whole
+   POINT of the middle state, so it gets the card's own plate and the card's own bottom edge.
+   Three plates now, and they are ordered the way the states are: struck (never touched) →
+   warmed (under way) → lit (taken). `grid-template-rows` is the second half of the fix — see
+   the status row's bottom lock below. */
+.ddC{ position:relative; display:grid; grid-template-columns:24px 1fr;
+  /* FIX12-UI §6c — ROW 2 (the description) ABSORBS THE SLACK, so the status row lands on the
+     card's bottom edge in every state instead of trailing whatever the description happened to
+     wrap to. The cards in a row are already stretched to a common height by the grid; what was
+     missing was somewhere for the leftover height to GO, and `grid-auto-rows:min-content` alone
+     packed every track to the top and left it at the foot. This is what stops the status column
+     zig-zagging down the phone's 2-column chronicle (_true_deeds_m). */
+  grid-template-rows:min-content minmax(0,1fr); grid-auto-rows:min-content;
   gap:1px 7px; padding:5px 7px 6px; border-radius:5px; font-family:var(--serif); color:#33260f;
   background:linear-gradient(178deg,#c6b189,#b8a37e);
   border:1px solid rgba(78,52,18,.42);
   box-shadow:inset 0 1px 0 rgba(255,250,232,.34), 0 1px 3px rgba(60,40,12,.18); }
+/* the middle plate: warmed, not lit. Measured target L≈178 — halfway between the struck plate
+   and the won one, so the three states read as a sequence at a glance across the sheet. It
+   deliberately does NOT take the won card's gold rim or outer glow: those say TAKEN, and this
+   card has not been. */
+.ddC.pr{ background:linear-gradient(178deg,#dfc99c,#cfb88e);
+  border-color:rgba(120,84,26,.55);
+  box-shadow:inset 0 1px 0 rgba(255,250,232,.46), 0 1px 3px rgba(60,40,12,.20); }
 .ddC.on{ background:linear-gradient(178deg,rgba(255,236,186,.66),rgba(214,168,74,.28));
   border-color:rgba(173,122,30,.85);
   box-shadow:inset 0 1px 0 rgba(255,252,238,.7), 0 0 0 1px rgba(232,182,76,.42), 0 3px 9px rgba(60,40,12,.30); }
@@ -3983,10 +4140,19 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      takes the LAST row's numeral — the one the bottom fade crosses — from 5.6:1 to over 7. */
   text-shadow:0 1px 0 rgba(255,250,232,.5);
   font-variant-numeric:tabular-nums lining-nums; }
-.ddC.on .ddF{ color:#3a2708; padding:1px 7px 2px; border-radius:3px; justify-self:start;
+/* ══ FIX12-UI §6b — THE REWARD BADGE IS THE BRIGHTEST THING ON ITS CARD ═══════════════════════
+   It was the darkest. Measured: the gold pill L=172.7 sitting on a won plate of L=197.1, while
+   "NOT YET WON" is dark ink on a dark plate — so the sheet was emphasising the deeds you have
+   NOT taken and muting the ones you have, exactly inverted. The pill is struck bright now
+   (L>=225) with the ink carrying the contrast, which is what a stamped gold seal does in the
+   light anyway; the deep #ad7a1e stop that was pulling the mean down survives as a hairline rim
+   underneath rather than as a third of the fill. */
+.ddC.on .ddF{ color:#2a1c03; padding:2px 9px 3px; border-radius:3px; justify-self:start;
   font-size:11px; letter-spacing:.06em; white-space:nowrap;
-  background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
-  box-shadow:inset 0 1px 0 rgba(255,250,232,.6); }
+  text-shadow:none;
+  background:linear-gradient(180deg,#fffefb,#fffaea 52%,#fef4d6);
+  box-shadow:inset 0 1px 0 rgba(255,255,252,.95), inset 0 -1px 0 rgba(166,116,24,.7),
+             0 0 0 1px rgba(160,110,22,.72), 0 1px 3px rgba(60,40,12,.34); }
 /* FIX7-UI §3 — THE UNFILLED HALF HAS TO BE VISIBLE. At .22 over lit parchment the empty part of
    the track was indistinguishable from the sheet, so "41 / 100" was drawn as a gold bar ending
    in nothing and the crest lost the one thing a progress bar is for: how far there is left to
@@ -3996,7 +4162,14 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    locked plate a translucent track resolved to within a shade of the plate itself, so the
    unfilled half went back to being invisible — the exact defect FIX7-UI §3 fixed against the
    lighter plate. A solid tone is immune to whatever the plate under it does next. */
-.ddP{ grid-column:2; display:block; height:5px; border-radius:2.5px; margin-top:4px;
+/* ══ FIX12-UI §6a — THE RAIL IS THE CARD'S OWN FOOT ══════════════════════════════════════════
+   A 5px rail inset into the description column reads as an underline on a paragraph. Flush with
+   the plate's bottom edge and spanning both columns it reads as what it is: a fill line on the
+   crest itself, legible from across the sheet without being read. The negative margins take it
+   out to the padding box (5px 7px 6px on desktop, 6px 7px on the phone — both are answered
+   below) and the bottom corners take the plate's inner radius, so the strip ENDS the card
+   instead of floating inside it. */
+.ddP{ grid-column:1 / -1; display:block; height:6px; margin:5px -7px -6px; border-radius:0 0 4px 4px;
   background:#6b5a3c; box-shadow:inset 0 0 0 1px rgba(48,32,10,.55); overflow:hidden; }
 .ddP u{ display:block; height:100%; background:linear-gradient(90deg,#a3761a,#e8b64c); }
 #ddHint{ margin-top:7px; font-size:12.5px; letter-spacing:.13em; font-variant-caps:small-caps; color:#b6a488;
@@ -4113,6 +4286,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #ddGrid::after{ height:52px; margin:0 0 -52px; background-size:20px 12px, 100% 18px, 100% 100%; }
   .ddRow{ grid-template-columns:1fr 1fr; gap:6px; }
   .ddC{ grid-template-columns:22px 1fr; gap:1px 7px; padding:6px 7px; }
+  /* the phone plate's bottom padding is 6px, not the desktop's — the strip has to reach the
+     same edge or it is a rail again, one pixel in (FIX12-UI §6a) */
+  .ddP{ margin:5px -7px -6px; }
   .ddI{ width:20px; height:20px; }
   .ddN{ font-size:10.5px; letter-spacing:.05em; }
   /* FIX7-UI §3 — 12px is the floor for a sentence carrying a RULE, and this sentence carries
