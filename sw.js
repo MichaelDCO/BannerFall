@@ -1,6 +1,7 @@
 // Bannerfall service worker — offline-capable PWA cache.
 // Strategy: network-first for app shell/code (always fresh online, cache fallback offline);
-// cache-first for immutable payload — the pinned vendor bundle (three@0.170.0) and the baked
+// cache-first for immutable payload — the pinned vendor bundles (three@0.170.0,
+// trystero@0.25.4) and the baked
 // detail tiles (seeded bake, content changes only when the tool is re-run under a new seed).
 const VERSION = 'bannerfall-__BUILD__';
 const SHELL = [
@@ -17,6 +18,14 @@ const VENDOR = [
   'js/vendor/addons/postprocessing/Pass.js',
   'js/vendor/addons/shaders/CopyShader.js',
   'js/vendor/addons/shaders/LuminosityHighPassShader.js',
+  // GAME_SPEC_9 §A — the co-op netlib (Trystero, Nostr strategy), vendored and pinned exactly
+  // like three above. Precached with the rest of VENDOR rather than fetched on demand: co-op
+  // is the one feature that is useless without the network, so the ONE moment it must not be
+  // waiting on a download is the moment a player clicks CO-OP. It is never IMPORTED on the
+  // solo path (no modulepreload hint for it, and game.js only reaches for "trystero" when a
+  // session is actually being created or joined), so precaching costs a boot fetch and zero
+  // parse/execute — the solo code path is byte-for-byte what it was.
+  'js/vendor/trystero-nostr.min.js',
 ];
 // GAME_SPEC_10 §B — the baked tri-planar detail tiles. Listed bare, exactly like VENDOR and
 // unlike SHELL: pages.yml stamps `__BUILD__` into index.html and sw.js only, so a `?v=` on
