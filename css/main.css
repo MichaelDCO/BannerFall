@@ -1009,6 +1009,12 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .pHead .x{ margin-left:2px; width:26px; height:26px; padding:0; border:0; background:none; font-size:15px; color:#b8a880;
             line-height:1; border-radius:4px; transition:color .15s,background .15s; }
 .pHead .x:hover{ color:#ffe2a2; background:rgba(232,182,76,.14); }
+/* ── FIX13-UI §3b — the garrison sheet's peek/expand handle. Only ever on the phone, where the
+   sheet has two states; on desktop the panel floats and shows everything, so there is nothing to
+   expand and the button is not in layout. The chevron POINTS AT THE RESULT — up while collapsed
+   ("there is more this way"), down while open — which is the same grammar the shop's own head
+   uses six hundred lines below, so one gesture vocabulary covers both bottom panels. */
+#towerMenu .pHead .exp{ display:none; }
 #buildMenu .cards{ display:flex; gap:9px; }
 /* FIX2-UI §3 — THE SHOP IS A DOCK, NOT A WALL.
    Measured at 1600x1000: the panel was 1090x399 at y583→982, i.e. 40% of the frame's height
@@ -1089,8 +1095,17 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
   #buildMenu .card .cost{ margin-top:3px; padding:1px 7px 1px 3px; font-size:12px; }
   #buildMenu .card .cost .ic{ width:13px; height:13px; }
   #buildMenu .cards.traps{ gap:6px; }
-  #buildMenu .card.trap{ width:94px; padding:5px 4px 6px; }
-  #buildMenu .card.trap .por{ height:38px; margin-bottom:3px; }
+  /* FIX13-UI §5 — the 44px icon box round 13 asked for, against the 38 that shipped. Two things
+     were wrong with 38: the keg's art overflowed it (fixed in POR_SC — see the note there), and a
+     tile a third shorter than the tower row's made any art that filled it read as oversized.
+     44 rather than the tower row's 52 is the height at which the trap plate still comes in UNDER
+     the tower plate, which is what keeps the dock at the ~220px band FIX2-UI §3 fought for now
+     that the card has gained a labelled school pill. */
+  #buildMenu .card.trap{ width:94px; padding:4px 4px 5px; }
+  #buildMenu .card.trap .por{ height:44px; margin-bottom:3px; overflow:hidden; }
+  #buildMenu .card.trap .nm{ line-height:1.25; }
+  #buildMenu .card.trap .cost{ margin-top:2px; }
+  #buildMenu .card.trap .tags{ margin-top:2px; }
   /* THE CHIP ROW HAS TO STAY ONE LINE, and that is a HEIGHT decision, not a width one. At 122px
      only SUPPORT/SOUTIEN wrapped, and because `.cards` stretches its items every plate paid for
      that one wrap — measured, the eight-card dock came out 249px tall against the 205 FIX2-UI §3
@@ -1146,8 +1161,8 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    drops 94 → 78, which is exactly the width the phone tier already ships it at and therefore a
    proven size for that card's content. Total: 888 + 13 + (13 + 3×78 + 2×6) + 24 = 1184. */
 @media (min-width:761px) and (max-width:1420px){
-  #buildMenu .card.trap{ width:78px; padding:5px 3px 6px; }
-  #buildMenu .card.trap .por{ height:34px; }
+  #buildMenu .card.trap{ width:78px; padding:4px 3px 5px; }
+  #buildMenu .card.trap .por{ height:44px; }   /* FIX13-UI §5 — the same box the wide tier uses */
   #buildMenu .cards.traps{ gap:6px; }
 }
 .card{ position:relative; width:140px; padding:8px 8px 9px; border-radius:6px; text-align:center;
@@ -1166,6 +1181,13 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
                miniature wherever the bitmap did not reach the corners. */
             background:radial-gradient(ellipse 78% 62% at 50% 74%, rgba(255,220,160,.13), rgba(0,0,0,0) 70%),
                        linear-gradient(180deg,#241a0d,#141008 78%); box-shadow:inset 0 0 0 1px rgba(0,0,0,.5); }
+/* FIX13-UI §1 — the card's SECOND plate: the same miniature on a lit stone niche, drawn once at
+   build time and shown by exactly one rule (the phone's collapsed strip). Off everywhere else, so
+   the dock, the sheet and every desktop width are byte-for-byte the shop they were. */
+.card .porS{ display:none; }
+/* …and the strip's segmented TOWERS | TRAPS pager, which only exists where the two rows cannot
+   both stand. Desktop shows them side by side and has nothing to page. */
+#buildMenu .segT{ display:none; }
 /* FIX6-UI §4a — A NAME CLAMPS, IT NEVER SPILLS. The card is a fixed 140px and the name had no
    overflow plan at all, so a longer tongue's word simply grew the plate (or, at phone width,
    the row). Two lines and an ellipsis: the tooltip carries the full name either way. */
@@ -1929,6 +1951,16 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .mCard .mChain svg{ width:100%; height:100%; display:block;
    filter:drop-shadow(0 3px 6px rgba(0,0,0,.75)); }
 .mCard .mLk{ font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#c9b78e; }
+/* ── FIX13-UI §4 — THE CHART KEY ───────────────────────────────────────────────────────────
+   Two items, one line, under the row of charts they belong to. Deliberately quiet type — this is
+   a caption, not a control, and the screen's only gold is on the things that are clickable. */
+#mapsLeg{ display:flex; justify-content:center; align-items:center; gap:22px;
+   margin-top:12px; font-family:var(--sans); }
+#mapsLeg .mLg{ display:inline-flex; align-items:center; gap:7px; }
+#mapsLeg .mLgP{ display:block; width:19px; height:19px;
+   filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+#mapsLeg b{ font-weight:400; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
+   color:#bcab8a; text-shadow:0 1px 0 rgba(0,0,0,.85); }
 #mapsFoot{ margin-top:20px; display:flex; gap:12px; align-items:center; }
 #btnBack{ border-radius:6px; padding:10px 26px; font-size:14px; letter-spacing:.18em; text-transform:uppercase; color:#e2d4b4;
    background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
@@ -2834,24 +2866,46 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    their painted plate at half height instead. */
 .card.trap .por{ display:block; height:46px; margin-bottom:4px; }
 .card.trap .nmS{ display:none; }
-/* the trap name WRAPS to two lines rather than ellipsing. French runs ~40% longer here
-   ("Chausse-trapes", "Baril de poudre") and a 106px card cannot hold either on one line —
-   ellipsed, both read as the same "…" and the card stops naming its own trap. Two lines are
-   reserved whatever the tongue, so the row's height never depends on the language. */
-.card.trap .nm{ display:flex; align-items:center; justify-content:center;
-   font-size:10px; letter-spacing:.11em; line-height:1.14; min-height:2.28em; white-space:normal; }
+/* ══ FIX13-UI §5 — THE TRAP ROW IS THE SAME GRID AS THE TOWER ROW ═══════════════════════════
+   Round 13, finding 5: "POWDER KEG wraps to two lines while CALTROPS and TAR PIT are one, so its
+   name block collides upward into the icon zone". It did, and the reserved-two-lines rule below
+   was the cause rather than a mitigation: `min-height:2.28em` held every trap plate two lines
+   tall, so the SHORT names sat on a floating baseline and the long one closed the gap to the
+   miniature. A card in a row of cards has to keep the row's grid.
+   ONE LINE, at a size the longest name in either tongue actually fits. English POWDER KEG is 10
+   characters and measures ~76px at 9.8px/.02em inside an 84px plate; the tracking is the cheaper
+   of the two levers (10 glyphs at .07em is 7px on its own) so it goes to .02em rather than the
+   size going down. French is handled where it belongs — in the STRING, not in a type size: the
+   card prints the authored short forms (Chausses / Poix / Baril) exactly as `.nmS` always has,
+   because "Baril de poudre" is fifteen characters against the laptop tier's 72px plate and there
+   is no size at which it fits on one line. See the note at the trap card builder in game.js.
+   Nothing is ellipsed.
+   AND THE SELECTOR CARRIES AN ID, which is not decoration: `#buildMenu .card .nm` (the desktop
+   dock's 11px/.13em, ~600 lines above) is (1,2,0) and would out-specify a plain `.card.trap .nm`
+   at (0,3,0) — the first cut of this fix shipped the keg still wrapped for exactly that reason,
+   with the rule visibly present in the stylesheet and losing. */
+#buildMenu .card.trap .nm{ display:block; font-size:clamp(9px,0.62vw,11px); letter-spacing:.02em;
+   line-height:1.5; min-height:0; white-space:nowrap; overflow:hidden; text-overflow:clip; }
 .card.trap .cost{ margin-top:3px; padding:1px 7px 1px 3px; font-size:11px; }
 .card.trap .cost .ic{ width:12px; height:12px; }
 .card.trap .kb{ top:3px; left:3px; width:14px; height:14px; line-height:14px; font-size:9px; }
-/* FIX10-UI §1 — top:5px right:7px, not 3/3. The card carries a 6px border-radius, so a 12px
-   sigil inset 3px puts its own top-right corner ON the curve of the frame: measured on
-   _champion.png at 5x, POWDER KEG's crush glyph and TAR PIT's flame both read as clipped by the
-   card border. 5/7 clears the arc entirely and the plate closes round the glyph. */
-.card.trap .tags{ display:block; position:absolute; top:5px; right:7px; margin:0; overflow:visible; }
-.card.trap .tags .tag{ padding:0; background:none; border:0; }
+/* ══ FIX13-UI §5 — ONE TOKEN VOCABULARY ACROSS THE WHOLE SHOP ═══════════════════════════════
+   Round 13: "the trap school token is a small unlabelled corner square (the keg's is dark brown on
+   dark brown, effectively invisible) whereas every tower carries a labelled bottom pill — PIERCE,
+   CRUSH, FIRE, FROST, SUPPORT."  Both halves are true and the second is the damning one: the
+   school is printed in WORDS in exactly one place in this game (FIX3-UI §1) and the three cards
+   that spend the same purse as the towers were the three that printed it as an unlabelled 12px
+   square. Worse, the square is a filled plate in the school's own colour, and crush's plate is
+   bronze #b07a3c on a #2b261f card — the one token in the shop with no contrast at all.
+   So the corner override is GONE and the trap inherits the tower's bottom chip row verbatim:
+   same plate, same 10.5px word, same position in the card. What does NOT come with it is the
+   reach chip — a trap plate is 78px at the laptop tier and the labelled pair measures ~95, so the
+   second chip is the one thing dropped (its radius is a row of the card's own flyout, where the
+   tower's DPS lives too). `.tag+.tag{display:none}` below is what drops it, unchanged. */
+.card.trap .tags{ overflow:hidden; }
 .card.trap .tags .tag+.tag{ display:none; }
-.card.trap .tags .tag .tw{ display:none; }
-.card.trap .tags .tag i{ width:12px; height:12px; }
+/* the ward shield goes back to the corner it holds on a tower card: nothing lives there now. */
+.card.trap.warded::after{ right:5px; width:14px; height:14px; }
 /* "four are already armed" is a BOARD state, not a purse state — it gets its own read so a
    player does not go looking for gold that would not help. */
 .card.trap.full{ filter:grayscale(.8) brightness(.55); }
@@ -3098,8 +3152,21 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      written by UI.buildMenu from the same two numbers the chip reads. So the gate is legible in
      both states of the bottom chrome — shop open, its raise button says it; sheet open, the
      sheet's own header says it — and no width has to go without. */
+  /* ── FIX13-UI §3c — AND BELOW 421 THE RAIL SWAPS RATHER THAN STACKS ──────────────────────────
+     Round 13 asked for the garrison sheet's STANDARDS chip to go "back into the top pill row", and
+     §5a's arithmetic above is why it cannot simply be added there: four chips at the tightened
+     metrics measure 254px against a 226px allowance at 390 (211 at 375). What the rail CAN do is
+     give up a seat for the duration. While a sheet is open the wave chip stands down and the
+     standards chip takes its place — the dispatch card two rows below is naming the wave in that
+     exact state (see #leftRail.sheet), and the standards cap is the one number the open sheet has
+     no other way to state. Nothing overflows, nothing resizes, and the count is where a global
+     resource belongs at every width. */
   #chipMuster{ display:none; }
   @media (min-width:421px){ #chipMuster{ display:flex; } }
+  @media (max-width:420px){
+    #hud.sheet #chipMuster{ display:flex; }
+    #hud.sheet #chipWave{ display:none; }
+  }
   .ibtn{ min-width:44px; min-height:44px; font-size:16px; padding:0 5px; }
   #hudRight{ gap:5px; }
   #wavePrev .wpE .pip{ width:10px; height:10px; background-size:7px 7px; }
@@ -3215,44 +3282,106 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      muster CTA and the stat flyouts are behind the chevron on the head. Every rule below is an
      override of the desktop
      `.min` tab, which is why they are all stated at `#buildMenu.min` rather than inherited. */
-  #buildMenu.min{ display:block; width:100%; min-height:0;
-     padding:2px 6px max(6px, env(safe-area-inset-bottom)); border-width:9px 9px 0;
-     border-radius:12px 12px 0 0; }
+  /* ══ FIX13-UI §1 — …BUT AN ICON STRIP HAS TO NAME ITS ICONS ══════════════════════════════════
+     Round 13, blocker 1, measured in _true_omens_m: eight 38px brown silhouettes on brown tiles
+     with a price under each and nothing else — "eight indistinguishable brown silhouettes", the
+     school chips gone, the trap set gone outright, and the card bottoms flush with the 844px edge.
+     The 8-up arithmetic below was the cause of all three: at 42px of cell there is no room for a
+     word, so the word was dropped, and once the row is a fixed 8 columns there is no room for a
+     ninth thing either, so the traps were dropped too. Both were subtractions dressed as layout.
+     The strip is a SCROLLER again — but a scroller with an affordance and a purpose, which is what
+     FIX4-UI §1's 58px cell never had. 64px cards, five in view at a true 390 (5x64 + 4x4 = 336
+     inside the 350 the panel has), scroll-snapped, with the sixth sliced by a 26px alpha fade that
+     says so. The 14px surplus is deliberate: a card that ENDS flush at the edge is what made the
+     old rail read as complete. And what pages the OTHER set is not a swipe but the segmented
+     control on the head — see #bmSeg — so the trap rail is one tap away rather than deleted.
+     Each cell carries the three things a shop card is: a lit tile (see towerPortrait's `lite`
+     plate — L~62 against the old L12, so the silhouette has ground to stand on), the NAME at 8px
+     letterspaced caps, and the price. 28px of tile, not 38: the twelve pixels pay for the word,
+     and a named 28px tower beats an anonymous 38px one at every distance. */
+  /* the BOX of this plate (padding, border, the 8px floor under the last card row) is written at
+     the foot of this stylesheet — see the FIX13-UI §1 note on the second `#buildMenu.min` rule for
+     why it has to be, and why the padding authored here never shipped. */
+  #buildMenu.min{ display:block; width:100%; min-height:0; border-radius:12px 12px 0 0; }
   #buildMenu.min::before, #buildMenu.min::after{ display:none; }   /* the tab's standard + chevron */
   #buildMenu.min .pBody{ display:block; }
   #buildMenu.min .tBlk{ display:none; }
-  /* EIGHT ACROSS, one row, no scroller. The full sheet's 4x2 grid is right for a sheet and wrong
-     for a strip: a strip that scrolls hides half the shop behind a gesture nothing advertises.
-     At a true 390 the cells come out (390 - 12 padding - 18 border - 7x3 gap)/8 = 42.4px, which
-     is under the 44px thumb floor on the horizontal axis alone — so the CELL is 42 and the TAP
-     TARGET is the full 48px-tall card, which clears the floor on the axis a thumb actually
-     misses on. Arming is also recoverable in one tap (the writ's cancel), unlike the irreversible
-     controls the 44px rule was written for. */
-  #buildMenu.min .cRail .cards{ display:grid; grid-template-columns:repeat(8,minmax(0,1fr));
-     gap:3px; overflow:visible; }
-  #buildMenu.min .cRail::after{ display:none; }   /* no swipe fade: nothing is off the rail */
+  /* the TRAPS page of the strip: the same scroller, the trap cards in it, and the block's own
+     head off (the segmented control on the panel head is already saying ROAD TRAPS and carrying
+     the armed count, so a second label under it would be the duplication FIX2-UI §3 filed). */
+  #buildMenu.min.trv .cRail{ display:none; }
+  #buildMenu.min.trv .tBlk{ display:block; margin:0; padding:0; border:0; }
+  #buildMenu.min.trv .tBlk .tHd{ display:none; }
+  #buildMenu.min .cRail .cards, #buildMenu.min .cards.traps{
+     display:flex; grid-template-columns:none; gap:4px; align-items:stretch;
+     overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
+     -webkit-overflow-scrolling:touch; scrollbar-width:none;
+     -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),rgba(0,0,0,.12));
+     mask-image:linear-gradient(90deg,#000 calc(100% - 26px),rgba(0,0,0,.12)); }
+  /* the trap page has three cards and cannot overflow, so it must not wear the swipe fade */
+  #buildMenu.min .cards.traps{ -webkit-mask-image:none; mask-image:none; }
+  #buildMenu.min .cards::-webkit-scrollbar{ display:none; }
+  #buildMenu.min .cRail::after{ display:none; }   /* the mask fade is the affordance, not a chevron */
   /* the head becomes a 30px grab rail with the chevron on it — it is the tap target that opens
      the sheet (UI.buildMenu binds the handler), so it keeps a real 30px of height rather than
      collapsing to the height of 9px type */
   #buildMenu.min .pHead{ display:flex; align-items:center; gap:8px; margin:0 0 2px; min-height:30px; }
   #buildMenu.min .pHead .pT{ font-size:9px; letter-spacing:.24em; }
   #buildMenu.min .pHead .rule{ display:block; flex:1 1 auto; }
+  /* ── FIX13-UI §1 — THE SEGMENTED CONTROL. It rides the head's rule gutter, which carried a
+     decorative hairline and nothing else, so paging the strip costs the world band nothing. Two
+     40px-wide targets in a 26px-tall plate: under the 44px thumb floor on the short axis, and
+     deliberately so — the same argument the 42px cell made below, i.e. the action is a VIEW
+     change, instantly reversible, and the alternative is the trap shop staying unreachable. */
+  #buildMenu.min .segT{ display:inline-flex; flex:0 0 auto; overflow:hidden; border-radius:6px;
+     border:1px solid rgba(232,182,76,.30); background:rgba(8,6,4,.6); }
+  #buildMenu.min .sgB{ display:inline-flex; align-items:center; gap:4px; min-height:26px;
+     padding:0 8px; border:0; background:transparent; font-family:var(--sans); font-weight:600;
+     font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:#a89877;
+     text-shadow:0 1px 0 rgba(0,0,0,.8); }
+  #buildMenu.min .sgB+.sgB{ border-left:1px solid rgba(232,182,76,.22); }
+  #buildMenu.min .sgB.on{ color:#1a1409; text-shadow:0 1px 0 rgba(255,240,206,.4);
+     background-image:linear-gradient(180deg,#f0d089,#c9922f); }
+  #buildMenu.min .sgB b{ font-weight:400; font-variant-numeric:tabular-nums; opacity:.85; }
   #buildMenu.min .pHead::after{ content:''; flex:0 0 auto; width:16px; height:16px; opacity:.85;
      background:50% 50%/100% 100% no-repeat;
      background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 15l7-7 7 7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
-  /* the card, stripped to what a strip can carry: the silhouette and the price. The name, the
-     school chip, the reach tag and the hotkey are all in the sheet one tap away, and none of them
-     is legible at 46px anyway — printing them smaller is the exact subtraction FIX7-UI §2 threw
-     the old 55% clone out for. */
-  #buildMenu.min .card{ width:auto; min-width:48px; padding:3px 5px 4px; }
-  #buildMenu.min .card .kb, #buildMenu.min .card .nm, #buildMenu.min .card .nmS,
+  /* the card, cut to what a 64px strip cell can carry AND NAME: the lit tile, the word, the price.
+     The hotkey, the school chip, the reach tag and the stat flyout stay in the sheet one tap away
+     — those are comparisons, and a comparison needs the sheet's room. The NAME is not one of them:
+     it is the card's identity, and eight anonymous silhouettes is the blocker this fix answers. */
+  /* THREE-CLASS SELECTOR, and it is load-bearing: `#buildMenu .cRail .card` (the 4-column sheet
+     grid, SPEC_8 §F) is also (1,2,0) and is written LATER in this file, so a plain
+     `#buildMenu.min .card` loses the tie on source order and the strip's cells collapse to the
+     grid's `width:auto` — measured at 45.1px against the 64 authored, i.e. seven cards in a rail
+     built for five. Same trap the trap-card and dock notes above record twice. */
+  #buildMenu.min .cRail .card, #buildMenu.min .cards.traps .card{
+     flex:0 0 64px; width:64px; min-width:64px; padding:3px 2px 4px; scroll-snap-align:start; }
+  #buildMenu.min .card .kb, #buildMenu.min .card .nm,
   #buildMenu.min .card .tags, #buildMenu.min .card .fly{ display:none; }
-  /* the miniature gets the width back the 8-up cell takes off it: at 42px of cell a 62%-wide
-     portrait (the sheet's rule) is a 26px tower, which is a smudge. Full-bleed and 38 tall is
-     the biggest silhouette this strip can carry, and the silhouette is the whole content. */
-  #buildMenu.min .card .por{ width:100%; height:38px; margin:0 0 2px; }
-  #buildMenu.min .card .cost{ margin-top:0; padding:0 5px 1px 2px; font-size:11px; }
-  #buildMenu.min .card .cost .ic{ width:12px; height:12px; }
+  /* 8.5px caps, one line. `.nmS` is the SHORT name (WARBANNER, FROSTSPIRE and the three traps are
+     authored for this width), so nothing ellipses.
+     THE SIZE AND THE TRACKING ARE BOTH FIX7-UI §5d's, NOT ROUND 13's, and that was measured twice
+     more here. Round 13 asked for "8px letterspaced caps"; at 8px/.06em this shipped "A RCHER",
+     "BA LLIST A", "CAT APULT", "BA RRACKS", and at 8.5px/0 it still shipped "CALTRO PS" — a
+     fractional glyph origin accumulates through the run and one gap in the word lands a whole
+     pixel wide. 10px with zero tracking is the size the run holds together at, and it is a WHOLE
+     pixel rather than the sheet's 10.14px clamp so the advances cannot drift with the viewport.
+     11px was measured and rejected: FROSTSPIRE wants 59px and WARBANNER 64 inside a 58px box.
+     (The residual per-glyph spacing of the condensed face at this size is the same one the
+     expanded sheet's own cards have carried since FIX7-UI §5d — verified side by side under
+     `&ui=full` — so the strip is at parity with the shop it collapses from, not behind it.) */
+  #buildMenu.min .card .nmS{ display:block; font-size:10px; letter-spacing:0; line-height:1.3;
+     margin-top:2px; color:#eddfc0; text-rendering:optimizeLegibility; }
+  /* THE LIT TILE. `.por` is the dark forge niche — right on the dock, and at 28px the reason
+     round 13 measured eight brown shapes on brown ground. `.porS` is the same art on a stone
+     niche (towerPortrait's `lite`), and it is the only plate the strip ever shows. */
+  #buildMenu.min .card .por{ display:none; }
+  #buildMenu.min .cRail .card .porS, #buildMenu.min .cards.traps .card .porS{
+     display:block; width:100%; height:28px; margin:0;
+     border-radius:3px; box-shadow:inset 0 0 0 1px rgba(232,182,76,.34); }
+  #buildMenu.min .card .cost{ margin-top:2px; padding:0 5px 1px 2px; font-size:10.5px; }
+  #buildMenu.min .card .cost .ic{ width:11px; height:11px; }
   /* 44px thumb targets on every new control (SPEC3 §C/§D) */
   #omenRow .omC{ min-height:52px; padding:3px 7px 4px; gap:7px; }
   #omenRow .omSig{ width:26px; height:26px; }
@@ -3517,8 +3646,16 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      row is the trap rail, a mis-tap there only arms a cancellable trap, and every pixel added to the
      shop's box is a pixel taken off the world band round 8 filed as finding 7. The floor is spent
      where an irreversible control lives, and nowhere else. */
+  /* FIX13-UI §3a — the constant floor goes 16 -> 22. Round 13 measured the UPGRADE / DISMANTLE
+     pair ending at y=824 of 844 and called the bottom 34pt band; the finding's own prescription
+     (`max(14px, env(...))`) is LOWER than what already shipped, so the number here is set from the
+     measurement rather than from the prescription. `max()`, not a sum, for the reason FIX8-UI §7iii
+     records: #ui is a padded fixed box and has already spent the inset once, so on a device that
+     reports 34px this resolves to 40 on top of the 34 the page is already inset by. What the raise
+     buys is the case env() reports ZERO — a plain tab, a desktop browser at phone width, and every
+     frame this harness captures — where 16px was the whole of the clearance. */
   .panel{ left:0; right:0; bottom:0; transform:none; width:100%; border-radius:12px 12px 0 0;
-          padding:8px 8px max(16px, calc(6px + env(safe-area-inset-bottom)));
+          padding:8px 8px max(22px, calc(6px + env(safe-area-inset-bottom)));
           border-width:13px 13px 0;
           max-height:42vh; overflow-y:auto; overscroll-behavior:contain;
           scrollbar-width:none; }
@@ -3528,7 +3665,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      transparent-to-opaque band at the top of the plate is the scroll cue (same job the chronicle's
      sticky fade does at #ddGrid::after), so the ORDERS row one flick below is advertised rather
      than merely present. */
-  #towerMenu .tBtns{ position:sticky; bottom:0; z-index:2; margin-top:9px; padding:18px 0 2px;
+  #towerMenu .tBtns{ position:sticky; bottom:0; z-index:2; margin-top:9px; padding:18px 0 6px;
      background:linear-gradient(180deg,rgba(17,14,10,0),rgba(17,14,10,.62) 34%,
                 rgba(17,14,10,.96) 62%,rgba(17,14,10,.99)); }
   /* FIX2-UI §3 — the sub-rail is a DESKTOP arrangement. On a 390px slab there is no horizontal
@@ -3575,6 +3712,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      The scroller now gives up 24px of its own width instead: the mask fade above runs out inside
      the cards, and the arrow stands in clear ground beside them. */
   #buildMenu .cRail.ovf{ padding-right:24px; }
+  /* …but NOT on the collapsed strip: that gutter exists to keep the chevron off the card art, and
+     the strip's affordance is the mask fade (FIX13-UI §1), which is drawn inside the cards. */
+  #buildMenu.min .cRail.ovf{ padding-right:0; }
   /* LONGHANDS. The `background` shorthand resets background-repeat to `repeat`, and a 14px chevron
      tiled down a 130px gutter is a column of eight arrows — which is what the first cut of this
      shipped (visible in _true_omens_m). The base rule's `no-repeat,no-repeat` has to be restated
@@ -3709,22 +3849,39 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   .card .tags .tag.el i{ width:14px; height:14px; }
   #buildMenu .pHead{ margin-bottom:3px; }
   /* FIX7-UI §2 — the tab is the same object at every width; it only loses a little filigree
-     and a little side padding. There is no per-width variant to keep in step any more. */
-  #buildMenu.min{ padding:0 14px; border-width:6px; border-image-width:6px; }
+     and a little side padding. There is no per-width variant to keep in step any more.
+     FIX13-UI §1 — AND THIS IS THE RULE THAT DECIDES THE STRIP'S BOX. The §1a block 500 lines above
+     writes `#buildMenu.min{padding:2px 6px …}` at the same (1,1,0) specificity and LOSES to this
+     one on source order, so the padding it authored has never once shipped; the strip has always
+     laid out at 0 side-padding-plus-6px-border. Round 13's "the card bottoms are clipped by the
+     844px edge" is exactly that: `padding:0` bottom, and the only thing between the cost pill and
+     the frame was the 6px border. The floor is stated HERE, where it wins, rather than a third
+     time somewhere it does not. */
+  #buildMenu.min{ padding:0 14px max(8px, env(safe-area-inset-bottom));
+     border-width:6px; border-image-width:6px; }
   #buildMenu.min .pHead .pT{ font-size:12px; letter-spacing:.24em; }
   /* nothing in the bottom chrome may exceed the phone, whatever the layout viewport is */
   #towerMenu, #buildMenu{ width:100%; max-width:100vw; }
   .tBtn{ min-width:0; }
   /* FIX2-UI §5 — 44px thumb floor on the panel dismiss, which was a 26px glyph */
   .pHead .x{ width:44px; height:44px; margin:-9px -8px -9px 2px; font-size:17px; }
-  /* FIX7-UI §5a — and this is where the standards read-out earns its place: the sheet is the
-     thing that hid the build bar's own copy of it. */
-  /* FIX8-UI §7ii — and it follows the chip, exactly as the raise button's ratio does: the sheet
-     shows the count only on the widths where the HUD chip cannot be afforded. At 421px and up the
-     chip is on screen while this sheet is open, and a second copy of the same two numbers 700px
-     below it is the duplication round 8 filed. */
-  #towerMenu .pHead .pStd{ display:inline-flex; }
-  @media (min-width:421px){ #towerMenu .pHead .pStd{ display:none; } }
+  /* FIX7-UI §5a put the standards read-out in this header and FIX8-UI §7ii scoped it to the widths
+     where the HUD chip could not be afforded. FIX13-UI §3c removed the span outright — see the
+     `#hud.sheet` swap above and the note in UI.buildMenu. Nothing is rendered here now. */
+  /* ══ FIX13-UI §3b — THE PEEK ═════════════════════════════════════════════════════════════════
+     Round 13, finding 3: the sheet measured 347px of an 844px frame and pushed the tower it is
+     about into the last 100px of visible world. What it opens at now is the ANSWER to "what is
+     this and should I upgrade it" — portrait, name, tier pips, the four stats, and the two money
+     buttons — and what is behind the handle is the labelled element block: school, resisted-by,
+     standing orders, runebond. Those are a READ, gone looking for; none of them is why the sheet
+     was opened, and every one of them is one tap away. Measured saving is ~100px of world band. */
+  #towerMenu .pHead .exp{ display:flex; align-items:center; justify-content:center;
+     flex:0 0 auto; width:44px; height:44px; margin:-9px -2px -9px 0; padding:0; border:0;
+     background:50% 50%/17px 17px no-repeat; opacity:.85; border-radius:4px;
+     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 15l7-7 7 7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+  #towerMenu:not(.peek) .pHead .exp{
+     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 9l7 7 7-7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+  #towerMenu.peek .elB{ display:none; }
   #towerMenu .stats{ display:grid; grid-template-columns:1fr 1fr; column-gap:14px; }
   /* the garrison sheet is full-width here and has the room the 58px build card does not —
      the school keeps its WORD (FIX4-UI §6a) */
@@ -3826,6 +3983,13 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
              scrollbar-width:thin; scrollbar-color:#c69a3a rgba(0,0,0,.28); }
   #mapCards::-webkit-scrollbar{ width:3px; }
   #mapCards::-webkit-scrollbar-thumb{ background:#c69a3a; border-radius:2px; }
+  /* FIX13-UI §4 — the key rides the phone too, and the scroller pays for it out of its own box
+     rather than pushing the fixed foot bar off the frame. 28px: the line's 17px pip plus its
+     margin, measured. */
+  #mapsLeg{ gap:14px; margin-top:11px; }
+  #mapsLeg .mLgP{ width:15px; height:15px; }
+  #mapsLeg b{ font-size:8.5px; letter-spacing:.12em; }
+  #mapCards{ max-height:calc(100vh - 238px - var(--mfoot)); }
   .mCard{ width:100%; display:flex; gap:11px; align-items:center; padding:8px; }
   .mCard .mWrap{ flex:0 0 118px; }
   .mCard .mTxt{ flex:1 1 auto; min-width:0; }
@@ -3837,7 +4001,15 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      lines (141px of clear run against a 156px name). So the ribbon crosses the corner of
      the MINI-MAP here, which is art rather than type, and the name keeps the whole rail. */
   .mCard .rib{ right:auto; left:6px; border-radius:3px; }
-  .mCard .mB{ font-size:10.5px; min-height:0; }
+  /* FIX13-UI §4 — THREE LINES ON THE PHONE, because two of them cut a rule in half. Round 13:
+     "Frostfell's rule is cut mid-sentence ('lose half the…') while the card has empty space below
+     it." Both halves measured true at 390: the blurb is the only place a road states its MECHANIC
+     ("Cover the fork or lose half the wave") and the phone card clamps it one line short of the
+     verb, while the row it sits in has slack under it. The clamp is what protects the list's
+     baseline grid, so it is raised rather than removed — three lines of 10.5px is 42px against the
+     two lines' 28, and the card's own rows absorb it. Desktop keeps two: at 12.5px in a 240px
+     column every blurb in either tongue already fits. */
+  .mCard .mB{ font-size:10.5px; min-height:0; -webkit-line-clamp:3; max-height:4.05em; }
   .mFoot{ margin-top:6px; padding-top:5px; }
   .mCard .mE{ margin-top:3px; font-size:9px; letter-spacing:.12em; }
   /* Pre-existing 11px overflow, measured live at 390px and fixed here because the daily
