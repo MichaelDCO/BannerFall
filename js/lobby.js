@@ -443,6 +443,18 @@ async function copySummons() {
 // import map not carrying it yet) the lobby still opens, still renders, and says so.
 async function transport() {
   if (S.tryst !== undefined) return S.tryst;
+  // ROUTED THROUGH THE SEQUENCER when it is there (js/net.js, RECONCILIATION §7). It owns the
+  // strategy switch - `?net=bc` picks the BroadcastChannel loopback the two-browser E2E rides
+  // on - and it caches exactly ONE module instance, so the lobby and the transport share a
+  // selfId instead of dialling the relays twice under two identities. With the transport absent
+  // (or refusing) the bare import is still the answer and this file behaves as it always did.
+  try {
+    const N = window.BFCoopNet;
+    if (N && typeof N.transport === 'function') {
+      const t = await N.transport();
+      if (t) { S.tryst = t; return S.tryst; }
+    }
+  } catch (e) { /* fall through to the direct import */ }
   try { S.tryst = await import('trystero'); }
   catch (e) { S.tryst = null; console.warn('co-op: trystero unavailable —', e && e.message); }
   return S.tryst;
@@ -665,6 +677,12 @@ try {
     version: 1,
     STR: LOBBY_STR,
     get room() { return S.room; },
+    // >> THE HOST'S RE-DIAL. SECTION: NET starts a run by NAVIGATING (it writes `?coop=CODE`),
+    // >> which ends this page and the Trystero room with it; on the far side js/net.js has to
+    // >> raise the channels again from the CODE, and its `roomCode()` reads this accessor FIRST.
+    // >> Without it a host navigates with the `?coop=1` sentinel, has nothing to re-dial, and the
+    // >> band is stillborn - every guest reconnects off `?join=` and the captain never arrives.
+    get code() { return S.code; },
     get session() { return S.go; },
     get localIdx() { return S.go ? S.go.players.findIndex(p => p.id === S.selfId) : -1; },
     open: show, close: hide, leave,

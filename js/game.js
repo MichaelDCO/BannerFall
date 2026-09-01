@@ -43384,8 +43384,13 @@ NET.loopback = () => { NET.onSubmit = (c) => { c.t = NET.stamp(); NET.recv(c); }
 // >> THE ONE THING THE TRANSPORT STAGE MUST OWN: the reload ends the page, and window.BFCoop.room
 // >> with it. Every peer has to RE-DIAL the room after boot. NET.resume() re-arms the sim side and
 // >> publishes NET.session(); rebuilding the DataChannels from `code` belongs to the transport.
-// >> The lobby does not publish the room code today, so `code` is best-effort (`?join=`, then
-// >> `?coop=`); the transport stage should have the lobby expose `window.BFCoop.code`.
+// >> LANDED (integrate stage): js/lobby.js publishes `window.BFCoop.code` beside `.room`, so the
+// >> `code` below is the real war-band code on every peer and a HOST no longer navigates with the
+// >> bare `?coop=1` sentinel with nothing to re-dial. js/net.js re-raises the channels from it and
+// >> holds the MUSTER GATE - it seals no tick until every saddle has answered - because the two
+// >> peers do not come back from this navigation together. tools/coopsmoke.mjs drives the whole
+// >> path live (plinth -> lobby -> horn -> navigation -> two lockstep peers) and is the
+// >> regression test for both.
 const COOP_KEY = 'bannerfall.coop';
 const coopMode = (m) => m === 'endl' || m === 'endless' ? 'endless'
                       : m === 'horde' ? 'horde' : 'campaign';
@@ -43998,6 +44003,265 @@ async function runTests(which) {
     T('coop.solo.takeAllFloorsAtZero', G.takeAll(tk + 500) === tk && state.gold === 0,
       'gold=' + state.gold);
     state.gold = gS;
+  }
+
+  // == GAME_SPEC_9 - THE TWO-BROWSER E2E (?test=coope2e&role=host|guest&room=CODE&net=bc) ====
+  // Everything above this line is ONE page proving a property of itself. This suite is the one
+  // that cannot be: co-op is two browsers stepping one sim off one command log, and the only
+  // honest proof of that is two browsers. tools/test.ps1's `coop` block boots this page twice -
+  // two tabs, two renderer processes, two module graphs, one profile - and gates on the two
+  // transcripts being identical. The two halves find each other over the BroadcastChannel
+  // loopback js/net.js ships for exactly this (`?net=bc`), which is ordered and lossless, the
+  // same delivery guarantee an ordered reliable DataChannel gives - so what is proved here is
+  // what holds in play. (It is also WHY the E2E is two tabs and not two chrome.exe: a
+  // BroadcastChannel is per-profile, and two Chrome processes cannot see one. The cross-PROCESS
+  // determinism claim is the `net` suite's double-run gate, which is a separate proof.)
+  //
+  // WHAT IT DRIVES, end to end, through the shipped code and no test-only seam:
+  //   the handshake the lobby performs (roster, seed, seats) -> NET.begin (arm + pin the rng
+  //   cursor) -> js/net.js start() re-dialling the room from the CODE -> the host's sequencer
+  //   stamping at NET.stamp() -> bundles -> NET.recv/NET.setHorizon -> NET.pre draining the
+  //   queue in (p, s) order -> G.* verbs -> G.stateCRC() gossip.
+  //
+  // WHAT IT ASSERTS, on BOTH peers:
+  //   1. the band forms and both sessions go live, over the wire, with no lobby involved;
+  //   2. both captains build, and each pays out of their OWN purse;
+  //   3. the rider's attempt to dismantle the CAPTAIN'S tower is REFUSED - in the sim, on both
+  //      screens, at the same tick, and the tower is still standing at the end;
+  //   4. every applied command is the same line at the same stamped tick on both peers;
+  //   5. the forty CRC marks are identical, and no peer ever declared a desync;
+  //   6. NET.late is 0 - not one command ever arrived for a tick its peer had already taken,
+  //      which is the horizon doing the one job it exists for;
+  //   7. and the whole of it disbands back to one seat and one purse.
+  //
+  // THE ONE PIECE OF RIGGING, declared: the two peers PACE each other over the handshake
+  // channel (LAGCAP). Real lockstep bounds a guest (it may not pass the horizon) and bounds a
+  // host not at all, so a captain on a faster tab can be three hundred ticks ahead when a
+  // rider's command arrives - legal, and it would land the scripted plan at an unpredictable
+  // tick. The pacing is entirely OUTSIDE the sequencer: not one byte of js/net.js or SECTION:
+  // NET knows it exists, and nothing it does could hide a desync (it only ever makes a peer
+  // wait, which is what the horizon does to it anyway).
+  // NAMED EXPLICITLY OR NOT AT ALL - deliberately not `has()`, so `?test=all` does not reach it.
+  // Every other suite is one page proving something about itself; this one needs a SECOND browser
+  // on the far end of the room, and under `all` it would sit out its ninety-second muster and then
+  // fail twice for a reason that is not a bug. tools/test.ps1's `coop` block starts both halves.
+  if (which.split(',').indexOf('coope2e') >= 0) {
+    const ROLE = ((P.get('role') || 'host').toLowerCase() === 'guest') ? 'guest' : 'host';
+    const TAG = '[' + ROLE + ']';
+    // roomCode() in js/net.js takes FIVE glyphs and nothing else, so the runner's `-Room` is
+    // normalised here rather than trusted - both tabs normalise it the same way.
+    const CODE = (((P.get('room') || 'E2E01').toUpperCase().replace(/[^A-Z0-9]/g, '')) + '00000').slice(0, 5);
+    const SEED = ((parseInt(P.get('seed') || '', 10) || 4242) >>> 0);
+    const TARGET = ((parseInt(P.get('ticks') || '', 10) || 1200) | 0);
+    const LAGCAP = 150;
+    const C = G.COOP, GD = G.GOLDS;
+    const E = (n) => 'e2e.' + ROLE + '.' + n;
+    const say = (s) => console.log('COOPE2E' + TAG + ' ' + s);
+    const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+    const eqj = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const firstDiff = (a, b) => {
+      a = a || []; b = b || [];
+      const n = Math.max(a.length, b.length);
+      for (let i = 0; i < n; i++) if (a[i] !== b[i]) return '#' + i + ' [' + a[i] + '] vs [' + b[i] + ']';
+      return 'none';
+    };
+
+    await (async () => {
+      // js/net.js installs NOTHING under ?test= (its own SHOT guard), so its module scope is
+      // inert and window.BFCoopNet is deliberately absent. Its EXPORTS are the transport, and
+      // this is the same module instance index.html already loaded - not a second copy.
+      const NM = await import('./net.js');
+      const strat = await NM.transport();
+      T(E('loopbackStrategy'), !!strat && NM.strategyName() === 'bc',
+        'strategy=' + NM.strategyName() + ' got=' + !!strat);
+      if (!strat) return;
+
+      // ---- the lobby's job, by hand -------------------------------------------------------
+      // js/lobby.js is behind the same ?test= guard, so the roster/seed/seats handshake it
+      // performs is replayed here on a SEPARATE room ('e2e-CODE'), leaving 'bf-CODE' entirely
+      // to the sequencer. What crosses is exactly the `bf-coop-start` detail the lobby emits.
+      let peerTick = 0;
+      const inbox = [];
+      const hs = strat.joinRoom({ appId: 'bannerfall' }, 'e2e-' + CODE);
+      const hsA = hs.makeAction('lob');
+      const hsend = Array.isArray(hsA) ? hsA[0] : (d) => hsA.send(d);
+      const onMsg = (d) => {
+        if (!d) return;
+        if (typeof d.t === 'number' && d.k === 'tick') { if (d.t > peerTick) { peerTick = d.t; } return; }
+        if (d.k === 'done' && typeof d.tick === 'number' && d.tick > peerTick) { peerTick = d.tick; }
+        inbox.push(d);
+      };
+      if (Array.isArray(hsA)) hsA[1](onMsg); else hsA.onMessage = onMsg;
+      const waitFor = async (pred, ms) => {
+        const dl = Date.now() + ms;
+        for (;;) {
+          for (let i = 0; i < inbox.length; i++) if (pred(inbox[i])) return inbox[i];
+          if (Date.now() >= dl) return null;
+          await nap(30);
+        }
+      };
+
+      let players = null, seedUsed = SEED;
+      if (ROLE === 'guest') {
+        let go = null; const dl = Date.now() + 90000;
+        while (!go && Date.now() < dl) { hsend({ k: 'hi', id: strat.selfId }); go = await waitFor((m) => m.k === 'go', 250); }
+        T(E('bandFormed'), !!go, 'no captain answered on e2e-' + CODE + ' inside 90s');
+        if (!go) return;
+        players = go.players; seedUsed = go.seed >>> 0;
+      } else {
+        let hi = null; const dl = Date.now() + 90000;
+        while (!hi && Date.now() < dl) { hi = await waitFor((m) => m.k === 'hi', 250); }
+        T(E('bandFormed'), !!hi, 'no rider answered on e2e-' + CODE + ' inside 90s');
+        if (!hi) return;
+        players = [{ id: strat.selfId, idx: 0, host: true, name: 'Captain', crest: 0, ready: true },
+                   { id: hi.id, idx: 1, host: false, name: 'Rider', crest: 1, ready: true }];
+        for (let i = 0; i < 5; i++) { hsend({ k: 'go', players: players, seed: SEED }); await nap(100); }
+      }
+      T(E('rosterIsTwoSeats'), Array.isArray(players) && players.length === 2 &&
+        players[0].host === true && players[1].host === false, JSON.stringify(players));
+
+      // ---- the board, cut identically on both peers ---------------------------------------
+      // Every term two pages could differ on is set by hand, and then NET.begin PINS the rng
+      // cursor - the one term G.stateCRC() cannot agree on by luck. Lives are 99 so a battle
+      // that goes badly cannot end the run early and make the two transcripts different
+      // LENGTHS for a reason that is not a desync.
+      const arm = () => {
+        for (const tw of G.towersList.slice()) G.sellTower(tw);
+        G.towersList.length = 0; G.knights.length = 0; G.enemies.length = 0;
+        G.projectiles.length = 0; G.traps.length = 0; G.patches.length = 0;
+        state.tick = 0; state.wave = 0; state.lives = 99; state.invested = 0; state.selTower = -1;
+        state.countdown = 6; state.phase = 'prewave'; state.kills = 0; state.leaked = 0;
+        state.peak = 0; state.speed = 1; state.paused = false; state.omen = '';
+        G.covDirty();
+        const okA = NET.begin({ seed: seedUsed, players: players, hostIdx: 0, code: CODE,
+          diff: 'knight', localIdx: (ROLE === 'host' ? 0 : 1) });
+        // The purses are cut at a run's START (setTalents) and this suite never opens a road,
+        // so it cuts them itself - exactly as ?test=coop does, for the reason the GOLDS note
+        // gives. state.gold is an accessor over GOLDS[COOP.pay], so `pay` is re-seated after.
+        GD.length = 2; GD[0] = 4000; GD[1] = 4000;
+        C.pay = C.me;
+        return okA;
+      };
+
+      // ORDER IS LOAD-BEARING. The host's pump starts inside NM.start() and emits its first
+      // bundle immediately; a bundle posted before the rider's room object exists is simply
+      // lost, and the sequencer has no retransmit (a hole it can never fill would stall the
+      // rider at horizon -1 forever). So the RIDER raises its channels first and says so, and
+      // only then does the captain raise its own.
+      let live = false;
+      if (ROLE === 'guest') {
+        T(E('armed'), arm() === true && NET.active === true && C.seats === 2 && C.me === 1,
+          'seats=' + C.seats + ' me=' + C.me);
+        live = await NM.start(NET.session());
+        for (let i = 0; i < 8; i++) { hsend({ k: 'ready' }); await nap(80); }
+      } else {
+        const rdy = await waitFor((m) => m.k === 'ready', 90000);
+        T(E('riderRaisedChannels'), !!rdy, 'the rider never answered ready');
+        if (!rdy) return;
+        T(E('armed'), arm() === true && NET.active === true && C.seats === 2 && C.me === 0,
+          'seats=' + C.seats + ' me=' + C.me);
+        live = await NM.start(NET.session());
+      }
+      T(E('transportLive'), live === true && NM.status().live === true && NM.status().role === ROLE,
+        JSON.stringify(NM.status()));
+      if (!live) return;
+      // The documented test hook, and the only way the timers move. The silence/drop clocks are
+      // pushed far out on purpose: a peer that is merely slow must not be declared dead, and the
+      // drop path has its own proof in tools/netprobe.html.
+      NM.setTimers({ pump: 10, hb: 250, watchdog: 250, silent: 90000, drop: 180000,
+        crcGrace: 90000, gapStall: 90000 });
+
+      // ---- the scripted plan, driven off each peer's OWN sim tick --------------------------
+      const applies = [], crcs = [];
+      let rej = null;
+      NET.onApply = (c, ok) => {
+        const line = 't=' + c.t + ' p=' + c.p + ' s=' + c.s + ' op=' + c.op +
+          ' args=' + JSON.stringify(c.args) + ' ok=' + (ok ? 1 : 0);
+        applies.push(line);
+        if (c.op === 'sell') rej = { t: c.t | 0, p: c.p | 0, uid: c.args[0] | 0, ok: !!ok };
+        console.log('NETAPPLY' + TAG + ' ' + line);
+      };
+      const PLAN = ROLE === 'host'
+        ? [[20, () => NET.submit('auto', [1])],
+           [60, () => NET.submit('place', [32, -31, 'archer'])],
+           [200, () => NET.submit('place', [45, -2, 'ballista'])]]
+        : [[20, () => NET.submit('auto', [1])],
+           [90, () => NET.submit('place', [44, 2, 'archer'])],
+           // The rider reads the captain's uid off its OWN board - which is itself a claim: the
+           // uid counter is sim state, so the tower the rider names is the tower the captain has.
+           [260, () => { const w = G.towersList.filter((x) => x.owner === 0)[0];
+                         NET.submit('sell', [w ? w.uid : -1]); }]];
+
+      const DEADLINE = Date.now() + 180000;
+      let pi = 0;
+      while (state.tick < TARGET && Date.now() < DEADLINE) {
+        let n = 0;
+        while (state.tick < TARGET && (state.tick - peerTick) < LAGCAP && NET.pre()) {
+          while (pi < PLAN.length && PLAN[pi][0] <= state.tick) { PLAN[pi][1](); pi++; }
+          G.tickSim();
+          NET.post();
+          if (state.tick % NET.CRC_EVERY === 0) {
+            const h = G.crcHex();
+            crcs.push(state.tick + ':' + h);
+            let alive = 0; for (const en of G.enemies) if (en.alive) alive++;
+            console.log('NETCRC' + TAG + ' tick=' + state.tick + ' crc=0x' + h + ' wave=' + state.wave +
+              ' lives=' + state.lives + ' purses=' + GD.join('/') + ' towers=' + G.towersList.length +
+              ' alive=' + alive);
+          }
+          if (++n >= 12) break;
+        }
+        hsend({ k: 'tick', t: state.tick });
+        await nap(0);
+      }
+      say('reached tick=' + state.tick + ' phase=' + state.phase + ' wave=' + state.wave +
+        ' lives=' + state.lives + ' purses=' + GD.join('/') + ' towers=' + G.towersList.length +
+        ' applied=' + NET.applied + ' refused=' + NET.refused + ' late=' + NET.late +
+        ' horizon=' + NET.horizon + ' peer=' + peerTick);
+      T(E('reachedTarget'), state.tick >= TARGET,
+        'tick=' + state.tick + '/' + TARGET + ' peer=' + peerTick + ' horizon=' + NET.horizon);
+      T(E('noLateCommands'), NET.late === 0, 'late=' + NET.late);
+      T(E('noDesyncDeclared'), NM.status().ended === '' && NM.status().desyncAt === 0,
+        JSON.stringify(NM.status()));
+      T(E('runWasNotLost'), state.phase !== 'lost', 'phase=' + state.phase);
+
+      // ---- the two boards, compared to each other -----------------------------------------
+      const owners = G.towersList.map((w) => w.uid + ':' + w.owner);
+      const mine = { k: 'done', role: ROLE, tick: state.tick, crcs: crcs, applies: applies,
+        purses: GD.slice(), owners: owners, lives: state.lives, wave: state.wave };
+      let other = null; const dl2 = Date.now() + 90000;
+      while (!other && Date.now() < dl2) { hsend(mine); other = await waitFor((m) => m.k === 'done' && m.role !== ROLE, 400); }
+      T(E('peerReported'), !!other, 'the other browser never reported in');
+      if (other) {
+        T(E('crcAgreesWithPeer'), crcs.length > 0 && eqj(crcs, other.crcs),
+          'marks=' + crcs.length + '/' + (other.crcs || []).length + ' firstDiff=' + firstDiff(crcs, other.crcs));
+        T(E('applyLogAgreesWithPeer'), applies.length > 0 && eqj(applies, other.applies),
+          'lines=' + applies.length + '/' + (other.applies || []).length + ' firstDiff=' + firstDiff(applies, other.applies));
+        T(E('boardAgreesWithPeer'), eqj(mine.purses, other.purses) && eqj(mine.owners, other.owners) &&
+          mine.lives === other.lives && mine.wave === other.wave,
+          'mine=' + JSON.stringify([mine.purses, mine.owners, mine.lives, mine.wave]) +
+          ' theirs=' + JSON.stringify([other.purses, other.owners, other.lives, other.wave]));
+      }
+
+      // ---- the rules the E2E exists to prove over a real wire ------------------------------
+      T(E('bothCaptainsBuilt'), G.towersList.some((w) => w.owner === 0) && G.towersList.some((w) => w.owner === 1),
+        'owners=' + owners.join(','));
+      T(E('eachPaidTheirOwnPurse'), GD.length === 2 && GD[0] < 4000 && GD[1] < 4000 && GD[0] !== GD[1],
+        'purses=' + GD.join('/'));
+      T(E('ownershipRefusedTheSell'), !!rej && rej.p === 1 && rej.ok === false && rej.uid >= 0,
+        rej ? JSON.stringify(rej) : "the rider's sell never landed on this peer");
+      T(E('captainsTowerStillStands'), !!rej && G.towersList.some((w) => w.uid === rej.uid && w.owner === 0),
+        'uid=' + (rej && rej.uid) + ' owners=' + owners.join(','));
+
+      // ---- and it all goes away -------------------------------------------------------------
+      NET.onApply = null;
+      NM.stop();
+      NET.disarm();
+      try { if (hs.leave) hs.leave(); } catch (e) { /* already gone */ }
+      T(E('disbandsToSolo'), NET.active === false && NM.status().live === false &&
+        GD.length === 1 && C.seats === 1, 'active=' + NET.active + ' live=' + NM.status().live +
+        ' purses=' + GD.length + ' seats=' + C.seats);
+      say('done');
+    })();
   }
 
   console.log('TESTSUM total=' + (R.pass + R.fail) + ' pass=' + R.pass + ' fail=' + R.fail +

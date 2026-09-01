@@ -59,6 +59,8 @@ en: {
   'coop.net.desyncBody': 'The band no longer sees the same field — two tellings of the same battle cannot both be true, so the battle is called at tick {0}. Ride back to the war-band and set out again.',
   'coop.net.toLobby': 'Back to the war-band',
   'coop.net.stalled': 'The captain has fallen silent. Holding at tick {0}…',
+  'coop.net.gather': 'Mustering the war-band…',
+  'coop.net.gatherBody': 'The horn has sounded and the field is being made ready. The battle opens when every captain has come up — nobody rides ahead of the band.',
   'coop.net.nolib': 'The co-op courier is missing from this build.',
 },
 fr: {
@@ -71,6 +73,8 @@ fr: {
   'coop.net.desyncBody': 'La compagnie ne voit plus le même terrain — deux récits d’une même bataille ne peuvent être vrais tous les deux, donc la bataille s’arrête au temps {0}. Retournez à la compagnie et repartez.',
   'coop.net.toLobby': 'Retour à la compagnie',
   'coop.net.stalled': 'Le capitaine s’est tu. On tient au temps {0}…',
+  'coop.net.gather': 'Rassemblement de la compagnie…',
+  'coop.net.gatherBody': 'Le cor a sonné et le terrain se prépare. La bataille s’ouvre quand chaque capitaine est arrivé — personne ne part devant la compagnie.',
   'coop.net.nolib': 'Le messager de coopération manque à cette version.',
 },
 };
@@ -119,6 +123,7 @@ const DEF = {
   drop: 30000,    // ms of silence from a peer -> drop them
   crcGrace: 4000, // ms to wait for every peer's hash for a checkpoint before judging on what came
   gapStall: 2000, // ms of a hole in the bundle stream before we say so on screen
+  muster: 60000,  // ms a saddle that has NEVER spoken is given to come back from the navigation
 };
 const T = { ...DEF };
 
@@ -297,6 +302,11 @@ const S = {
 
   startedAt: 0,        // ms; the clock a peer that has never spoken is measured against
   seen: new Map(),     // peerId -> ms of last inbound byte
+  met: new Set(),      // seats that have announced themselves SINCE THIS SESSION BEGAN. Not the
+                       // same thing as `seen`: the roster's peer ids are all stale on the far
+                       // side of the navigation, so this is the only honest answer to "is that
+                       // saddle actually on the wire yet".
+  gatherOn: 0,         // is the muster overlay up
   stalling: new Set(), // idx of peers past `silent`
   gone: new Set(),     // idx of peers past `drop`
   paused: false,
@@ -347,6 +357,26 @@ function unbindSim() {
   S.prev = null; S.crcSinks = [];
 }
 
+// ── THE MUSTER GATE ─────────────────────────────────────────────────────────────────────────
+// A run BEGINS with a navigation: SECTION: NET writes `?coop=CODE` and every page dies and comes
+// back, at its own pace, after its own world build. The captain is usually first. A bundle sealed
+// before a rider's channels exist is simply lost - `bun` is a broadcast into a room the rider has
+// not joined - and because the sequencer has no retransmit by design, that rider holds a hole at
+// f=0 that can never be filled and stands at horizon -1 for the rest of the road, buffering
+// bundles it may never apply. (Measured: tools/coopsmoke.mjs, guest buffered=133 horizon=-1.)
+//
+// So the captain seals NOTHING until every saddle has answered `hello`. Both halves of the band
+// wait at the gate together, which is exactly what the horizon means anyway, and the first bundle
+// any rider ever sees is f=0. A saddle that never comes is dropped by sweep()'s muster window, at
+// which point `gone` takes it out of this test and the band rides without it.
+function bandPresent() {
+  for (const p of S.players) {
+    if (p.idx === S.localIdx || S.gone.has(p.idx)) continue;
+    if (!S.met.has(p.idx)) return false;
+  }
+  return true;
+}
+
 // THE HOST'S CLOCK. `NET.stamp()` is the sim's own published rule — state.tick + LEAD — so the
 // sequencer never has to keep a second, drifting idea of what tick it is. Pumped a little faster
 // than the 30 tps sim so a tick is never missed; the emitter itself coalesces (see feedTick).
@@ -354,6 +384,7 @@ function unbindSim() {
 // has sealed, so each pump raises the seal by exactly as far as the sim actually advanced.
 function pump() {
   const N = sim(); if (!N) return;
+  if (!bandPresent()) return;                 // THE MUSTER GATE - see above. Host-only path.
   let t;
   try { t = (N.stamp() | 0) - (N.LEAD | 0); } catch (e) { return; }
   if (t > S.tick) feedTick(t);
@@ -571,6 +602,19 @@ function sweep() {
     // to declare another guest dropped — that is the sequencer's call and only the sequencer's.
     if (S.role === 'guest' && p.idx !== S.hostIdx) continue;
     const seat = S.byIdx.get(p.idx);
+    // A SADDLE THAT HAS NOT ANSWERED ONCE IS NOT SILENT, IT IS STILL COMING BACK. The silence and
+    // drop clocks are about a peer that WAS on the wire and stopped; a peer on the far side of the
+    // navigation has never been on this session's wire at all, and its world build alone can
+    // outlast `silent` on a slow machine. It gets the muster window instead - and when that runs
+    // out it is dropped exactly as a silent peer is, so the band can never be held at the gate
+    // forever by a browser that closed.
+    if (!S.met.has(p.idx)) {
+      if (t - S.startedAt > T.muster) {
+        if (p.idx === S.hostIdx) { onHostGone(); return; }
+        dropPeer(p.idx);
+      }
+      continue;
+    }
     const last = S.seen.get((seat && seat.id) || p.id) || S.startedAt;
     const dt = t - last;
     if (dt > T.drop) {
@@ -673,6 +717,11 @@ function veil(kind) {
     tt.textContent = L('coop.net.desync');
     bb.textContent = L('coop.net.desyncBody', S.desync);
     btn.hidden = false; btn.textContent = L('coop.net.toLobby');
+  } else if (kind === 'gather') {
+    d.classList.remove('bad');
+    tt.textContent = L('coop.net.gather');
+    bb.textContent = L('coop.net.gatherBody');
+    btn.hidden = true;
   } else if (kind === 'hostgone') {
     d.classList.add('bad');
     tt.textContent = L('coop.net.hostgone');
@@ -732,6 +781,7 @@ export async function start(sess) {
   S.pend.length = 0; S.seq = 0; S.buf.clear(); S.gapSince = 0;
   S.crc.clear(); S.crcSinks = []; S.desync = 0;
   S.seen.clear(); S.stalling.clear(); S.gone.clear(); S.paused = false; S.ended = '';
+  S.met.clear(); S.met.add(S.localIdx); S.gatherOn = 0;
 
   aCmd.on((d, m) => {
     const from = pid(m); touch(from);
@@ -763,7 +813,7 @@ export async function start(sess) {
   bindSim();
   hello();
 
-  S.wd = setInterval(() => { sweep(); judgeCRC(); gapWatch(); }, T.watchdog);
+  S.wd = setInterval(() => { sweep(); judgeCRC(); gateWatch(); gapWatch(); }, T.watchdog);
   if (S.role === 'host') S.pmp = setInterval(pump, T.pump);
   S.hbT = setInterval(hello, T.hb);
 
@@ -780,6 +830,7 @@ function onSys(d, from) {
       const r = S.byIdx.get(d.idx);
       if (r) { r.id = from; if (d.name) r.name = String(d.name).slice(0, 14); }
       const q = S.players.find((x) => x.idx === d.idx); if (q) q.id = from;   // keep the roster copy honest
+      S.met.add(d.idx);                       // ...and the saddle is answered: see bandPresent()
     }
     return;
   }
@@ -800,8 +851,17 @@ function onSys(d, from) {
 // A hole in the bundle stream is not a drop — the peer may be perfectly alive and the stream
 // merely late. It still has to say so, because from the player's chair a frozen field with no
 // explanation is a bug report.
+// The other half of the gate: what a player sees while it is shut. Runs on the watchdog rather
+// than the pump, because a GUEST has no pump and is waiting on exactly the same thing.
+function gateWatch() {
+  if (!S.live || S.ended) return;
+  const gathering = S.horizon < 0 || (S.role === 'host' && !bandPresent());
+  if (gathering) { S.gatherOn = 1; if (!S.paused && !S.stalling.size) veil('gather'); return; }
+  if (S.gatherOn) { S.gatherOn = 0; if (!S.stalling.size && !S.gapSince) veil(''); }
+}
+
 function gapWatch() {
-  if (!S.gapSince || S.ended) return;
+  if (!S.gapSince || S.ended || S.horizon < 0) return;   // before the first bundle it is a muster
   if (now() - S.gapSince < T.gapStall) return;
   if (SHOT) return;
   const d = veilNode();
@@ -820,6 +880,7 @@ export function stop() {
   if (S.ownRoom && S.room) { try { if (S.room.leave) S.room.leave(); } catch (e) { /* */ } }
   S.live = false; S.room = null; S.send = null; S.ownRoom = false; S.role = null;
   S.pend.length = 0; S.buf.clear(); S.crc.clear(); S.seen.clear(); S.stalling.clear();
+  S.met.clear(); S.gatherOn = 0;
   veil('');
   emit('stop', {});
 }
@@ -835,6 +896,7 @@ export function status() {
     pending: S.pend.length, buffered: S.buf.size, gap: S.gapSince ? now() - S.gapSince : 0,
     paused: S.paused, ended: S.ended, desyncAt: S.desync,
     stalling: Array.from(S.stalling), gone: Array.from(S.gone),
+    met: Array.from(S.met), gathering: !!S.gatherOn,
     lead: (() => { const N = sim(); return (N && typeof N.LEAD === 'number') ? N.LEAD : T.lead; })(),
   };
 }
@@ -844,7 +906,7 @@ export function status() {
 export function setTimers(o) {
   for (const k of Object.keys(DEF)) if (o && typeof o[k] === 'number') T[k] = o[k];
   if (S.live) {
-    if (S.wd) { clearInterval(S.wd); S.wd = setInterval(() => { sweep(); judgeCRC(); gapWatch(); }, T.watchdog); }
+    if (S.wd) { clearInterval(S.wd); S.wd = setInterval(() => { sweep(); judgeCRC(); gateWatch(); gapWatch(); }, T.watchdog); }
     if (S.pmp) { clearInterval(S.pmp); S.pmp = setInterval(pump, T.pump); }
     if (S.hbT) { clearInterval(S.hbT); S.hbT = setInterval(hello, T.hb); }
   }
@@ -923,7 +985,7 @@ if (!SHOT) try { window.BFCoopNet = TRANSPORT; } catch (e) { /* never fatal */ }
 
 // ── RECONCILIATION WITH SECTION: NET (js/game.js) ───────────────────────────────────────────
 // The command layer landed while this stage was building. Everything below was verified against
-// the code, not assumed; what is left is the one thing that still needs an edit next door.
+// the code, not assumed. The integrate stage CLOSED §5 and §7 (see their entries) and added §8.
 //
 //  1. NAMES. `window.BFNet` is SECTION: NET's — game.js publishes the command layer there. The
 //     transport is `window.BFCoopNet`, and only falls back to `BFNet` when nothing claimed it.
@@ -934,23 +996,22 @@ if (!SHOT) try { window.BFCoopNet = TRANSPORT; } catch (e) { /* never fatal */ }
 //     of what tick it is exists anywhere in this file.
 //  4. ORDER. The sequencer sorts by (p, s), which is byte-for-byte SECTION: NET's own `netCmp`
 //     — so the host's bundle order and the receiver's queue order cannot disagree.
-//  5. >> THE ONE OPEN ITEM: THE HOST CANNOT RE-DIAL. <<
-//     SECTION: NET starts a run by navigating (`location.search = …`), which kills the page and
-//     the lobby's room with it, and carries the room code across as `?coop=CODE`. But it can
-//     only carry a code it can SEE, and it looks in `window.BFCoop.code` (does not exist) then
-//     `?join=` (guests only) — so a HOST navigates with `?coop=1` and this module has nothing
-//     to re-dial with. Guests reconnect; the host does not; the band is stillborn.
-//     THE FIX IS ONE LINE IN js/lobby.js, which this stage does not own — in the window.BFCoop
-//     block, alongside `get room()`:
-//           get code() { return S.code; },
-//     `roomCode()` above already reads it first, so the moment that line lands the whole path
-//     closes with no change here. (game.js's own comment asks for exactly this line.)
+//  5. CLOSED (integrate stage). THE HOST CAN RE-DIAL. `get code() { return S.code; }` now sits
+//     in js/lobby.js's window.BFCoop block beside `get room()`, so `roomCode()` finds the war-band
+//     code on the far side of SECTION: NET's navigation and a captain no longer carries the bare
+//     `?coop=1` sentinel. Regression-tested live rather than argued: tools/coopsmoke.mjs asserts
+//     `smoke.host.carriedTheRoomCode` against the captain's post-navigation URL.
 //  6. `inherit` IS NOT AN OP YET. GAME_SPEC_9 §B's drop rule is submitted as
 //     `{op:'inherit', args:[fromIdx, toIdx]}`; NET.OPS has no such entry, so NET.recv drops it
 //     as unknown — a clean no-op that leaves the towers standing. The coop-rules stage owns the
 //     verb; the wire format above is what it will arrive as.
-//  7. `?net=bc` IS TRANSPORT-ONLY. js/lobby.js does `await import('trystero')` directly, so the
-//     loopback cannot be driven through the lobby UI. One line there would fix that too —
-//         try { S.tryst = (window.BFCoopNet && await window.BFCoopNet.transport()) || await import('trystero'); }
-//     — and until it lands, tools/netprobe.html drives this module directly instead. The
-//     sequencer it proves is the same sequencer either way.
+//  7. CLOSED (integrate stage). js/lobby.js's transport() now asks window.BFCoopNet.transport()
+//     first and falls back to the bare import, so `?net=bc` reaches the lobby UI and the lobby and
+//     the sequencer share ONE strategy instance and one selfId. That is what lets
+//     tools/coopsmoke.mjs drive the real CREATE/JOIN/READY sheet over the loopback.
+//  8. THE MUSTER GATE (integrate stage, and it is a RULE CHANGE, not a tidy-up). A captain now
+//     seals no tick until every saddle has answered `hello`, and a saddle that has never spoken
+//     is measured against T.muster rather than T.silent/T.drop. See bandPresent() above for the
+//     failure it closes: without it the first rider back from the navigation was fine and every
+//     later one held an unfillable hole at f=0 and never took a tick. Any future stage that makes
+//     the host emit earlier than the gate has to bring a retransmit with it.
