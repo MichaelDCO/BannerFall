@@ -308,6 +308,11 @@
      the first frame, it imports nothing at module scope, and it carries no modulepreload hint,
      so it lands behind the world build instead of in front of it. -->
 <script type="module" src="js/lobby.js?v=__BUILD__"></script>
+<!-- The co-op transport (GAME_SPEC_9 B) - the lockstep sequencer. Same discipline as the lobby
+     above and for the same reasons: no modulepreload hint, nothing imported at module scope,
+     and its single listener waits on `bf-coop-start`, which nothing headless can dispatch. On a
+     solo boot it parses and then costs nothing at all. -->
+<script type="module" src="js/net.js?v=__BUILD__"></script>
 <script>
 // PWA service worker — NEVER in shot mode (a stale cache would poison the deterministic harness).
 if ('serviceWorker' in navigator && !new URLSearchParams(location.search).has('shot')

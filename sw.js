@@ -8,7 +8,9 @@ const SHELL = [
   './', 'index.html', 'css/main.css?v=__BUILD__', 'js/game.js?v=__BUILD__',
   // GAME_SPEC_9 A - the co-op lobby module. Shell, not vendor: it carries the `?v=` stamp
   // because it is ours and it changes when we change it.
-  'js/lobby.js?v=__BUILD__', 'manifest.webmanifest',
+  // GAME_SPEC_9 §B - the lockstep transport. Shell for the same reason as lobby.js: ours, and
+  // it changes when we change it, so it carries the `?v=` stamp rather than riding VENDOR.
+  'js/lobby.js?v=__BUILD__', 'js/net.js?v=__BUILD__', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
 ];
 const VENDOR = [
