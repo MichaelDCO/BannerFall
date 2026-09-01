@@ -22501,6 +22501,44 @@ G.patches = [];                      // burning ground (pyre) — sim-owned, TOW
 G.obstacles = G.obstacles || [];
 let eid = 0, twid = 0;
 
+// ══ GAME_SPEC_9 §B — CROSS-ENGINE DETERMINISM TABLES ════════════════════════════════════
+// Lockstep co-op means two BROWSERS, possibly two JS engines, stepping the same sim off the
+// same command log. IEEE basic ops (+ − × ÷) and sqrt are exactly specified and agree
+// everywhere; `Math.pow/sin/cos/exp/atan2` are NOT — the spec only bounds their error, so
+// V8 and JavaScriptCore may hand back doubles that differ in the last ulp. One ulp of tower
+// damage is a body that dies on tick 412 on one screen and 413 on the other, and from there
+// the two vales are different games.
+//
+// So every transcendental the SIM evaluates at a COMPILE-CONSTANT argument is evaluated
+// here, once, and written down. The literals below are the exact V8 doubles the shipped
+// game produced (shortest round-tripping decimal, so they re-parse bit-for-bit), which is
+// what keeps the balance matrix bit-identical while removing the engine from the loop.
+// The `net` unit suite re-derives them from Math.* and fails if the harness engine ever
+// disagrees with this table.
+//
+// THE HAZARD IS NOT THEORETICAL. Generating this table on Node v24 and then checking it in
+// Chrome 1xx caught a real disagreement on the very first pass: FOOT_RING_C[3] is
+// -0.7071067811389274 here and -0.7071067811389276 there. Same vendor, same engine family,
+// one ulp apart on Math.cos of a compile constant. Every literal below is therefore the
+// value the HARNESS's Chrome produces, because that is the engine the shipped balance matrix
+// was measured on; the whole point of writing them down is that a Safari peer now reads the
+// same numbers instead of its own.
+//
+// DPOW[level-1] is the 1.55^(tier-1) damage ladder — three sim readers (coverage dps,
+// burning-ground dps, the shot's damage). Levels are 1..3 by contract; the table runs to 8
+// so a future tier cannot fall off the end into `undefined`.
+const DPOW = [1, 1.55, 2.4025000000000003, 3.7238750000000005, 5.7720062500000004,
+              8.9466096875, 13.867245015625002, 21.494229774218756];
+// padY's eight-point foundation ring: cos/sin of i/8*6.283185307, i = 0..7.
+const FOOT_RING_C = [1, 0.7071067812024209, 4.489659216976159e-11, -0.7071067811389274,
+                     -1, -0.7071067812659142, -1.3468977650928477e-10, 0.7071067810754345];
+const FOOT_RING_S = [0, 0.7071067811706742, 1, 0.7071067812341676,
+                     8.979318433952318e-11, -0.7071067811071808, -1, -0.7071067812976606];
+// rallyMilitia's triangle: cos/sin of i*2.0943951 + 0.5236, i = 0..3 (POWERS.rally.n is 3;
+// the fourth entry is the same defensive slack DPOW carries).
+const TRI_RING_C = [0.866024791582939, -0.8660260147880448, 0.0000012196153098934161, 0.86602479517274];
+const TRI_RING_S = [0.5000010603626028, 0.4999989417092172, -0.9999999999992563, 0.5000010541449026];
+
 // ══ FREE PLACEMENT (SPEC2 §A) ════════════════════════════════════════
 // G.canPlace(x,z) is the SINGLE authority on whether a tower may stand somewhere: the UI
 // ghost, the keyboard/touch commit path and the bot harness all ask this one function, so
@@ -22551,8 +22589,9 @@ G.canPlace = canPlace;
 function padY(x, z) {
   let y = G.groundY(x, z);
   for (let i = 0; i < 8; i++) {
-    const a = i / 8 * 6.283185307;
-    y = Math.min(y, G.groundY(x + Math.cos(a) * FOOT_R, z + Math.sin(a) * FOOT_R));
+    // §B determinism: the eight angles are compile constants, so the ring is a table
+    // (FOOT_RING_C/S) rather than sixteen engine-dependent transcendental calls.
+    y = Math.min(y, G.groundY(x + FOOT_RING_C[i] * FOOT_R, z + FOOT_RING_S[i] * FOOT_R));
   }
   return y;
 }
@@ -22588,7 +22627,7 @@ let COV = {};
 G.covDirty = () => { COV = {}; };
 const _cv3 = new THREE.Vector3();
 const twCovDps = (tw) => {
-  const d = TOWER_DEFS[tw.type], k = Math.pow(1.55, tw.level - 1);
+  const d = TOWER_DEFS[tw.type], k = DPOW[tw.level - 1];   // §B determinism: 1.55^(tier-1), tabled
   if (d.patch) return d.patch.dps * k;
   if (d.knights) return d.knights * 6 * (1 + 0.55 * (tw.level - 1));
   if (!d.dmg || !d.cd) return 0;
@@ -23397,6 +23436,10 @@ function flankPick(e, h) {
   // The bearing is taken off the chosen arm's own tangent rather than off his facing: he is drawn
   // still pointing the old way on this tick, and the information is where he is GOING.
   if (VFX.flankTurn) {
+    // §B determinism, PROVEN RENDER-ONLY: the bearing is an argument to a VFX call and is
+    // never stored on `e` or read back by the sim, so an ulp of atan2 disagreement between
+    // two peers moves a burst's rotation and nothing else. Left as Math.atan2 deliberately —
+    // a tabled int-atan2 here would cost accuracy in the one place accuracy is only visual.
     const bs = flankSeg(bc), bt = G.pathTan(bs[0], best);
     VFX.flankTurn(e.px, G.groundY(e.px, e.pz), e.pz, Math.atan2(bt.x, bt.z));
   }
@@ -24159,7 +24202,7 @@ function addPatch(tw, x, z) {
     for (let i = 0; i < G.patches.length; i++) if (G.patches[i].owner === tw.uid) { G.patches.splice(i, 1); own--; break; }
   }
   G.patches.push({ x, z, r: P.rad, dur: P.dur, born: vt(), owner: tw.uid,
-    dps: P.dps * Math.pow(1.55, tw.level - 1) });
+    dps: P.dps * DPOW[tw.level - 1] });                    // §B determinism: tabled ladder
   VFX.firePatch(x, z, P.rad);
 }
 // ══ SPEC_8 §F — THE FROST LANCE ════════════════════════════════════════════════════════════
@@ -24238,7 +24281,7 @@ function fireTower(tw) {
   }
   if (!tgt) return false;
   tw.cdT = def.cd / auraMul(tw.x, tw.z);               // banner aura buys rate, not damage
-  const dmg = def.dmg * Math.pow(1.55, tw.level - 1);
+  const dmg = def.dmg * DPOW[tw.level - 1];                // §B determinism: tabled ladder
   let hasProj = true;
   if (tw.type === 'catapult' || tw.type === 'pyre') {
     const pot = tw.type === 'pyre', T = pot ? 1.25 : 1.1;
@@ -24346,7 +24389,8 @@ function rallyMilitia(x, z) {
   const P = POWERS.rally, t = vt();
   const mhp = P.hp * G.talHp();               // SPEC6 §B — the Drillmaster drills militia too
   for (let i = 0; i < P.n; i++) {
-    const a = i * 2.0943951 + 0.5236, hx = x + Math.cos(a) * 1.25, hz = z + Math.sin(a) * 1.25;
+    // §B determinism: three compile-constant bearings, tabled (TRI_RING_C/S).
+    const hx = x + TRI_RING_C[i] * 1.25, hz = z + TRI_RING_S[i] * 1.25;
     G.knights.push({ tower: null, mil: true, expire: t + P.life, alive: true,
       hp: mhp, maxhp: mhp, dps: P.dps, x: hx, z: hz, hx, hz,
       target: -1, respawn: 0, face: 0, idleT: 0 });
@@ -24724,6 +24768,8 @@ function tickSim() {
               // HOOK: ROSTER → VFX/AUDIO. Neither consumes G.rng (VFX runs its own hash stream,
               // Audio its own), so a telegraph cannot shift the seeded spawn order.
               if (VFX.chargeTell) {
+                // §B determinism, PROVEN RENDER-ONLY: same shape as the flank telegraph —
+                // the angle is consumed by VFX and never re-enters sim state.
                 const tw1 = G.pathTan(e.d, e.pathId);
                 VFX.chargeTell(e.px, G.groundY(e.px, e.pz), e.pz, Math.atan2(tw1.x, tw1.z));
               }
@@ -24959,13 +25005,18 @@ function tickSim() {
     }
     if (tgt) {
       const dx = tgt.px - kn.x, dz = tgt.pz - kn.z, dist = Math.hypot(dx, dz);
+      // §B determinism, PROVEN RENDER-ONLY: `kn.face` has exactly one consumer in the whole
+      // file — ARMIES' knight draw (`let kface = kn.face`, which the idle-fan pass then
+      // overrides for DRAWING ONLY and never writes back). Steering below uses dx/dz/dist,
+      // not the angle, so face never closes a loop into the sim. Verified by grepping every
+      // `.face` read: two writes here, one read in the renderer, nothing else.
       kn.face = Math.atan2(dx, dz);
       if (dist > 1.15) { kn.x += dx / dist * 3.2 * TICK; kn.z += dz / dist * 3.2 * TICK; }
       else { DSRC = 'steel'; dealDamage(tgt, kn.dps * TICK, 'crush'); DSRC = ''; }  // knights swing steel: CRUSH (SPEC3 §A)
       kn.idleT = 0;
     } else {
       const dx = kn.hx - kn.x, dz = kn.hz - kn.z, dist = Math.hypot(dx, dz);
-      if (dist > 0.4) { kn.x += dx / dist * 3.2 * TICK; kn.z += dz / dist * 3.2 * TICK; kn.face = Math.atan2(dx, dz); }
+      if (dist > 0.4) { kn.x += dx / dist * 3.2 * TICK; kn.z += dz / dist * 3.2 * TICK; kn.face = Math.atan2(dx, dz); }  // §B: render-only, see above
       kn.idleT += TICK;
       // knights standing in a warbanner's aura bind their wounds half again as fast
       if (kn.idleT > 3 && kn.hp < kn.maxhp) kn.hp = Math.min(kn.maxhp, kn.hp + 4 * TICK * (auraMul(kn.x, kn.z) > 1 ? 1.5 : 1));
@@ -25014,6 +25065,12 @@ function tickSim() {
       p.el += TICK;
       const f = Math.min(1, p.el / p.T);
       p.x = lerp(p.sx, p.ex, f); p.z = lerp(p.sz, p.ez, f);
+      // §B determinism, PROVEN RENDER-ONLY: this branch is the ARC projectiles (boulder /
+      // pot) and it resolves on `f >= 1` at the pre-computed impact point (p.ex/p.ez) — the
+      // height never gates a hit. The only reads of an arc shot's `p.y` are in TOWERS' draw
+      // pass (the mesh compose + the smoke-trail sag). The HOMING branch below does read
+      // p.y for its aim vector, but that p.y is stepped by basic ops and never touched by
+      // this sine. So an ulp of Math.sin here moves a stone's silhouette, not a death.
       p.y = lerp(p.sy, G.groundY(p.ex, p.ez), f) + Math.sin(f * Math.PI) * (p.kind === 'pot' ? 8 : 11);
       if (f >= 1) {
         G.projectiles.splice(i, 1);
@@ -25527,6 +25584,54 @@ G.holdTheLine = () => {
   return true;
 };
 G.tickSim = tickSim;
+// ══ GAME_SPEC_9 §B — THE DESYNC TRIPWIRE ════════════════════════════════════════════════
+// One uint32 that says "these two peers are still playing the same game". The netcode sends
+// it every 30 ticks; a mismatch pauses the run and raises the desync banner rather than
+// letting two vales drift silently apart. It is deliberately CHEAP and ALLOCATION-FREE —
+// module-scope accumulator, indexed loops, no closures per call, no strings — because it
+// runs once a second forever inside the tick loop.
+//
+// WHAT IT COVERS, and why each term earns its place:
+//  · tick / gold / lives — the three numbers a player would notice diverging first.
+//  · the RNG CURSOR (`_s`) — the single most important term. Every other field can agree by
+//    luck; the cursor cannot. If two peers have drawn a different NUMBER of rng values the
+//    next spawn already differs, and this catches it a full wave before the board shows it.
+//  · enemies.length AND the live count — the array keeps corpses for two seconds and sweeps
+//    on a fixed 90-tick beat, so its length is itself sim output worth checking.
+//  · sum of QUANTIZED live hp — hp is a float and floats are the thing being audited, so it
+//    is snapped to 1/16 before summing: a divergence has to be a real 0.0625 of damage, not
+//    a rounding whisker, before it trips the banner.
+//  · tower count and the sum of tower levels — the build, which is what commands mutate.
+// FNV-1a over four bytes per word: no table, no allocation, good avalanche for this size.
+let _crcH = 0;
+const _crcW = (v) => {
+  v = v >>> 0;
+  _crcH = Math.imul(_crcH ^ (v & 255), 16777619) >>> 0;
+  _crcH = Math.imul(_crcH ^ ((v >>> 8) & 255), 16777619) >>> 0;
+  _crcH = Math.imul(_crcH ^ ((v >>> 16) & 255), 16777619) >>> 0;
+  _crcH = Math.imul(_crcH ^ (v >>> 24), 16777619) >>> 0;
+};
+G.stateCRC = () => {
+  _crcH = 0x811c9dc5;
+  _crcW(state.tick); _crcW(state.gold); _crcW(state.lives); _crcW(state.wave);
+  _crcW(_s);                                            // the sim rng cursor — see above
+  const E = G.enemies;
+  let alive = 0, hpq = 0;
+  for (let i = 0; i < E.length; i++) {
+    const e = E[i];
+    if (!e.alive) continue;
+    alive++;
+    hpq = (hpq + Math.round(e.hp * 16)) | 0;            // quantise to 1/16 before summing
+  }
+  _crcW(E.length); _crcW(alive); _crcW(hpq);
+  const W = G.towersList;
+  let lv = 0;
+  for (let i = 0; i < W.length; i++) lv = (lv + W[i].level) | 0;
+  _crcW(W.length); _crcW(lv);
+  return _crcH >>> 0;
+};
+// Fixed-width hex, so a transcript diff lines up column-for-column.
+G.crcHex = () => ('0000000' + G.stateCRC().toString(16)).slice(-8);
 
 // ══ v7-RESILIENCE §1 — MID-RUN SAVE / RESUME (GAME_SPEC_7 §C.2) ═════════════════════════════
 // A store app is suspended and killed without warning, and until this stage the only way out of
@@ -42450,6 +42555,112 @@ async function runTests(which) {
     const arr = drawTurns();
     T('turns.drawShape', arr === null || (Array.isArray(arr) && arr.length > 0 && arr.every(t => Number.isFinite(t))),
       JSON.stringify(arr));
+  }
+
+
+  // == GAME_SPEC_9 SB - THE LOCKSTEP DETERMINISM SUITE (?test=net) ==========================
+  // Co-op is host-sequenced lockstep: only COMMANDS travel, and every peer re-derives the
+  // whole battle from (map, seed, command log). That contract has exactly one failure mode
+  // worth testing - two machines fed the identical log reaching different states - so this
+  // suite IS a peer. It drives a scripted command log through the EXISTING G rig (the same
+  // placeTower/upgradeTower/sellTower entry points the balance bot and the UI both use, so
+  // there is no test-only code path to be wrong about) and prints a transcript: one NETCMD
+  // line per command as it lands, one NETCRC line at ticks 300 / 900 / 1500.
+  //
+  // The transcript is the artefact. tools/test.ps1 runs this page TWICE, in two separate
+  // Chrome PROCESSES, and fails the suite unless the two transcripts are line-for-line
+  // identical. Two processes rather than two loops on purpose: a loop inside one page shares
+  // a warmed JIT, a warmed heap and every module-scope value already resolved, and would
+  // happily pass a sim that read the clock at boot.
+  //
+  // The plan is a matrix-row build order (intended1's opening on the Vale) rewritten as
+  // (tick, op) pairs - which is precisely the CMD = {tick, player, op, args} shape SB gives
+  // the netcode, with the player column omitted because v1 solo is player 0 throughout.
+  if (has('net')) {
+    // The engine guard. DPOW/FOOT_RING/TRI_RING are frozen V8 doubles: on the harness's own
+    // engine they MUST reproduce Math.* exactly, or the tables have silently re-balanced the
+    // game. On a non-V8 peer a mismatch is expected and is the entire reason the tables
+    // exist, so the assertion is scoped to Chrome and merely reported elsewhere.
+    const isV8 = typeof navigator !== 'undefined' && /Chrome\//.test(navigator.userAgent || '');
+    if (isV8) {
+      let dp = -1;
+      for (let i = 0; i < 8; i++) if (DPOW[i] !== Math.pow(1.55, i)) { dp = i; break; }
+      T('net.DPOW.bitIdenticalToPow', dp < 0, 'first mismatch at level ' + (dp + 1) +
+        ': table=' + DPOW[dp] + ' pow=' + Math.pow(1.55, dp));
+      let fr = -1;
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * 6.283185307;
+        if (FOOT_RING_C[i] !== Math.cos(a) || FOOT_RING_S[i] !== Math.sin(a)) { fr = i; break; }
+      }
+      T('net.FOOT_RING.bitIdenticalToTrig', fr < 0, 'first mismatch at i=' + fr);
+      let tr = -1;
+      for (let i = 0; i < 4; i++) {
+        const a = i * 2.0943951 + 0.5236;
+        if (TRI_RING_C[i] !== Math.cos(a) || TRI_RING_S[i] !== Math.sin(a)) { tr = i; break; }
+      }
+      T('net.TRI_RING.bitIdenticalToTrig', tr < 0, 'first mismatch at i=' + tr);
+    } else {
+      console.log('TESTLOG NOTE net.* table guards skipped - non-V8 engine, divergence expected');
+    }
+    // The tripwire itself, before it is trusted with 1500 ticks of evidence.
+    const c0 = G.stateCRC();
+    T('net.crc.pure', G.stateCRC() === c0, 'crc drifted with no sim step');
+    const goldWas = state.gold; state.gold = goldWas + 1;
+    T('net.crc.sensitive', G.stateCRC() !== c0, 'crc ignored a purse change');
+    state.gold = goldWas;
+    T('net.crc.restores', G.stateCRC() === c0, 'crc did not come back');
+    T('net.crc.hexWidth', G.crcHex().length === 8, G.crcHex());
+
+    // -- the command log ---------------------------------------------------------------
+    // Sites are intended1's, so every one of them is a coordinate the shipping matrix already
+    // proves is buildable on map 1. The muster is never exceeded (six standards, then a
+    // dismantle buys back the slot the last ballista needs), so canPlace refuses nothing
+    // and a skipped op is a real failure rather than a rules quibble.
+    state.phase = 'prewave'; state.countdown = 3; state.gold = 4000; state.lives = 32;
+    const LOG = [
+      [  30, 'place 32,-31 archer',   () => G.placeTower(32, -31, 'archer')],
+      [  60, 'place 44,2 archer',     () => G.placeTower(44, 2, 'archer')],
+      [ 150, 'place 50,3 barracks',   () => G.placeTower(50, 3, 'barracks')],
+      [ 240, 'place 45,-2 ballista',  () => G.placeTower(45, -2, 'ballista')],
+      [ 420, 'upgrade #0',            () => G.upgradeTower(G.towersList[0])],
+      [ 600, 'place 26,21 catapult',  () => G.placeTower(26, 21, 'catapult')],
+      [ 780, 'place 48,8 storm',      () => G.placeTower(48, 8, 'storm')],
+      [ 960, 'upgrade #3',            () => G.upgradeTower(G.towersList[3])],
+      [1140, 'sell #1',               () => { const tw = G.towersList[1]; if (!tw) return false; G.sellTower(tw); return true; }],
+      [1320, 'place 41,-6 ballista',  () => G.placeTower(41, -6, 'ballista')],
+    ];
+    const MARKS = [300, 900, 1500];
+    let applied = 0, refused = 0, li = 0;
+    const crcs = [];
+    for (let i = 1; i <= 1500; i++) {
+      // Commands resolve BEFORE the step they are stamped for - the netcode's own ordering:
+      // the host's bundle for tick N is applied, then tick N is simulated, on every peer.
+      while (li < LOG.length && LOG[li][0] === i) {
+        const ok = LOG[li][2]() !== false;
+        if (ok) applied++; else refused++;
+        console.log('NETCMD tick=' + i + ' op=' + LOG[li][1] + ' ok=' + (ok ? 1 : 0) +
+          ' towers=' + G.towersList.length + ' gold=' + state.gold);
+        li++;
+      }
+      G.tickSim();
+      if (MARKS.indexOf(i) >= 0) {
+        const h = G.crcHex();
+        crcs.push(h);
+        console.log('NETCRC tick=' + state.tick + ' crc=0x' + h + ' wave=' + state.wave +
+          ' gold=' + state.gold + ' lives=' + state.lives + ' towers=' + G.towersList.length +
+          ' alive=' + G.enemies.filter(e => e.alive).length);
+      }
+      if (state.phase === 'won' || state.phase === 'lost') break;
+    }
+    T('net.plan.allCommandsLanded', refused === 0 && applied === LOG.length,
+      'applied=' + applied + ' refused=' + refused + ' of ' + LOG.length);
+    T('net.run.reachedEnd', state.tick >= 1500 && state.phase !== 'lost',
+      'tick=' + state.tick + ' phase=' + state.phase);
+    T('net.crc.allMarksEmitted', crcs.length === MARKS.length, 'emitted=' + crcs.length);
+    // A frozen sim would emit three identical CRCs and pass a determinism diff for the wrong
+    // reason. The battle has to actually have MOVED between the marks.
+    T('net.crc.advances', crcs.length === 3 && crcs[0] !== crcs[1] && crcs[1] !== crcs[2],
+      crcs.join(' '));
   }
 
   console.log('TESTSUM total=' + (R.pass + R.fail) + ' pass=' + R.pass + ' fail=' + R.fail +
