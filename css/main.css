@@ -85,6 +85,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
        text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.5); }
 .chip>span{ min-width:1.6ch; text-align:left; }
 .chip .lbl{ display:block; font-size:8.5px; letter-spacing:.24em; opacity:.5; text-transform:uppercase; margin-bottom:-1px; }
+/* r14-UI §3 — the SHORT label is the phone's; every width above it spells the word out. Stated
+   here rather than only in the phone block, so the two never both render. */
+.chip .lbl.sh{ display:none; }
 .chip .val{ display:block; line-height:1.02; }
 .ic{ position:relative; flex:0 0 auto; width:28px; height:28px; background-repeat:no-repeat; background-position:50% 50%; background-size:100% 100%; }
 /* one ivory for every counter that is NOT carrying a state, so the one that is stands out */
@@ -663,7 +666,14 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    the shop's tower miniatures already sit on. */
 #wavePrev .wpT{ color:#f2e5c6; text-shadow:0 1px 0 #000; }
 #wavePrev .wpT em{ color:#ffdc8e; }
-#wavePrev .wpS{ color:#b6a488; }
+/* r14-UI §3e — "raise '30 STRONG' in the mobile wave banner from ~55% gray to >=80%". Measured on
+   _true_omens_m before this line moved: peak luminance 148/255 = 58%, which is the #b6a488 this
+   rule shipped (L 166) taken down again by the .85 opacity the base rule at .wpS carries. The
+   strength line is not decoration — it is the one number on the card that says how hard the wave
+   coming down the road hits — so it goes to #ddd0b4 at full opacity: L 209, i.e. 82%, clearing the
+   finding's floor. It still sits a clear 20 points under the title's #f2e5c6, so the card keeps
+   its hierarchy; what it stops doing is reading as disabled text. */
+#wavePrev .wpS{ color:#ddd0b4; opacity:1; }
 /* the rest of the dispatch's registers, all of them authored as ink on cream: the enemy
    counts, the champion/cursed/hex/omen footer lines and the wave-strength grade. Each keeps
    its SEMANTIC hue (crimson for a threat, blue for a boon, green for the player's own) —
@@ -1726,7 +1736,17 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    is not a chain. */
 .dg-hex{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='none' stroke='%231f5347' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><rect x='2.9' y='8.4' width='8.4' height='7.2' rx='3.6'/><rect x='12.7' y='8.4' width='8.4' height='7.2' rx='3.6'/><path d='M4.6 20.4L19.4 3.6'/></g></svg>"); }
 /* the war standard: the muster's own mark, so it never reads as the wave chip's swords */
-.ic-must, .mIc.ic-must{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M9.6 4.2l1.6-2.4 1.6 2.4z' fill='%23e8b64c'/><rect x='10.5' y='3.6' width='1.9' height='26' rx='.9' fill='%234a3113'/><path d='M12.4 5.4h15.2l-4 5.6 4 5.6H12.4z' fill='%233468b0' stroke='%23e8b64c' stroke-width='1.4' stroke-linejoin='round'/><path d='M12.4 5.4h15.2l-4 5.6 4 5.6H12.4z' fill='none' stroke='%23bcd8ff' stroke-width='.7' opacity='.35' transform='translate(0,1.6) scale(1,.86)'/><path d='M18.4 8.2l1.6 2.4h-3.2z' fill='%23ffe7ab'/><path d='M4.6 29.4h14.8' stroke='%236d4a10' stroke-width='2.2' stroke-linecap='round'/></svg>"); }
+/* ══ r14-UI §3d — THE PENNANT GOES GOLD ═══════════════════════════════════════════════════════
+   Round 14, finding 3: "the vale glyph and standards glyph are both small blue heraldic shapes at
+   ~18px — indistinguishable on a real 390pt device." True, and the shapes are genuinely different
+   (a kite shield and a swallow-tailed pennon on a staff) — at 16px what survives is the COLOUR,
+   and both were the same royal blue. The vale keeps it: that shield is lifted straight off the
+   game's crest and the whole point of FIX2-UI §4c was to stop the counter being an emoji heart.
+   The standards chip takes GOLD instead, which is this interface's own word for "yours" (every
+   pill, keyline and cost figure in the game is struck in it) and is exactly the read the muster
+   wants — these are the banners YOU have raised, not a place you are defending. Blue survives as
+   the charge on the field, so the heraldic register is intact. */
+.ic-must, .mIc.ic-must{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M9.6 4.2l1.6-2.4 1.6 2.4z' fill='%23ffe7ab'/><rect x='10.5' y='3.6' width='1.9' height='26' rx='.9' fill='%234a3113'/><path d='M12.4 5.4h15.2l-4 5.6 4 5.6H12.4z' fill='%23e8b64c' stroke='%236d4a10' stroke-width='1.4' stroke-linejoin='round'/><path d='M12.4 5.4h15.2l-4 5.6 4 5.6H12.4z' fill='none' stroke='%23fff3c4' stroke-width='.7' opacity='.5' transform='translate(0,1.6) scale(1,.86)'/><path d='M18.4 8.2l1.6 2.4h-3.2z' fill='%232b5697'/><path d='M4.6 29.4h14.8' stroke='%236d4a10' stroke-width='2.2' stroke-linecap='round'/></svg>"); }
 /* FIX2-UI §4b · FIX3-UI §1/§3 — the flyout's prose. `small-caps` went the same way it went
    on the placement writ: it drew "Strewn iron" at an effective 7.5px. Sentence case in the
    micro face instead, and `balance` so a three-word clause does not orphan its em-dash. */
@@ -3113,10 +3133,43 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   /* FIX7-UI §5a — the chip metrics are TIGHTENED (16px sprites for 19, 13.5px values for 15, 3px
      gaps for 5) so a fourth chip can be afforded wherever the rail can pay for it. See the
      STANDARDS block below for the arithmetic and for what the 390px slab does instead. */
-  .chip{ min-height:44px; font-size:13.5px; gap:3px; padding:2px 5px 2px 2px; border-width:6px; }
+  /* ══ r14-UI §3 — FOUR FIXED SLOTS, AND EVERY ONE OF THEM SAYS WHAT IT IS ═══════════════════════
+     Round 14, finding 3 (major): "_trueui_m shows three chips [coin 172][blue shield 32][blue
+     banner 2/6]; _true_omens_m shows [coin 260][blue shield 32][crossed swords 4/10]. Slot 3
+     changes meaning between screens and the WAVE counter is absent from one while STANDARDS is
+     absent from the other, so the player must re-read positions every screen. Worse, no mobile
+     chip carries a label … and the vale glyph and standards glyph are both small blue heraldic
+     shapes at ~18px."
+     Both halves are FIX13-UI §3c's doing, and its arithmetic was right: four icon+numeral chips
+     measure 254px against the 226px a 390 slab can spend, so it bought the standards chip a seat by
+     TAKING the wave chip's whenever a sheet was open. A rail whose slots change meaning is worse
+     than a rail that is missing one — the player cannot learn it — so the swap goes, and the width
+     is found where §3c never looked: in the ICON.
+     MEASURED at a true 390 (tools/measure.mjs): the four chips cost 60+53+64+59 = 236px of content
+     and every one of those chips spends 16px on a 16px sprite plus its 3px gutter. Below 461 the
+     sprites stand down and a 7px letterspaced LABEL takes their place — the same label the desktop
+     rail carries, which is the finding's own first remedy — and the four chips fit inside the
+     allowance with room left for a five-digit endless purse. From 461 up both are affordable.
+     The standards glyph also goes GOLD (see .ic-must): a gold pennant beside a blue kite shield is
+     the shape-and-colour separation the finding's second remedy asks for, and gold is already this
+     interface's word for "yours". */
+  .chip{ min-height:44px; font-size:15px; gap:3px; padding:2px 6px 2px 3px; border-width:6px; }
   .ic{ width:16px; height:16px; }
-  .chip .lbl{ display:none; }
+  /* nowrap is load-bearing here and nowhere else: at 375 the endless wave counter "13/∞" broke
+     across two lines inside its own chip and took the whole rail from 44px to 51.5px tall
+     (measured). A counter is one token whatever the viewport is. */
+  .chip .lbl, .chip .val{ white-space:nowrap; }
+  .chip .lbl{ display:block; font-size:7px; letter-spacing:.20em; opacity:.68; margin-bottom:0; }
+  .chip .lbl.sh{ display:none; }
+  .chip .val{ font-size:15px; }
   .chip>div{ min-width:0; }
+  @media (max-width:460px){
+    /* the sprite is the width the fourth chip is paid for with */
+    #hudL .chip .ic{ display:none; }
+    .chip{ padding:2px 6px; gap:0; }
+    #chipMuster .lbl{ display:none; }
+    #chipMuster .lbl.sh{ display:block; }
+  }
   /* The wave counter is CAMPAIGN progress and the preview card never carries "4/10" — it
      says "WAVE 4 — TWO COLUMNS". Deleting the chip left a phone with no way to know how far
      the road runs once the banner faded. All three chips + all three controls fit 390px once
@@ -3161,18 +3214,30 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      exact state (see #leftRail.sheet), and the standards cap is the one number the open sheet has
      no other way to state. Nothing overflows, nothing resizes, and the count is where a global
      resource belongs at every width. */
-  #chipMuster{ display:none; }
-  @media (min-width:421px){ #chipMuster{ display:flex; } }
-  @media (max-width:420px){
-    #hud.sheet #chipMuster{ display:flex; }
-    #hud.sheet #chipWave{ display:none; }
-  }
+  /* ── r14-UI §3 — …AND THE SWAP IS RETIRED. §3c's `#hud.sheet` seat-trade is what the round-14
+     finding photographed as "slot 3 changes meaning between screens". Four chips, one order, every
+     width, always. The `.sheet` class is still written by UI.sync (the left rail reads it) — it
+     simply no longer moves anything in this row. */
+  #chipMuster{ display:flex; }
   .ibtn{ min-width:44px; min-height:44px; font-size:16px; padding:0 5px; }
   #hudRight{ gap:5px; }
   #wavePrev .wpE .pip{ width:10px; height:10px; background-size:7px 7px; }
   #wavePrev .wpP{ gap:3px; }
   #wavePrev .wpI{ width:27px; height:27px; }
-  #leftRail{ top:56px; left:7px; right:7px; width:auto; max-width:334px; gap:6px; }
+  /* ══ r14-UI §3c — THE DISPATCH CARD ENDS WHERE THE CHIP RAIL ENDS ═══════════════════════════
+     Round 14, finding 3, last clause: "align the banner's right edge (x343) to the top button
+     cluster's right edge (x380)". The 334px cap is a TABLET number — between 461 and 760 the rail
+     shares its row with nothing and a card wider than that starts to read as a banner across the
+     screen — but on a 390 slab it stops the dispatch card 42px short of the chip rail and the gear
+     button directly above it, and two stacked plates that do not share an edge read as two
+     unrelated objects instead of one column.
+     The cap is therefore SCOPED to the widths that want it rather than overridden underneath: the
+     first cut of this fix wrote `#leftRail{max-width:none}` into the nested 460 block above, which
+     is the same specificity as this rule and EARLIER in the file, so it lost every cascade and the
+     card measured 340px on a true 390 exactly as the finding photographed it. Below 461 the rail
+     is bounded by its own left:7px/right:7px, which is #hud's own box to the pixel. */
+  #leftRail{ top:56px; left:7px; right:7px; width:auto; gap:6px; }
+  @media (min-width:461px){ #leftRail{ max-width:334px; } }
   #wavePrev{ padding:6px 10px 8px; }
   #wavePrev .wpT{ font-size:13px; }
   #wavePrev .wpE canvas{ width:27px; height:27px; }
@@ -3202,8 +3267,15 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   /* .19em of tracking is right for a subtitle on its own line and wrong for one sharing a line:
      at 9px it cost "30 STRONG ON THE ROAD" 25px it did not need, and the title paid for it by
      ellipsizing to "WAVE 1 — RED RA…". Tightened, both runs fit whole at every wave title. */
+  /* r14-UI §3c — AND IT IS READ AT FULL VALUE. Round 14: "raise '30 STRONG' in the mobile wave
+     banner from ~55% gray to >=80%." The subtitle inherits #b6a488 at opacity .85 (the re-ink
+     block at #wavePrev .wpT), which is right for a subtitle standing UNDER a title on its own
+     line and wrong for one sharing a baseline with it at 8.5px: at that size the opacity is the
+     difference between a second line and a smudge, and the strength of the incoming wave is not a
+     decoration. Full opacity, parchment ink. */
   #leftRail.sheet #wavePrev .wpS{ display:block; flex:1 1 0; min-width:0; font-size:8.5px; margin-top:0;
      letter-spacing:.01em; white-space:nowrap; text-align:right;
+     color:#e6d9bd; opacity:1;
      overflow:hidden; text-overflow:ellipsis; }
   #leftRail.sheet #wavePrev .wpRow, #leftRail.sheet #wavePrev .bar,
   #leftRail.sheet #wavePrev .wpG,   #leftRail.sheet #wavePrev .wpCz,
@@ -3358,7 +3430,26 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #buildMenu.min .cRail .card, #buildMenu.min .cards.traps .card{
      flex:0 0 64px; width:64px; min-width:64px; padding:3px 2px 4px; scroll-snap-align:start; }
   #buildMenu.min .card .kb, #buildMenu.min .card .nm,
-  #buildMenu.min .card .tags, #buildMenu.min .card .fly{ display:none; }
+  #buildMenu.min .card .fly{ display:none; }
+  /* ══ r14-UI §3b — THE PHONE CARD KEEPS ITS SCHOOL AND ITS REACH ═══════════════════════════════
+     Round 14, finding 3: "the mobile build card keeps name + cost but DROPS the school and RNG
+     chips that the desktop card carries, removing the element/resist read from the primary
+     purchase decision on the platform where it matters most."
+     Exactly right, and the note above ("those are comparisons, and a comparison needs the sheet's
+     room") is the reasoning that has to give: the element/resist system is the one mechanic in
+     this game a wrong purchase cannot be undone from — a fire battery against a fire-resistant
+     wave is 300 gold that does nothing — and "one tap away in a sheet" is not where a gate like
+     that belongs. The row is 13px of card and it costs the world band 13px of an 844px slab.
+     The sigil comes back INTO FLOW here (the ≤760 rule above parks it in the card's top-right
+     corner, which is right for the open sheet's 4-column grid and wrong for a 64px strip cell
+     where the corner is 12px from the cost pill). */
+  #buildMenu.min .card .tags{ display:flex; flex-wrap:nowrap; justify-content:center;
+     gap:3px; margin:2px -2px 0; overflow:hidden; }
+  #buildMenu.min .card .tags .tag{ font-size:9px; padding:0 3px 0 1px; letter-spacing:0; }
+  #buildMenu.min .card .tags .tag i{ width:11px; height:11px; }
+  #buildMenu.min .card .tags .tag.el{ position:static; top:auto; right:auto; padding:0; margin:0;
+     background:none; border:0; }
+  #buildMenu.min .card .tags .tag.el i{ width:13px; height:13px; }
   /* 8.5px caps, one line. `.nmS` is the SHORT name (WARBANNER, FROSTSPIRE and the three traps are
      authored for this width), so nothing ellipses.
      THE SIZE AND THE TRACKING ARE BOTH FIX7-UI §5d's, NOT ROUND 13's, and that was measured twice
@@ -3986,9 +4077,21 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   /* FIX13-UI §4 — the key rides the phone too, and the scroller pays for it out of its own box
      rather than pushing the fixed foot bar off the frame. 28px: the line's 17px pip plus its
      margin, measured. */
-  #mapsLeg{ gap:14px; margin-top:11px; }
+  /* ══ r14-UI §5b — THE KEY WAS UNDER THE FOOT BAR'S SCRIM ══════════════════════════════════════
+     Round 14, finding 5(b): "the 'SPAWN GATE / YOUR KEEP' legend row is rendered INSIDE the scroll
+     fade at roughly 30% opacity and is unreadable, sitting on top of a half-dissolved EMBER WASTES
+     card." Measured at a true 390: it is NOT inside the scroller — #mapCards ends at y=636.7 and
+     the legend runs 647.7-662.7 — but the diagnosis is right and the culprit is one line away.
+     `#mapsFoot::before` is a 64px black scrim that rises OUT OF the fixed foot bar (top:-64px,
+     covering 620.8-684.8) to separate it from the list, #mapsFoot carries z-index:7, and the
+     legend carries none. So the key has been painted over by the bar's own shadow since FIX9-UI §3
+     made that bar fixed.
+     The row is lifted onto the scrim instead of under it — which is the finding's own remedy, and
+     it also gives an 8.5px caption the darkest, most even ground on the screen to sit on, so the
+     ink goes up with it. */
+  #mapsLeg{ position:relative; z-index:8; gap:14px; margin-top:11px; }
   #mapsLeg .mLgP{ width:15px; height:15px; }
-  #mapsLeg b{ font-size:8.5px; letter-spacing:.12em; }
+  #mapsLeg b{ font-size:8.5px; letter-spacing:.12em; color:#e2d4b4; }
   #mapCards{ max-height:calc(100vh - 238px - var(--mfoot)); }
   .mCard{ width:100%; display:flex; gap:11px; align-items:center; padding:8px; }
   .mCard .mWrap{ flex:0 0 118px; }
@@ -4187,15 +4290,31 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    therefore always sits on flat ground and never on type, and the fold's own last 24px are opaque
    whatever is behind them. The other half of the fix is in UI.showDeeds(), which snaps the
    scroller so the ramp starts in the empty gutter below the last WHOLE row. */
+/* ══ r14-UI §5 — A RAMP CANNOT BE 52px LONG WHEN THE ROW GAP IS 7 ══════════════════════════════
+   Round 14, finding 5: "the 'FEATS 2/9' section header is bisected by the fade and renders ~50%
+   dissolved — legible enough to read as broken rather than as an affordance … snap the fade's
+   start to fall between grid rows rather than through them."
+   The snap is already there (fitDeeds solves the scroller's height so the ramp starts in the empty
+   gutter under the last WHOLE row) and it CANNOT fix this on its own, which is the part FIX11-UI
+   §4a missed: the gutter between two rows is 7-8px and the ramp was 52. Whatever the snap does,
+   50 of those 52 pixels land on the NEXT row — and a ramp that reaches only .62 alpha over the
+   first 16px of it is precisely the "half a glyph" the finding photographs. There is no scroll
+   position at which a soft edge that long does anything else.
+   So the band is re-cut to fit the gutter it has: 44px total, of which the RAMP IS 8 — the width
+   of one row gap — and the remaining 36 are the solid edge tone with the chevron centred in it.
+   At rest the whole gradient lies in empty parchment and the row below it is covered outright, so
+   nothing on the sheet is ever half-drawn; in mid-flick a row slides under a hard sheet edge,
+   which is what a fold looks like. The band is also 32px shorter, so the chronicle shows more of
+   itself than it did with the affordance that was hiding it. */
 #ddGrid::after, #cTree::after{ content:''; display:block; flex:0 0 auto; position:sticky;
-   bottom:0; height:76px; margin:0 0 -76px; pointer-events:none; border-radius:0 0 6px 6px;
+   bottom:0; height:44px; margin:0 0 -44px; pointer-events:none; border-radius:0 0 6px 6px;
    background-repeat:no-repeat,repeat-x,no-repeat;
-   background-position:50% calc(100% - 6px), 0 100%, 0 0;
-   background-size:20px 12px, 100% 24px, 100% 100%;
+   background-position:50% calc(100% - 24px), 0 100%, 0 0;
+   background-size:20px 12px, 100% 36px, 100% 100%;
    background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path d='M2.6 2.8L10 9.4l7.4-6.6' fill='none' stroke='%23f6e6bd' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' opacity='.92'/></svg>"),
      linear-gradient(180deg, rgba(104,74,32,.985), rgba(104,74,32,.985)),
-     linear-gradient(180deg, rgba(150,116,60,0) 0, rgba(140,105,50,.62) 30%,
-              rgba(116,84,38,.90) 52%, rgba(104,74,32,.985) 68%, rgba(104,74,32,.985) 100%); }
+     linear-gradient(180deg, rgba(150,116,60,0) 0, rgba(104,74,32,.985) 14%,
+              rgba(104,74,32,.985) 100%); }
 /* FIX9-UI §3 — A FADE IS NOT A DIRECTION. The chronicle and the council tree both scroll on the
    phone and both advertised it with a gradient alone, which reads as a vignette on the plate: on
    _true_deeds_m three of the four registers (DOCTRINE, FEATS, COLLECTION) were below the fold and
@@ -4213,8 +4332,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #cTree::after{ display:block; border-radius:0;
      background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path d='M2.6 2.8L10 9.4l7.4-6.6' fill='none' stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
        linear-gradient(180deg, rgba(6,5,3,.97), rgba(6,5,3,.97)),
-       linear-gradient(180deg, rgba(10,8,6,0) 0, rgba(10,8,6,.58) 30%, rgba(8,6,4,.88) 52%,
-                rgba(6,5,3,.97) 68%, rgba(6,5,3,.97) 100%); }
+       linear-gradient(180deg, rgba(10,8,6,0) 0, rgba(6,5,3,.97) 14%, rgba(6,5,3,.97) 100%); }
 }
 /* nothing to continue to, nothing to advertise */
 /* …and it has to REACH the plate's edge. Measured after the ramp was strengthened: the fade ends at
