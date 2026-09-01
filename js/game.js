@@ -22718,6 +22718,16 @@ function exitPlace() {
 function commitPlace(keep) {
   const p = G.place;
   if (!p) return false;
+  // GAME_SPEC_9 SB - THE FUNNEL. In a war-band the hammer does not fall here: the intent is
+  // SUBMITTED, and the board changes when the host's bundle for that tick comes back - on every
+  // screen at once, in one order. `NET.hold` is a single property read returning false when no
+  // war-band is riding, so everything below this branch is the shipped path, byte for byte.
+  if (p.ok && NET.hold(p.kind === PK_CAST ? 'cast' : p.kind === PK_TRAP ? 'trap' : 'place',
+      p.kind === PK_TOWER ? [p.x, p.z, p.type]
+                          : [p.kind === PK_CAST ? p.power : p.trap, p.x, p.z])) {
+    exitPlace();
+    return true;
+  }
   const done = p.ok && (p.kind === PK_CAST ? castPower(p.power, p.x, p.z)
                       : p.kind === PK_TRAP ? layTrap(p.trap, p.x, p.z)
                       : placeTower(p.x, p.z, p.type));
@@ -23912,6 +23922,17 @@ function trickleTick() {
   if (SHOT) console.log('TRICKLELOG wave=' + nx + ' party=' + P[0][0] + '×' + k + ' tick=' + state.tick);
 }
 G.startWave = startWave;
+// GAME_SPEC_9 SB - THE HORN AS A COMMAND. The war-horn was the last board mutation with no
+// sim-side entry point: `$('btnWave').onclick` carried the early-call bonus and the muster
+// INLINE, which is fine for one pair of hands and impossible for four. Lifted here verbatim -
+// the same phase guard, the same `Math.ceil(state.countdown)` bonus, the same startWave call -
+// so the button and the command layer's `wave` op share ONE body and cannot drift apart.
+G.callWave = () => {
+  if (state.phase !== 'prewave') return false;
+  if (!waveHold) state.gold += Math.ceil(state.countdown);
+  startWave(state.wave + 1);
+  return true;
+};
 
 // Free placement: (x,z) is anywhere G.canPlace() allows. `free` skips the purse AND the
 // validity gate — that is the shot harness / preset path only.
@@ -36229,7 +36250,10 @@ UI.omens = () => {
     '<i class="omBar"><u></u></i>' +
     '<span class="omSub">' + L(sel < 0 ? 'om.subTake' : 'om.subTaken', O.forWave) +
     '</span></div>' + O.offer.map((k, i) => omCard(k, i, sel)).join('');
-  el.querySelectorAll('.omC').forEach(b => { b.onclick = () => G.omens.pick(+b.dataset.i); });
+  el.querySelectorAll('.omC').forEach(b => { b.onclick = () => {
+    const i = +b.dataset.i;
+    if (NET.hold('omen', [i])) return;                // GAME_SPEC_9 SC - the Speaker's pick is a command
+    G.omens.pick(i); }; });
   UI.omenClock();
 };
 // SPEC3 §D read-out: the dispatch always says what the NEXT muster will put on the table,
@@ -36885,19 +36909,26 @@ UI.buildMenu = () => {
     // else. Rebuilding the panel alone would leave the two discs standing on the sheet's header
     // until the next coin landed.
     $('mExp').onclick = () => { tmFull = tmPeek(tw) ? tw.uid : -1; UI.sync(); };
-    $('mUp').onclick = () => { sellArm = false; upgradeTower(tw); UI.buildMenu(); };
-    $('mSell').onclick = () => { if (!sellArm) { sellArm = true; UI.buildMenu(); return; } sellArm = false; sellTower(tw); UI.deselect(); };
+    // GAME_SPEC_9 SB - four of the funnel's entry points. Each keeps its own panel bookkeeping
+    // (the sell arming, the rebuild) and hands only the MUTATION to the command layer.
+    $('mUp').onclick = () => { sellArm = false;
+      if (NET.hold('up', [tw.uid])) { UI.buildMenu(); return; } upgradeTower(tw); UI.buildMenu(); };
+    $('mSell').onclick = () => { if (!sellArm) { sellArm = true; UI.buildMenu(); return; } sellArm = false;
+      if (NET.hold('sell', [tw.uid])) { UI.deselect(); return; } sellTower(tw); UI.deselect(); };
     $('mX').onclick = () => UI.deselect();
-    if ($('mTgt')) $('mTgt').onclick = () => G.cycleMode(tw);
+    if ($('mTgt')) $('mTgt').onclick = () => { if (NET.hold('mode', [tw.uid])) return; G.cycleMode(tw); };
     // SPEC_8 §G — all three handlers re-run UI.buildMenu() so the row flips state in place: the
     // panel must not close on a bind, because the very next thing a player wants is to look at what
     // they just bought. The candidate list is re-evaluated on that rebuild, which is also how the
     // row correctly offers a SECOND candidate after an Unbind.
     if ($('mRbF')) $('mRbF').onclick = () => {
       const cand = bondPickIn(tw, G.bondCands(tw));      // the SAME rule the lit chip was drawn from
-      if (cand && G.forgeBond(tw, cand)) UI.buildMenu(); else Audio.play('deny');
+      if (!cand) { Audio.play('deny'); return; }
+      if (NET.hold('bond', [tw.uid, cand.uid])) return;
+      if (G.forgeBond(tw, cand)) UI.buildMenu(); else Audio.play('deny');
     };
-    if ($('mRbB')) $('mRbB').onclick = () => { G.breakBond(tw, true); UI.buildMenu(); };
+    if ($('mRbB')) $('mRbB').onclick = () => { if (NET.hold('unbond', [tw.uid])) return;
+      G.breakBond(tw, true); UI.buildMenu(); };
     // The rail. `data-u` carries the partner's uid rather than an index into the list, because the
     // list is rebuilt from the board on every sync and an index would silently point at a different
     // tower the moment one is sold. Cosmetic-only click: it moves a cursor and redraws.
@@ -36996,7 +37027,7 @@ UI.buildMenu = () => {
         : '<span class="c"><i class="ic ic-gold"></i>' + mc + '</span>');
     mb.title = mCap ? L('bm.capT') : L('bm.raiseT', mc);
     mb.disabled = mCap || mPoor;
-    mb.onclick = () => { G.raiseMuster(); };
+    mb.onclick = () => { if (NET.hold('muster')) return; G.raiseMuster(); };
     const shut = bmCollapsed();
     bm.classList.toggle('min', shut);
     // FIX13-UI §1 — the strip's pager. `.trv` is what swaps the tower rail for the trap rail;
@@ -38922,22 +38953,26 @@ UI.frame = (rt) => {
 // ══ controls ═══════════════════════════════════════════════════════════════════
 // SPEC6 §D2 — the first horn pays NO early-call bonus: nothing is being skipped, because
 // nothing was counting down. Every later muster is unchanged.
-$('btnWave').onclick = () => { if (state.phase === 'prewave') {
-  if (!G.waveHeld()) state.gold += Math.ceil(state.countdown);
-  startWave(state.wave + 1); } };
+$('btnWave').onclick = () => { if (NET.hold('wave')) return; G.callWave(); };
 // SPEC4 §A — ×1 → ×2 → ×3. The frame loop already caps at 8 sim ticks per frame, so ×3
 // costs three ticks on a 30fps phone and stays inside the budget; the cap is what makes a
 // dropped frame a slow frame instead of a spiral.
-$('btnSpeed').onclick = () => { state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 3 : 1;
+// GAME_SPEC_9 SB - the body has moved into UI.setSpeed because the command layer has to be able
+// to set the war-band's pace from a sequenced command, and a control that writes its own DOM
+// inline can only ever be called by its own click. The click's arithmetic is unchanged.
+UI.setSpeed = (v) => { state.speed = v;
   $('btnSpeed').textContent = '×' + state.speed; $('btnSpeed').classList.toggle('on', state.speed > 1); };
+$('btnSpeed').onclick = () => { const v = state.speed === 1 ? 2 : state.speed === 2 ? 3 : 1;
+  if (NET.hold('speed', [v])) return; UI.setSpeed(v); };
 // FIX2-UI §4c — the pause control was the Unicode ❚❚ / ▶, a type glyph in a HUD whose every
 // other mark is drawn steel and gold. Both states are now the same hand-drawn pair as the
 // coin and the crossed swords beside them; the label lives in the tooltip.
-$('btnPause').onclick = () => { state.paused = !state.paused;
+UI.setPaused = (v) => { state.paused = !!v;
   $('btnPause').classList.toggle('gl-play', state.paused);
   $('btnPause').classList.toggle('gl-pause', !state.paused);
   $('btnPause').title = L(state.paused ? 'hud.resume' : 'hud.pause');
   $('btnPause').classList.toggle('on', state.paused); };
+$('btnPause').onclick = () => { if (NET.hold('pause', [!state.paused])) return; UI.setPaused(!state.paused); };
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
   $('btnGear').classList.toggle('on', !s.classList.contains('hidden'));
   // FIX9-UI §3 — the sheet is capped on a phone (main.css), so it can genuinely become a
@@ -39570,11 +39605,14 @@ addEventListener('keydown', e => {
   if (e.key === ' ') $('btnPause').click();
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
   // SPEC3 §F — T cycles the selected tower's targeting doctrine.
-  if ((e.key === 't' || e.key === 'T') && state.selTower >= 0) G.cycleMode(G.towersList[state.selTower]);
+  if ((e.key === 't' || e.key === 'T') && state.selTower >= 0) {
+    const stw = G.towersList[state.selTower];
+    if (stw && !NET.hold('mode', [stw.uid])) G.cycleMode(stw);
+  }
   // SPEC3 §D — 8/9/0 take the omen on the table. They sit past the seven build hotkeys on
   // purpose: the number row reads left-to-right as "what you build" then "what you accept".
   const oi = { '8': 0, '9': 1, '0': 2 }[e.key];
-  if (oi !== undefined) { if (state.phase === 'prewave') G.omens.pick(oi); return; }
+  if (oi !== undefined) { if (state.phase === 'prewave' && !NET.hold('omen', [oi])) G.omens.pick(oi); return; }
   // SPEC4 §C/§D — Q/W call the two powers, Z/X/C arm the three road traps. They sit off the
   // number row on purpose: 1-7 buy fortifications, 8-0 take omens, and neither of those is
   // what these are. All five ARM placement mode exactly as a build card does, so the ghost,
@@ -39701,7 +39739,18 @@ function frame(now) {
   if (!state.paused && (state.phase === 'wave' || state.phase === 'prewave')) {
     acc += dt * state.speed * BASE_RATE;               // SPEC6 §D1
     let steps = 0;
-    while (acc >= TICK && steps++ < 8) { tickSim(); acc -= TICK; }
+    // GAME_SPEC_9 SB - THE LOCKSTEP GATE. A BRANCH rather than a condition inside the loop, on
+    // purpose: the `else` arm is the shipped line character for character, so the solo path is
+    // not "equivalent to" today's loop, it IS today's loop. One boolean property read per frame
+    // is the whole cost of co-op existing while nobody is playing it.
+    if (NET.active) {
+      while (acc >= TICK && steps++ < 8 && NET.pre()) { tickSim(); NET.post(); acc -= TICK; }
+      // Starved by the horizon. The ticks we could not take are NOT banked: repaying them as a
+      // burst the moment the host's bundle lands would turn every hitch into a fast-forward.
+      if (acc > TICK) acc = TICK;
+    } else {
+      while (acc >= TICK && steps++ < 8) { tickSim(); acc -= TICK; }
+    }
   }
   // §D3c — one count per frame, off the list the render pass is about to walk anyway.
   {
@@ -42420,6 +42469,316 @@ if (P.get('dbg')) window.G = G;
 // (purse 140, knight hp ×1, refund 70%, trap costs unchanged), which is what keeps every
 // preset and every baseline matrix row bit-identical.
 if (SHOT) G.applyTalents();
+// ══════════════════════ SECTION: NET (owner: coop command layer) ══════════════════════
+// GAME_SPEC_9 SB - HOST-SEQUENCED DETERMINISTIC LOCKSTEP, the SIM half of it. Nothing in this
+// section knows what a DataChannel is. The transport stage owns the wire and meets this file at
+// four callbacks (onSubmit / recv / setHorizon / onCRC); everything here is about ORDER.
+//
+// THE ONE IDEA. A Bannerfall run is already a pure function of (map, seed, command log): a 30 tps
+// fixed tick, one seeded sim rng, and every board mutation behind a G.* entry point. So peers do
+// not exchange the battle - they exchange the LOG. A click becomes CMD = {t, p, s, op, args} and
+// travels a few dozen bytes; the host stamps it with an execution tick and broadcasts the tick's
+// bundle; every peer, the host included, applies it at that tick and re-derives the same vale.
+// That is why the determinism stage came first: the tables of frozen doubles and G.stateCRC()
+// are the two things that make "re-derives the same vale" a measurable claim.
+//
+// THE CONTRACT, in the order the four moving parts touch one command:
+//   1. SUBMIT.  A UI entry point calls NET.hold(op, args). With no war-band riding that is ONE
+//      property read returning false, and the shipped code runs underneath it - which is why
+//      solo bit-identity is measured rather than argued. With one riding, the entry point does
+//      nothing locally: it hands {p, s, op, args} to NET.onSubmit and returns true. `s` is a
+//      per-player sequence number and never restarts inside a session.
+//   2. SEQUENCE.  The host (the transport's job) stamps `t = NET.stamp()` = its own state.tick +
+//      NET.LEAD and broadcasts the bundle. LEAD is 8 ticks, 266 ms: shorter than a tower's own
+//      raising animation, long enough that a peer on a 150 ms link has the bundle before it is
+//      needed. Empty ticks are sealed too - that heartbeat is what moves the horizon on a quiet
+//      board, and a board with four players on it is quiet most of the time.
+//   3. DELIVER.  The transport calls NET.recv(cmd) with `t` filled in, and NET.setHorizon(t) with
+//      the last tick it has SEALED ("no further command will ever be stamped at or below t").
+//   4. APPLY.  The frame loop calls NET.pre() before every tickSim(). It refuses to step past the
+//      horizon and it drains the queue for the CURRENT state.tick in (p, s) order - the same
+//      order on every machine, which is the entire reason a host sequences at all.
+//
+// WHAT `t` MEANS, exactly, because an off-by-one here IS a desync: a command stamped `t` is
+// applied when `state.tick === t`, in the gap BEFORE the tick that makes state.tick t+1. That is
+// the ?test=net suite's own convention ("apply the entries for i, then step"), kept deliberately.
+//
+// APPLYCMD RUNS THE SHIPPED VERBS AND NOTHING ELSE. Every op below is one call into the G.* API
+// that the UI, the shot harness and the balance bot already share. There is no netcode copy of
+// placeTower, so there is no netcode copy to fall out of date - and a command the rules refuse
+// (an empty purse, an occupied site, a wave already marching) is refused identically on every
+// peer off identical state, so a REFUSAL cannot desync either.
+//
+// WHAT THIS STAGE DELIBERATELY LEAVES TO THE coop-rules STAGE (GAME_SPEC_9 SC):
+//   * OWNERSHIP is RECORDED (`tw.owner = cmd.p` at placement) and enforced nowhere.
+//   * GOLD is one shared purse. `gold` is a wired, counted, logged placeholder that pays nothing:
+//     splitting bounties changes the SIM, not the command layer, and a half-done purse split is
+//     worse than none.
+//   * SPEED is last-writer-wins, not slowest-wins. The READY-CHECK horn, the rotating omen
+//     Speaker and the shared muster bonus are rules, and rules land next door.
+//   * `diff` is carried and inert: the sim has no difficulty lever to point it at yet.
+const NET = {
+  // ── live state ───────────────────────────────────────────────────────────────────────────
+  active: false,        // THE guard. False on every solo boot, every shot preset, every matrix row.
+  players: [],          // the lobby's roster - the SAME array in the SAME order on every peer
+  localIdx: 0,          // this browser's index into `players`: the `p` column of its commands
+  hostIdx: 0,
+  code: '',             // the war-band's room code, for a transport that has to re-dial
+  diff: '',             // GAME_SPEC_9 SC - carried, inert until the rules stage
+  seed: 0,
+  LEAD: 8,              // SB: 8 ticks, ~266 ms
+  CRC_EVERY: 30,        // SB: one state CRC per sim second
+  horizon: -1,          // the last tick the host has SEALED; the sim may not step past it
+  seq: 0,               // this peer's per-player command counter
+  stalled: false,       // true while the loop is waiting on the horizon ("waiting for X")
+  applied: 0, refused: 0, late: 0,
+  last: null, crc: null,
+  log: false,           // NETCMD transcript, for a desync post-mortem
+  queue: new Map(),     // execTick -> cmd[]
+  pending: { gold: 0 }, // what the placeholder ops have banked for the rules stage
+  // ── the transport stage assigns these; null means nobody is listening ─────────────────────
+  onSubmit: null,       // (cmd) -> send to the host
+  onCRC: null,          // ({tick, crc}) -> gossip the tripwire
+  onApply: null,        // (cmd, ok) -> optional: an action log, an owner crest, a deny cue
+};
+
+// uid, not index: the tower list is spliced on every sale, so an index would silently name a
+// different tower between the click and the tick the command lands on.
+const netTower = (uid) => {
+  const W = G.towersList;
+  for (let i = 0; i < W.length; i++) if (W[i].uid === uid) return W[i];
+  return null;
+};
+
+// THE OP TABLE IS THE PROTOCOL. `a` is the argument arity a transport may validate against
+// before it trusts a peer's packet; `now` marks the two ops that are not sim state at all.
+const NET_OPS = {
+  // ── the board ──
+  place:  { a: 3, run: (g, c) => {                        // [x, z, type]
+    const n = G.towersList.length;
+    if (!G.placeTower(g[0], g[1], g[2])) return false;
+    const tw = G.towersList[G.towersList.length - 1];
+    // GAME_SPEC_9 SC - the builder's crest. Written here and read by nobody yet; it is a property
+    // on a freshly built object that the solo path never reaches, so it costs a solo run nothing.
+    if (tw && G.towersList.length > n) tw.owner = c.p;
+    return true; } },
+  up:     { a: 1, run: (g) => { const tw = netTower(g[0]); return !!tw && G.upgradeTower(tw); } },
+  sell:   { a: 1, run: (g) => { const tw = netTower(g[0]); if (!tw) return false; G.sellTower(tw); return true; } },
+  mode:   { a: 1, run: (g) => { const tw = netTower(g[0]); return !!tw && G.cycleMode(tw) !== null; } },
+  bond:   { a: 2, run: (g) => { const a = netTower(g[0]), b = netTower(g[1]);
+              return !!a && !!b && G.forgeBond(a, b); } },
+  unbond: { a: 1, run: (g) => { const tw = netTower(g[0]); return !!tw && G.breakBond(tw, true); } },
+  trap:   { a: 3, run: (g) => G.layTrap(g[0], g[1], g[2]) },        // [kind, x, z]
+  cast:   { a: 3, run: (g) => G.castPower(g[0], g[1], g[2]) },      // [power, x, z]
+  // ── the run ──
+  wave:   { a: 0, run: () => G.callWave() },
+  omen:   { a: 1, run: (g) => G.omens.pick(g[0]) },
+  muster: { a: 0, run: () => G.raiseMuster() },
+  // ── the two that are NOT sim state ──
+  // Neither pace nor pause can change what a tick DOES: speed is wall-clock ticks per second and
+  // pause is whether the frame loop asks for any. So neither belongs in the tick queue - and
+  // pause positively must NOT be in it, because a paused peer runs no ticks and could therefore
+  // never reach the queued command that unpauses it. Sequenced for fairness, applied on arrival,
+  // and by construction invisible to G.stateCRC().
+  speed:  { a: 1, now: 1, run: (g) => { const v = g[0] | 0; if (v < 1 || v > 3) return false;
+              if (UI.setSpeed) UI.setSpeed(v); else state.speed = v; return true; } },
+  pause:  { a: 1, now: 1, run: (g) => {
+              if (UI.setPaused) UI.setPaused(!!g[0]); else state.paused = !!g[0]; return true; } },
+  // ── the placeholder SC promises ──
+  // SEND-GOLD, in 50-gold steps, from the tower/ally panel. There is exactly ONE purse today, so
+  // moving gold between players would be a no-op dressed as a feature. It is wired, counted and
+  // logged so the transport and the panel can be built against a real op, and the rules stage
+  // fills the body in the day per-player purses exist.
+  gold:   { a: 2, run: (g, c) => { NET.pending.gold += g[1] | 0;
+              if (P.has('dbg')) console.log('NETGOLD from=' + c.p + ' to=' + (g[0] | 0) +
+                ' amt=' + (g[1] | 0) + ' - one shared purse, no transfer (GAME_SPEC_9 SC)');
+              return true; } },
+};
+NET.OPS = NET_OPS;
+
+// (p, s). Player index FIRST so the order inside a tick is a property of the ROSTER - identical
+// on every peer - rather than of arrival time, which is identical on none of them.
+const netCmp = (a, b) => (a.p - b.p) || (a.s - b.s);
+
+// ── 1. SUBMIT ────────────────────────────────────────────────────────────────────────────────
+// The whole funnel is this one line at the top of an entry point: `if (NET.hold(op, args)) return;`
+NET.hold = (op, args) => NET.active ? (NET.submit(op, args), true) : false;
+NET.submit = (op, args) => {
+  if (!NET.active) return null;
+  const c = { t: -1, p: NET.localIdx, s: NET.seq++, op: op, args: args || [] };
+  if (NET.onSubmit) NET.onSubmit(c); else NET.refused++;   // armed with no transport: dropped, counted
+  return c;
+};
+
+// ── 3. DELIVER ───────────────────────────────────────────────────────────────────────────────
+NET.recv = (c) => {
+  if (!NET.active || !c || !NET_OPS[c.op]) return false;
+  if (NET_OPS[c.op].now) return NET.apply(c);
+  let t = c.t | 0;
+  // A command stamped for a tick this peer has already stepped is, strictly, a desync - the
+  // horizon exists to make it impossible. Counted LOUDLY and applied at the next boundary, so the
+  // CRC gossip names the divergence a second later instead of the two boards quietly disagreeing.
+  if (t < state.tick) { NET.late++; t = state.tick; }
+  const q = NET.queue.get(t);
+  if (q) q.push(c); else NET.queue.set(t, [c]);
+  return true;
+};
+// "Everything up to and including t is sealed." Monotonic by contract: a lower value is ignored
+// rather than obeyed, because un-sealing a tick the sim has already taken is not a thing.
+NET.setHorizon = (t) => { t = t | 0; if (t > NET.horizon) NET.horizon = t; return NET.horizon; };
+NET.stamp = () => state.tick + NET.LEAD;      // the host's stamping rule, published once
+
+// ── 4. APPLY ─────────────────────────────────────────────────────────────────────────────────
+NET.apply = (c) => {
+  const spec = NET_OPS[c.op];
+  if (!spec) return false;
+  const ok = spec.run(c.args || [], c) !== false;
+  NET.applied++; if (!ok) NET.refused++;
+  NET.last = c;
+  if (NET.onApply) NET.onApply(c, ok);
+  if (NET.log) console.log('NETCMD t=' + c.t + ' p=' + c.p + ' s=' + c.s + ' op=' + c.op +
+    ' args=' + JSON.stringify(c.args) + ' ok=' + (ok ? 1 : 0) + ' tick=' + state.tick +
+    ' gold=' + state.gold + ' towers=' + G.towersList.length);
+  return ok;
+};
+
+// ── the two hooks the frame loop calls, and the ONLY netcode that runs per tick ──────────────
+// pre(): may this peer take the next tick, and if so, what lands before it.
+NET.pre = () => {
+  if (state.tick >= NET.horizon) { NET.stalled = true; return false; }
+  NET.stalled = false;
+  const q = NET.queue.get(state.tick);
+  if (q) {
+    NET.queue.delete(state.tick);
+    if (q.length > 1) q.sort(netCmp);
+    for (let i = 0; i < q.length; i++) NET.apply(q[i]);
+  }
+  return true;
+};
+// post(): the desync tripwire, once a sim second. G.stateCRC() is allocation-free by contract.
+NET.post = () => {
+  if (state.tick % NET.CRC_EVERY) return;
+  const rec = { tick: state.tick, crc: G.stateCRC() };
+  NET.crc = rec;
+  if (NET.onCRC) NET.onCRC(rec);
+};
+
+// ── the sim rng cursor ───────────────────────────────────────────────────────────────────────
+// Published for exactly two callers: NET.begin, which PINS it so two peers whose boots consumed
+// different numbers of draws still open the run at the same place in the stream; and the
+// ?test=cmd suite, which rewinds it to run one plan twice. Nothing else may touch `_s`.
+NET.reseed = (v) => { _s = v >>> 0; return _s; };
+NET.cursor = () => _s >>> 0;
+
+// ── arming ───────────────────────────────────────────────────────────────────────────────────
+// SHOT DISCIPLINE. `?shot=` is the screenshot battery and the balance bot, and neither may ever
+// see NET.active true - so the refusal is at the door rather than at forty call sites. `?test=`
+// is deliberately NOT refused: the cmd suite below IS the proof this layer works, it installs no
+// transport of any kind, and js/lobby.js boots behind the same guard, so nothing can dial out.
+NET.arm = (s) => {
+  if (P.get('shot')) return false;
+  s = s || {};
+  NET.players = s.players || [];
+  NET.localIdx = s.localIdx | 0;
+  NET.hostIdx = s.hostIdx | 0;
+  NET.code = s.code || '';
+  NET.diff = s.diff || '';
+  NET.seed = s.seed >>> 0;
+  NET.seq = 0; NET.horizon = -1; NET.applied = 0; NET.refused = 0; NET.late = 0;
+  NET.last = null; NET.crc = null; NET.stalled = false;
+  NET.queue.clear();
+  NET.active = true;
+  return true;
+};
+NET.disarm = () => { NET.active = false; NET.queue.clear(); NET.horizon = -1; NET.stalled = false; };
+NET.isHost = () => NET.active && NET.localIdx === NET.hostIdx;
+NET.session = () => ({ seed: NET.seed, map: MAP.id, mode: MODE, diff: NET.diff, code: NET.code,
+  players: NET.players, localIdx: NET.localIdx, hostIdx: NET.hostIdx });
+
+// A SEQUENCER IN ONE TAB. Not a toy: it is the host's own rule (stamp at state.tick + LEAD) with
+// the wire taken out, and it is the only way to test that the funnel changes WHEN a command lands
+// and never WHAT it does. The caller still has to seal ticks - NET.setHorizon is the host's other
+// half and a loopback that sealed for you would hide a horizon bug rather than expose one.
+NET.loopback = () => { NET.onSubmit = (c) => { c.t = NET.stamp(); NET.recv(c); }; return NET; };
+
+// ══ THE LOBBY HANDOFF (GAME_SPEC_9 SA -> SB) ═════════════════════════════════════════════════
+// js/lobby.js dispatches ONE event, `bf-coop-start`, and gets out of the way. What arrives is a
+// RUN IDENTITY - seed, road, mode, trial, roster - and a run identity is resolved at MODULE SCOPE
+// in this file for reasons that long predate co-op: `runSeed` from `&seed=`, MAP from `&map=`,
+// MODE from `&mode=`, and the world, the wave tables, the palette and the omen hands are all
+// built off them before the title screen paints. So a war-band's road is a NAVIGATION, and it is
+// the Daily War chip's navigation exactly: the same params, the same `&auto=1`, the same
+// `location.search` assignment. The session rides across the reload in sessionStorage.
+//
+// >> THE ONE THING THE TRANSPORT STAGE MUST OWN: the reload ends the page, and window.BFCoop.room
+// >> with it. Every peer has to RE-DIAL the room after boot. NET.resume() re-arms the sim side and
+// >> publishes NET.session(); rebuilding the DataChannels from `code` belongs to the transport.
+// >> The lobby does not publish the room code today, so `code` is best-effort (`?join=`, then
+// >> `?coop=`); the transport stage should have the lobby expose `window.BFCoop.code`.
+const COOP_KEY = 'bannerfall.coop';
+const coopMode = (m) => m === 'endl' || m === 'endless' ? 'endless'
+                      : m === 'horde' ? 'horde' : 'campaign';
+function coopSess(d) {
+  const pl = d.players || [];
+  let h = 0; for (let i = 0; i < pl.length; i++) if (pl[i] && pl[i].host) { h = i; break; }
+  return { seed: d.seed >>> 0, map: d.map | 0, mode: d.mode || 'camp', diff: d.diff || '',
+    players: pl, localIdx: d.localIdx | 0, hostIdx: h,
+    code: (window.BFCoop && window.BFCoop.code) || P.get('join') || '' };
+}
+// Arm + pin the stream. Split from arm() so the ?test=cmd suite can arm WITHOUT reseeding and
+// compare a netted plan against the solo one on the same cursor.
+NET.begin = (s) => {
+  if (!NET.arm(s)) return false;
+  NET.reseed(s.seed >>> 0);
+  console.log('COOPGO seed=' + (s.seed >>> 0) + ' map=' + MAP.id + ' mode=' + MODE +
+    ' seats=' + NET.players.length + ' me=' + NET.localIdx + ' host=' + NET.hostIdx +
+    ' lead=' + NET.LEAD);
+  return true;
+};
+NET.start = (d) => {
+  if (!d || P.get('shot')) return false;
+  const s = coopSess(d);
+  // Already the right page? Then there is nothing to navigate to, and the room stays up.
+  if (s.map === MAP.id && coopMode(s.mode) === MODE && s.seed === (runSeed >>> 0)) {
+    if (!NET.begin(s)) return false;
+    if (state.phase === 'title') UI.startGame(true);
+    return true;
+  }
+  try { sessionStorage.setItem(COOP_KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
+  const q = new URLSearchParams(location.search);
+  q.set('map', String(s.map)); q.set('seed', String(s.seed >>> 0));
+  q.set('auto', '1'); q.set('coop', s.code || '1');
+  q.delete('maps'); q.delete('endless'); q.delete('daily'); q.delete('resume'); q.delete('join');
+  const md = coopMode(s.mode);
+  if (md === 'campaign') q.delete('mode'); else q.set('mode', md);
+  location.search = q.toString();
+  return true;
+};
+// The far side of that navigation, called from the boot tail before `&auto=1` opens the road, so
+// the first tick of the run is already sequenced. A session that does not FIT this page is left
+// alone and said out loud, exactly as `&resume=` does with a snapshot that does not fit.
+NET.resume = () => {
+  let s = null;
+  try { s = JSON.parse(sessionStorage.getItem(COOP_KEY) || 'null'); } catch (e) { s = null; }
+  try { sessionStorage.removeItem(COOP_KEY); } catch (e) { /* private mode */ }
+  if (!s || (s.seed >>> 0) !== (runSeed >>> 0) || (s.map | 0) !== MAP.id) {
+    console.log('COOPSKIP &coop asked, parked session does not fit this page - ' + (s
+      ? 'map=' + s.map + '/' + MAP.id + ' seed=' + (s.seed >>> 0) + '/' + (runSeed >>> 0)
+      : 'nothing parked'));
+    return false;
+  }
+  if (!s.code) { const c = P.get('coop') || ''; s.code = c === '1' ? '' : c; }
+  return NET.begin(s);
+};
+// The listener lives inside `if (!SHOT)` like every other live-only listener in the build, so the
+// shot battery, the balance matrix and the unit suites cannot be handed a session by anyone.
+if (!SHOT) document.addEventListener('bf-coop-start', (e) => NET.start(e && e.detail));
+G.NET = NET;
+// The handle the transport stage takes this layer from, mirroring window.BFCoop. Not published
+// under `?shot=`, where NET.arm() refuses anyway.
+if (!P.get('shot')) try { window.BFNet = NET; } catch (e) { /* never fatal */ }
+// ══════════════════════ END SECTION: NET ══════════════════════
+
 // ══════════════════════ SECTION: TEST (?test=<suites|all>) ══════════════════════
 // The unit suite (user order 2026-08-19 after the volume-slider leak shipped): fast,
 // framework-free assertions over the REAL systems — the audio suite renders the actual
@@ -42663,6 +43022,126 @@ async function runTests(which) {
       crcs.join(' '));
   }
 
+
+  // == GAME_SPEC_9 SB - THE COMMAND LAYER SUITE (?test=cmd) ================================
+  // The funnel makes exactly one claim: it changes WHEN a command lands and never WHAT it does.
+  // This suite MEASURES that claim instead of asserting it. The same tower is placed twice from
+  // the same rewound state - once by calling G.placeTower where the solo UI would call it, once
+  // by pushing it through submit -> host stamp -> queue -> NET.pre() - and the two runs have to
+  // reach the same G.stateCRC(). If the netted path shifted the placement by even one tick, the
+  // tower's first cooldown falls on a different tick and the CRC parts; if it changed the verb,
+  // the purse parts. Both are inside the tripwire, which is why the tripwire is the assertion.
+  //
+  // Then the three things the transport will lean on, each in isolation: the horizon really does
+  // stop the sim (a peer that outruns the host is a peer playing a different game), commands
+  // inside one tick resolve in (p, s) order whatever order they arrived in, and the whole funnel
+  // is closed again the moment NET.active goes false.
+  if (has('cmd')) {
+    // A QUIET BOARD. G.holdFirstWave() suspends the opening countdown, so nothing musters, nothing
+    // spawns and nothing shoots: the ONLY mutation in either run is the plan itself, which is what
+    // makes a CRC comparison across a rewind meaningful rather than a coincidence.
+    state.phase = 'prewave'; G.holdFirstWave();
+    const CSEED = 0x5EED1;
+    const rewind = () => {
+      for (const tw of G.towersList.slice()) G.sellTower(tw);
+      G.towersList.length = 0; G.knights.length = 0; G.enemies.length = 0;
+      G.projectiles.length = 0; G.traps.length = 0; G.patches.length = 0;
+      state.tick = 0; state.wave = 0; state.gold = 4000; state.lives = 32;
+      state.invested = 0; state.selTower = -1; state.countdown = 14; state.phase = 'prewave';
+      state.kills = 0; state.leaked = 0; state.peak = 0;
+      G.covDirty(); NET.reseed(CSEED);
+    };
+    const PLAN = [32, -31, 'archer'];      // intended1's opening site: the matrix proves it buildable
+    const RUNT = 90;                        // three CRC marks at the 30-tick cadence
+
+    // -- run A: the solo path, the verb called inline exactly where the shipped UI calls it -----
+    rewind();
+    for (let i = 1; i <= RUNT; i++) { if (i === 9) G.placeTower(PLAN[0], PLAN[1], PLAN[2]); G.tickSim(); }
+    const crcA = G.crcHex(), goldA = state.gold, towA = G.towersList.length;
+
+    // -- run B: the same plan through the funnel, on a one-tab sequencer -------------------------
+    // Submitted at state.tick 0 and therefore stamped t = 0 + LEAD = 8, so it is applied when
+    // state.tick === 8 - the gap before the 9th tick, which is where run A placed it.
+    rewind();
+    NET.arm({ players: [{ idx: 0, host: true }, { idx: 1 }], localIdx: 0, hostIdx: 0, seed: CSEED });
+    NET.loopback();
+    let crcN = 0; NET.onCRC = () => { crcN++; };
+    const heldOk = NET.hold('place', PLAN);
+    for (let i = 1; i <= RUNT; i++) { NET.setHorizon(state.tick + 1); NET.pre(); G.tickSim(); NET.post(); }
+    const crcB = G.crcHex();
+    T('cmd.funnel.holdsWhenActive', heldOk === true, 'NET.hold returned ' + heldOk);
+    T('cmd.apply.landedExactlyOnce', NET.applied === 1 && NET.refused === 0,
+      'applied=' + NET.applied + ' refused=' + NET.refused + ' late=' + NET.late);
+    T('cmd.crc.nettedEqualsSolo', crcA === crcB,
+      'solo=0x' + crcA + ' (gold ' + goldA + ', ' + towA + ' towers) net=0x' + crcB +
+      ' (gold ' + state.gold + ', ' + G.towersList.length + ' towers)');
+    T('cmd.crc.cadenceIs30', crcN === Math.floor(RUNT / NET.CRC_EVERY) && NET.crc &&
+      NET.crc.tick === RUNT, 'onCRC fired ' + crcN + ' at tick ' + (NET.crc && NET.crc.tick));
+
+    // -- the horizon gate ------------------------------------------------------------------------
+    const t0 = state.tick;
+    NET.horizon = t0;                                   // nothing further sealed
+    let ran = 0;
+    for (let i = 0; i < 5; i++) if (NET.pre()) { G.tickSim(); ran++; }
+    T('cmd.horizon.blocksUnsealed', ran === 0 && state.tick === t0 && NET.stalled === true,
+      'ran=' + ran + ' tick=' + state.tick + '/' + t0 + ' stalled=' + NET.stalled);
+    NET.setHorizon(t0 + 3);
+    ran = 0;
+    for (let i = 0; i < 5; i++) if (NET.pre()) { G.tickSim(); ran++; }
+    T('cmd.horizon.releasesExactly', ran === 3 && state.tick === t0 + 3 && NET.stalled === true,
+      'ran=' + ran + ' tick=' + state.tick + '/' + (t0 + 3));
+    T('cmd.horizon.neverRewinds', NET.setHorizon(t0) === t0 + 3, 'horizon=' + NET.horizon);
+
+    // -- (p, s) ordering inside one tick -----------------------------------------------------------
+    const seen = [];
+    NET.onApply = (c) => { seen.push(c.p + ':' + c.s); };
+    const at = state.tick + 2;
+    NET.recv({ t: at, p: 1, s: 7, op: 'muster', args: [] });     // delivered out of order on purpose
+    NET.recv({ t: at, p: 0, s: 9, op: 'muster', args: [] });
+    NET.recv({ t: at, p: 0, s: 3, op: 'muster', args: [] });
+    NET.setHorizon(at + 1);
+    while (state.tick < at + 1 && NET.pre()) G.tickSim();
+    T('cmd.order.playerThenSeq', seen.join(' ') === '0:3 0:9 1:7', seen.join(' ') || '(nothing applied)');
+    NET.onApply = null;
+
+    // -- the REAL ghost-commit path submits, and touches nothing until the host says so ------------
+    const held = [];
+    NET.onSubmit = (c) => { held.push(c); };
+    const gB = state.gold, tB = G.towersList.length;
+    G.enterPlace('archer'); G.setPlaceAt(45, -2);
+    const committed = G.commitPlace(false);
+    T('cmd.commitPlace.submits', committed === true && held.length === 1 && held[0].op === 'place' &&
+      held[0].args[2] === 'archer' && held[0].p === 0, JSON.stringify(held));
+    T('cmd.commitPlace.noLocalMutation', G.towersList.length === tB && state.gold === gB && G.place === null,
+      'towers=' + G.towersList.length + '/' + tB + ' gold=' + state.gold + '/' + gB);
+    held[0].t = NET.stamp();
+    NET.recv(held[0]); NET.setHorizon(held[0].t + 1);
+    while (state.tick <= held[0].t && NET.pre()) G.tickSim();
+    const owned = G.towersList[G.towersList.length - 1];
+    T('cmd.commitPlace.landsOnStamp', G.towersList.length === tB + 1 && state.gold < gB,
+      'towers=' + G.towersList.length + '/' + (tB + 1) + ' gold=' + state.gold + '/' + gB);
+    T('cmd.owner.stampedOnBuilder', !!owned && owned.owner === 0, 'owner=' + (owned && owned.owner));
+
+    // -- the protocol surface, pinned. A transport is written against this list; a silent rename
+    //    here is a wire break that would only surface as a refused command on somebody else's screen.
+    T('cmd.ops.tablePinned', Object.keys(NET.OPS).join(',') ===
+      'place,up,sell,mode,bond,unbond,trap,cast,wave,omen,muster,speed,pause,gold',
+      Object.keys(NET.OPS).join(','));
+    T('cmd.lead.andCadence', NET.LEAD === 8 && NET.CRC_EVERY === 30,
+      'LEAD=' + NET.LEAD + ' CRC_EVERY=' + NET.CRC_EVERY);
+    T('cmd.speedPause.applyOnArrival', NET_OPS.speed.now === 1 && NET_OPS.pause.now === 1 &&
+      NET.queue.size === 0, 'queue=' + NET.queue.size);
+
+    // -- and the guard itself. Disbanded, every entry point is the shipped one again. -------------
+    NET.disarm(); NET.onSubmit = null; NET.onCRC = null;
+    T('cmd.solo.funnelClosed', NET.hold('wave') === false && NET.submit('wave') === null &&
+      NET.active === false, 'the funnel is still open with NET.active false');
+    const gW = state.gold, tW = G.towersList.length;
+    const placedSolo = G.placeTower(41, -6, 'archer');
+    T('cmd.solo.entryPointRuns', placedSolo === true && G.towersList.length === tW + 1 && state.gold < gW,
+      'placed=' + placedSolo + ' gold ' + gW + '->' + state.gold + ' towers ' + tW + '->' + G.towersList.length);
+  }
+
   console.log('TESTSUM total=' + (R.pass + R.fail) + ' pass=' + R.pass + ' fail=' + R.fail +
     ' suites=' + which);
   document.title = R.fail ? 'TESTFAIL' : 'TESTPASS';
@@ -42698,6 +43177,10 @@ else {
   // `&auto=1` (written by a map card) drops straight into the chosen road; `&maps=1`
   // ("Choose Your Road" on the victory plate) opens the chooser over the title backdrop.
   // Neither runs after a resume: the run is already under way.
+  // GAME_SPEC_9 SB - a war-band's road comes back through the SAME deep link the Daily War chip
+  // writes, so the session is re-armed HERE, before `&auto=1` opens it and before the first tick
+  // exists. See NET.resume() for what survives the reload and what the transport must rebuild.
+  if (!resumed && P.has('coop')) NET.resume();
   if (!resumed) { if (P.has('auto')) UI.startGame(false); else if (P.has('maps')) UI.showMaps(); }
   // v7-RESILIENCE §1 — dress the plinth, but only on the paths that actually END at the title.
   if (state.phase === 'title') UI.resumeOffer();
