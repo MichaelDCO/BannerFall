@@ -104,6 +104,11 @@
       <div class="chip iron frm" id="chipLives"><i class="ic ic-vale"></i><div><span class="lbl" data-l="hud.vale">Vale</span><span class="val" id="lives">0</span></div></div>
       <div class="chip iron frm" id="chipWave"><i class="ic ic-sw"></i><div><span class="lbl" data-l="hud.wave">Wave</span><span class="val" id="wave">0/10</span></div></div>
       <div class="chip iron frm" id="chipMuster"><i class="ic ic-must"></i><div><span class="lbl" data-l="hud.muster">Muster</span><span class="val" id="muster">0/6</span></div></div>
+      <!-- GAME_SPEC_9 §C2 — THE ALLY PURSES. Ships EMPTY and hidden: SECTION: UI fills it only
+           when COOP.seats > 1, which cannot happen under ?shot= (NET.arm refuses outright), so
+           the whole shot battery and the balance matrix render the HUD they always rendered.
+           No data-l — there is no static copy in it; every string it shows comes from L(). -->
+      <div id="coBand" class="hidden"></div>
     </div>
     <div id="hudRight">
       <button id="btnSpeed" class="ibtn frm" data-lt="hud.speed" title="Speed">×1</button>

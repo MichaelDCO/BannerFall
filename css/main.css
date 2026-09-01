@@ -123,6 +123,72 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .ic-vale{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='v' x1='.2' y1='0' x2='.85' y2='1'><stop offset='0' stop-color='%234a80c6'/><stop offset='.55' stop-color='%232b5697'/><stop offset='1' stop-color='%23142c58'/></linearGradient></defs><path d='M16 2.6l11.2 3.6v9.2c0 7.6-6.4 12.6-11.2 15.4C11.2 28 4.8 23 4.8 15.4V6.2z' fill='url(%23v)' stroke='%23e8b64c' stroke-width='2'/><path d='M16 5.6l8.4 2.7v7c0 5.8-4.9 9.7-8.4 11.8-3.5-2.1-8.4-6-8.4-11.8v-7z' fill='none' stroke='%23bcd8ff' stroke-width='.9' opacity='.35'/><path d='M6.6 15.8L16 10.6l9.4 5.2v3.1L16 13.9l-9.4 5z' fill='%23e8b64c' opacity='.92'/><path d='M11.6 5.2l1.8-.6.4 1.9z' fill='%23ffe7ab' opacity='.7'/></svg>"); }
 .ic-sw{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><g stroke-linecap='round' fill='none'><path d='M7 26l17-19' stroke='%23c8d2df' stroke-width='3.2'/><path d='M25 26L8 7' stroke='%23e6eef8' stroke-width='3.2'/><path d='M7 26l17-19' stroke='%23f4f9ff' stroke-width='1.1' opacity='.8'/></g><g stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round'><path d='M5.5 20.5l5 5'/><path d='M26.5 20.5l-5 5'/></g><circle cx='9' cy='24' r='1.9' fill='%23c9922f'/><circle cx='23' cy='24' r='1.9' fill='%23c9922f'/></svg>"); }
 #hudRight{ margin-left:auto; display:flex; gap:8px; }
+
+/* ══ GAME_SPEC_9 §C — THE WAR-BAND'S DRESSING ═════════════════════════════
+   Five small surfaces, none of which exists on a solo boot (#coBand ships empty and hidden;
+   .coOwn / .coSpk / .coHn are only ever written when COOP.seats > 1). Nothing here carries a
+   transition or an animation — the harness freeze contract holds by construction rather than
+   by the injected stylesheet having to switch anything off.
+   The crest tinctures are the LOBBY'S, seat for seat, so a captain is the same shield on the
+   roster and on the board. */
+#coBand{ display:flex; align-items:stretch; gap:6px; }
+#coBand.hidden{ display:none; }
+.coP{ position:relative; display:flex; align-items:center; gap:5px; min-height:38px;
+      padding:3px 8px 3px 6px; border-radius:5px; font-size:15px; font-variant-numeric:tabular-nums;
+      background:linear-gradient(180deg, rgba(28,24,18,.82), rgba(14,12,9,.88));
+      border:1px solid rgba(232,182,76,.22);
+      text-shadow:0 1px 0 rgba(0,0,0,.85); color:#e9dcc0; }
+/* The local captain's own purse is the one the rest of the HUD is already about, so it is the
+   lit one — the ally chips read as a reference column beside it, not as four equal readouts. */
+.coP.me{ border-color:rgba(232,182,76,.55); background:linear-gradient(180deg, rgba(46,38,24,.9), rgba(22,18,12,.92)); }
+.coP.me b{ color:#ffdc8e; }
+.coP.gone{ opacity:.42; filter:grayscale(.7); }
+.coP b{ font-weight:600; letter-spacing:.01em; }
+.coCr{ width:17px; height:20px; flex:0 0 auto; display:block; }
+/* The send button is a 50-gold step and it says so — "+50", never an icon on its own: it moves
+   money, and a control that moves money has to state the amount before it is pressed. */
+.coP .coS{ margin-left:2px; padding:1px 6px 2px; border-radius:4px; font:inherit; font-size:11px;
+           line-height:1.25; cursor:pointer; color:#f0e3c4;
+           background:linear-gradient(180deg, rgba(90,72,36,.85), rgba(46,36,18,.9));
+           border:1px solid rgba(232,182,76,.4); }
+.coP .coS:hover{ background:linear-gradient(180deg, rgba(120,96,46,.92), rgba(64,50,24,.95)); }
+.coP .coS:active{ transform:translateY(1px); }
+/* §C3 — the horn tally on the war-horn. Unlit until this captain has sounded, so the button
+   answers "have I?" before it answers "have they?". */
+.coHn{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:9px; font-size:12px;
+       vertical-align:2px; font-variant-numeric:tabular-nums;
+       background:rgba(0,0,0,.34); border:1px solid rgba(232,182,76,.28); color:#e2d3b0; }
+.coHn.on{ background:rgba(232,182,76,.22); border-color:rgba(232,182,76,.7); color:#ffdc8e; }
+/* §C1 — the crest row on the garrison sheet, directly above the two money buttons it governs:
+   "this is whose it is" has to be read in the same glance as "upgrade / dismantle". */
+.coOwn{ display:flex; align-items:center; gap:7px; margin:6px 0 2px; padding:4px 7px;
+        border-radius:4px; font-size:11.5px; letter-spacing:.02em; color:#cbbb99;
+        background:rgba(0,0,0,.26); border:1px solid rgba(232,182,76,.18); }
+.coOwn.me{ color:#f0e0bb; border-color:rgba(232,182,76,.42); }
+.coOwn .coCr{ width:14px; height:17px; }
+/* §C5 — the Speaker's crest and glass, in the council's own header. */
+.coSpk{ display:flex; align-items:center; gap:7px; margin-top:6px; padding:4px 8px;
+        border-radius:4px; font-size:12px; color:#cbbb99;
+        background:rgba(0,0,0,.28); border:1px solid rgba(232,182,76,.2); }
+.coSpk.me{ color:#ffdc8e; border-color:rgba(232,182,76,.6); }
+.coSpk .coCr{ width:15px; height:18px; }
+.coSpk b{ margin-left:auto; font-variant-numeric:tabular-nums; color:#e8b64c; }
+/* A control a captain may not press is greyed AND explained (the title carries co.notYours);
+   `disabled` alone on a gold button reads as "you cannot afford it", which is a different
+   sentence entirely. */
+.notMine{ opacity:.4 !important; filter:grayscale(.85); cursor:not-allowed; }
+/* NARROW WIDTHS. The four HUD chips already fill a 390px rail, so at phone width the ally
+   purses compact to a crest, a number and a smaller send button — the
+   feature stays reachable on a phone rather than being hidden there, because a captain sending
+   coin to a struggling ally is exactly the thing a phone player wants to do one-handed.
+   Inside the co-op block on purpose: #coBand is empty and display:none on every solo boot, so
+   none of this can reach the shot battery or the mobile presets. */
+@media (max-width: 900px){
+  #coBand{ gap:4px; }
+  .coP{ padding:3px 5px; gap:4px; font-size:13px; }
+  .coP .coCr{ width:14px; height:17px; }
+  .coP .coS{ padding:1px 4px 2px; font-size:10px; }
+}
 .ibtn{ min-width:44px; min-height:38px; padding:2px 10px; border-radius:5px; font-size:17px; letter-spacing:.04em;
        background-image:var(--noise),linear-gradient(178deg,#2a251e,#15120e); background-size:180px 180px,100% 100%;
        box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12);
