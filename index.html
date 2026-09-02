@@ -18,7 +18,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <script type="importmap">
-{"imports":{"three":"./js/vendor/three.module.js","three/addons/":"./js/vendor/addons/"}}
+{"imports":{"three":"./js/vendor/three.module.js","three/addons/":"./js/vendor/addons/","trystero":"./js/vendor/trystero-nostr.min.js"}}
 </script>
 <!-- BOOTPIPE §3 — module graph warm-up. The browser cannot discover three.module.js or the
      four addon modules until it has fetched and parsed game.js, and it cannot discover
@@ -104,6 +104,11 @@
       <div class="chip iron frm" id="chipLives"><i class="ic ic-vale"></i><div><span class="lbl" data-l="hud.vale">Vale</span><span class="val" id="lives">0</span></div></div>
       <div class="chip iron frm" id="chipWave"><i class="ic ic-sw"></i><div><span class="lbl" data-l="hud.wave">Wave</span><span class="val" id="wave">0/10</span></div></div>
       <div class="chip iron frm" id="chipMuster"><i class="ic ic-must"></i><div><span class="lbl" data-l="hud.muster">Muster</span><span class="lbl sh" data-l="hud.musterS">Stds</span><span class="val" id="muster">0/6</span></div></div>
+      <!-- GAME_SPEC_9 §C2 — THE ALLY PURSES. Ships EMPTY and hidden: SECTION: UI fills it only
+           when COOP.seats > 1, which cannot happen under ?shot= (NET.arm refuses outright), so
+           the whole shot battery and the balance matrix render the HUD they always rendered.
+           No data-l — there is no static copy in it; every string it shows comes from L(). -->
+      <div id="coBand" class="hidden"></div>
     </div>
     <div id="hudRight">
       <button id="btnSpeed" class="ibtn frm" data-lt="hud.speed" title="Speed">×1</button>
@@ -208,6 +213,13 @@
          IS shown, #btnPlay is relabelled "New campaign" — see resumeOffer(). -->
     <button id="btnResume" class="bigBtn frm hidden"><span data-l="resume">Resume the battle</span></button>
     <button id="btnPlay" class="bigBtn frm"><span data-l="play">Play</span></button>
+    <!-- GAME_SPEC_9 A - THE CO-OP DOOR. It ships `hidden` and js/lobby.js is the only thing
+         that ever unhides it, which it does only when SHOT is unset - so every shot preset
+         frames this plinth exactly as it did before co-op existed, the same contract
+         #btnResume above keeps. No `data-l`: the lobby keys do not live in STR until the
+         coop-rules stage merges LOBBY_STR, and `test=i18n` asserts every data-l key resolves,
+         so lobby.js writes this label from its own table instead. -->
+    <button id="btnCoop" class="bigBtn hidden"></button>
     <!-- BOOTPIPE §1 — the load bar. A REAL element, painted with the rest of the title screen
          on the browser's first paint, and filled by the BOOT pipeline in SECTION: CORE as the
          world is generated. It is `display:none` until SECTION: CORE puts `.booting` on
@@ -266,6 +278,12 @@
     <div id="ddFoot"><button id="btnDDBack" class="frm" data-l="dd.back">← Back</button></div>
   </div>
 
+  <!-- GAME_SPEC_9 A - THE WAR-BAND LOBBY. Deliberately EMPTY: js/lobby.js writes its markup on
+       the first open and pulls the Trystero bundle with a dynamic import on the first
+       CREATE/JOIN, so a solo boot pays for neither. Nothing headless can reach it - the module
+       returns before it touches the DOM whenever `?shot=` or `?test=` is set. -->
+  <div id="coopLobby" class="overlay hidden" aria-hidden="true"></div>
+
   <div id="end" class="overlay hidden">
     <div id="endPlate" class="iron frmB">
       <h1 id="endTitle"></h1>
@@ -291,6 +309,15 @@
 </div>
 <!-- ══ END SECTION: UI-HTML ══ -->
 <script type="module" src="js/game.js?v=__BUILD__"></script>
+<!-- The co-op lobby (GAME_SPEC_9 A). A separate module on purpose: it is not on the path to
+     the first frame, it imports nothing at module scope, and it carries no modulepreload hint,
+     so it lands behind the world build instead of in front of it. -->
+<script type="module" src="js/lobby.js?v=__BUILD__"></script>
+<!-- The co-op transport (GAME_SPEC_9 B) - the lockstep sequencer. Same discipline as the lobby
+     above and for the same reasons: no modulepreload hint, nothing imported at module scope,
+     and its single listener waits on `bf-coop-start`, which nothing headless can dispatch. On a
+     solo boot it parses and then costs nothing at all. -->
+<script type="module" src="js/net.js?v=__BUILD__"></script>
 <script>
 // PWA service worker — NEVER in shot mode (a stale cache would poison the deterministic harness).
 if ('serviceWorker' in navigator && !new URLSearchParams(location.search).has('shot')

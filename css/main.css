@@ -126,6 +126,72 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .ic-vale{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='v' x1='.2' y1='0' x2='.85' y2='1'><stop offset='0' stop-color='%234a80c6'/><stop offset='.55' stop-color='%232b5697'/><stop offset='1' stop-color='%23142c58'/></linearGradient></defs><path d='M16 2.6l11.2 3.6v9.2c0 7.6-6.4 12.6-11.2 15.4C11.2 28 4.8 23 4.8 15.4V6.2z' fill='url(%23v)' stroke='%23e8b64c' stroke-width='2'/><path d='M16 5.6l8.4 2.7v7c0 5.8-4.9 9.7-8.4 11.8-3.5-2.1-8.4-6-8.4-11.8v-7z' fill='none' stroke='%23bcd8ff' stroke-width='.9' opacity='.35'/><path d='M6.6 15.8L16 10.6l9.4 5.2v3.1L16 13.9l-9.4 5z' fill='%23e8b64c' opacity='.92'/><path d='M11.6 5.2l1.8-.6.4 1.9z' fill='%23ffe7ab' opacity='.7'/></svg>"); }
 .ic-sw{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><g stroke-linecap='round' fill='none'><path d='M7 26l17-19' stroke='%23c8d2df' stroke-width='3.2'/><path d='M25 26L8 7' stroke='%23e6eef8' stroke-width='3.2'/><path d='M7 26l17-19' stroke='%23f4f9ff' stroke-width='1.1' opacity='.8'/></g><g stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round'><path d='M5.5 20.5l5 5'/><path d='M26.5 20.5l-5 5'/></g><circle cx='9' cy='24' r='1.9' fill='%23c9922f'/><circle cx='23' cy='24' r='1.9' fill='%23c9922f'/></svg>"); }
 #hudRight{ margin-left:auto; display:flex; gap:8px; }
+
+/* ══ GAME_SPEC_9 §C — THE WAR-BAND'S DRESSING ═════════════════════════════
+   Five small surfaces, none of which exists on a solo boot (#coBand ships empty and hidden;
+   .coOwn / .coSpk / .coHn are only ever written when COOP.seats > 1). Nothing here carries a
+   transition or an animation — the harness freeze contract holds by construction rather than
+   by the injected stylesheet having to switch anything off.
+   The crest tinctures are the LOBBY'S, seat for seat, so a captain is the same shield on the
+   roster and on the board. */
+#coBand{ display:flex; align-items:stretch; gap:6px; }
+#coBand.hidden{ display:none; }
+.coP{ position:relative; display:flex; align-items:center; gap:5px; min-height:38px;
+      padding:3px 8px 3px 6px; border-radius:5px; font-size:15px; font-variant-numeric:tabular-nums;
+      background:linear-gradient(180deg, rgba(28,24,18,.82), rgba(14,12,9,.88));
+      border:1px solid rgba(232,182,76,.22);
+      text-shadow:0 1px 0 rgba(0,0,0,.85); color:#e9dcc0; }
+/* The local captain's own purse is the one the rest of the HUD is already about, so it is the
+   lit one — the ally chips read as a reference column beside it, not as four equal readouts. */
+.coP.me{ border-color:rgba(232,182,76,.55); background:linear-gradient(180deg, rgba(46,38,24,.9), rgba(22,18,12,.92)); }
+.coP.me b{ color:#ffdc8e; }
+.coP.gone{ opacity:.42; filter:grayscale(.7); }
+.coP b{ font-weight:600; letter-spacing:.01em; }
+.coCr{ width:17px; height:20px; flex:0 0 auto; display:block; }
+/* The send button is a 50-gold step and it says so — "+50", never an icon on its own: it moves
+   money, and a control that moves money has to state the amount before it is pressed. */
+.coP .coS{ margin-left:2px; padding:1px 6px 2px; border-radius:4px; font:inherit; font-size:11px;
+           line-height:1.25; cursor:pointer; color:#f0e3c4;
+           background:linear-gradient(180deg, rgba(90,72,36,.85), rgba(46,36,18,.9));
+           border:1px solid rgba(232,182,76,.4); }
+.coP .coS:hover{ background:linear-gradient(180deg, rgba(120,96,46,.92), rgba(64,50,24,.95)); }
+.coP .coS:active{ transform:translateY(1px); }
+/* §C3 — the horn tally on the war-horn. Unlit until this captain has sounded, so the button
+   answers "have I?" before it answers "have they?". */
+.coHn{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:9px; font-size:12px;
+       vertical-align:2px; font-variant-numeric:tabular-nums;
+       background:rgba(0,0,0,.34); border:1px solid rgba(232,182,76,.28); color:#e2d3b0; }
+.coHn.on{ background:rgba(232,182,76,.22); border-color:rgba(232,182,76,.7); color:#ffdc8e; }
+/* §C1 — the crest row on the garrison sheet, directly above the two money buttons it governs:
+   "this is whose it is" has to be read in the same glance as "upgrade / dismantle". */
+.coOwn{ display:flex; align-items:center; gap:7px; margin:6px 0 2px; padding:4px 7px;
+        border-radius:4px; font-size:11.5px; letter-spacing:.02em; color:#cbbb99;
+        background:rgba(0,0,0,.26); border:1px solid rgba(232,182,76,.18); }
+.coOwn.me{ color:#f0e0bb; border-color:rgba(232,182,76,.42); }
+.coOwn .coCr{ width:14px; height:17px; }
+/* §C5 — the Speaker's crest and glass, in the council's own header. */
+.coSpk{ display:flex; align-items:center; gap:7px; margin-top:6px; padding:4px 8px;
+        border-radius:4px; font-size:12px; color:#cbbb99;
+        background:rgba(0,0,0,.28); border:1px solid rgba(232,182,76,.2); }
+.coSpk.me{ color:#ffdc8e; border-color:rgba(232,182,76,.6); }
+.coSpk .coCr{ width:15px; height:18px; }
+.coSpk b{ margin-left:auto; font-variant-numeric:tabular-nums; color:#e8b64c; }
+/* A control a captain may not press is greyed AND explained (the title carries co.notYours);
+   `disabled` alone on a gold button reads as "you cannot afford it", which is a different
+   sentence entirely. */
+.notMine{ opacity:.4 !important; filter:grayscale(.85); cursor:not-allowed; }
+/* NARROW WIDTHS. The four HUD chips already fill a 390px rail, so at phone width the ally
+   purses compact to a crest, a number and a smaller send button — the
+   feature stays reachable on a phone rather than being hidden there, because a captain sending
+   coin to a struggling ally is exactly the thing a phone player wants to do one-handed.
+   Inside the co-op block on purpose: #coBand is empty and display:none on every solo boot, so
+   none of this can reach the shot battery or the mobile presets. */
+@media (max-width: 900px){
+  #coBand{ gap:4px; }
+  .coP{ padding:3px 5px; gap:4px; font-size:13px; }
+  .coP .coCr{ width:14px; height:17px; }
+  .coP .coS{ padding:1px 4px 2px; font-size:10px; }
+}
 .ibtn{ min-width:44px; min-height:38px; padding:2px 10px; border-radius:5px; font-size:17px; letter-spacing:.04em;
        background-image:var(--noise),linear-gradient(178deg,#2a251e,#15120e); background-size:180px 180px,100% 100%;
        box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12);
@@ -4728,3 +4794,347 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    text-shadow:0 2px 0 rgba(0,0,0,.8), 0 0 26px rgba(255,196,120,.3); }
 @keyframes vSpin{ to{ transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce){ #veil .vI{ animation:none; } }
+
+
+/* == GAME_SPEC_9 SECTION A - THE CO-OP LOBBY ==================================================
+   A fourth full-screen menu, built out of the three that already exist rather than invented
+   beside them: the chooser's header scrim / eyebrow / gold H1 / rule, the victory plate's
+   framed iron sheet, the map card's mode chips for the pickers, and the settings sheet's
+   struck-iron rows for the name and code fields. The only new figure in the whole screen is the
+   SEAT CREST, and it is drawn from the game's own heraldry (a shield, a charge, a gold rim) so
+   a roster reads as a war-band rather than as four coloured dots.
+   Section 3 gives crimson to the horde, so the four player tinctures are the other heraldic
+   four - azure, vert, purpure, or - and each carries a DIFFERENT charge, which is what keeps
+   the roster legible at 22px and to a colour-blind reader.
+   FREEZE-SAFE by construction: every rule's base state is its final look, the only animations
+   are hover transitions (the idiom the whole file uses), and no shot preset can reach any of
+   it - js/lobby.js returns before it touches the DOM whenever SHOT or TESTQ is set. */
+
+/* -- the title plinth's third call --------------------------------------------------------
+   Struck iron under the blue-enamel PLAY, exactly the hierarchy #btnResume already establishes
+   for a second call on this plinth: one primary, and everything else steps back. It ships
+   `hidden` and only lobby.js (live mode only) unhides it, so every shot frame of the title is
+   laid out as it was before this button existed.
+   `#ui #btnCoop` and not `#btnCoop`: `#ui button{ color:#f6ecd6 }` is (1,0,1) and outranks a
+   bare id - the same trap FIX9-UI section 4b recorded when PLAY came out white. */
+#ui #btnCoop{ margin-top:13px; padding:10px 34px; border-radius:9px;
+   font-size:min(3.9vw,15px); letter-spacing:.24em; color:#e2d4b4;
+   background-clip:border-box;
+   background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f);
+   background-size:180px 180px,100% 100%;
+   box-shadow:0 6px 16px rgba(0,0,0,.6), inset 0 0 0 1px rgba(232,182,76,.28),
+              inset 0 1px 0 rgba(255,228,178,.12);
+   text-shadow:0 1px 0 rgba(0,0,0,.9); }
+#ui #btnCoop:hover{ filter:brightness(1.22); transform:translateY(-2px);
+   box-shadow:0 10px 24px rgba(0,0,0,.66), 0 0 22px rgba(232,182,76,.30),
+              inset 0 0 0 1px rgba(232,182,76,.5), inset 0 1px 0 rgba(255,228,178,.16); }
+/* The world has to exist before a war-band can march on it - the same gate the load bar puts
+   on Play, stated the same way. */
+#title.booting #btnCoop{ opacity:.30; filter:saturate(.35) brightness(.7); pointer-events:none; }
+/* Three calls on one plinth is the crowded case (a saved run + a new campaign + co-op), and the
+   dimension it has to survive is a landscape phone's short side. Scoped to the offer being up,
+   so the ordinary two-button plinth keeps the composition the art was tuned for. */
+#btnResume:not(.hidden) ~ #btnCoop{ margin-top:9px; padding:8px 26px; font-size:min(3.4vw,13px);
+   letter-spacing:.2em; }
+@media (max-height:460px){
+  #ui #btnCoop{ margin-top:8px; padding:6px 22px; font-size:min(3.2vw,12.5px); letter-spacing:.18em; }
+}
+
+/* -- the screen --------------------------------------------------------------------------- */
+/* The same three-layer grade the chooser and the council wear: the shared header plate, a
+   local radial under the sheet, and the plinth gradient at the foot. The diorama behind keeps
+   its full warmth everywhere those three shapes are not (WORLD-FIX4 section 5). */
+/* The radial runs TALLER and denser than the chooser's (56% against 44%, .78 against .62) for a
+   measured reason: this screen's header is vertically CENTRED rather than docked at the top, so
+   --hdrScrim's 220px band does not reach it and the eyebrow / H1 / rule land on whatever the
+   diorama is doing at a third of the frame - which on the Vale is the sunlit meadow. Sampled on
+   the first cut at x=680,y=299 the 2px gold rule came back (135,113,55) against a (137,133,95)
+   meadow: a rule nobody can see. The plate under the lockup is what carries it. */
+#coopLobby{ background-image: var(--hdrScrim),
+   radial-gradient(ellipse 54% 56% at 50% 48%, rgba(10,8,6,.78), rgba(10,8,6,.34) 52%, rgba(10,8,6,0) 78%),
+   linear-gradient(180deg, rgba(6,5,3,0) 54%, rgba(6,4,2,.44) 80%, rgba(4,3,1,.90) 100%); }
+#clKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#e2d3ad;
+   text-shadow:0 1px 0 rgba(0,0,0,.9), 0 1px 5px #000, 0 0 12px rgba(0,0,0,.9); }
+#clT{ margin:4px 0 0; font-size:min(6.6vw,36px); line-height:1; letter-spacing:.14em; font-weight:400;
+   color:#f2cf74;
+   text-shadow:0 1px 0 #fff6da, 1px 2px 0 #5d3d0c, 0 4px 0 #2e1e05, 0 1px 0 rgba(0,0,0,.9),
+               0 8px 16px rgba(0,0,0,.9), 0 0 44px rgba(232,182,76,.3); }
+/* The eyebrow and the H1 carry their own ground in their text-shadows; a 2px gradient rule has
+   nowhere to put one, and this header floats at a third of the frame rather than inside the
+   top scrim (see #coopLobby above). Sampled on the first cut it came back (135,113,55) against
+   a (137,133,95) meadow - present in the DOM and invisible on the screen. A dark drop-shadow
+   is the whole fix: it gives the line the same ground the type beside it already has, without
+   another full-width scrim shape on a screen that has two. */
+#clRule{ width:min(46vw,380px); margin:9px auto 0;
+   filter:drop-shadow(0 1px 2px rgba(0,0,0,.95)) drop-shadow(0 0 7px rgba(0,0,0,.85)); }
+#clPlate{ width:min(94vw,520px); margin-top:16px; padding:16px 18px 18px; border-radius:9px;
+   text-align:left; }
+
+/* one sheet, three faces - the view is a data attribute so nothing has to be hidden by hand */
+#coopLobby .clV{ display:none; }
+#coopLobby[data-view="home"] #clHome,
+#coopLobby[data-view="join"] #clEntry,
+#coopLobby[data-view="room"] #clRoom{ display:block; }
+
+/* The lead sets the screen up and the name row is asked once for both sheets that need it, so
+   both sit ABOVE the views rather than inside one - and each is withdrawn on the view it has
+   nothing to say to. `display:none` on the ROOM sheet only, so the summons view is not carrying
+   a paragraph explaining a thing the player has already done. */
+#clLead{ margin:0 0 13px; font-size:13px; line-height:1.42; letter-spacing:.05em;
+   font-variant-caps:small-caps; color:#a2947a; text-align:center; }
+#coopLobby[data-view="join"] #clLead,
+#coopLobby[data-view="room"] #clLead,
+#coopLobby[data-view="room"] #clNameRow{ display:none; }
+#clNameRow{ display:flex; align-items:center; gap:10px; margin-bottom:13px; padding:3px 12px;
+   border-radius:5px; border:1px solid rgba(232,182,76,.22);
+   background-image:var(--noise),linear-gradient(178deg,#241f1a,#14110d);
+   background-size:180px 180px,100% 100%; }
+#clNameRow label{ flex:0 0 auto; font-size:11px; letter-spacing:.19em; text-transform:uppercase;
+   color:#d5c49b; }
+#coopLobby #clName{ flex:1 1 auto; min-width:0; min-height:36px; font-size:14px; letter-spacing:.08em; }
+#coopLobby #clName:focus{ color:#ffe7ab; }
+
+/* -- the sheet's calls -------------------------------------------------------------------- */
+/* Enamelled steel at sheet scale: the same plate PLAY wears, minus the filigree band (the
+   frame is on the sheet, and a frame inside a frame is a ransom note). `.sec` is the struck
+   iron every second call in this game steps back to; `.sec.on` is the filled gold the muster
+   control uses for a latched state (FIX4-UI section 1) - a READY pip you have struck yourself. */
+#coopLobby .clBig{ display:block; width:100%; margin-top:10px; padding:12px 18px; border-radius:8px;
+   font-size:min(4.2vw,16px); letter-spacing:.2em; text-transform:uppercase; text-align:center;
+   color:var(--gold);
+   background-image:
+     radial-gradient(ellipse 84% 130% at 50% -30%, rgba(150,196,252,.20), rgba(150,196,252,0) 60%),
+     var(--noise),
+     linear-gradient(178deg,#2b558f 0%,#1e4179 46%,#12294f 100%);
+   background-size:100% 100%,180px 180px,100% 100%;
+   box-shadow:inset 0 0 0 1px rgba(232,182,76,.42), inset 0 2px 0 rgba(255,223,174,.45),
+              inset 0 -14px 20px -6px rgba(3,7,16,.55), 0 8px 22px rgba(0,0,0,.6);
+   text-shadow:0 1px 0 rgba(0,0,0,.9), 0 0 18px rgba(255,214,148,.28);
+   transition:filter .15s, transform .15s; }
+#coopLobby .clBig:hover:not(:disabled){ filter:brightness(1.16); transform:translateY(-2px); }
+#coopLobby .clBig:active:not(:disabled){ transform:translateY(0) scale(.99); filter:brightness(.9); }
+#coopLobby .clBig:disabled{ cursor:default; opacity:.40; filter:saturate(.3) brightness(.72); }
+#coopLobby .clBig.sec{ color:#e2d4b4; text-shadow:0 1px 0 rgba(0,0,0,.9);
+   background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f);
+   background-size:180px 180px,100% 100%;
+   box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 0 0 1px rgba(232,182,76,.22),
+              inset 0 1px 0 rgba(255,228,178,.12); }
+#coopLobby .clBig.sec.on{ color:#3a2708; text-shadow:0 1px 0 rgba(255,246,214,.5);
+   background-image:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e); background-size:100% 100%;
+   box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,250,224,.6); }
+/* the map card's own "this road is held" tick, at button scale - the latch has to be readable
+   as a latch and not only as a colour, and the word beside it names the STATE, not the undo */
+#coopLobby .clBig.sec.on::before{ content:''; display:inline-block; width:13px; height:13px;
+   margin-right:9px; vertical-align:-1px; background:50% 50%/100% 100% no-repeat;
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 12.6l5.2 5.4L20 6.4' fill='none' stroke='%233a2708' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
+
+#coopLobby input{ font-family:var(--serif); color:#f6ecd6; background:transparent; border:0;
+   outline:none; pointer-events:auto; }
+
+/* -- the code entry (join sheet) ---------------------------------------------------------- */
+/* A struck-iron channel with a gold inner rule - the load bar's own track idiom, at glyph
+   scale. `text-indent` matches the tracking so five letterspaced characters stay optically
+   centred (a trailing letter-space always drags a centred run left by half a space). */
+#clInL{ display:block; font-family:var(--sans); font-weight:600; font-size:10px; letter-spacing:.2em;
+   text-transform:uppercase; color:#a8977a; text-align:center; }
+#coopLobby #clIn{ display:block; width:100%; margin-top:10px; padding:11px 8px 13px; border-radius:6px;
+   text-align:center; font-size:min(11vw,34px); letter-spacing:.42em; text-indent:.42em;
+   text-transform:uppercase; color:#f2cf74; font-variant-numeric:tabular-nums;
+   background-image:linear-gradient(180deg,#05070b,#0d1219 60%,#070a10);
+   box-shadow:inset 0 0 0 1px rgba(232,182,76,.34), inset 0 2px 6px rgba(0,0,0,.9); }
+#coopLobby #clIn:focus{ box-shadow:inset 0 0 0 1px rgba(232,182,76,.8), inset 0 2px 6px rgba(0,0,0,.9),
+   0 0 18px rgba(232,182,76,.25); }
+#coopLobby .clErr{ min-height:15px; margin-top:5px; text-align:center; font-family:var(--sans);
+   font-weight:600; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:#e6714f; }
+
+/* -- the code plate + the summons (room sheet) -------------------------------------------- */
+#clCodeRow{ display:flex; align-items:stretch; gap:11px; }
+#coopLobby .clCodeB{ flex:1 1 auto; min-width:0; padding:6px 13px 8px; border-radius:6px;
+   background-image:linear-gradient(180deg,#05070b,#0d1219 60%,#070a10);
+   box-shadow:inset 0 0 0 1px rgba(232,182,76,.34), inset 0 2px 5px rgba(0,0,0,.9); }
+#coopLobby .clCodeB em{ display:block; font-style:normal; font-family:var(--sans); font-weight:600;
+   font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:#a8977a; }
+#coopLobby .clCodeB b{ display:block; margin-top:1px; font-size:min(7.4vw,29px); line-height:1.06;
+   font-weight:400; letter-spacing:.3em; text-indent:.3em; color:#f2cf74;
+   font-variant-numeric:tabular-nums;
+   text-shadow:0 1px 0 #5d3d0c, 0 2px 0 #2e1e05, 0 0 22px rgba(232,182,76,.4); }
+#coopLobby .clChip{ flex:0 0 auto; padding:8px 13px 9px; border-radius:5px; font-family:var(--sans);
+   font-weight:600; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:#c4b391;
+   background:linear-gradient(180deg, rgba(60,50,36,.9), rgba(34,28,20,.94));
+   box-shadow:inset 0 0 0 1px rgba(122,106,76,.4), inset 0 1px 0 rgba(226,206,166,.08);
+   transition:filter .13s; }
+#coopLobby .clChip:hover{ filter:brightness(1.3); }
+#coopLobby .clChip.on{ color:#3a2708; background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
+   box-shadow:inset 0 1px 0 rgba(255,250,224,.6); }
+/* The summons is PRINTED, not only copied: clipboard writes are gated on a secure context and
+   on a permission, and a share link a player cannot read is a dead end on the one screen whose
+   entire job is getting a second player in. */
+#clLinkRow{ margin-top:7px; }
+#clLinkRow em{ font-style:normal; font-family:var(--sans); font-weight:600; font-size:9px;
+   letter-spacing:.2em; text-transform:uppercase; color:#8d7f66; }
+#coopLobby #clLink{ display:block; margin-top:2px; font-family:var(--sans); font-size:10.5px;
+   letter-spacing:.01em; color:#bca77e; word-break:break-all; }
+
+/* -- the roster --------------------------------------------------------------------------- */
+/* FOUR ROWS, ALWAYS. An empty saddle is drawn rather than omitted, for the same reason the map
+   card reserves its record row: a roster that grows a line every time somebody joins is a
+   roster that moves the READY button out from under the cursor. */
+#clRoster{ list-style:none; margin:13px 0 0; padding:0; display:grid; gap:5px; }
+#coopLobby .clP{ display:flex; align-items:center; gap:10px; padding:6px 10px; border-radius:5px;
+   background-image:var(--noise),linear-gradient(178deg,#241f1a,#14110d);
+   background-size:180px 180px,100% 100%;
+   box-shadow:inset 0 0 0 1px rgba(122,106,76,.30); }
+#coopLobby .clCrW{ flex:0 0 22px; height:26px; display:block; }
+#coopLobby .clCr{ width:22px; height:26px; display:block;
+   filter:drop-shadow(0 1px 3px rgba(0,0,0,.65)); }
+#coopLobby .clP .clN{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis;
+   white-space:nowrap; font-size:13.5px; letter-spacing:.09em; color:#f2e5c6; }
+#coopLobby .clP .clN u{ margin-left:7px; text-decoration:none; font-family:var(--sans);
+   font-weight:600; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:#8d7f66; }
+#coopLobby .clP .clTag{ flex:0 0 auto; font-family:var(--sans); font-weight:600; font-size:9px;
+   letter-spacing:.18em; text-transform:uppercase; color:#a2947a; }
+/* the READY pip: unstruck iron, or the filled gold rivet the HUD uses for a thing that is DONE */
+#coopLobby .clPip{ flex:0 0 11px; width:11px; height:11px; border-radius:50%;
+   background:radial-gradient(circle at 34% 30%, #2a2419, #14110c);
+   box-shadow:inset 0 0 0 1px rgba(122,106,76,.55); }
+#coopLobby .clP.rdy .clPip{ background:radial-gradient(circle at 34% 30%, #fff0c0, #e8b64c 58%, #a9761d);
+   box-shadow:0 0 9px rgba(232,182,76,.6), inset 0 1px 0 rgba(255,250,224,.6); }
+#coopLobby .clP.me{ box-shadow:inset 0 0 0 1px rgba(232,182,76,.45); }
+#coopLobby .clP.em{ box-shadow:inset 0 0 0 1px rgba(122,106,76,.16); }
+/* An empty saddle gets the SAME shield, drawn as a dashed outline - a place kept, not a hole.
+   A bare bordered box in a column of crests reads as a broken image. */
+#coopLobby .clP.em .clCrW{ background:50% 50%/22px 26px no-repeat;
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'><path d='M2.2 2.2h19.6v14.2c0 7.4-6.1 10.2-9.8 11.4C8.3 26.6 2.2 23.8 2.2 16.4z' fill='rgba(0,0,0,.28)' stroke='%237c6c4e' stroke-width='1.4' stroke-dasharray='3 2.6'/></svg>"); }
+#coopLobby .clP.em .clN{ font-size:12px; letter-spacing:.05em; font-variant-caps:small-caps;
+   color:#7d7260; }
+
+/* -- the captain's pickers ---------------------------------------------------------------- */
+/* The map card's mode chips, reused wholesale - they are already the game's word for "a small
+   iron tab you may or may not be allowed to press", and Endless/Horde are locked here in the
+   same voice they are locked there (GAME_SPEC_9 section C puts co-op Endless and Horde in v2). */
+#clPicks{ margin-top:13px; display:grid; gap:7px; }
+#coopLobby .clPk{ display:flex; align-items:flex-start; gap:10px; }
+#coopLobby .clPk>em{ flex:0 0 52px; padding-top:4px; font-style:normal; font-family:var(--sans);
+   font-weight:600; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:#8d7f66; }
+#coopLobby .clCs{ flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; gap:4px; }
+#coopLobby .clC{ padding:3px 8px 4px; border-radius:4px; white-space:nowrap; font-size:10.5px;
+   letter-spacing:.14em; text-transform:uppercase; color:#c4b391;
+   background:linear-gradient(180deg, rgba(60,50,36,.9), rgba(34,28,20,.94));
+   box-shadow:inset 0 0 0 1px rgba(122,106,76,.4), inset 0 1px 0 rgba(226,206,166,.08);
+   transition:filter .13s, transform .13s; }
+#coopLobby .clC:hover{ filter:brightness(1.3); transform:translateY(-1px); }
+#coopLobby .clC.on{ color:#3a2708; background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
+   box-shadow:inset 0 1px 0 rgba(255,250,224,.6), 0 0 12px rgba(232,182,76,.28); }
+#coopLobby .clC.lk{ color:#6f6656; cursor:default;
+   box-shadow:inset 0 0 0 1px rgba(96,84,62,.34); }
+#coopLobby .clC.lk:hover{ filter:none; transform:none; }
+/* A RIDER reads the muster, a CAPTAIN sets it. Rather than dim eleven dead chips on the guest's
+   sheet, the rail collapses to the one chip that is true - a read-out, in the same plate. */
+#coopLobby[data-role="guest"] .clC{ pointer-events:none; }
+#coopLobby[data-role="guest"] .clC:not(.on){ display:none; }
+#coopLobby[data-role="guest"] #btnClStart{ display:none; }
+
+/* -- the state line ----------------------------------------------------------------------- */
+/* Every state GAME_SPEC_9 section A names - waiting, connecting, failed, host-left, starting -
+   lands in this one register, so a player never has to look in a second place to find out what
+   the band is doing. The failure copy is long on purpose: "network blocks P2P" is the one
+   message in the feature that has to tell somebody what to DO next. */
+#clStatus{ margin-top:12px; padding:8px 12px 9px; border-radius:5px; font-size:12.5px; line-height:1.42;
+   letter-spacing:.05em; font-variant-caps:small-caps; color:#bca77e; text-align:center;
+   background:rgba(0,0,0,.34); box-shadow:inset 0 0 0 1px rgba(122,106,76,.22); }
+#coopLobby[data-net="failed"] #clStatus,
+#coopLobby[data-net="nolib"] #clStatus,
+#coopLobby[data-net="hostleft"] #clStatus{ color:#e6a891;
+   box-shadow:inset 0 0 0 1px rgba(230,113,79,.40); }
+#coopLobby[data-net="starting"] #clStatus{ color:#f2cf74;
+   box-shadow:inset 0 0 0 1px rgba(232,182,76,.50); }
+#clActs{ display:flex; gap:9px; }
+#clActs .clBig{ flex:1 1 0; min-width:0; }
+
+/* ── the fold cue ───────────────────────────────────────────────────────────────────────── */
+/* Declared at TOP LEVEL, not inside the phone query, because the sheet becomes a bounded
+   scroller on any SHORT viewport - and a landscape 844x390 (the orientation this game is
+   locked to) matches the height query while missing `max-width:760` entirely, which left the
+   widest-and-shortest case scrolling 383px with no cue at all. It costs nothing where it does
+   not apply: `.scr` is written by lobby.js only when scrollHeight genuinely exceeds the box,
+   and `.atEnd` withdraws it the moment the foot is reached, so the chevron can never point at
+   nothing. Same idiom, same terms, as #settings. */
+#clPlate.scr::after{ content:''; display:block; position:sticky; bottom:0; height:26px;
+   margin:0 -18px -18px; pointer-events:none;
+   background-repeat:no-repeat,no-repeat;
+   background-position:50% calc(100% - 5px), 0 0;
+   background-size:18px 11px, 100% 100%;
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path d='M2.6 2.8L10 9.4l7.4-6.6' fill='none' stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+     linear-gradient(180deg, rgba(14,11,8,0), rgba(14,11,8,.72) 52%, rgba(12,10,7,.96)); }
+#clPlate.atEnd::after{ display:none; }
+
+/* -- the foot ----------------------------------------------------------------------------- */
+#clFoot{ margin-top:18px; display:flex; gap:12px; align-items:center; }
+#coopLobby #btnClBack{ border-radius:6px; padding:10px 26px; font-size:14px; letter-spacing:.18em;
+   text-transform:uppercase; color:#e2d4b4;
+   background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f);
+   background-size:180px 180px,100% 100%;
+   box-shadow:0 5px 14px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,228,178,.12);
+   transition:filter .14s; }
+#coopLobby #btnClBack:hover{ filter:brightness(1.24); }
+
+/* -- PHONE. Measured at a true 390 with tools/mshots.ps1 - the sheet is the widest thing on the
+   screen and it is the thing that has to fit, so it goes to the rail's full width inside a 12px
+   gutter, the picker labels stack above their rails instead of eating 52px of a 312px content
+   box, and the two calls stack. The sheet is the same bounded scroller #cTree and #settings use
+   here, so nothing in it can be unreachable on a short viewport. ---------------------------- */
+@media (max-width:760px){
+  #coopLobby{ justify-content:flex-start;
+     padding:calc(14px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); }
+  #clT{ font-size:min(8vw,28px); }
+  #clRule{ width:min(72vw,340px); margin-top:7px; }
+  /* The reserve is MEASURED, not guessed: at a true 390x844 the header lockup above the sheet
+     runs 76px (14 gutter + eyebrow + H1 + rule) and the foot rail 61 (11 + the back button +
+     the home-indicator band), so 152 is what the sheet may not have. The first cut reserved 208
+     and hid 150px of the room sheet — including both calls — behind a fold. */
+  #clPlate{ width:100%; margin-top:11px; padding:12px 12px 14px;
+     max-height:calc(100vh - 152px); overflow-y:auto; overscroll-behavior:contain; }
+  #coopLobby .clBig{ padding:10px 16px; }
+  /* the URL says what it is; the sentence above it is desktop's courtesy, not the phone's */
+  #clLinkRow{ margin-top:6px; }
+  #clLinkRow em{ display:none; }
+  #clLead{ font-size:12px; margin-bottom:11px; }
+  #clNameRow{ margin-bottom:11px; }
+  /* THE CODE MUST NOT BE CLIPPED - it is the one string on this screen a player has to read
+     aloud. Measured on the first cut at a true 390: five glyphs at min(7.4vw,29px) with .3em
+     tracking need ~168px and the row left the plate 151, so the final H was painted under the
+     copy chip. Stacked, the code owns the full 312px content box and the chip becomes a full
+     -width call under it, which is also the better touch target. */
+  #clCodeRow{ flex-direction:column; align-items:stretch; gap:8px; }
+  #coopLobby .clChip{ text-align:center; padding:9px 13px 10px; }
+  #coopLobby .clCodeB b{ font-size:min(9vw,30px); }
+  #clRoster{ margin-top:10px; gap:4px; }
+  #coopLobby .clP{ padding:5px 9px; gap:9px; }
+  #coopLobby .clP .clN{ font-size:12.5px; }
+  #clPicks{ margin-top:10px; gap:6px; }
+  #clStatus{ margin-top:10px; font-size:12px; }
+  #coopLobby .clPk{ flex-direction:column; gap:4px; }
+  #coopLobby .clPk>em{ flex:0 0 auto; padding-top:0; }
+  #clActs{ flex-direction:column; gap:0; }
+  /* the cue is declared at top level; here it only re-states the plate's tighter gutter */
+  #clPlate.scr::after{ margin:0 -12px -14px; }
+  #clFoot{ margin-top:11px; }
+  #coopLobby #btnClBack{ padding:9px 17px; font-size:11.5px; letter-spacing:.13em; }
+}
+/* A SHORT viewport - which on a landscape-locked game is the ORDINARY phone case, 844x390.
+   Measured there: a 178px reserve left the sheet a 182px window onto 565px of room, i.e. the
+   roster, the pickers and both calls all below the fold at once. The header is what pays: the
+   eyebrow and the rule are decoration, the H1 alone still names the screen, and 86px of chrome
+   goes back to the sheet. Keyed on height rather than width so a wide-but-short window - the
+   one case `max-width:760` misses entirely - gets it too. */
+@media (max-height:620px){
+  #coopLobby{ justify-content:flex-start;
+     padding-top:calc(10px + env(safe-area-inset-top)); }
+  #clKick, #clRule{ display:none; }
+  #clT{ font-size:min(5.4vw,26px); }
+  #clPlate{ margin-top:8px; max-height:calc(100vh - 118px); overflow-y:auto;
+     overscroll-behavior:contain; }
+  #clLead{ margin-bottom:10px; }
+  #clFoot{ margin-top:8px; }
+  #coopLobby #btnClBack{ padding:7px 18px; font-size:11.5px; letter-spacing:.14em; }
+}
