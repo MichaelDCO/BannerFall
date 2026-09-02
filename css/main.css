@@ -3972,7 +3972,30 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 15l7-7 7 7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
   #towerMenu:not(.peek) .pHead .exp{
      background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 9l7 7 7-7' fill='none' stroke='%23f0dcae' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"); }
-  #towerMenu.peek .elB{ display:none; }
+  /* ══ r15-UI §5 — THE PEEK KEEPS EVERY FIELD AND EVERY CONTROL ════════════════════════════════
+     Round 15, finding 5: the phone card dropped SCHOOL, RESISTED BY and the ORDERS rail outright,
+     so a phone player could not set targeting at all. The §3b cut above was made against a 347px
+     sheet; the sheet is 240px now and the space argument is gone with it (measured: ~590px of
+     empty viewport stands above the card on an 844px frame).
+     So the block comes back, in the smallest shape that keeps every field: the two READ rows fold
+     onto ONE line — `SCHOOL <chip> · RESISTED BY <text>` in the stat labels' own 10px voice — and
+     the ORDERS rail takes the full width under them at the 44px touch height the rule ~280 lines
+     above already gives it. Total added height ~92px, which is what the finding priced it at.
+     What stays behind the handle is the RUNEBOND row alone (a bond is a second school on this
+     tower, and it is the one line here that is a read gone looking for rather than an answer the
+     sheet owes you) — and the handle itself is only drawn when that row exists, see UI.buildMenu. */
+  #towerMenu.peek .elB{ display:flex; flex-wrap:wrap; align-items:center; column-gap:9px; row-gap:1px; }
+  #towerMenu.peek .elB .rbR{ display:none; }
+  #towerMenu.peek .schR, #towerMenu.peek .rby{ flex:0 1 auto; min-width:0; gap:6px; }
+  #towerMenu.peek .schR>em, #towerMenu.peek .rby>em{ flex:0 1 auto; justify-content:flex-start; }
+  /* the desktop/phone rule that gives a LOADED resist row its own full-width line is exactly what
+     the one-line fold is undoing here, so it is turned off for the peek and the row simply wraps
+     if the busts need the room. */
+  #towerMenu.peek .rby:not(:has(b.nil))>em{ flex:0 1 auto; }
+  #towerMenu.peek .schR+.rby{ margin-top:0; }
+  /* the interpunct that makes the two answers one sentence rather than two orphaned pairs */
+  #towerMenu.peek .rby::before{ content:'·'; flex:0 0 auto; margin-right:1px; color:#8b7d61; font-size:13px; }
+  #towerMenu.peek .ordR{ flex:1 0 100%; margin-top:5px; }
   #towerMenu .stats{ display:grid; grid-template-columns:1fr 1fr; column-gap:14px; }
   /* the garrison sheet is full-width here and has the room the 58px build card does not —
      the school keeps its WORD (FIX4-UI §6a) */
@@ -4306,15 +4329,33 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    nothing on the sheet is ever half-drawn; in mid-flick a row slides under a hard sheet edge,
    which is what a fold looks like. The band is also 32px shorter, so the chronicle shows more of
    itself than it did with the affordance that was hiding it. */
+/* ══ r15-UI §4 — A FADE, NOT A LID ═══════════════════════════════════════════════════════════
+   Round 15, finding 4 (major): "the more-content indicator renders as a SOLID dark-brown rectangle
+   spanning the full panel width, ~36px tall, with a chevron. It is not a fade — it completely hides
+   the first row of FEATS (the header 'FEATS 2/9' is visible directly above it with nothing under
+   it) … The named 'scroll-fade fixes' item regressed here."
+   It did, and the regression is legible in the history right here: r14-UI §5 cut the RAMP to 8px
+   and gave the remaining 36 to a solid bar, on the reasoning that "a ramp cannot be 52px long when
+   the row gap is 7" — a soft edge that long can only ever land half-dissolved type. That argument
+   is sound about a ramp that ENDS on the sheet's darkest EDGE TONE, which is what it was pointed
+   at: a 52px ramp to a near-opaque brown is a guillotine with a soft handle. It is not sound about
+   a ramp that ends on the PARCHMENT'S OWN colour at .92 — the last row does not get cut in half,
+   it gets absorbed into the sheet, which is what "there is more below" looks like on paper and is
+   the affordance FIX2-UI §1 set out to build in the first place.
+   So: one layer, 36px of ramp from rgba(parchment,0) to rgba(parchment,.92), no bar at any alpha.
+   The chevron leaves the band entirely and becomes its own floating pill on the sheet's bottom
+   edge (below), so the mark never rides a ramp's mid-tones — which is the one thing FIX11-UI §4a
+   got right and is kept. And the affordance is INSET on every side that matters: this pseudo-element
+   lives in the sheet's CONTENT box, 15px in from each edge, so the parchment's 1px rule and its
+   bottom radius are drawn by the sheet itself and the sheet still ends as a sheet. */
 #ddGrid::after, #cTree::after{ content:''; display:block; flex:0 0 auto; position:sticky;
    bottom:0; height:44px; margin:0 0 -44px; pointer-events:none; border-radius:0 0 6px 6px;
-   background-repeat:no-repeat,repeat-x,no-repeat;
-   background-position:50% calc(100% - 24px), 0 100%, 0 0;
-   background-size:20px 12px, 100% 36px, 100% 100%;
-   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path d='M2.6 2.8L10 9.4l7.4-6.6' fill='none' stroke='%23f6e6bd' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' opacity='.92'/></svg>"),
-     linear-gradient(180deg, rgba(104,74,32,.985), rgba(104,74,32,.985)),
-     linear-gradient(180deg, rgba(150,116,60,0) 0, rgba(104,74,32,.985) 14%,
-              rgba(104,74,32,.985) 100%); }
+   background-repeat:no-repeat,no-repeat;
+   background-position:50% calc(100% - 3px), 0 0;
+   background-size:52px 21px, 100% 100%;
+   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 21'><rect x='1.2' y='1.2' width='49.6' height='18.6' rx='9.3' fill='%234b3616' stroke='%23e8b64c' stroke-opacity='.72' stroke-width='1.6'/><path d='M19.4 8.2L26 14.1l6.6-5.9' fill='none' stroke='%23f6e6bd' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+     linear-gradient(180deg, rgba(174,149,96,0) 0, rgba(174,149,96,0) 14%,
+              rgba(172,146,93,.62) 56%, rgba(168,142,88,.96) 100%); }
 /* FIX9-UI §3 — A FADE IS NOT A DIRECTION. The chronicle and the council tree both scroll on the
    phone and both advertised it with a gradient alone, which reads as a vignette on the plate: on
    _true_deeds_m three of the four registers (DOCTRINE, FEATS, COLLECTION) were below the fold and
@@ -4328,11 +4369,11 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    off centre since FIX2-UI §1. Turned off outside the phone column layout. */
 #cTree::after{ display:none; }
 @media (max-width:760px){
-  /* the council's iron reading of the same three-layer band (FIX11-UI §4a) */
+  /* the council's iron reading of the same band — r15-UI §4's ramp-plus-pill, in iron */
   #cTree::after{ display:block; border-radius:0;
-     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path d='M2.6 2.8L10 9.4l7.4-6.6' fill='none' stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
-       linear-gradient(180deg, rgba(6,5,3,.97), rgba(6,5,3,.97)),
-       linear-gradient(180deg, rgba(10,8,6,0) 0, rgba(6,5,3,.97) 14%, rgba(6,5,3,.97) 100%); }
+     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 52 21'><rect x='1.2' y='1.2' width='49.6' height='18.6' rx='9.3' fill='%23100d08' stroke='%23e8b64c' stroke-opacity='.66' stroke-width='1.6'/><path d='M19.4 8.2L26 14.1l6.6-5.9' fill='none' stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+       linear-gradient(180deg, rgba(10,8,6,0) 0, rgba(10,8,6,0) 14%,
+                rgba(8,6,4,.62) 56%, rgba(6,5,3,.96) 100%); }
 }
 /* nothing to continue to, nothing to advertise */
 /* …and it has to REACH the plate's edge. Measured after the ramp was strengthened: the fade ends at
@@ -4342,14 +4383,26 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    effect; a transform is applied after layout and is not, so the fade slides down over the padding
    band and closes flush with the border. Scoped to #ddGrid because #cTree has no bottom padding and
    the same shift would paint a brown strip below the council tree. */
+/* r15-UI §4 — the shift stays at 15: a sticky box cannot be pushed past its containing block's
+   CONTENT box, so without it the ramp stops 15px short and the last line of type is sheared by the
+   sheet's own padding with nothing over it (measured at 6x on _deeds.png when this was tried at 11).
+   The 1px rule and the bottom radius are painted by the SHEET's border box, which is OUTSIDE this
+   pseudo-element in both axes, so they still draw under the affordance — what the round-15 finding
+   was actually seeing there was the opaque bar reading AS the sheet's edge, and that bar is gone. */
 #ddGrid::after{ transform:translateY(15px); }
 #ddGrid.atEnd::after, #cTree.atEnd::after{ display:none; }
 .ddSH{ display:flex; align-items:center; gap:8px; padding-bottom:5px;
   border-bottom:1px solid rgba(78,52,18,.38); margin-bottom:8px; }
 .ddSH span{ font-size:13px; letter-spacing:.26em; text-transform:uppercase; color:#41300f;
   text-shadow:0 1px 0 rgba(255,250,232,.5); }
-.ddSH u{ margin-left:auto; text-decoration:none; font-size:12.5px; letter-spacing:.12em; color:#7a5f2a;
-  font-variant-numeric:tabular-nums; }
+/* r15-UI §4 (last clause) — "lift the section-count '2/9' contrast — it is currently near-invisible
+   against the parchment". Measured on _deeds.png: #7a5f2a ink on the sheet's own (169,141,94) at
+   1.89:1, i.e. under half the 4.5:1 floor and the lowest-contrast type on the panel. #372810 with
+   the parchment's own top-light shadow — the same pair the section HEADER beside it already uses —
+   measures 4.5:1 while staying a stop quieter than that header, so the count is legible without
+   competing with the register it belongs to. */
+.ddSH u{ margin-left:auto; text-decoration:none; font-size:12.5px; letter-spacing:.12em; color:#372810;
+  text-shadow:0 1px 0 rgba(255,250,232,.5); font-variant-numeric:tabular-nums; }
 .ddSI{ width:17px; height:17px; flex:0 0 auto; background:50% 50%/100% 100% no-repeat; }
 .ddRow{ display:grid; grid-template-columns:repeat(auto-fill, minmax(232px, 1fr)); gap:7px; }
 
@@ -4573,7 +4626,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      under it), so the sticky band here is a page-direction cue rather than a fold treatment and
      it has no guillotined row to dissolve. It keeps its shipped 52px rather than the desktop's
      76: the extra 24 would take a further quarter of a real crest out of the frame for nothing. */
-  #ddGrid::after{ height:52px; margin:0 0 -52px; background-size:20px 12px, 100% 18px, 100% 100%; }
+  /* r15-UI §4 — two layers now (pill, ramp) instead of three (chevron, bar, ramp). */
+  #ddGrid::after{ height:52px; margin:0 0 -52px; background-size:52px 21px, 100% 100%;
+     transform:translateY(12px); }   /* the phone plate's padding-bottom, as on the desktop rule */
   .ddRow{ grid-template-columns:1fr 1fr; gap:6px; }
   .ddC{ grid-template-columns:22px 1fr; gap:1px 7px; padding:6px 7px; }
   /* the phone plate's bottom padding is 6px, not the desktop's — the strip has to reach the

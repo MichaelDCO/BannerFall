@@ -450,8 +450,8 @@ en: {
   'tm.school': 'School',
   'tm.resNil': 'none on this road',
   'tm.orders': 'Orders',
-  'tm.more': 'Show school, resistances and standing orders',
-  'tm.less': 'Collapse to the tower’s stats',
+  'tm.more': 'Show this tower’s rune bindings',
+  'tm.less': 'Collapse to the tower’s sheet',
   'mode.first': 'First', 'mode.strong': 'Strong', 'mode.close': 'Close',
   'st.guards': 'Guards', 'st.hp': 'HP', 'st.rng': 'Rng', 'st.rate': 'Rate', 'st.aura': 'Aura',
   'st.heals': 'Heals', 'st.yes': 'yes', 'st.no': 'no', 'st.burn': 'Burn', 'st.area': 'Area',
@@ -1078,8 +1078,8 @@ fr: {
   'tm.school': 'École',
   'tm.resNil': 'aucun sur cette route',
   'tm.orders': 'Ordres',
-  'tm.more': 'Afficher école, résistances et ordres permanents',
-  'tm.less': 'Réduire aux statistiques de la tour',
+  'tm.more': 'Afficher les liens runiques de cette tour',
+  'tm.less': 'Réduire la fiche de la tour',
   'mode.first': 'Tête', 'mode.strong': 'Fort', 'mode.close': 'Près',
   'st.guards': 'Gardes', 'st.hp': 'PV', 'st.rng': 'Port', 'st.rate': 'Cad', 'st.aura': 'Aura',
   'st.heals': 'Soins', 'st.yes': 'oui', 'st.no': 'non', 'st.burn': 'Braise', 'st.area': 'Aire',
@@ -3365,7 +3365,15 @@ const WPAL_BASE = {
   // warm lean and a little value, `rockWarm` and `rockComp` (below) come off with it. Target for
   // this pass is B-G around -22 at S ~0.34 — halfway to §4d's number from the wrong side of it,
   // and as far as the anti-mauve findings allow in one round.
-  granite: [0.1660, 0.1560, 0.1450],
+  // ══ r15 WORLD 6 — "COOL THE ROCK ALBEDO TOWARD #8d8578; THE CURRENT HUE IS THE LOUDEST
+  // SINGLE TELL." Measured on the shipped frame: overview (1050,700)-(1600,1000) returns
+  // rgb(117,97,66), i.e. B-G -31 at S 0.44, against SPEC 3's granite #8d8578 (B-G -13, S 0.15).
+  // WORLD-FIX10 4d took this from -41 to -31 and wrote down why it could not go further in one
+  // step (rounds 6-8 each filed the OPPOSITE defect, a mauve slab, and the key's own R/B is
+  // 1.66 so a wall authored at B == G renders lilac). This is the next measured step on the
+  // same line and no further: blue up 11%, red off 4.5%, which lands B-G near -22 — the number
+  // 4d itself set as this pass's target and reported as not reached.
+  granite: [0.1585, 0.1560, 0.1610],
   // WORLD-FIX6 §6. Sun elevation, per map. 23 degrees is the Vale's floor (see SUN_EL) — the
   // cliff ring's own shadow swallows the basin below it. The Barrowmoor is allowed lower
   // because a moor at last light is exactly the frame a raking key builds.
@@ -3577,7 +3585,16 @@ const WPAL_BASE = {
   // olive third of the family. Luminance is pinned to the digit on all three stops, so §9's
   // signed-off L 165-170 lit-sward acceptance and every value ratio built on it are untouched:
   // this is a chroma and hue move only.
-  gDark: [0.1034, 0.1412, 0.0614], gMid: [0.1447, 0.1866, 0.0810], gLit: [0.1821, 0.2290, 0.0991],
+  // ══ r15 WORLD 7 — THE VALE MEADOW IS HAY-YELLOW AND SPEC 3's MEADOW GREEN IS NOWHERE ═════
+  // Measured ground means: battle (1050,620)-(1300,880) H45.3, battle (1100,300)-(1400,450)
+  // H55.9, overview (700,380)-(1000,560) H58.4 — every one of them is the DRY-PATCH hue
+  // (#a9a05a is H51), and SPEC 3's meadow band (H 84-95) does not occur in the terrain at all.
+  // The ramp is only half the cause and the smaller half: rendered alone it lands H107, well
+  // inside the family. What decides the frame is COVERAGE — see dryM below, which was running
+  // at ~54% of the meadow. Both move. The ramp rotates green at constant luminance (G/R from
+  // 1.257 to 1.334, B off 4%), so every value ratio rounds 9-13 signed off is arithmetically
+  // unmoved and only the hue turns; the dry mask goes to the finding's own 35% ceiling.
+  gDark: [0.0968, 0.1444, 0.0589], gMid: [0.1355, 0.1908, 0.0778], gLit: [0.1705, 0.2341, 0.0951],
   // §7a §10 (last clause): the dry patches SPEC §3 asks for (#a9a05a) were measured as "not one
   // pixel anywhere in the meadow" — because dry1 was authored at 0.33/0.30/0.098, a saturated
   // straw that the dryM mask then had to be kept narrow to hide. On the spec hex the patches can
@@ -3597,7 +3614,10 @@ const WPAL_BASE = {
   // and no longer decide what colour the rock is.
   // WORLD-FIX10 §4d: the warm stain halves again (a 1.13/0.88 R-over-B rotation is a +28% swing on
   // the largest material in the frame) and the cool one holds, so the pair now averages neutral.
-  rockWarm: [1.065, 1.015, 0.945], rockCool: [0.92, 0.96, 1.06],
+  // r15 WORLD 6: the water stains are the third authority on the wall's hue and the only one
+  // left leaning warm. A 1.065/0.945 R-over-B rotation on the largest material in the frame is
+  // +13% of the very tell the finding names; halved again, and the cool stain holds.
+  rockWarm: [1.038, 1.012, 0.972], rockCool: [0.92, 0.96, 1.06],
   moss: [0.0520, 0.1020, 0.0270], scree: [0.1320, 0.1180, 0.0910],
   snow: 0, snowC: [0.62, 0.69, 0.81],
   lowG: [0.92, 1.00, 0.44], lowRiv: [0.150, 0.172, 0.190],
@@ -3616,7 +3636,9 @@ const WPAL_BASE = {
   // (34, 0.15, 0.55) — the simultaneous-contrast argument above is sound but this is well past
   // "authored warm to be SEEN as neutral" and into sandy-tan. Roughly a third of the rotation comes
   // off, which lands the rock near S 0.24.
-  rockComp: [1.032, 0.999, 0.938],
+  // r15 WORLD 6: rockComp is a VALUE lever by the 9 ruling, and its residual -6% blue was
+  // half of the warm lean `granite` above is trying to remove. Flattened, value held.
+  rockComp: [1.014, 0.999, 0.972],
   // Key-chromaticity compensation for the SWARD (see TERRAIN_ALBEDO). Per map.
   // WORLD-FIX6 §11: the blue lift comes down with the albedo — at 1.105 it was half of why
   // the meadow read mint. §3's cooler, thinner fill now supplies the shade-side blue instead,
@@ -3861,7 +3883,15 @@ uniform float uTileN;
 // can dissolve into its own mip mean while the far one is still fully resolved, which keeps
 // detail energy continuous instead of switching it off at 78 units.
 #define TILE_SN 0.6667
-#define TILE_SF 0.1667
+// ══ r15 WORLD 1 (c) — 4:1 IS A CHEVRON GENERATOR ══════════════════════════════════════════
+// "make the near/far tiling-scale ratio irrational (e.g. 1.0 : 4.73, not 1:4) so the two
+// distance bands cannot phase-lock into a chevron beat." Exactly right, and the sand crop is
+// what it looks like: the SAME tile laid at two periods whose ratio is a small integer beats
+// against itself on a fixed lattice, and every directional feature the tile carries is drawn
+// twice, in register, four periods apart. 4.7291 is 0.6667/0.14098 — the two bands now walk
+// past each other with no repeat inside any surface in the build. (The 12.7 world offset the
+// far tap already carried breaks the PHASE; it cannot break a rational frequency ratio.)
+#define TILE_SF 0.14098
 // The tiles are DETAIL maps: mean luma 128 by construction, so a modulation built from them
 // has zero DC and cannot shift a map's exposure. Sampled through an sRGB texture that mean
 // arrives as 0.2159 LINEAR, and a modulation centred on 0.5 would then darken every surface
@@ -4011,6 +4041,91 @@ vec3 tileTN(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, float s) {
 // beats against itself every 6 units, which is a visible plaid at overview framing.
 vec3 tileTri2(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, vec3 sg, float f) {
   return mix(tileT(T, p, dx, dy, k, w, sg, TILE_SN), tileT(T, p + 12.7, dx, dy, k, w, sg, TILE_SF), f);
+}
+// ══ r15 WORLD 5/8 — A FIXED WORLD PERIOD IS A FLAT SURFACE, AND HERE IS THE ARITHMETIC ═════
+// "_longnight's foreground boulder measures hp_std 2.15 against 9.78 for the terrain 3 wu
+// beside it… at 3.2x it is bare flat-shaded polygons." Measured the same way and the cause is
+// not the injection (the granite pair IS bound on that material): it is the period. A 1.5 wu
+// tile is 341 texels a world unit, so a boulder 2 wu across drawn 60 px wide is sampled at
+// ~11 texels per pixel — mip 3.5 — and granite_a's whole signal is its 4-8 texel crystal
+// mosaic. The mip chain removes exactly the band the finding measures, by construction, and
+// no gain can put it back: amplifying the local MEAN amplifies nothing.
+// So the period follows the pixel. Pick the octave at which one texel is about 1.6 pixels,
+// snap it (so the period is piecewise constant and a dolly cannot make the grain breathe
+// continuously) and cross-fade the two neighbouring octaves. Two taps — the same two the
+// fixed near/far pair already cost — and the surface now carries the tile's own crystal
+// structure at every distance instead of its arithmetic mean past 30 units.
+// Capped at three octaves: past 8x the period the tile stops being grain and starts being
+// shape, and the analytic ladder already owns shape.
+float tileOct(vec3 dpx, vec3 dpy, float base) {
+  float fp = max(max(length(dpx), length(dpy)), 1.0e-6);
+  return clamp(log2(512.0 * base * fp * 0.625), 0.0, 3.0);
+}
+vec3 tileTriO(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, vec3 sg, float o) {
+  float o0 = floor(o), f = o - o0, s0 = TILE_SN * exp2(-o0);
+  return mix(tileT(T, p,        dx, dy, k, w, sg, s0),
+             tileT(T, p + 12.7, dx, dy, k, w, sg, s0 * 0.5), f);
+}
+vec3 tileTNO(sampler2D T, vec3 p, vec3 dx, vec3 dy, vec3 k, vec3 w, float o) {
+  return tileTN(T, p, dx, dy, k, w, TILE_SN * exp2(-floor(o)));
+}
+// ...and the flat-projection pair, for the ground and the road. Same argument, same two taps:
+// r15 WORLD 4 measures the _champion valley skirt at laplacian HF 4.47 — "a bare flat-shaded
+// polygon occupying ~13% of a hero frame" — beside an ice cliff at 29.48 in the SAME image. The
+// skirt is terrain and the injection reaches it; what it does not reach is the mip level. A
+// 0.5 wu turf period is 1024 texels a world unit, so any ground fragment past about fifteen
+// units is being asked for its own arithmetic mean, and the far band (6 wu) is a low-frequency
+// wash on top of it. Locking the octave to the footprint is the only construction that gives a
+// surface the SAME grain energy at every distance, which is exactly what the acceptance
+// ("every patch >= 100x100 px lands in HF 10-25") is a statement of.
+float tileOct2(vec2 gx, vec2 gy, float base) {
+  float fp = max(max(length(gx), length(gy)), 1.0e-6);
+  return clamp(log2(512.0 * base * fp * 0.625), 0.0, 3.0);
+}
+vec3 tilePO(sampler2D T, vec2 q, vec2 gx, vec2 gy, float o) {
+  float o0 = floor(o), f = o - o0, s0 = TILE_SN * exp2(-o0), s1 = s0 * 0.5;
+  return mix(textureGrad(T, q*s0,         gx*s0, gy*s0).rgb,
+             textureGrad(T, q*s1 + 0.37,  gx*s1, gy*s1).rgb, f);
+}
+vec2 tilePNO(sampler2D T, vec2 q, vec2 gx, vec2 gy, float o) {
+  float s0 = TILE_SN * exp2(-floor(o));
+  return textureGrad(T, q*s0, gx*s0, gy*s0).xy*2.0 - 1.0;
+}
+// ══ r15 WORLD 2/3/6 — THE CROSS-JOINT, AND WHY IT CANNOT LIVE IN THE TILE ══════════════════
+// Three findings name the same picture from three maps: "long unbroken parallel grain lines
+// following the surface for the full face width", "nested V contour RINGS stacking up a
+// conical pinnacle", "strata run at a dead-constant pitch UNBROKEN across every rib boundary".
+// rock_strata already bakes 96 joints and 3-9 lateral blocks a bed; they are 2-5 texel
+// features running ACROSS strike, and the wall is sampled with an anisotropic filter that by
+// definition preserves the along-strike axis and blurs the across-strike one. So the beds
+// survive to the rim and the only thing that breaks them does not. That is a filter property,
+// not an amplitude, and the only fix is a break that is not made of texels.
+// Three terms, all analytic, all free of taps:
+//  · JOINTS. A vertical fracture set, spaced ~3 u along strike, its phase re-hashed every
+//    ~1.9 u of world height, so joints step course by course instead of ruling a grid. u runs
+//    along STRIKE (-n.z, n.x), which is the one horizontal bearing on which a planar face does
+//    not change height, so a joint is vertical on every face in the game by construction.
+//  · A SECOND SET at 0.41x the spacing and a third of the depth — r15 3 (c)'s "low-amplitude
+//    vertical cross-joint mask at ~0.4x the bed wavelength".
+//  · FACET PHASE. r15 6 (a) asks for the bed phase to STEP at every rib edge. The heightfield
+//    has no facet index, but its world normal quantised to ~14 degrees is one: two fragments
+//    on the same rib hash the same, two fragments across a crease do not, and the beds
+//    discontinue exactly where the geometry does.
+float bfJoint(vec3 p, vec3 n, out float fine) {
+  vec2 st = normalize(vec2(-n.z, n.x) + vec2(1.0e-5, 0.0));
+  float u  = dot(p.xz, st);
+  float cy = floor(p.y * 0.53);
+  float ph = fract(sin(cy * 91.73) * 43758.5453);
+  float q  = u * 0.335 + ph;
+  float jw = 0.030 + 0.026 * fract(sin(floor(q) * 57.31) * 24634.6345);
+  float d  = abs(fract(q) - 0.5);
+  float q2 = u * 0.815 + fract(ph * 3.77);
+  fine = smoothstep(0.052, 0.014, abs(fract(q2) - 0.5));
+  return smoothstep(jw, jw * 0.22, d);
+}
+float bfFacetPh(vec3 n) {
+  vec3 qn = floor(normalize(n) * 4.0 + 0.5);
+  return fract(sin(dot(qn, vec3(37.13, 71.79, 113.37))) * 43758.5453);
 }
 // ══ r13 WORLD 1/4 — THE STRATA TAP HAS TO BE ANISOTROPIC, AND THAT IS THE WHOLE FINDING ═════
 // r13 measured the cliff ring at a blurred vertical-flute / horizontal-ledge energy ratio of
@@ -5105,18 +5220,36 @@ function graniteMat(o) {
           vec3 gDx = dFdx(vRP), gDy = dFdy(vRP);
           vec3 gW  = triW(vRN);
           vec3 gK  = tileK3(gDx, gDy);
-          float gRel = 1.0 - smoothstep(0.050, 0.190, sqrt(length(cross(gDx, gDy))));
-          // r14 WORLD 4 — TEXEL DENSITY, NOT CAMERA DISTANCE. See the terrain tap for the full
-          // argument; the crag instances have the same defect for the same reason (a boulder
-          // 60 u out that fills 400 screen px was being handed the far tile).
-          float gFar = smoothstep(0.028, 0.135, sqrt(length(cross(gDx, gDy))));
+          // r15 WORLD 5/8 — the relief no longer aliases at distance (the period follows the
+          // pixel now, see tileOct), so the taper that used to switch it off is a floor.
+          float gRel = 1.0 - 0.42 * smoothstep(0.050, 0.190, sqrt(length(cross(gDx, gDy))));
+          // r15 WORLD 5/8 — TEXEL DENSITY DRIVES THE PERIOD, not a two-stop crossfade between
+          // two fixed ones. A 1.5 wu tile on a 2 wu boulder 60 px wide is mip 3.5, i.e. the
+          // tile's arithmetic mean, which is the measured hp_std 2.15 against the terrain's
+          // 9.78 three units away.
+          float gO = tileOct(gDx, gDy, TILE_SN);
           vec3 gSg = tileSg(vRN);
-          vec3 dq = tileTri2(uTQ_A, vRP, gDx, gDy, gK, gW, gSg, gFar);
-          gTileR = tileTN(uTQ_N, vRP, gDx, gDy, gK, gW, TILE_SN) * (0.42*gRel);
+          vec3 dq = tileTriO(uTQ_A, vRP, gDx, gDy, gK, gW, gSg, gO);
+          gTileR = tileTNO(uTQ_N, vRP, gDx, gDy, gK, gW, gO) * (0.42*gRel);
           // r14 WORLD 1 — perceptual gain. The crags carry the palest albedo in the build on
           // the Pass and on Frostfell, which is exactly the population the finding measures at
           // 5-6% relative Laplacian energy.
-          diffuseColor.rgb *= mix(vec3(1.0), tileMod(dq, tileGK(diffuseColor.rgb, 1.200)), uTileK);
+          // r15 WORLD 8 — the pale outcrops measured fine-band energy 1.69 against 6.79 on the
+          // road in the same frame. Half of that gap is the period (above); the rest is gain,
+          // and a prop that is 100% rock can afford what a mixed terrain fragment cannot.
+          diffuseColor.rgb *= mix(vec3(1.0), tileMod(dq, tileGK(diffuseColor.rgb, 1.680)), uTileK);
+          // ══ r15 WORLD 5/8 — THE JOINTED HALF OF STONE, ON THE PROPS ══════════════════════
+          // "apply the identical tri-planar detail block … to the rock/boulder/scree prop
+          // material." The strata TILE is deliberately not sampled here (see the note above:
+          // this shader carries its own analytic bedding ladder and a second period of courses
+          // re-opens the r8 barcode) but the thing the finding is really pointing at — a rock
+          // prop that is one flat value across a whole facet — is fracture, not bedding. The
+          // analytic joint set costs no tap and is the same construction the terrain wall runs,
+          // so a boulder and the cliff behind it break on the same fracture spacing.
+          {
+            float jf; float jm = bfJoint(vRP, normalize(vRN), jf);
+            diffuseColor.rgb *= 1.0 - (jm * 0.20 + jf * 0.075) * uTileK;
+          }
         }
       }`)
       // FLORA §4f. THE RIM VOIDS. The "geometry holes / black voids at the plateau-to-cliff
@@ -6434,7 +6567,21 @@ const TERRAIN_ALBEDO = `
     // distribution sits below that, coverage was a few percent and every patch fell in a hollow.
     // The centre drops to 0.462 and the shoulders widen, which puts the third splat channel
     // genuinely on screen — this is what stops maps 1 and 2 reading as one flat colour field.
-    float dryM = smoothstep(0.462 - ${(0.150 / WPAL.hfK).toFixed(4)}, 0.462 + ${(0.150 / WPAL.hfK).toFixed(4)}, nD*0.78 + nB*0.22)
+    // ══ r15 WORLD 7 — "CONFINE #a9a05a TO THE EXISTING DRY MASK AT <= 35% COVERAGE" ══════════
+    // The r7 centre of 0.462 was set to answer "there is not one pixel of the spec's dry patch
+    // anywhere in the meadow" and it overshot by a factor of two: against a field whose own
+    // distribution centres on 0.5, a smoothstep centred BELOW that returns a mean near 0.63,
+    // and after the two shaping factors the mask covers ~54% of the sward. So the meadow IS
+    // the dry patch — which is the direct mechanical cause of the H45-58 measurement above and,
+    // as the finding notes, of the levy-vs-ground separation on the same map, since a warm
+    // ochre ground cannot separate from a warm ochre army. Centred at 0.565 the mask lands
+    // near 33%: the patches are still there, still wide, still soft-edged, and they are patches
+    // in a meadow rather than a meadow with green in it.
+    // SECOND PASS: 0.565 moved battle (700,380)-(1000,560) from H58.4 to H66.4 and the hero
+    // crop at (1050,620)-(1300,880) by half a degree — that patch is not a mixture, it is
+    // WHOLLY inside a dry mass, and the only thing that moves it is the mask's own extent.
+    // 0.640 is where the meter lands the finding's 35%.
+    float dryM = smoothstep(0.700 - ${(0.150 / WPAL.hfK).toFixed(4)}, 0.565 + ${(0.150 / WPAL.hfK).toFixed(4)}, nD*0.78 + nB*0.22)
                * (0.80 + 0.20*nM) * (0.70 + 0.50*smoothstep(-3.0, 15.0, vWP.y));
     vec3 soil = mix(grass, dry, clamp(dryM, 0.0, 1.0));
     // bare earth showing through in the thinnest spots
@@ -6929,11 +7076,17 @@ const TERRAIN_ALBEDO = `
         // measures well) keeps the period it was tuned at. Costs no extra taps.
         vec2 gq = wxz*${TILE_GSC.toFixed(4)};
         vec2 ggx = gx*${TILE_GSC.toFixed(4)}, ggy = gy*${TILE_GSC.toFixed(4)};
-        vec3 dg = tileP (uTG_A, gq, ggx, ggy, tFar);
-        vec2 ng = tilePN(uTG_N, gq, ggx, ggy);
+        // r15 WORLD 4 — the octave follows the footprint (see tileOct2). The octave is taken on
+        // the UNBIASED derivative: kG above is an anisotropic LOD bias, i.e. a deliberate blur
+        // along the axis the sampler cannot resolve, and feeding it back into the period
+        // selection would compound the two.
+        float gO = tileOct2(tDx.xz, tDy.xz, TILE_SN*${TILE_GSC.toFixed(4)});
+        float rO = tileOct2(tDx.xz, tDy.xz, TILE_SN);
+        vec3 dg = tilePO (uTG_A, gq, ggx, ggy, gO);
+        vec2 ng = tilePNO(uTG_N, gq, ggx, ggy, gO);
         if (tRoad > 0.004) {
-          dg = mix(dg, tileP (uTR_A, wxz, gx, gy, tFar), tRoad);
-          ng = mix(ng, tilePN(uTR_N, wxz, gx, gy), tRoad);
+          dg = mix(dg, tilePO (uTR_A, wxz, gx, gy, rO), tRoad);
+          ng = mix(ng, tilePNO(uTR_N, wxz, gx, gy, rO), tRoad);
         }
         // r14 WORLD 1/12 — tileGK is the perceptual-gain compensation: snow at linear 0.75 and
         // ash at linear 0.05 were being handed the same MULTIPLIER, which is the same relative
@@ -6951,7 +7104,11 @@ const TERRAIN_ALBEDO = `
         // survived two rounds of footprint tuning that could never have addressed it. Same
         // construction as the wall's, at a gentler floor because ground relief is worth more of
         // the frame than wall relief is.
-        gTileP += vec3(ng.x, 0.0, ng.y) * (tWG*0.38*tRel*mix(0.40, 1.0, smoothstep(0.16, 0.52, tNV)));
+        // r15 WORLD 4 — tRel was a footprint window that reached zero once a texel dropped under
+        // a pixel, which is the correct guard for a FIXED period and redundant now that the
+        // period tracks the pixel: the tile can no longer alias, because it is never minified.
+        // Floored at 0.55 so the far half of a meadow keeps its relief instead of going to suede.
+        gTileP += vec3(ng.x, 0.0, ng.y) * (tWG*0.38*mix(0.55, 1.0, tRel)*mix(0.40, 1.0, smoothstep(0.16, 0.52, tNV)));
       }
       if (tWS > 0.004) {
         vec3 tW = triW(vWN);
@@ -6975,7 +7132,18 @@ const TERRAIN_ALBEDO = `
         // far too much for a wall: a slab crossed edge-on asks for mip 6 and comes back as the
         // tile's own mean, i.e. flat suede. Three stops is the cap here — past that the wall is
         // better served by going soft along the major axis than by having no bedding at all.
-        vec3 tK = min(tileK3(tDx, tDy), vec3(8.0));
+        // r15 WORLD 2/3/6 — THREE STOPS IS STILL A TIMBER MACHINE. An anisotropic LOD bias
+        // preserves the along-strike axis and blurs the across-strike one, which on a bedded
+        // tile is precisely the instruction "keep the grain, remove every joint that breaks
+        // it". At eight (three stops) the gorge slab comes back as planed driftwood with the
+        // bake's 96 joints filtered out of existence. 2.6 is 1.4 stops: the wall goes a little
+        // softer along the one axis the hardware cannot resolve, and it keeps the fractures
+        // that are the whole difference between bedded stone and quarter-sawn oak.
+        // (Measured at 2.6 the wall came back as burl figure — 1.4 stops lets the tile's own
+        // 2-3 texel grain alias at overview framing. 4.2 is 2.07 stops: the joints below are
+        // analytic and no longer depend on this number, so the clamp only has to keep the BEDS
+        // resolved, and that is what it does.)
+        vec3 tK = min(tileK3(tDx, tDy), vec3(4.2));
         // r11 WORLD 1 item 3 — PER-BAND WORLD-SPACE JITTER. The tile is laid at a fixed period,
         // so every wall in the game beds at the same pitch, in phase, which is what "machined"
         // means. Offsetting each ~0.74 wu horizontal slab laterally by a hash of its own index
@@ -6983,9 +7151,23 @@ const TERRAIN_ALBEDO = `
         // ruling through. The discontinuity at a slab boundary IS a bed contact, and it costs
         // nothing to sample because the gradients below are taken from the unjittered position
         // (the jitter is piecewise-constant, so its derivative is zero everywhere it is defined).
-        float tBI = floor(vWP.y * 1.35);
+        // r15 WORLD 6 (a) — "hash each rock facet by its plane index and offset the strata
+        // phase by hash*bedPitch so beds STEP at every rib edge instead of flowing through."
+        // The measured tell on overview.png is a dead-constant ~7 px bed pitch running
+        // UNBROKEN across every rib boundary, which is the signature of grain on a milled
+        // plank rather than of bedding on a fracture-bounded mass. The facet hash below is the
+        // world normal quantised to ~14 degrees: constant over a rib, different across a
+        // crease, and it is added to the world Y the bedding is read from, so a bed line
+        // DISCONTINUES at a facet edge by construction.
+        float tFPh = bfFacetPh(vWN);
+        // r15 WORLD 2 — "apply a low-frequency world-space domain warp (amplitude ~0.35 wu) so
+        // bedding is not globally parallel". Every wall in the build currently beds on one
+        // global lattice; one slow warp is what turns a ruled stack into an outcrop.
+        vec3 tWrp = vec3(0.0, (fbm3(vWP.xz * 0.031 + 71.3) - 0.5) * 0.70
+                            + (fbm3(vWP.xz * 0.107 + 19.7) - 0.5) * 0.26, 0.0);
+        float tBI = floor((vWP.y + tFPh * 0.74) * 1.35);
         float tBJ = fract(sin(tBI * 127.1) * 43758.5453);
-        vec3 tSP = vWP + vec3(tBJ * 4.3, 0.0, fract(tBJ * 7.31) * 4.3);
+        vec3 tSP = vWP + tWrp + vec3(tBJ * 4.3, tFPh * 0.74, fract(tBJ * 7.31) * 4.3);
         // The albedo takes the SAME interpolated period as the normal below, so the bedding a
         // fragment is coloured with and the bedding it is lit by are the same beds. It is also
         // three taps rather than the six a two-scale cross-fade costs, which is where the
@@ -7023,6 +7205,40 @@ const TERRAIN_ALBEDO = `
         {
           float hs = (fract(tBJ * 3.77) - 0.5) * 0.070;
           alb *= mix(vec3(1.0), vec3(1.0 + hs, 1.0, 1.0 - hs), tWS * uTileK);
+        }
+        // ══ r15 WORLD 6 (b) — THE RIBS ARE EXTRUSIONS AND THEY HAVE TO BE FRACTURES ════════
+        // "the wall is faceted into regular vertical ribs, and every rib gets an identical
+        // smooth light-to-dark lambert ramp, so the mass reads as machined beadboard." Two
+        // terms, both keyed on the same facet hash the bed phase now steps on, so a rib's
+        // colour break and its bedding break land on the SAME edge:
+        //  · +/-6% L per rib, so no two neighbouring ribs run the same ramp;
+        //  · a contact crease. fwidth of the interpolated world normal is large exactly where
+        //    the geometry creases and ~0 across a rib's face, which is a facet-boundary
+        //    detector that costs one derivative and needs no adjacency data.
+        {
+          float rib = bfFacetPh(vWN);
+          alb *= mix(1.0, 0.940 + 0.120 * rib, tWS * uTileK);
+          alb *= 1.0 - smoothstep(0.045, 0.300, length(fwidth(vWN))) * 0.230 * tWS * uTileK;
+        }
+        // ══ r15 WORLD 2/3/6 — THE JOINT SET THAT CANNOT BE MIPPED AWAY ═════════════════════
+        // The acceptance is stated as geometry, not as energy: "no continuous grain line
+        // exceeds one third of the face width", "bed lines must visibly discontinue at facet
+        // edges", "joint breaks are visible at 1:1". A joint carved into a 512 tile cannot
+        // guarantee any of the three, because whether it survives to the frame is a property
+        // of the sampler's footprint. This one is evaluated per fragment, so it is the same
+        // fracture at establishing pull-back and at a tower's foot.
+        // It also carries the r15 3 (c) anisotropy cap: the primary set at ~3 u along strike
+        // against a 0.75 u bed is a 4:1 block, well inside the 6:1 the finding asks for, and
+        // the 0.41x secondary set stops the blocks themselves reading as a course of bricks.
+        {
+          float jf; float jm = bfJoint(vWP + tWrp, vWN, jf);
+          float jk = tWS * uTileK;
+          alb *= 1.0 - (jm * ${'0.285'} + jf * ${'0.105'}) * jk;
+          // The joint is a RECESS, so it has to be in the lighting as well or it reads as a
+          // painted line. Same projection the albedo used, pushed along strike.
+          vec2 jst = normalize(vec2(-vWN.z, vWN.x) + vec2(1.0e-5, 0.0));
+          gTileP += vec3(jst.x, 0.0, jst.y) * ((jm * 0.55 + jf * 0.20) * jk
+                    * (fract(dot(vWP.xz, jst) * 0.335) < 0.5 ? 1.0 : -1.0));
         }
         // ══ r13 WORLD 1 — WHY THE FLAGSHIP STRATA DELIVERABLE NEVER LANDED IN A SINGLE FRAME ═══
         // Bisected, not reasoned: render the cliff at a CONSTANT albedo and the wood grain is
@@ -7179,7 +7395,17 @@ const TERRAIN_ALBEDO = `
       // That product is §3's (5,7,8) pixel: three occlusion terms stacked, and no light in the rig
       // can reach past the first one because it is applied to the ALBEDO. 0.52 is still above the
       // 35% peak §8b asks for at a boulder silhouette and it takes the stacked case out of the void.
-      alb *= 1.0 - 0.52*clamp(pao, 0.0, 1.0);
+      // ══ r15 WORLD 11 — "ROCKS AND TUFTS FLOAT: ZERO OCCLUSION DARKENING AT THE CONTACT" ═══
+      // The stamp is real and the r10 note is right that it cannot simply be turned up: a tree
+      // cluster lays four or five of them on one square metre and a linear response drives that
+      // square metre into the void round 10 §3 measured. What a linear response ALSO does is
+      // spend most of its range on the overlap case — pao 0.3-0.6, which is the soft grey pool
+      // nobody reads as contact — while the isolated boulder that saturates at 1.0 gets the same
+      // 0.52 it would have got at 0.7. A soft toe fixes both ends at once: an overlap sums into
+      // the toe and is DARKENED LESS than it is today, and the silhouette of a single prop —
+      // which is where the eye actually looks for contact — gets the full 0.62 the finding asks
+      // for. Net at a stacked cluster: shallower. Net at a boulder's edge: +19%.
+      alb *= 1.0 - 0.62*smoothstep(0.06, 0.94, clamp(pao, 0.0, 1.0));
     }
     // the map edge falls away into shadow — keyed well below the valley floor so the
     // meadow's own hollows (which dip to about -5) never darken. WORLD-FIX4 §10: at 0.94 the
@@ -7403,7 +7629,33 @@ terrainMat.onBeforeCompile = (sh) => {
           if (${SHD_DBG} == 1) gl_FragColor.rgb = _td;
           if (${SHD_DBG} == 3) gl_FragColor.rgb = vec3(_ca, _cb, _mg) / 128.0;
           if (${SHD_DBG} == 2) gl_FragColor.rgb = vec3(gShdG);` : '') + `
-        }
+        }` + (WPAL.snow > 0 ? `
+        // ══ r15 WORLD 12 (a), DISPLAY-SPACE HALF — WHERE THE SNOW SHADOW IS ACTUALLY DECIDED ══
+        // The linear-space split further up owns the AMBIENT-shaded population (a drift's own
+        // lee, where gShdG is zero and nothing overwrites it) and it measured the sunlit fifth
+        // from b* +1.0 to +5.3, which is the finding's warm target. It cannot own the CAST
+        // shadow, because the guard immediately above does not accumulate onto the chain — it
+        // WRITES gl_FragColor from a reconstructed (L*, C*, h) triple, so every linear term
+        // before it is discarded on exactly the pixels the acceptance measures. Two passes were
+        // spent raising the linear term and both measured the shadowed fifth unmoved at b* +2.4;
+        // that is why this is said here instead of argued with there.
+        // Stated the way the acceptance is stated: a b* target, in the space it is measured in,
+        // on the snow mask only, gated by the guard's own shadow term so a lit fragment cannot
+        // be touched. Luminance is carried through untouched, so every shadow RATIO on this map
+        // is arithmetically unmoved; the gamut walk is the same one the guard uses, for the same
+        // reason (a negative channel clipped by the encode is a hue shear, not a clamp).
+        if (tSnow > 0.02 && gShdG > 0.002) {
+          float snG = tSnow * gShdG * ${(WPAL.snowShdB != null ? WPAL.snowShdB : 0.88).toFixed(3)};
+          vec3 _sn = bfLab(bfS2L(gl_FragColor.rgb));
+          _sn.y = mix(_sn.y, -1.4, snG);
+          _sn.z = mix(_sn.z, -9.5, snG);
+          vec3 _snl = bfUnlab(_sn);
+          for (int _j = 0; _j < 3; _j++) {
+            if (all(greaterThan(_snl, vec3(-0.0015))) && all(lessThan(_snl, vec3(1.0015)))) break;
+            _sn.yz *= 0.62; _snl = bfUnlab(_sn);
+          }
+          gl_FragColor.rgb = clamp(bfL2S(clamp(_snl, 0.0, 1.0)), 0.0, 1.0);
+        }` : '') + `
       }`)
       // ══ r13 WORLD 3 — THE CLIFF RING IS ESSENTIALLY AMBIENT-LIT, AND THAT IS THE ROOT CAUSE ══
       // Round 13: "the sunlit face is 10.1 L* DARKER than the shadowed one"; cross-checked at
@@ -7800,6 +8052,41 @@ terrainMat.onBeforeCompile = (sh) => {
           gShdT = _litLin;
           gShdG = sg;
         }
+` + (WPAL.snow > 0 ? `
+        // ══ r15 WORLD 12 (a) — 1.4 b* OF TOTAL RANGE IS A SHEET OF GREY PAPER ════════════════
+        // Regressed over 160k near-neutral pixels of battle2's snow field: sunlit-20% b* +1.00
+        // against darkest-20% b* -0.44. The r14 sky tint above DOES execute (it is what took the
+        // shadow off +6.71), but it is a mix toward the hemisphere's CHROMATICITY at a fragment
+        // whose own chroma is ~0, and a mix cannot create chroma that neither end has — the
+        // hemisphere is only mildly blue and the snow albedo is authored neutral by definition.
+        // Real snow's colour is not in its albedo at all: it is a two-illuminant surface, warm
+        // key on one side and a large blue sky on the other, and the whole read lives in the
+        // SPLIT. So the split is stated as one, keyed on the same sunF every other term here
+        // uses: shaded snow rotates to the sky, sunlit snow rotates to the key, and luminance is
+        // carried through both so no ratio signed off in rounds 4-14 moves by a digit.
+        // Targets from the finding: shadow b* ~ -8, sun b* ~ +6.
+        {
+          float snS = tSnow * ${(WPAL.snowSplit != null ? WPAL.snowSplit : 1).toFixed(3)};
+          // THIRD PASS. The stops matter more than the magnitude here: 0.125-0.235 is the
+          // window every OTHER term in this block uses, and it is written for a surface whose
+          // shade is unambiguous. On a snowfield lit by a fat hemisphere, sunF — direct over
+          // (direct + indirect) — never falls that low outside a hard cast shadow, so the cool
+          // half of the split was firing on a few percent of the field and the measured b* in
+          // the darkest fifth stayed positive. Widened to 0.10-0.50, so the whole gradient from
+          // a drift's sunlit crest to its own lee gets a proportional share of sky.
+          float snW = 1.0 - smoothstep(0.10, 0.50, sunF);        // 1 in shade, 0 in sun
+          float snL = dot(c, vec3(0.2126,0.7152,0.0722));
+          // SECOND PASS: 1.052/0.918 measured +1.9 b* on the sunlit fifth against a target of
+          // +6. The shaded half of this rotation is largely re-decided by the display-space
+          // guard further down (which SETS a shadow's chroma rather than accumulating it), so
+          // what this term actually owns is the SUN side, and it is doubled there.
+          vec3 snC = mix(vec3(1.108, 1.014, 0.836), vec3(0.828, 0.950, 1.268), snW);
+          c = mix(c, c * snC, snS);
+          // ...luminance-preserving by construction: the rotation above is a chromaticity, so
+          // it is renormalised back onto the fragment's own value.
+          float snL2 = dot(c, vec3(0.2126,0.7152,0.0722));
+          c *= snL / max(snL2, 1.0e-5);
+        }` : '') + `
         gl_FragColor.rgb = c;` + (WPAL.shdFloor ? `
         // ══ WORLD-FIX10 §3 — THE ABSOLUTE SHADE FLOOR, AND WHY IT CANNOT BE PROPORTIONAL ══════════
         // Every floor in this shader (rockFloor, gndFloor, the tuft/foliage floors) is a fraction of
@@ -9741,7 +10028,20 @@ World.build = async function () {
     iron.push(...torchParts(-6.1, 1.2, 0), ...torchParts(6.1, 1.2, 0));
     const gGrp = new THREE.Group();
     gGrp.position.set(G1.x, gy, G1.z); gGrp.rotation.y = ang;
-    const dm = new THREE.Mesh(mergeParts(dark), propMat({ roughness: 0.96 }));
+    // ══ r15 WORLD 5 — THE SPAWN-GATE CRAGS ARE STONE AND THEY WERE ON THE PROP PROGRAM ═══════
+    // "_longnight: the foreground boulder at (280,400)-(660,700) measures hp_std 2.15; the
+    // terrain 3 wu beside it measures 9.78. At 3.2x it is bare flat-shaded polygons — huge
+    // uniform-value triangles, hard terminators, literally zero surface detail — and it eats
+    // roughly a fifth of the frame." Bisected with &rockdbg: the mass is byte-identical with
+    // the rock albedo debug on, so it is not the crag material at all — it is THIS mesh, the
+    // spawn gate's leaning crag arch, built from the same cragGeo() the rim crags are built
+    // from and handed `propMat`, which carries no detail tile and no analytic strata. Same
+    // geometry, same material family, one word different. graniteMat shares the 'bf_granite'
+    // program cache key, so this is zero new programs and zero new draw calls; `grim` has
+    // already knocked the vertex colours to near-black basalt and graniteMat multiplies by
+    // them, so the hostile-ground read is untouched. It also brings the shade-side warm grade
+    // with it, which is the finding's second clause ("stop reading cold slate at RGB 60,62,72").
+    const dm = new THREE.Mesh(mergeParts(dark), graniteMat({ roughness: 0.96 }));
     dm.castShadow = true; dm.receiveShadow = true; gGrp.add(dm);
     const im = new THREE.Mesh(mergeParts(iron, 1.1), texMat(TX.wood, { roughness: 0.8 }));
     im.castShadow = true; gGrp.add(im);
@@ -10384,7 +10684,7 @@ let bannKit = null;
 // r14-ARMIES §1a — the garrison SERGEANT's kit. See section 7f.
 let sergKit = null;
 const SERG_CAP = 12, SERG_EVERY = 6;
-const BANNER_EVERY = 12;
+const BANNER_EVERY = 7;
 // ARMIES-FIX3 §4a — a flyer's DRAWN altitude. `def.alt` is a sim number (it gates `air`
 // weapons and it is what an arrow climbs to), so it is not touched; this is the render-only
 // multiplier that puts real air between the wyvern and its own shadow.
@@ -11008,16 +11308,16 @@ await BOOT.stage('boot.host');
   // two crossed braces and a horizontal enarme at real contrast, a dark boss shadow where the
   // grip is, and plank seams four times deeper so the boards read as boards.
   tile(T.SHBK, 0.74, 0.05, g => {
-    g.fillStyle = '#6d4f31'; g.fillRect(0, 0, S, S);
+    g.fillStyle = '#3b2716'; g.fillRect(0, 0, S, S);
     for (let i = 0; i < 6; i++) { const x = i * S / 6; g.fillStyle = 'rgba(0,0,0,' + (0.10 + (i & 1) * 0.14) + ')'; g.fillRect(x, 0, S / 12, S); g.fillStyle = 'rgba(0,0,0,.52)'; g.fillRect(x, 0, 3.2 * u, S); g.fillStyle = 'rgba(255,224,190,.10)'; g.fillRect(x + 3.2 * u, 0, 2.0 * u, S); }
-    blot(g, 60, '#28190c', '#a17c50', 0.06, 0.16, 4, 20);
+    blot(g, 60, '#150c05', '#6b4e2f', 0.06, 0.16, 4, 20);
     // the braces: two leather straps crossed corner to corner, riveted at every crossing
-    g.save(); g.strokeStyle = '#4a3320'; g.lineCap = 'butt'; g.lineWidth = S * 0.115;
+    g.save(); g.strokeStyle = '#2a1c10'; g.lineCap = 'butt'; g.lineWidth = S * 0.115;
     for (const d of [1, -1]) { g.beginPath(); g.moveTo(S * (d > 0 ? 0.02 : 0.98), S * 0.06); g.lineTo(S * (d > 0 ? 0.98 : 0.02), S * 0.94); g.stroke(); }
     g.strokeStyle = 'rgba(255,232,196,.16)'; g.lineWidth = 2.6 * u;
     for (const d of [1, -1]) { g.beginPath(); g.moveTo(S * (d > 0 ? 0.02 : 0.98), S * 0.06 - S * 0.052); g.lineTo(S * (d > 0 ? 0.98 : 0.02), S * 0.94 - S * 0.052); g.stroke(); }
     g.restore();
-    g.fillStyle = '#3a2a1a'; g.fillRect(0, S * 0.40, S, S * 0.185);            // the enarme
+    g.fillStyle = '#241a10'; g.fillRect(0, S * 0.40, S, S * 0.185);            // the enarme
     g.fillStyle = 'rgba(255,232,196,.20)'; g.fillRect(0, S * 0.40, S, 3.2 * u);
     g.fillStyle = 'rgba(0,0,0,.42)'; g.fillRect(0, S * 0.40 + S * 0.185 - 3.2 * u, S, 3.2 * u);
     for (let i = 0; i < 6; i++) { g.fillStyle = '#9aa2ad'; g.beginPath(); g.arc(S * (0.10 + i * 0.16), S * 0.49, 6.2 * u, 0, 7); g.fill();
@@ -11074,12 +11374,12 @@ await BOOT.stage('boot.host');
       // never a hole punched in it), and the claw sigil and the dark warm-iron rim — §E's shared
       // mark and its shared metal — are untouched. Hue is what pays on the Vale, whose road is
       // pale sand at h ~80: a madder board at h ~25 clears it by 55 degrees where no value could.
-      g.fillStyle = '#8f5238'; g.fillRect(0, 0, S, S);
+      g.fillStyle = '#4f2618'; g.fillRect(0, 0, S, S);
       const ug = g.createLinearGradient(0, S * 0.42, 0, S);           // deep shade underside
-      ug.addColorStop(0, 'rgba(62,28,16,0)'); ug.addColorStop(1, '#3a1c0e');
+      ug.addColorStop(0, 'rgba(40,17,9,0)'); ug.addColorStop(1, '#1f0e06');
       g.fillStyle = ug; g.fillRect(0, S * 0.42, S, S * 0.58);
       for (let i = 0; i < 7; i++) { const x = i * S / 7; g.fillStyle = 'rgba(0,0,0,' + (0.04 + (i & 1) * 0.05) + ')'; g.fillRect(x, 0, S / 14, S); g.fillStyle = 'rgba(255,222,196,.05)'; g.fillRect(x + S / 14, 0, 2 * u, S); }
-      blot(g, 44, '#341608', '#b4744c', 0.05, 0.14, 6, 30);
+      blot(g, 44, '#1d0b04', '#7d4128', 0.05, 0.14, 6, 30);
       // ══ r14-ARMIES §5 — THE DEVICE HAS TO BE A DEVICE ════════════════════════════════════
       // "Every shield in the horde is a blank flat lozenge with a soft gradient and no boss, rim,
       // or device: at the _champion camera those salmon shields are the single largest colour
@@ -11787,7 +12087,7 @@ await BOOT.stage('boot.host');
   // The moss tile is rotated a long way off the grass toward the cold end of green (its authored
   // hue goes from an olive that IS the meadow to a blue-green nothing in WORLD's scatter carries)
   // and deepened, so the caparison and the cowl read as lichen on stone rather than as leaves.
-  clothTile(T.MOSS,  '#2f4a3e', '#101f19', '#4d7060', 0.91, 0.07);
+  clothTile(T.MOSS,  '#2b5a3a', '#0d2416', '#4e8a5e', 0.91, 0.07);
   clothTile(T.SLATE, '#454b52', '#1e2126', '#6b727a', 0.88, 0.08);
   // BRASS is the one family tile that is not cloth. It is held INSIDE r10's material law
   // (metalness <= 0.46, roughness >= 0.45) so a roster-wide metal tint cannot reopen the chrome
@@ -11812,14 +12112,14 @@ await BOOT.stage('boot.host');
   // unit's footprint) is measured on the RENDER, in tools/d_r12armies.py, and reported per pass.
   tile(T.BRASS, 0.70, 0.20, g => {
     const gr = g.createLinearGradient(0, 0, 0, S);
-    gr.addColorStop(0, '#856530'); gr.addColorStop(0.40, '#5a431a'); gr.addColorStop(1, '#2e2009');
+    gr.addColorStop(0, '#4c5222'); gr.addColorStop(0.40, '#313617'); gr.addColorStop(1, '#171a08');
     g.fillStyle = gr; g.fillRect(0, 0, S, S);
     for (let i = 0; i < 46; i++) {                       // hammer planish, same vocabulary as CIRON
       const y = arng() * S;
-      g.strokeStyle = rgba(arng() < 0.5 ? 152 : 30, arng() < 0.5 ? 126 : 22, arng() < 0.5 ? 74 : 8, ar(0.05, 0.15));
+      g.strokeStyle = rgba(arng() < 0.5 ? 86 : 20, arng() < 0.5 ? 100 : 22, arng() < 0.5 ? 44 : 6, ar(0.05, 0.15));
       g.lineWidth = ar(1, 3.0) * u; g.beginPath(); g.moveTo(0, y); g.lineTo(S, y + ar(-5, 5) * u); g.stroke();
     }
-    blot(g, 40, '#1f1506', '#93783f', 0.05, 0.14, 4, 18);
+    blot(g, 40, '#101305', '#586230', 0.05, 0.14, 4, 18);
     shade(g, 'rgba(232,214,178,.10)', 'rgba(0,0,0,.42)');
   });
   // ══ r12-ARMIES §4 — WIRON: THE WARLORD'S OWN PLATE ═══════════════════════════════════════
@@ -11879,7 +12179,7 @@ await BOOT.stage('boot.host');
   // and the pair survives because whichever way the average falls there is still a light mark
   // and a dark one. The same claw the banner, the pavise and the board carry, so this is §E's
   // shared sigil arriving on the one surface a player actually looks at.
-  clothTile(T.MADD, '#c07a62', '#6d3526', '#dda184', 0.90, 0.06, null, g => {
+  clothTile(T.MADD, '#ac5238', '#59261a', '#cf8161', 0.90, 0.06, null, g => {
     g.save(); g.lineCap = 'round';
     // ROUND 2, judged at 2x on `closeup`: at 0.72 alpha and 34 u of pale stroke the three claws
     // filled the cape and a rank of them read as STRIPES — a striped awning, not a charge. The
@@ -12457,9 +12757,9 @@ await BOOT.stage('boot.host');
         A(boxA(K(0.046), K(0.086), K(0.290), [T.DUN]), trs(0, yCrn + K(0.092), -K(0.010)), 7, hp, null, null, 1.04, 3);
       }
     } else if (C.helm === 'wrap') {                          // skirmisher hood + headband
-      dome(K(0.147), 0.98, T.DUN, yCrn - K(0.086), 1.05);
-      A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.154), K(0.046), C.seg + 2 || 10), T.RUSS), trs(0, yCrn - K(0.140), 0), 7, hp, null, null, 1.08);
-      A(plateGeo([[-K(0.032), 0], [K(0.032), 0], [K(0.060), -K(0.26)], [-K(0.022), -K(0.31)]], K(0.014), T.RUSS, T.DUN),
+      dome(K(0.147), 0.98, T.MOSS, yCrn - K(0.086), 1.05);
+      A(uvAll(new THREE.CylinderGeometry(K(0.150), K(0.154), K(0.046), C.seg + 2 || 10), T.CIRON), trs(0, yCrn - K(0.140), 0), 7, hp, null, null, 1.08);
+      A(plateGeo([[-K(0.032), 0], [K(0.032), 0], [K(0.060), -K(0.26)], [-K(0.022), -K(0.31)]], K(0.014), T.MOSS, T.MOSS),
         trs(-K(0.10), yCrn - K(0.16), -K(0.06), 0.5), 8, null, null, (x, y) => clamp((yCrn - K(0.16) - y) / K(0.31), 0, 1), 1.0);
     } else if (C.helm === 'horned') {
       dome(K(0.160), 1.06, T.IRON, yCrn - K(0.086), 1.05);
@@ -14824,12 +15124,12 @@ await BOOT.stage('boot.host');
     // so there is open sky between the crown and the shoulder line and the cowl underneath it
     // becomes the head it always was. The four minor caps come down with it — five discs of
     // similar radius is the "second wide cap disc" read whatever the largest one does.
-    const CAPS = [[-0.24, 0.86, -0.26, 0.66, 0.245], [0.30, 0.62, 0.08, 0.140, 0.098],
+    const CAPS = [[-0.20, 0.88, -0.22, 0.30, 0.245], [0.30, 0.62, 0.08, 0.140, 0.098],
                   [0.26, 0.70, -0.18, 0.22, 0.092], [-0.02, 0.60, -0.34, 0.16, 0.080],
                   [0.20, 0.54, 0.18, 0.14, 0.070]];
     for (const [cx, cy, cz, hgt, cr] of CAPS) {
       const b0 = [K(cx), K(cy), K(cz)], b1 = [K(cx) + K(hgt) * 0.14, K(cy + hgt), K(cz) - K(hgt) * 0.10];
-      rod(b0, b1, K(cr * 0.32), K(cr * 0.24), T.MOLD, 8, null, (x, y) => clamp((y / k - cy) / hgt, 0, 1) * 0.6, 1.14);
+      rod(b0, b1, K(cr * 0.60), K(cr * 0.46), T.MOLD, 8, null, (x, y) => clamp((y / k - cy) / hgt, 0, 1) * 0.6, 1.14);
       // ══ r11-ARMIES §4a — THE MANDATORY NEAR-BLACK RIM ════════════════════════════════════
       // "Give every one a mandatory near-black (L* < 18) carapace rim and underside so the dome
       // breaks out of the grass." Both parts already existed and both were spent at mid value:
@@ -14861,9 +15161,20 @@ await BOOT.stage('boot.host');
     // point of the hunch, the inboard one rides the crest — which is what makes the PLAN view a
     // wedge instead of a circle.
     for (const [rx, ry, rz, rw, rh, rr] of [[-0.415, 0.845, -0.045, 0.300, 0.155, 0.40],
-                                            [-0.215, 0.985, 0.085, 0.225, 0.115, 0.14]])
+                                            [-0.330, 0.905, 0.155, 0.215, 0.105, 0.20]])
       A(tbox(K(rw) * 2, K(rh), K(rw) * 0.92, [T.SHROUD], 1.0, 0.62),
         trs(K(rx), K(ry), K(rz), rr, 1, 1, 1, -0.40, 0.30), 0, null, null, null, 0.30);
+    // r15-ARMIES SS2 — THE SHOULDER LINE AND THE GORGET.
+    // A pair of squared dark-iron pauldrons cantilevered clear of the mass on both sides (the
+    // hunch reaches 0.485 K on +x and 0.455 on -x, so 0.430 half-width centred at 0.395/-0.375
+    // breaks the outline on each), plus a gorget collar at the foot of the neck. Together they
+    // are what turns cap-on-stalk-on-cone into helm-neck-shoulders-tabard: the plan view gains
+    // two corners and the profile gains the helmet/body separation the finding names.
+    for (const [px_, pz_, pr_] of [[0.395, 0.030, 0.34], [-0.375, -0.060, -0.28]])
+      A(tbox(K(0.215), K(0.132), K(0.190), [T.CIRON], 1.0, 0.66),
+        trs(K(px_), K(0.905), K(pz_), pr_, 1, 1, 1, 0, (px_ > 0 ? -0.34 : 0.34)), 0, null, null, null, 0.92);
+    A(uvAll(new THREE.CylinderGeometry(K(0.196), K(0.226), K(0.086), SG + 3), T.CIRON),
+      trs(K(-0.20), K(0.952), K(-0.22)), 8, null, null, () => 0.30, 0.72);
     // the brow: a dark hood ledge thrown FORWARD off the face bone, so the head leans down-road
     A(tbox(K(0.400), K(0.105), K(0.190), [T.SHROUD], 1.0, 0.70),
       trs(0, K(0.735), K(0.245), 0, 1, 1, 1, 0.46), 7, [0, K(0.560), K(0.180)], null, null, 0.26);
@@ -14931,7 +15242,7 @@ await BOOT.stage('boot.host');
       A(uvAll(new THREE.SphereGeometry(K(0.104), SG, 5), T.MOSS), trs(0, K(0.856), K(0.140)), 7, HD, null, null, 1.02);
       for (let i = 0; i < 7; i++) {                     // torn hem, hanging further at the flanks
         const a = -1.05 + i * 0.35, hl = 0.088 + (i === 0 || i === 6 ? 0.058 : 0.018);
-        A(plateGeo([[-K(0.054), 0], [K(0.054), 0], [K(0.042), -K(hl)], [0, -K(hl * 1.45)], [-K(0.048), -K(hl * 0.90)]], K(0.012), T.DUN, T.DUN),
+        A(plateGeo([[-K(0.054), 0], [K(0.054), 0], [K(0.042), -K(hl)], [0, -K(hl * 1.45)], [-K(0.048), -K(hl * 0.90)]], K(0.012), T.MOSS, T.MOSS),
           trs(Math.sin(a) * K(0.232), K(0.556), K(0.150) + Math.cos(a) * K(0.232), a, 1, 1, 1, 0.20), 7, HD, null, null, 1.00);
       }
       // the eye slit: a near-black bar sunk into the brow under the hood, with two pale cores in it
@@ -14941,9 +15252,9 @@ await BOOT.stage('boot.host');
         A(boxA(K(0.050), K(0.020), K(0.014), [T.RUNE]), trs(K(ex), K(0.634), K(0.332), 0, 1, 1, 1, -0.12), 7, HD, null, null, 1.26);
       // the mantle: a crimson cape thrown over the shoulder hump, so the crimson is a MASS and not
       // a trim. Rides the cloth bone with the crown, so it sways with the shamble.
-      A(uvAll(new THREE.CylinderGeometry(K(0.330), K(0.560), K(0.420), SG + 4, 1, true), T.MOSS),
+      A(uvAll(new THREE.CylinderGeometry(K(0.400), K(0.448), K(0.420), SG + 4, 1, true), T.MOSS),
         trs(-K(0.030), K(0.730), -K(0.040), 0, 1.20, 1, 1.08, 0.16), 8, null, null, () => 0.42, 1.12);
-      A(uvAll(new THREE.CylinderGeometry(K(0.568), K(0.578), K(0.062), SG + 4, 1, true), T.DUN),
+      A(uvAll(new THREE.CylinderGeometry(K(0.456), K(0.462), K(0.062), SG + 4, 1, true), T.MOSS),
         trs(-K(0.030), K(0.524), -K(0.040), 0, 1.20, 1, 1.08, 0.16), 8, null, null, () => 0.42, 1.02);
       // r14-ARMIES §4 — "tatter the skirt hem with 3-4 alpha cuts". The hem was a clean turned
       // band all the way round, which is the bottom edge of the "wide conical skirt" the finding
@@ -14953,11 +15264,11 @@ await BOOT.stage('boot.host');
       // (Geometry cuts rather than alpha, for the same reason the war banner's hem is geometry:
       // an alpha map on this material costs a program and the budget does not have one.)
       for (const [ha, hl] of [[-1.34, 0.235], [-0.62, 0.148], [0.05, 0.290], [0.74, 0.176], [1.62, 0.128]]) {
-        const hr = K(0.560);
+        const hr = K(0.450);
         A(plateGeo([[-K(0.130), 0], [K(0.130), 0], [K(0.100), -K(hl * 0.62)], [K(0.020), -K(hl)],
-                    [-K(0.086), -K(hl * 0.70)]], K(0.014), T.DUN, T.DUN),
+                    [-K(0.086), -K(hl * 0.70)]], K(0.014), T.MOSS, T.MOSS),
           trs(Math.sin(ha) * hr * 1.20 - K(0.030), K(0.512), Math.cos(ha) * hr * 1.08 - K(0.040), ha, 1, 1, 1, 0.10),
-          8, null, null, () => 0.42, 0.94);
+          8, null, null, () => 0.42, 0.78);
       }
     }
     // ── two stub legs (bones 1/2), one root arm and one CLEAVER arm (5/6) ──
@@ -14991,8 +15302,8 @@ await BOOT.stage('boot.host');
         A(uvAll(new THREE.CylinderGeometry(K(0.030), K(0.034), K(0.420), 5), T.WOOD),
           trs(hnd[0] + K(0.012), hnd[1] + K(0.190), hnd[2] + K(0.022), 0, 1, 1, 1, 0.16, 0.10), 6, sho, null, null, 0.88);
         A(plateGeo([[-K(0.138), 0], [K(0.148), K(0.036)], [K(0.152), K(0.302)], [-K(0.040), K(0.328)], [-K(0.132), K(0.242)]],
-                   K(0.026), T.BLADE, T.IRON, T.IRON),
-          trs(hnd[0] + K(0.040), hnd[1] + K(0.400), hnd[2] + K(0.030), 0.22, 1, 1, 1, 0.16, 0.10), 6, sho, null, null, 0.96);
+                   K(0.026), T.IRON, T.IRON, T.IRON),
+          trs(hnd[0] + K(0.040), hnd[1] + K(0.400), hnd[2] + K(0.030), 0.22, 1, 1, 1, 0.16, 0.10), 6, sho, null, null, 1.34);
         A(boxA(K(0.054), K(0.072), K(0.048), [T.IRON]),
           trs(hnd[0] + K(0.012), hnd[1] + K(0.394), hnd[2] + K(0.022), 0, 1, 1, 1, 0.16, 0.10), 6, sho, null, null, 1.06);
       } else for (let i = 0; i < 3; i++) {
@@ -15626,7 +15937,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // light madder with the tabard and the dark half is paid entirely in metal and
               // leather — dark-iron helm, T.CIRON shoulder, T.DIRT hose, T.LEATH boot — which is
               // also exactly the "lighter cloth over dark leather" the finding asks for.
-              cape: true, capeT: T.MADD, capeF: 0.94,
+              cape: true, capeT: T.RUSS, capeF: 0.94,
               // ARMIES-FIX9b §1/§5 — the levyman is 60-70% of every wave, so his silhouette IS the
               // coverage statistic: a knee-length crimson tunic (skirtL) and a cloak wide enough to
               // be seen past his own ribs (capeW). See the two notes in buildSoldier.
@@ -15636,7 +15947,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // spans the +-8% the finding specifies instead of +-5%. Both ride the same seeded id
               // hashes the walk phase and the dye lot already use, so the harness stays deterministic.
               shield: 'round', weapon: 'spear', knee: false, gait: 1.70, jit: 0.17, aim: 1.00, kitVar: true },
-    runner: { h: 1.63, bulk: 0.86, hose: T.DIRT, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN, hand: T.SKIN,
+    runner: { h: 1.63, bulk: 0.86, hose: T.DIRT, shin: T.LEATH, mail: T.MOSS, arm: T.SKIN, hand: T.SKIN,
               // ARMIES-FIX9b §1/§5 — the runner had NO skirt at all ("without the cloak his lower
               // half is bare leather at every zoom" — FIX8 §3 says so one line down), and he is a
               // third of every early wave. A short crimson kilt, not the levyman's tunic: his read
@@ -15648,12 +15959,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // the levyman now wears the light madder lot and the skirmisher keeps the dark one,
               // which is a ~30 L* step between the two bodies a wave is mostly made of. The dark
               // iron shoulder is the levy's, shared, so the family still reads as one family.
-              pauld: T.CIRON, skirt: T.DUN, skirtL: 1.15, capeW: 1.20,
-              tabard: T.RUSS, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
+              pauld: T.CIRON, skirt: T.MOSS, skirtL: 1.15, capeW: 1.20,
+              tabard: T.MOSS, tabW: 1.06, chest: -1, face: T.FACE, helm: 'wrap',
               bladeTint: 0.84, lm: 0.82, lean: 0.15,
               // ARMIES-FIX8 §3 — a shorter cloak than the levyman's, and it streams: the runner
               // has no skirt, so without it his lower half is bare leather at every zoom.
-              cape: true, capeT: T.DUN, capeF: 0.62,
+              cape: true, capeT: T.MOSS, capeF: 0.62,
               shield: 'buckler', weapon: 'sword', knee: false, gait: 3.05, jit: 0.11, aim: 0.90, bracer: true },
     brute:  { h: 2.52, bulk: 1.42, hose: T.FUR, shin: T.LEATH, mail: T.IRON, arm: T.SKIN, hand: T.SKIN,
               // ARMIES-FIX8 §3 — a crimson chest-wrap over the pelt. The brute's read is the
@@ -15943,7 +16254,7 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
               // UNITS §1 — squatter and broader than the ironclad by a clear margin: shoulder
               // line 1.44 of the hips against his 1.14, legs at 0.78 of the human skeleton
               // against his full length. Same height, opposite proportion.
-              spauld: true, spauldT: T.GRAV, shF: 1.44, headDrop: 0.06, bar: 1.54,
+              spauld: true, spauldT: T.CIRON, shF: 1.44, headDrop: 0.06, bar: 1.54,
               seg: tier === 'mobile' ? 7 : 10 },
     cutpurse:{ h: 1.56, bulk: 0.80, hose: T.SHROUD, shin: T.LEATH, mail: T.LEATH, arm: T.SKIN,
               // ARMIES-FIX8 §3 — the cloak carries the crimson; the hood, the sack of gold and the
@@ -16263,7 +16574,12 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // body. So the row is pushed as far as the transfer allows while staying a legible mass, and
     // the rest of the separation is paid where it is actually affordable: VALUE (L* 40.7 -> 32.1
     // against grass 40.9) and the near-black carapace rim the same finding asks for.
-    gravemold: [0.22, 0.34, 0.88],
+    gravemold: [0.18, 0.42, 0.62],
+    // r15-ARMIES SS1 — the skirmisher's moor key. Green level with blue and both well over
+    // red puts the lichen cloth out at H 120-150 in the RENDER, which is where the money
+    // shot's hue histogram gets its second mode. Clear of the reserved band on chroma and on
+    // hue at once; nothing here is inside H 205-230.
+    runner:    [0.80, 1.06, 1.16],
     brute:     [0.98, 0.90, 0.78],
     // Closed against the re-shot PNG: the first solve put marauder at 94.5 and ram at 97.8, a
     // 3.5% step — the same collapse, moved. Marauder drops to land the pair at 84 / 100, which
@@ -16321,6 +16637,10 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // re-solved when §E made it ochre: a 1.10 lift on a yellow tile is a lift straight at the
     // reserved band. Down and slightly cool of yellow, so the ochre keeps its family and stops
     // competing with the coin. The bone mask carries its own tile and is untouched.
+    // r15-ARMIES SS7 — the warded one had no row at all, so a granite body under a warm key
+    // arrived at the road's own value on the map it is fielded on. Down 15% of luma and
+    // rotated off yellow, which is the axis the road leaves open.
+    wardedone: [0.70, 0.84, 0.82],
     warshaman: [0.90, 0.82, 0.84],
     // SPEC6 §E's caster read as "a black amoeba" at gameplay pitch (§6b): his shroud is the
     // darkest tile in the atlas and nothing lifted it. Up a third, cool, so the body is a
@@ -16470,11 +16790,17 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
   const L_ = { fd: [1.20, 1.00, 0.72], lot: [0.42, 0.36, 0.32], lot2: [1.34, 1.30, 1.16],
                acc: [1.16, 0.94, 1.12], sig: [1.30, 1.16, 1.06] };
   const V_ = { fd: [0.72, 1.14, 0.98], lot: [0.80, 0.86, 0.82], acc: [0.92, 1.16, 1.06], sig: [1.06, 1.32, 1.20] };
+  // r15-ARMIES SS1 — the skirmisher's lots. Three bands like the levy's (deep bog-green,
+  // the family's own lichen, a bleached rime lot) plus a warm leather trim, so the cool half
+  // of the column is as varied as the warm half. `fd` holds the hue at distance instead of
+  // restoring warmth the way L_ does.
+  const S_ = { fd: [0.84, 1.02, 1.06], lot: [0.60, 0.70, 0.66], lot2: [1.22, 1.26, 1.22],
+               acc: [1.14, 0.96, 0.82], sig: [1.10, 1.28, 1.18] };
   // r14-ARMIES §2 — the levy families, i.e. the bodies the word "horde" now means. Named once so
   // the wedge-widening jitter below and this table cannot drift apart.
   const LEVY_F = { grunt: 1, runner: 1, shield: 1, marauder: 1, ogre: 1, brute: 1 };
   const FAM = {
-    grunt: L_, runner: L_, shield: L_, marauder: L_, ogre: L_, brute: L_, hound: L_,
+    grunt: L_, runner: S_, shield: L_, marauder: L_, ogre: L_, brute: L_, hound: L_,
     necromancer: V_, hexbinder: V_,
     // The knights are not horde (`A.horde` is false, so `fd` is never read on them) but they DO
     // run the lot/trim selector, and a blue column of one paint has exactly the barcode problem
@@ -16489,7 +16815,8 @@ mat3 rZ(float a){ float c=cos(a),s=sin(a); return mat3(c,s,0., -s,c,0., 0.,0.,1.
     // survive the wide camera. Widened to the same ~+-14% of value the levy's two lots now carry,
     // both still rotating INSIDE royal blue (deep lot pulls red under blue, trim lifts and warms
     // the same way), so twenty men are twenty shades of one livery rather than one paint.
-    knight:        { fd: [1.00, 1.00, 1.00], lot: [0.72, 0.79, 0.96], acc: [1.18, 1.15, 1.06], sig: null },
+    knight:        { fd: [1.00, 1.00, 1.00], lot: [0.58, 0.68, 0.94], lot2: [1.20, 1.22, 1.24],
+                     acc: [1.30, 1.24, 1.08], sig: null },
     ironclad:      { fd: [0.88, 0.96, 1.06], lot: [0.86, 0.88, 0.92], acc: [1.10, 1.02, 0.86], sig: [1.06, 1.16, 1.38] },
     ashwraith:     { fd: [1.30, 0.74, 0.46], lot: [0.78, 0.72, 0.70], acc: [1.22, 0.94, 0.66], sig: [1.34, 1.14, 0.98] },
     frostrevenant: { fd: [0.96, 1.04, 1.06], lot: [0.86, 0.90, 0.94], acc: [1.08, 1.10, 1.10], sig: [1.02, 1.16, 1.26] },
@@ -18296,6 +18623,19 @@ Armies.syncVisuals = (vtNow) => {
     // The species' own jitter is kept at 40% so two champions are not identical, and `msc` in SIM
     // is left exactly where it is (nothing else reads it, and it is not a balance number).
     if (e.champ) s = (CHAMP_H / A.h) * (1 + (h1 - 0.5) * A.jit * 0.4);
+    // ══ r15-UI §2b — PUBLISH THE DRAWN CROWN, TOO ════════════════════════════════════════════
+    // Round 15 filed "all four floaters hover over EMPTY terrain" against UI, and the anchor it is
+    // complaining about is `_ry + def.scale * 1.55`. `def.scale` is the SIM FOOTPRINT RADIUS and
+    // has nothing to do with how tall a body is drawn: on a hound (scale 0.55 against a 1.02 u
+    // model) it lands inside the animal, and on a charger (0.90 against a 1.72 u hv) it hangs the
+    // number the better part of a body-height over the back of a knee-high boar — measured on
+    // `_endless`, ~60 px of open meadow between the numeral and anything alive.
+    // `A.h * s` is the crown of the body ACTUALLY drawn — the same quantity the health bar rides
+    // on two hundred lines below and the same one `_plateY` gives the champion nameplate. It is
+    // published here for the same reason and under exactly the same contract as `_rx/_ry/_rz`
+    // above (r10-ARMIES §3a): render-only, underscore-prefixed, written in the render pass, read
+    // by nothing in SIM, so no tick can move.
+    e._rcy = _v3.y + A.h * s;
     _q.setFromAxisAngle(_YAX, face);
     _m4.compose(_v3, _q, _sc.setScalar(s));
     A.mesh.setMatrixAt(A.n, _m4);
@@ -18874,7 +19214,7 @@ Armies.syncVisuals = (vtNow) => {
         // which is where a rank stops being measurable by eye — and the two axes now ride
         // DIFFERENT hashes, so a body that steps forward is not also the body that steps out.
         // The reserve file gets a touch more again: it is not dressed on anything.
-        const gjit = wall ? 0.70 : 0.86;
+        const gjit = wall ? 0.98 : 1.18;
         G.pathPos(along + (gh1 - 0.5) * gjit, _rv3, lane + (gh3 - 0.5) * gjit, np.pid);
         _rv3.y = G.groundY(_rv3.x, _rv3.z);
         const gs = 1 + (gh1 - 0.5) * KA.jit;
@@ -18897,7 +19237,7 @@ Armies.syncVisuals = (vtNow) => {
         // uses everywhere: an albedo band of ±0.18 lands at roughly ±12 of L*), and the hue
         // jitter rides `gh2` — still inside royal blue, still the reserved pair, but no two
         // neighbours in a file share a byte any more.
-        const gl = 0.67 + gh3 * 0.30, gwv = (gh2 - 0.5) * 0.150;   // r13 §5 — mirrors the field loop
+        const gl = 0.58 + gh3 * 0.44, gwv = (gh2 - 0.5) * 0.300;   // r13 §5 — mirrors the field loop
         _rcol.setRGB(gl * 0.84 * (1 + gwv), gl * 0.94, gl * 1.28 * (1 - gwv * 0.9));
         dyeLot(_rcol, KA, (((np.d * 51.7) | 0) * 89 + gi * 13) | 0);   // r11 §6a — see the field loop
         KA.mesh.setColorAt(KA.n, _rcol);
@@ -21547,8 +21887,38 @@ function footTex(bad) {
   //    makes the square read as a CELL rather than as a second outline around a disc.
   // FIX13-UI §2's interior is deliberately NOT touched: it sits on top of this bed, so the disc
   // gains chroma contrast (saturated mint over darkened ground) rather than losing brightness.
+  // ══ r15-UI §1 — THE CELL MAY ONLY EVER DARKEN ITS GROUND ═══════════════════════════════════
+  // Round 15, finding 1 (major): "Stop using a fixed fill colour — drive it from the sampled
+  // ground luminance: fill = ground L* minus 22 … so the plot fill measures 15-30 dL* BELOW
+  // adjacent ground on both _stalker (sand) and _hex (snow)."
+  // The ASK is a sampled ground colour and this plate cannot have one: it is a cached canvas
+  // sampled tri-planarly over a shader-computed terrain, there is no CPU-side answer for "what
+  // colour is the meadow under the cursor", and a readPixels inside the render loop would be
+  // both a pipeline stall and a source of frame-order nondeterminism the shot harness forbids
+  // (GAME_SPEC §2.3). What the ask is FOR, though, is a polarity guarantee, and that is buyable
+  // without any sampling at all: make every fill term in this plate SUBTRACTIVE. A near-black at
+  // alpha a composites to ground x (1-a) on any ground whatever, so the cell is darker than what
+  // it lies on by construction, on all five maps, in sun and in shade — which is the property the
+  // finding is actually asking a sampled colour to deliver.
+  // WHAT WAS WRONG: only the SQUARE bed was dark (r14-UI §4 put it there). The DISC inside it —
+  // the landing cell proper, the thing the ghost stands on — was a .45/.38 WHITE radial (FIX13-UI
+  // §2), so on Frostfell's snow and the canyon's sand the cell's own interior lifted straight back
+  // to the ground's value and above it. See shots\_place_m2.png before this change: a dark square
+  // with a pale disc punched out of the middle of it.
+  // THE ARITHMETIC, and the one thing that makes it work out on every map at once: this plate is
+  // composited into a LINEAR HDR target (the post chain), not into sRGB. A near-black at alpha a
+  // therefore scales the LUMINANCE by (1-a), and since L* is a cube root of luminance the drop is
+  // dL* = (L*+16)(1 - (1-a)^(1/3)) — very nearly a fixed FRACTION of the ground's own L*, which is
+  // exactly the shape the finding's 15-30 band wants. Solved for the campaign's two extremes and
+  // measured on the shipped frames against a zero-fill reference build (see the round report):
+  // a total alpha of ~0.62 in the cell (bed .50, disc .24, times the plate's .90-1.0 breathing
+  // opacity) puts Frostfell's lit snow at -16, the canyon's sand at -18 and the Vale at -18 — all
+  // three inside the band, rather than the +28 the round-15 finding measured. Snow needs the most
+  // alpha for the least delta because the plate lands in the HDR buffer BEFORE the ACES curve, and
+  // a near-clipping snowfield sits in the compressive shoulder of it; that is why the number was
+  // solved on the render and not on the canvas.
   const bm = S * 0.035;
-  g.fillStyle = 'rgba(6,7,9,.40)'; g.fillRect(bm, bm, S - bm * 2, S - bm * 2);
+  g.fillStyle = 'rgba(5,6,9,.50)'; g.fillRect(bm, bm, S - bm * 2, S - bm * 2);
   const rg = g.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, R);
   // ══ FIX8-UI §2b — THE PLATE WAS EATING THE THING IT WAS SUPPOSED TO GROUND ══════════════════
   // FIX7-UI §1 raised this fill from .30 to .46/.56 on the reasoning that "the plate should say how
@@ -21576,9 +21946,15 @@ function footTex(bad) {
   // in the placement composite — brighter than the translucent ghost standing in the middle of
   // it". The ghost now clears the meadow by ΔL >= 45 and carries a black rim (see GHOST_FS and
   // ghostOutline), so the plate is no longer competing with it; it is the ground under it.
-  const i0 = bad ? .50 : .45, i1 = bad ? .42 : .38;
-  rg.addColorStop(0, 'rgba(255,255,255,' + i0 + ')'); rg.addColorStop(0.70, 'rgba(255,255,255,' + i1 + ')');
-  rg.addColorStop(0.885, 'rgba(255,255,255,' + (i1 * 0.62).toFixed(3) + ')'); rg.addColorStop(0.90, 'rgba(255,255,255,0)');
+  // r15-UI §1 — …and the disc is the same ink as the bed, not its opposite. The FIX13-UI §2
+  // argument for bringing this interior back up ("the cell has to read as a cell") is untouched:
+  // the disc is still a distinct step inside the square, it just steps DOWN into the ground
+  // instead of up out of it, which is the only direction that survives a bright map. The refused
+  // state keeps its heavier hand (a plot you cannot buy may be a patch) — heavier now means
+  // darker rather than brighter.
+  const i0 = bad ? .30 : .24, i1 = bad ? .25 : .19;
+  rg.addColorStop(0, 'rgba(5,6,9,' + i0 + ')'); rg.addColorStop(0.70, 'rgba(5,6,9,' + i1 + ')');
+  rg.addColorStop(0.885, 'rgba(5,6,9,' + (i1 * 0.62).toFixed(3) + ')'); rg.addColorStop(0.90, 'rgba(5,6,9,0)');
   g.fillStyle = rg; g.beginPath(); g.arc(S / 2, S / 2, R * 0.90, 0, 7); g.fill();
   // the dark keyline stays solid — it is what lifts the dash off bright dirt — and the white rim
   // above it is broken into 28 dashes. `setLineDash` on an arc is measured along the arc, so the
@@ -21595,14 +21971,18 @@ function footTex(bad) {
   // So the refusal now has four channels and only one of them is hue: the ring's colour, the
   // ghost's tint, the SHAPE of this rim, and the writ's sentence.
   if (bad) {
-    g.strokeStyle = 'rgba(255,255,255,.86)'; g.lineWidth = 8;
+    g.strokeStyle = 'rgba(255,255,255,.97)'; g.lineWidth = 8;   // r15-UI §1 — full opacity, as below
     g.beginPath(); g.arc(S / 2, S / 2, R * 0.855, 0, 7); g.stroke();
     g.lineWidth = 4;
     g.beginPath(); g.arc(S / 2, S / 2, R * 0.745, 0, 7); g.stroke();
   } else {
   const circ = 2 * Math.PI * R * 0.855, dash = circ / 28;
   g.setLineDash([dash * 0.60, dash * 0.40]);
-  g.strokeStyle = 'rgba(255,255,255,.78)'; g.lineWidth = 7;
+  // r15-UI §1 — the dash is the half of spec §1 that has to survive on EVERY ground, so it is
+  // carried at full opacity rather than at .78: with the interior now subtractive the border is
+  // the plate's only light term, and a border at three-quarter alpha over lit snow is a border
+  // that is only there on the dark maps.
+  g.strokeStyle = 'rgba(255,255,255,.97)'; g.lineWidth = 7;
   g.beginPath(); g.arc(S / 2, S / 2, R * 0.855, 0, 7); g.stroke();
   g.setLineDash([]);
   }
@@ -21631,7 +22011,7 @@ function footTex(bad) {
   g.strokeStyle = 'rgba(0,0,0,.42)'; g.lineWidth = 9; g.setLineDash([]);
   g.strokeRect(bm, bm, sq, sq);
   g.setLineDash([dq * 0.62, dq * 0.38]);
-  g.strokeStyle = 'rgba(255,255,255,.80)'; g.lineWidth = 5;
+  g.strokeStyle = 'rgba(255,255,255,.97)'; g.lineWidth = 5;   // r15-UI §1 — full opacity, as above
   g.strokeRect(bm, bm, sq, sq);
   g.setLineDash([]);
   const t = tex(c); FOOT_TEX[slot] = t; return t;
@@ -21771,7 +22151,7 @@ function gridShape(mesh, cx, cz, half, lift) {
 // boundary to ~1.2 u on a 2.4 u grid, and the band is drawn in the fragment shader from the
 // interpolated field. The trap grid is analytic and pays ~1 us a vertex, so it can afford the
 // density its 8 u road actually needs.
-const PMASK = { mesh: null, key: '', t0: -1, D: null, geo: {} };
+const PMASK = { mesh: null, key: '', t0: -1, D: null, S: null, geo: {} };
 const PMASK_RES = { tower: [72, 48], trap: [132, 88] };
 // the placement language's GREEN, which is the same thing the footprint ring says at 1/40th the
 // scale — one system, two ranges. Additive, so this is a light, not a paint.
@@ -21792,8 +22172,28 @@ function maskGeo(mode) {
 function maskMesh() {
   if (PMASK.mesh) return PMASK.mesh;
   const g = maskGeo('tower');
+  // ══ r15-UI §3 — THE BAND HAD NO POLARITY, SO IT WAS NOT A BOUNDARY ══════════════════════════
+  // Round 15, finding 3 (major), on `_place`: "the band … is a ~20px soft mint feather that traces
+  // the blocked/buildable boundary, but BOTH sides of it are undifferentiated green grass and the
+  // band itself sits only about d12 from the meadow. On the Vale it reads as terrain wetness or
+  // algae, not as UI." Exactly right, and it convicts the shape r14-UI §1 chose: an INNER GLOW is
+  // symmetric to the eye. It says "something changes along this line" and nothing about which side
+  // of the line is the answer, which is the only thing a player entering build mode wants to know.
+  // Three changes, all of them in this material and its field:
+  //  (a) THE LINE IS HARD. A screen-constant ~2 px stroke on the zero crossing (fwidth on the
+  //      packed field, the same idiom the terrain shader uses for its own pixel footprints) in a
+  //      chroma the diorama cannot produce — UI cyan, off the mint that was sitting inside the
+  //      meadow's own hue wedge. A hairline in an impossible colour cannot be read as wet grass.
+  //  (b) ONLY THE BLOCKED SIDE IS PAINTED, and it is painted DOWN: a desaturating dark-navy scrim
+  //      at 15% on the boundary easing to 7.5% nine units in. The buildable meadow keeps its own
+  //      colour, so "shaded = you cannot build here" is available from the value channel alone at
+  //      a 200 ms glance, and the diorama is left intact exactly where the player is about to act.
+  //      This is why the blending changes from ADDITIVE to NORMAL: an additive sheet is physically
+  //      incapable of darkening anything, so the old material could only ever say "lighter", i.e.
+  //      could only ever paint the side it should have left alone.
+  //  (c) …and the field itself is cleaned up before it is drawn — see maskField.
   const mat = new THREE.MeshBasicMaterial({ vertexColors: true,
-    transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending, opacity: 0 });
+    transparent: true, depthWrite: false, fog: false, blending: THREE.NormalBlending, opacity: 0 });
   mat.color.setRGB(PMASK_COL[0], PMASK_COL[1], PMASK_COL[2]);
   // ONE material, ONE program: an instance fork of MeshBasicMaterial, not a ShaderMaterial, so the
   // v7 program budget is unchanged (the sheet already owned exactly one program and still does).
@@ -21805,14 +22205,29 @@ function maskMesh() {
       sh.fragmentShader.replace('#include <color_fragment>', [
         // the packed field, back in world units. Positive inside the legal set.
         'float sd = (vColor.r - 0.5) * ' + MASK_DSC.toFixed(1) + ';',
-        // a half-unit crossfade at the contour so the edge is a shoreline, never a stencil
-        'float ins = smoothstep(-0.35, 0.35, sd);',
-        // (a) the 1.5 u inner glow, brightest ON the line and gone 1.5 u in
-        'float band = ins * (1.0 - smoothstep(0.0, 1.5, max(sd, 0.0)));',
-        // (c) the cursor falloff — nothing at all past uFall.y
+        // the cursor falloff — nothing at all past uFall.y
         'float rad = 1.0 - smoothstep(uFall.x, uFall.y, distance(vMW, uCur));',
-        // (b) the interior tint, and the band on top of it
-        'diffuseColor.a *= (0.055 * ins + 0.42 * band) * rad;'
+        // (a) THE STROKE. `fwidth(sd)` is how many world units of field one pixel spans here, so
+        // a threshold of ~1.15 of it is a ~2 px line at every zoom and on every slope; the small
+        // constant floor stops it thinning to nothing where the field is almost flat.
+        'float fw = fwidth(sd);',
+        'float line = 1.0 - smoothstep(0.0, fw * 1.15 + 0.02, abs(sd));',
+        // (b) THE SCRIM, on the refused side only. Strongest against the line, half-strength nine
+        // units in, so the boundary still reads as an edge rather than as one flat plate of tint.
+        'float blk = 1.0 - smoothstep(-0.30, 0.30, sd);',
+        // …on its OWN radial reach. The lamp that keeps the contour local is far too tight for the
+        // scrim: measured on _place, the road boundary stands ~30 u from the cursor, where `rad` is
+        // already 0.43 and a 15% scrim renders at 6% — present in the buffer and absent to the eye,
+        // which is the whole finding again one fix later. The stroke keeps the tight lamp (a hard
+        // line at the edge of vision IS the lattice r14-UI §1 was told to stop drawing); the scrim
+        // gets a ramp about twice as long, so the side the boundary in front of you separates is
+        // shaded for as far as that boundary is legible.
+        'float radS = 1.0 - smoothstep(uFall.y * 0.75, uFall.y * 2.0, distance(vMW, uCur));',
+        'float scr = blk * mix(0.130, 0.200, 1.0 - smoothstep(0.0, 9.0, max(-sd, 0.0))) * radS;',
+        // dark navy under the stroke's UI cyan. The mix is on COLOUR, the max on coverage, so the
+        // hairline is opaque cyan and the field under it is a scrim, from one draw.
+        'diffuseColor.rgb = mix(vec3(0.030,0.048,0.115), vec3(0.14,0.86,1.00), line);',
+        'diffuseColor.a *= max(scr, line * rad);'
       ].join('\n  '));
   };
   const m = new THREE.Mesh(g, mat);
@@ -21833,6 +22248,64 @@ const PMASK_HX = 86, PMASK_HZ = 58;
 // what lets a 1.5 u band read on a 2.4 u grid.
 // TRAPS: canTrap IS closed-form — a road half-width minus three keep-out circles — so its field is
 // computed EXACTLY and costs no sampling at all. Same packing, same shader, crisper contour.
+// ══ r15-UI §3c — THE BOUNDARY HAS TO BE A FEW SHAPES, NOT A HUNDRED ═══════════════════════════
+// Round 15: the band "wraps every individual boulder, producing lumpy amoebas with no legible
+// semantics". True, and it is a property of the FIELD, not of the shader: `canPlace` refuses a
+// couple of metres around every rock on the map, so the boolean this sheet is drawn from is a
+// meadow perforated by two hundred pinholes. A contour that traces all of them is noise however
+// it is stroked. Two morphological passes on the BLOCKED set, in the order the finding names:
+//   MERGE  a one-cell closing (dilate, then erode). Blockers a cell apart stop being two lobes
+//          with a 2.4 u thread of "buildable" ground between them — and a 2.4 u thread cannot
+//          hold a 3 u tower footprint anyway, so nothing true is lost by closing it.
+//   DROP   any blocked island under MASK_MINCELL cells that does not touch the sheet's own rim.
+//          11 cells is ~63 u^2, a disc of radius 4.5 u. `canPlace` refuses `o.r + FOOT_R` around
+//          every prop, which is ~3.8 u for a boulder and ~8 cells of this grid, so 11 is the first
+//          threshold that actually clears one; a cliff foot, a road band or a gate keep-out is an
+//          order of magnitude larger and none of them is touched.
+//          cliff foot. The islands that go are exactly the ones whose halo the reader cannot act
+//          on — the plate and the writ still refuse the site the moment the cursor is on it, so
+//          this softens the MAP, not the rule.
+// Drawing-only, by construction: `ok` is consumed by the distance field and by nothing else.
+//   KEEP   a component that contains a STANDING TOWER is never dropped, whatever its area. A
+//          tower's own 3.8 u keep-out prices out the same ~8 cells a boulder does, and it is the
+//          one small island on the board a player acts on — `_placeX` exists precisely to
+//          photograph a spacing refusal, and a sheet that had erased the ring it is refusing
+//          against would be answering the wrong question.
+const MASK_MINCELL = 11;
+function maskClean(ok, W, H, prot) {
+  const N = W * H, blk = new Uint8Array(N), tmp = new Uint8Array(N);
+  for (let k = 0; k < N; k++) blk[k] = ok[k] ? 0 : 1;
+  // dilate / erode, 4-neighbour, with everything outside the rim treated as blocked so the frame
+  // of the sheet is never eaten by its own erosion
+  const grow = (src, dst, want) => {
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const k = j * W + i;
+      const l = i > 0 ? src[k - 1] : 1, r = i < W - 1 ? src[k + 1] : 1,
+            u = j > 0 ? src[k - W] : 1, d = j < H - 1 ? src[k + W] : 1;
+      dst[k] = want ? (src[k] | l | r | u | d) : (src[k] & l & r & u & d);
+    }
+  };
+  grow(blk, tmp, 1); grow(tmp, blk, 0);
+  // 4-connected components over the blocked set, one explicit stack, no recursion
+  const seen = new Uint8Array(N), stack = new Int32Array(N), cell = new Int32Array(N);
+  for (let s = 0; s < N; s++) {
+    if (!blk[s] || seen[s]) continue;
+    let sp = 0, n = 0, edge = false;
+    stack[sp++] = s; seen[s] = 1;
+    while (sp) {
+      const k = stack[--sp]; cell[n++] = k;
+      const i = k % W, j = (k - i) / W;
+      if (i === 0 || j === 0 || i === W - 1 || j === H - 1) edge = true;
+      if (prot && prot[k]) edge = true;
+      if (i > 0 && blk[k - 1] && !seen[k - 1]) { seen[k - 1] = 1; stack[sp++] = k - 1; }
+      if (i < W - 1 && blk[k + 1] && !seen[k + 1]) { seen[k + 1] = 1; stack[sp++] = k + 1; }
+      if (j > 0 && blk[k - W] && !seen[k - W]) { seen[k - W] = 1; stack[sp++] = k - W; }
+      if (j < H - 1 && blk[k + W] && !seen[k + W]) { seen[k + W] = 1; stack[sp++] = k + W; }
+    }
+    if (!edge && n < MASK_MINCELL) for (let q = 0; q < n; q++) blk[cell[q]] = 0;
+  }
+  for (let k = 0; k < N; k++) ok[k] = blk[k] ? 0 : 1;
+}
 function maskField(mode) {
   const [NX, NZ] = PMASK_RES[mode] || PMASK_RES.tower, W = NX + 1, H = NZ + 1, N = W * H;
   if (!PMASK.D || PMASK.D.length !== N) PMASK.D = new Float32Array(N);
@@ -21861,6 +22334,13 @@ function maskField(mode) {
     const x = (i / NX - 0.5) * 2 * PMASK_HX, z = (j / NZ - 0.5) * 2 * PMASK_HZ;
     ok[j * W + i] = G.canPlace(x, z).ok ? 1 : 0;
   }
+  // the protected cells: one per standing tower, so its exclusion ring survives the island drop
+  const prot = new Uint8Array(N);
+  for (const tw of G.towersList) {
+    const pi = Math.round((tw.x / (2 * PMASK_HX) + 0.5) * NX), pj = Math.round((tw.z / (2 * PMASK_HZ) + 0.5) * NZ);
+    if (pi >= 0 && pi < W && pj >= 0 && pj < H) prot[pj * W + pi] = 1;
+  }
+  maskClean(ok, W, H, prot);
   const BIG = 1e4;
   for (let k = 0; k < N; k++) D[k] = BIG;
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
@@ -21886,6 +22366,25 @@ function maskField(mode) {
     if (j < H - 1 && i > 0) D[k] = Math.min(D[k], D[k + W - 1] + sd);
   }
   for (let k = 0; k < N; k++) D[k] = ok[k] ? Math.min(D[k], 40) : -Math.min(D[k], 40);
+  // ── r15-UI §3c (second clause) — SMOOTH THE FIELD, OR THE HARD LINE DRAWS THE GRID ──────────
+  // A chamfer over a boolean grid is faceted by construction: its seeds sit half a cell either
+  // side of a sign change, so the reconstructed contour is a polyline on a 2.4 u lattice. The old
+  // 1.5 u feather hid that; a 2 px stroke cannot, and the first cut of this fix shipped the
+  // buildable field as a honeycomb of hexagons (measured on _place at 3x). Two separable 1-2-1
+  // passes round the corners off at about a cell without moving the zero crossing anywhere the
+  // eye can measure — the contour goes back to reading as a shoreline, drawn hard.
+  if (!PMASK.S || PMASK.S.length !== N) PMASK.S = new Float32Array(N);
+  const S = PMASK.S;
+  for (let pass = 0; pass < 2; pass++) {
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const k = j * W + i;
+      S[k] = (D[i > 0 ? k - 1 : k] + 2 * D[k] + D[i < W - 1 ? k + 1 : k]) * 0.25;
+    }
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const k = j * W + i;
+      D[k] = (S[j > 0 ? k - W : k] + 2 * S[k] + S[j < H - 1 ? k + W : k]) * 0.25;
+    }
+  }
   return D;
 }
 function maskBuild(key, mode) {
@@ -26756,14 +27255,25 @@ const VFX = { list: [] };
 G.VFX = VFX;
 {
 const PQ = tier === 'mobile'
-  ? { ts: 64,  aCap: 760,  bCap: 520,  mote: [5, 3, 5], mcell: 9, dust: 2, decals: 6,  prime: 52 }
+  ? { ts: 64,  aCap: 760,  bCap: 520,  mote: [5, 3, 5], mcell: 9, dust: 2, decals: 10, prime: 52 }
   // r12-VFX §4a — desktop aCap 2800 -> 4800. This is a RING SIZE and a per-frame loop bound, not a
   // draw call and not a budget the GPU cares about: one InstancedBufferGeometry, one flush, ~0.5 MB
   // of attribute buffers. It is lifted so MOTE_RES can carry a 6-sub snowfall (3630 flakes + the
   // 108-quad near layer) and still leave ~1050 slots for the effects that stand beside it — the
   // measured Frostfell spend is 503. Mobile is untouched: its lattice is 7x3x7 and its bucket is
   // 760 wide, and the phone's alpha budget is already the tightest number in this file.
-  : { ts: 128, aCap: 4800, bCap: 1900, mote: [8, 4, 8], mcell: 7, dust: 3, decals: 14, prime: 90 };
+  : { ts: 128, aCap: 4800, bCap: 1900, mote: [8, 4, 8], mcell: 7, dust: 3, decals: 26, prime: 90 };
+// ══ r15-VFX §2 — `decals` 14 -> 26, AND IT IS WHY "THERE IS NO SCORCH DECAL" ═════════════
+// Round 15, on `impact`: "the ground under the core is BRIGHTER from bounce, not charred — there
+// is no scorch decal". There is one, it has been authored since FIX2, and it is a 20-second
+// crater. The bug is the POOL. DEC.slot is a plain ring buffer and every one-shot in the file
+// draws from it — an explosion takes two slots (crater + shockwave), a fire patch one, a
+// telegraph one, a rally one, a trap one — so on `impact`'s frame (wave 4, a catapult firing
+// into a column, eight towers up) fourteen slots recycle in a second or two and the crater the
+// player is looking at has already been overwritten by the shockwave of the next shot.
+// A slot is 121 vertices of ONE mesh in ONE draw call: 26 slots is 3146 vertices against a frame
+// that runs two million triangles, and it is the whole of the fix. Mobile 6 -> 10 for the same
+// reason at its own scale.
 // VFX-FIX5 §3 — `dust` is the per-tick road-plume budget and it was 7 (mobile 3). At 30 tps
 // against a 2.1-3.2 s life that is ~550 concurrent quads standing over the road, which is how
 // a 0.14 alpha sprite adds up to the near-opaque veil round 5 measured bleaching the horde
@@ -26806,7 +27316,20 @@ const T_SMOKE = 0, T_WISP = 1, T_DUST = 2, T_SPARK = 3, T_EMBER = 4, T_COIN = 5,
       // i.e. 2.3x what T_SOFT delivers for the same instance), a short feather, and six faint
       // dendrite arms that only resolve on the near-camera layer where a flake is 12-20 px. The
       // three unused slots on the 4x5 sheet pay for it, so nothing else in the atlas moves.
-      T_FLAKE = 17;
+      T_FLAKE = 17,
+      // ══ r15-VFX §3 — T_BOLT, THE ONE TILE A DISCHARGE CANNOT BORROW ════════════════════
+      // Round 15: storm "drawn as perfectly straight, uniform-width, hard-edged bars". Two of
+      // those three are properties of T_SPARK, which storm was borrowing: it is a COMET — a
+      // head-weighted needle whose alpha runs 1.0 at u=0 to 0 at the tail, and whose ink is
+      // authored WARM (255,246,214 -> 255,190,110). A comet drawn along a straight segment IS a
+      // straight bar with a hard head, and its warm ink multiplies a violet down toward grey
+      // before the additive sum ever reaches the road (P_FRAG does t.rgb * vCol.rgb).
+      // T_BOLT is a segment rather than a spark: PURE WHITE ink, so the emitter's own hue
+      // survives the multiply intact; a gaussian ACROSS the bolt so the edge falls off instead
+      // of cutting; and a taper at BOTH ends so a chain of them joins into one filament and the
+      // last link ends in air rather than on a chopped rectangle. The 4x5 sheet's two remaining
+      // slots pay for it — no atlas dimension moves.
+      T_BOLT = 18;
 const TS = PQ.ts, ACOL = 4, AROW = 5, AW = TS * ACOL, AH = TS * AROW;
 let _as = 0x2f6b1d31 >>> 0;
 const ar = () => { _as ^= _as << 13; _as >>>= 0; _as ^= _as >>> 17; _as ^= _as << 5; _as >>>= 0; return _as / 4294967296; };
@@ -26908,11 +27431,19 @@ const atlasTex = (() => {
     for (let i = 0; i < 9; i++) needle(cx, cy, ar() * 6.2832, R * (0.55 + ar() * 0.44), R * (0.045 + ar() * 0.05), '255,240,206');
     blob(cx, cy, R * 0.42, 0.92, '255,238,196'); blob(cx, cy, R * 0.17, 1, '255,255,252');
   });
+  // r15-VFX §2 — "the shockwave is a perfect thin hard-edged circle lying flat like a 2D UI
+  // ring". The profile was zero out to 0.58 R and then climbed to 0.90 alpha by 0.79 — a 21%
+  // ramp on the INSIDE against a 21% one on the outside, and a linear gradient stop is a visible
+  // knee, so what the eye got was a hoop with an edge on it. The ramp is asymmetric now, as a
+  // real front is: a long soft rise from 0.30 R into the peak, and a shorter fall behind it.
+  // Nothing about its radius, colour or exposure moves — crush's dust torus is drawn with this
+  // tile and its read was not what round 15 objected to.
   tile(T_RING, (cx, cy, R) => {
     const gr = x.createRadialGradient(cx, cy, 0, cx, cy, R * 0.99);
-    gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.58, 'rgba(255,255,255,0)');
-    gr.addColorStop(0.79, 'rgba(255,250,238,.90)'); gr.addColorStop(0.88, 'rgba(255,236,200,.30)');
-    gr.addColorStop(1, 'rgba(255,220,170,0)');
+    gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.30, 'rgba(255,255,255,0)');
+    gr.addColorStop(0.52, 'rgba(255,252,244,.10)'); gr.addColorStop(0.68, 'rgba(255,250,238,.44)');
+    gr.addColorStop(0.79, 'rgba(255,250,238,.88)'); gr.addColorStop(0.88, 'rgba(255,236,200,.34)');
+    gr.addColorStop(0.95, 'rgba(255,226,180,.08)'); gr.addColorStop(1, 'rgba(255,220,170,0)');
     x.fillStyle = gr; x.fillRect(0, 0, TS, TS);
   });
   tile(T_TUFT, (cx, cy, R) => {
@@ -26944,6 +27475,22 @@ const atlasTex = (() => {
     x.fillStyle = 'rgba(255,255,255,.98)';
     x.beginPath(); x.arc(cx, cy, R * 0.56, 0, 7); x.fill();
     feather(cx, cy, R, 0.62);
+  });
+  // r15-VFX §3 — see the T_BOLT note at the constant. Row by row so the across-profile is a real
+  // gaussian rather than a four-stop ramp: at the 3-9 px a bolt occupies, a ramp's knee IS the
+  // hard edge the finding photographed. The along-profile tapers to nothing at both ends.
+  tile(T_BOLT, (cx, cy, R) => {
+    for (let j = 0; j < TS; j++) {
+      const v = (j + 0.5 - cy) / (R * 0.94);
+      const av = Math.exp(-v * v * 6.2);
+      if (av < 0.005) continue;
+      const gh = x.createLinearGradient(0, 0, TS, 0);
+      gh.addColorStop(0.00, 'rgba(255,255,255,0)');
+      gh.addColorStop(0.14, 'rgba(255,255,255,' + av.toFixed(4) + ')');
+      gh.addColorStop(0.78, 'rgba(255,255,255,' + (av * 0.90).toFixed(4) + ')');
+      gh.addColorStop(1.00, 'rgba(255,255,255,0)');
+      x.fillStyle = gh; x.fillRect(0, j, TS, 1);
+    }
   });
   // ══ SPEC_8 §F — T_RIME: the frost school's signature primitive ═══════════════════════════
   // Every other school's tile is a decision about what its damage IS: pierce a struck-steel star,
@@ -27231,7 +27778,7 @@ void main(){
   float a = t.a * vCol.a;
   if (a < 0.003) discard;
   vec3 c = t.rgb * vCol.rgb * mix(uSkyC, uSunC, clamp(vSh, 0.0, 1.0));
-  ` + (add ? 'float shOn = uShK.x * vShd;' : 'float shOn = uShK.x;') + `
+  ` + (add ? 'float shOn = uShK.x * vShd;' : 'float shOn = uShK.x * (1.0 - vShd);') + `
   if (shOn > 0.5) {
     vec4 scw = uShMat * vec4(vWP, 1.0);
     vec3 sp = scw.xyz / scw.w;
@@ -27430,7 +27977,11 @@ void main(){
     // the top, i.e. v offset (5-1-3)/5 = 0.2. It was (0.5, 0.0) while the sheet was 4x4 — see
     // SPEC_8 §F on T_RIME for why the sheet grew, and keep these two in step.
     vec4 t = texture2D(uMap, uv*vec2(0.25, 0.2) + vec2(0.5, 0.2));
-    a = t.a * (1.0 - smoothstep(0.62, 1.0, r)) * smoothstep(0.0, 0.10, age) * (1.0 - smoothstep(0.55, 1.0, f));
+    // r15-VFX §2 — the finding asks for the char to arrive "as the flash decays", and a 0.10 s
+    // ramp is instantaneous next to a 0.42 s blast light: the scorch was fully painted while the
+    // fireball was still white over it, so nothing about its arrival was legible. 0.35 s puts the
+    // char's rise exactly under the light's fall.
+    a = t.a * (1.0 - smoothstep(0.62, 1.0, r)) * smoothstep(0.02, 0.20, age) * (1.0 - smoothstep(0.55, 1.0, f));
     c = vT * (0.30 + 0.85*t.r);
   } else if (vI.z < 1.5) {                           // expanding ground shockwave
     float rr = pow(f, 0.48);
@@ -27714,6 +28265,15 @@ const BL_KIND = [
   // ground 12 wu out, which the column at 6 u genuinely cannot deliver) at the exposure that
   // job needs and no more.
   [1.00, 0.94, 0.58, 430, 1.15, 2, 12.5, 0.360],  // 3 smite/pillar FOOT — the ground pool
+  // ══ r15-VFX §3 — THE STRIKE LIGHTS WHAT IT HITS ═════════════════════════════════
+  // Round 15: storm bolts arrive "with no impact point and no emissive spill on either the
+  // target or the ground". A discharge is the shortest-lived light on this table and the only
+  // COOL one — 0.12 s (the finding's own number), an 8 u reach so it lands on the struck body
+  // and the dirt under it and nothing else, and violet-white so what it falls on reads electric
+  // rather than merely brighter. PRIORITY 0: it is the one kind that may never take a slot from
+  // a detonation or a pillar, because a storm tower fires several times a second and a chain
+  // hit could otherwise put out the catapult's fireball.
+  [0.62, 0.40, 1.00, 300, 0.12, 0, 8, 0.0],      // 4 storm strike
 ];
 const BLL = [], BLD = new Float32Array(BL_N * 6), BL_LIFE = 0.42;
 if (tier !== 'mobile') for (let i = 0; i < BL_N; i++) {
@@ -27730,7 +28290,7 @@ if (tier !== 'mobile') for (let i = 0; i < BL_N; i++) {
 }
 for (let i = 0; i < BL_N; i++) BLD[i * 6] = -99;
 function claimBlast(x, y, z, p, kind) {
-  if (!BLL.length) return;
+  if (!BLL.length || _dry) return;   // r15: the boot dry-run must not light the field
   // SCHOOLS §2 — PRIORITY-AWARE CLAIM. Prefer a dead slot; failing that, the oldest slot
   // whose kind does not outrank the incoming one; failing that, drop the claim entirely
   // rather than putting out the brightest light on the field. `t` is virtual time, so a
@@ -27854,7 +28414,62 @@ function stepNightLights(t) {
       }
       return;
     }
-    for (let i = 0; i < NPL.length; i++) if (NPL[i].intensity) NPL[i].intensity = 0; return;
+    // ══ r15-VFX §1b — DAY PRACTICALS, i.e. THE EMISSIVE THAT LIGHTS PROPS AND MEN ═══════
+    // Round 15, on `_troll`: "the Frostspire's bright cyan crystals put ZERO blue on the stone
+    // parapet, the banner, the fence or the ground directly beneath them ... the brazier's warm
+    // pool reaches the terrain but not the banner 30px away nor the flame-facing side of the post
+    // beside it. So emissive->terrain works and emissive->prop/unit does not."
+    // Diagnosed exactly right, and the mechanism is emitSpill: the pool every fire on the field
+    // lays down is a GROUND-ALIGNED ADDITIVE QUAD (see its own note), chosen because three bakes
+    // the light count into every program and a new light would recompile the whole scene. A quad
+    // lying on the ground can only ever light the ground. No gain on it reaches a banner.
+    // The answer is not a new light — it is these two NIGHT_L slots, which by day sat at
+    // intensity zero on every map but the Ember Wastes with nothing else in the game claiming
+    // them. The vent branch above already proves the pattern; this generalises it. By day the
+    // pool goes to the two nearest emissive PRACTICALS on the field — a tower's own flame site,
+    // or a Frostspire's ice crown — and a real THREE.PointLight lands on the parapet, the fence,
+    // the banner and the men, not only on the dirt. Zero new lights, zero new programs, zero
+    // draw calls; the light COUNT the programs were compiled against is unchanged.
+    // The exposure is deliberately a fraction of the night lantern's 108-over-14: by day a
+    // brazier is decoration and must not out-light the sun. 30 cd over a 7.5 u reach at decay 2
+    // puts a readable tint on anything inside about three world units — the finding's own radius
+    // — and effectively nothing past six.
+    {
+      const TL = G.towersList, c = G.camera.position;
+      let b1 = -1, b2 = -1, r1 = 1e18, r2 = 1e18;
+      for (let i = 0; i < TL.length; i++) {
+        const tw = TL[i];
+        if (!(tw._fire && tw._fire.length) && tw.type !== 'frostspire') continue;
+        const q = (tw.x - c.x) ** 2 + (tw.z - c.z) ** 2;
+        if (q < r1) { r2 = r1; b2 = b1; r1 = q; b1 = i; } else if (q < r2) { r2 = q; b2 = i; }
+      }
+      const pk = [b1, b2];
+      for (let i = 0; i < NPL.length; i++) {
+        const l = NPL[i], ti = pk[i];
+        if (ti < 0) { if (l.intensity) l.intensity = 0; continue; }
+        const tw = TL[ti], bg = G.groundY(tw.x, tw.z);
+        if (l.distance !== 7.5) l.distance = 7.5;
+        if (tw.type === 'frostspire') {
+          // the ice crown sits on top of the plinth (see bFrost's PH/CH), so the source is up
+          // the spire rather than at its foot — which is what puts the blue on the parapet rail
+          // and the fence beside it instead of only on the snow underneath.
+          l.color.setRGB(0.30, 0.82, 1.00);
+          l.position.set(tw.x, bg + 3.4, tw.z);
+          l.intensity = 24;
+        } else {
+          const f = tw._fire[0];
+          const cb = Math.cos(tw._base || 0), sb = Math.sin(tw._base || 0);
+          l.color.setRGB(1.00, 0.44, 0.13);
+          // 0.85 u ABOVE the coals, not in them: at decay 2 a source sitting inside its own bowl
+          // divides by a distance near zero and blows the bowl to white (measured on the first cut
+          // of this, `_troll`'s barracks brazier came back as a featureless disc). Lifted clear,
+          // the falloff's steep part lands on the banner and the fence rather than on the iron.
+          l.position.set(tw.x + f[0] * cb + f[2] * sb, bg + f[1] + 0.85, tw.z - f[0] * sb + f[2] * cb);
+          l.intensity = 15 * (0.86 + 0.14 * Math.sin(t * 5.1 + ti * 2.3));   // a brazier gutters
+        }
+      }
+    }
+    return;
   }
   // r13-VFX §2, second cut: #ff8b3a landed the pool at C* 14.3 / h 86.8 -- chroma cleared the bar,
   // hue did not (the ask is 50-75 deg, i.e. FIRE rather than lamplight). h_ab is set by b*/a*, so
@@ -28242,6 +28857,90 @@ function dustCol(r, g, b, gain) {
   const k = gain === undefined ? 1 : gain;
   E.r = r * k * ASUN_INV[0]; E.g = g * k * ASUN_INV[1]; E.b = b * k * ASUN_INV[2];
 }
+// ══ r15-VFX §3 — A BOLT'S BODY CANNOT BE ADDITIVE, AND THAT IS THE WHOLE FINDING ═════════
+// Round 15 measured `_elem`'s storm at rgb(219,171,221), HSV S 0.23 — "near-white with a faint
+// magenta tint" — and asked for S >= 0.55 at h 265-280 ON THE RENDER. No gain on the storm
+// branch could ever have delivered it, and the FIX6 note inside zapHit already contains the
+// reason without drawing the conclusion: "a bright additive streak over a sunlit tan road sums
+// past the clip on every channel and arrives white no matter what it was authored as". Its
+// answer was a wide DIM copy, which lowers the exposure rather than raising the chroma, so the
+// school stayed pale for four more rounds.
+// A sum with a lit tan road carries the road's own red into the result and clips blue first.
+// The only operator that can put a SATURATED colour on a lit surface is the one that REPLACES
+// it, so a bolt's BODY belongs in the alpha bucket, and the white-hot core it needs is a
+// separate 1-2 px additive filament laid on the same segment. Body + filament is also exactly
+// what the finding asks for ("a white-hot 1 px inner filament") and what a discharge is.
+// P_FRAG multiplies the alpha bucket by mix(uSkyC, uSunC, vSh); a mode-2 streak runs vSh = 1.4,
+// which CLAMPS to uSunC exactly — so unlike a dust dome (ASUN_INV can only cancel the ramp at
+// one height across the quad) a streak's sun divides out exactly. That is ASTRK.
+const ASTRK = [1 / 1.50, 1 / 1.30, 1 / 0.99];
+// Authored in pre-ACES linear so the FRAME lands where the acceptance measures, not the swatch.
+// Both are the school's own SCHOOL_FX hue deepened rather than re-invented — `col` is what the
+// eye should name a school, and this is what has to be authored on an OPAQUE quad to get there.
+// Measured on the shipped `_elem` and re-authored twice: the FIRST cut (0.192, 0.052, 0.640)
+// landed the violet cluster at H 280.6 / S 0.418 — hue in band, saturation short, because a
+// 4 px streak is half coverage-blended EDGE and the tan road it feathers into carries red and
+// green into the mean. Deeper green and a taller blue buy the core back; the width goes up with
+// it (see boltChain's callers) so the core-to-edge ratio itself improves.
+const STORM_BODY = [0.168, 0.005, 0.900];
+// PIERCE IS A STEEL BLUE, NOT A CYAN, and the difference is a contract. Round 15 asks for
+// "the same treatment in cyan"; SPEC_8 §F and the boot assertion put pierce at hue 212 and FROST
+// at 188, separated on hue, saturation, bloom, shape and time — and a literal cyan spall body
+// measured 196 on the render, i.e. straight on top of the school it is contractually required to
+// stay off. So the body carries the school's own authored hue: it renders at h 213 / S 0.65
+// against frost's ice-white S 0.22, which answers the finding (pierce has a saturated colour on
+// the render at last) without re-opening the collision four rounds were spent closing.
+const PIERCE_BODY = [0.072, 0.191, 0.805];
+function strkCol(C, gain) {
+  const g = gain === undefined ? 1 : gain;
+  E.r = C[0] * g * ASTRK[0]; E.g = C[1] * g * ASTRK[1]; E.b = C[2] * g * ASTRK[2];
+}
+// ONE SEGMENT OF A BOLT. `b` is the far end: mode 2 draws its quad BACKWARD from iPos along
+// iVel, so the head is the end the eye follows a chain toward. iVel is a UNIT vector and the
+// drag is 40, i.e. it carries the bearing and moves the streak two centimetres — a bolt is a
+// shape, not a projectile, and the old chain's velocity of `delta * 30` slid every link three
+// quarters of a segment out of the polyline it belonged to.
+// The body is shadow-EXEMPT (mode +8 in the alpha bucket is the opt-OUT that mirrors the
+// additive bucket's opt-IN, see P_VERT): lightning is light, and light does not lie in shade.
+// s1 === s0 deliberately — length is s * asp, so a shrinking width would shorten the segment
+// and open a gap at every joint as the bolt fades.
+function boltSeg(ax, ay, az, bx, by, bz, w, C, life, lead) {
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  const L = Math.hypot(dx, dy, dz);
+  if (L < 1e-3) return;
+  const ux = dx / L, uy = dy / L, uz = dz / L;
+  eReset();
+  E.x = bx; E.y = by; E.z = bz;
+  E.vx = ux; E.vy = uy; E.vz = uz; E.drag = 40;
+  E.tile = T_BOLT; E.mode = 2 + 8;
+  E.s0 = w; E.s1 = w; E.asp = L / w;
+  strkCol(C, 1);
+  E.a = 0.96; E.life = life; E.fade = 2; E.lead = lead; push(BA);
+  eReset();                                          // ...and the filament inside it
+  E.x = bx; E.y = by; E.z = bz;
+  E.vx = ux; E.vy = uy; E.vz = uz; E.drag = 40;
+  E.tile = T_BOLT; E.mode = 2;
+  E.s0 = w * 0.24; E.s1 = w * 0.24; E.asp = L / (w * 0.24);
+  E.r = 1.18; E.g = 1.08; E.b = 1.30;                // white-hot, a shade cool
+  E.a = 1; E.life = life * 0.80; E.fade = 2; E.lead = lead; push(BB);
+}
+// A JITTERED POLYLINE from a strike point to a body, ending ON the body. `lat` is the lateral
+// kink in world units; the last joint takes none, which is the difference between a chain that
+// arrives and the round-15 finding's "bars fanning in directions unrelated to the target".
+function boltChain(ax, ay, az, bx, by, bz, segs, lat, w, C, life) {
+  const dx = bx - ax, dy = by - ay, dz = bz - az;
+  const H = Math.hypot(dx, dz) || 1;
+  const nx = -dz / H, nz = dx / H;
+  let px = ax, py = ay, pz = az;
+  for (let k = 0; k < segs; k++) {
+    const f = (k + 1) / segs, last = k === segs - 1;
+    const j = last ? 0 : es1() * lat;
+    const qx = ax + dx * f + nx * j, qz = az + dz * f + nz * j;
+    const qy = ay + dy * f + (last ? 0 : es1() * lat * 0.62);
+    boltSeg(px, py, pz, qx, qy, qz, w, C, life, 0.008);
+    px = qx; py = qy; pz = qz;
+  }
+}
 {
   // ══ SCHOOLS §1b — the contract, asserted at boot ══════════════════════════════════════
   // Every rule here is a finding from a critic round, kept as a test so the next pass cannot
@@ -28371,6 +29070,19 @@ VFX.hit = (x, y, z, el, size, e) => {
       const q = (tw.x - x) ** 2 + (tw.z - z) ** 2;
       if (q < bq) { bq = q; nx = x - tw.x; nz = z - tw.z; }
     }
+    // ══ r15-VFX §3 — ...AND A FALLBACK, WHICH IS WHY THE PROOF FRAME SHOWED NOTHING ══════
+    // `_elem` is this school's own acceptance frame and it stages its eight bodies with
+    // `builds: []`. With no damaging tower on the field the loop above leaves (0, 0), the
+    // normalise below turns that into +x, and every streak in the burst — the shard fan, the
+    // arrow stub and the spall body — is fired along a world axis that on this rig points into
+    // the body and out the far side, where the depth test eats it. That is most of why round 15
+    // could "find no pierce streak" on a frame that was drawing three of them.
+    // An arrow comes from AHEAD, so with no shooter to name, the spall flies back along the
+    // body's own travel. It is the path tangent and not the camera, so it stays deterministic
+    // under the harness in exactly the way the melee emitter's note demands.
+    if (bq === 1e9 && e && G.pathTan && typeof e.d === 'number') {
+      const tn = G.pathTan(e.d); nx = -tn.x; nz = -tn.z;
+    }
     { const L = Math.hypot(nx, nz) || 1; nx /= L; nz /= L; }
     // ══ VFX-FIX5 §4b — PIERCE LEADS WITH A DIRECTION ══════════════════════════════════
     // Round 5: "the pierce hit is the same isotropic white line-burst as the melee clash", and
@@ -28453,8 +29165,13 @@ VFX.hit = (x, y, z, el, size, e) => {
     // core beside it, so it is opened up: 1.85 -> 2.15 u and alpha 0.52 -> 0.70. Nothing about it
     // clips (the chroma ceiling holds it at max EC_CEIL), so a wider one adds chroma rather than
     // glare — which is the opposite of what widening it would have done before the ceiling.
-    E.s0 = 0.86 * s; E.s1 = 2.15 * s; elemCol(PC.hot, 1.25);   // FIX5 §4b: behind the shaft, not over it
-    E.a = 0.70; E.life = 0.24; E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 3.0;
+    // r15-VFX §3 — 1.25 -> 0.95 and alpha 0.70 -> 0.44. Every previous pass on this school could
+    // only raise ADDITIVE exposure, so "make pierce visible" and "make pierce cyan" were the same
+    // dial pulling opposite ways and exposure always won. With a saturated alpha BODY under it
+    // (see the spall loop below) the star goes back to being what its own note calls it — a
+    // glint behind the shaft — instead of the white bloom that was bleaching the school.
+    E.s0 = 0.86 * s; E.s1 = 2.15 * s; elemCol(PC.hot, 0.95);   // FIX5 §4b: behind the shaft, not over it
+    E.a = 0.44; E.life = 0.24; E.fade = 2; E.rot = er() * 6.28; E.rotV = es1() * 3.0;
     E.lead = 0.01; push(BB);
     eReset();                                                       // the white-hot centre
     // A struck-steel spark has a point in it. This is the ONE near-achromatic quad in the
@@ -28495,8 +29212,24 @@ VFX.hit = (x, y, z, el, size, e) => {
       // SCHOOLS §1c: wider and longer (0.088/asp 8 → 0.20/asp 9) — the fan is the school's
       // silhouette and it has to survive being 30 px wide on a gameplay frame.
       E.s0 = (SPL / 3.8) * s; E.s1 = 0.080 * s; E.asp = 3.8;
-      elemCol(PC.col, 1.45); E.a = 1; E.life = 0.26; E.fade = 2;
+      elemCol(PC.col, 0.85); E.a = 0.85; E.life = 0.26; E.fade = 2;   // r15 §3 — see the star
       E.lead = 0.005; push(BB);
+    }
+    // ══ r15-VFX §3 — "I CAN FIND NO PIERCE STREAK" ═══════════════════════════════
+    // Round 15, on the school's own proof frame, and it is the storm failure in a second colour.
+    // The fan above is ADDITIVE, and an additive streak over a sunlit tan road arrives white
+    // however it is authored (see the STORM_BODY note) — which is why four rounds of widening it
+    // produced more white and never more cyan. So the fan keeps its glint and gains a BODY:
+    // three saturated alpha-bucket spall streaks on the same impact axis, under the same
+    // white-hot filament storm's bolts carry, so the school has a colour on the render and not
+    // only on its build chip. Same axis rules the FIX6 porcupine note set — a tight cone about
+    // the incoming shaft, never upward — so nothing here can read as a needle stuck in a body.
+    for (let i = 0, k = (LOWQ ? 1 : 2); i < k; i++) {
+      const an = Math.atan2(nz, nx) + es1() * 0.26;
+      const l0 = (0.26 + er() * 0.16) * s, l1 = l0 + (SPL * 0.95 + er() * 0.30) * s;
+      boltSeg(x + Math.cos(an) * l0, hy - 0.05 * s, z + Math.sin(an) * l0,
+              x + Math.cos(an) * l1, hy - 0.26 * s, z + Math.sin(an) * l1,
+              0.240 * s, PIERCE_BODY, 0.24 + er() * 0.06, 0.006);
     }
     // ...and ONE arrow, with the material an arrow has. The finding's last clause on stick-ins
     // is "give shafts the actual arrow material (brown shaft + pale fletching), not a white
@@ -28885,46 +29618,35 @@ VFX.hit = (x, y, z, el, size, e) => {
     // to be one — wider polylines, a longer life than the old 0.15 s blink, and each limb
     // grows a BRANCH off its midpoint, which is the one thing lightning does that no other
     // primitive in this game does.
+    // r15-VFX §3 — the same rebuild zapHit takes, for the same reason: a CONNECTED jitter
+    // polyline that ends on the body it names, drawn as a saturated alpha BODY under a
+    // white-hot additive filament. See the STORM_BODY note above boltSeg.
+    claimBlast(x, py + 0.20, z, s, 4);
+    emitSpill(x, z, 0.52 * s, 0.30, 0.12, 1.20, 0.26);
     for (const ni of [n1, n2]) {
       if (ni < 0) continue;
       const o = EN[ni], tx = o.px, tz = o.pz, ty = G.groundY(tx, tz) + 0.9;
-      const SEG = 5;
-      for (let k = 0; k < SEG; k++) {                                // a jagged chain of streaks
-        const f0 = k / SEG, f1 = (k + 1) / SEG;
-        const jx = es1() * 0.55, jy = es1() * 0.42, jz = es1() * 0.55;
-        eReset();
-        E.x = x + (tx - x) * f0 + jx; E.y = py + (ty - py) * f0 + jy; E.z = z + (tz - z) * f0 + jz;
-        E.vx = (tx - x) * (f1 - f0) * 30; E.vy = (ty - py) * (f1 - f0) * 30; E.vz = (tz - z) * (f1 - f0) * 30;
-        E.drag = 40; E.tile = SC.tile; E.mode = 2;
-        E.s0 = 0.30 * s; E.s1 = 0.11 * s; E.asp = 9 + er() * 5;
-        elemCol(SC.col, 1.85); E.a = 1; E.life = 0.28 + er() * 0.10; E.fade = 2;
-        E.lead = 0.01; push(BB);
-        if (k === 1 || k === 3) {                                    // the fork off the limb
-          eReset();
-          const bx = x + (tx - x) * f1, bz = z + (tz - z) * f1, by = py + (ty - py) * f1;
-          const ba = Math.atan2(tz - z, tx - x) + (er() < 0.5 ? 1.05 : -1.05) + es1() * 0.35;
-          E.x = bx; E.y = by; E.z = bz;
-          E.vx = Math.cos(ba) * 16; E.vy = 4 + er() * 6; E.vz = Math.sin(ba) * 16;
-          E.drag = 34; E.tile = SC.tile; E.mode = 2;
-          E.s0 = 0.21 * s; E.s1 = 0.07 * s; E.asp = 7 + er() * 4;
-          elemCol(SC.hot, 1.00); E.a = 0.92; E.life = 0.22 + er() * 0.08; E.fade = 2;
-          E.lead = 0.012; push(BB);
-        }
+      boltChain(x, py, z, tx, ty, tz, 4, 0.80 * s, 0.150 * s, STORM_BODY, 0.28 + er() * 0.10);
+      {                                                              // the fork off the limb
+        const bx = x + (tx - x) * 0.5, bz = z + (tz - z) * 0.5, by = py + (ty - py) * 0.5;
+        const ba = Math.atan2(tz - z, tx - x) + (er() < 0.5 ? 1.05 : -1.05) + es1() * 0.35;
+        const fl = (1.2 + er() * 1.0) * s;
+        boltSeg(bx, by, bz, bx + Math.cos(ba) * fl, by + 0.45 + er() * 0.60, bz + Math.sin(ba) * fl,
+                0.090 * s, STORM_BODY, 0.22 + er() * 0.08, 0.012);
       }
+      eReset();                                                      // ...and the ARRIVAL
+      E.x = tx; E.y = ty; E.z = tz; E.tile = T_FLASH; E.mode = 3;
+      E.s0 = 0.13 * s; E.s1 = 0.26 * s; elemCore(SC.hot, 1.05);
+      E.a = 0.86; E.life = 0.09; E.fade = 2; E.lead = 0.004; push(BB);
     }
-    for (let i = 0, k = 8; i < k; i++) {                             // the violet-white crack
-      eReset();
-      const an = er() * 6.2832, sp = 5 + er() * 12;
-      E.x = x + es1() * 0.14 * s; E.y = py + es1() * 0.2 * s; E.z = z + es1() * 0.14 * s;
-      E.vx = Math.cos(an) * sp * 0.85; E.vy = sp * (0.3 + er() * 0.85); E.vz = Math.sin(an) * sp * 0.85;
-      E.grav = 15; E.drag = 4.6; E.tile = T_SPARK; E.mode = 2;
-      E.s0 = 0.15 * s; E.s1 = 0.050 * s; E.asp = 7 + er() * 9;
-      // one crack in three runs at the WHITE end of the school and the rest at the violet
-      // end. That mix is the "violet-white" the brief asks for: a bolt is white at the core
-      // and violet everywhere the eye can still resolve a colour.
-      elemCol(SC.hot, i % 3 === 0 ? 1.85 : 1.05);
-      E.a = 1; E.life = 0.22 + er() * 0.14; E.fade = 2;
-      E.lead = 0.01; push(BB);
+    // Two forks to EARTH where there were eight isotropic cracks. See the zapHit note: a random
+    // bearing is not a shape, and an additive spark on a lit road cannot carry the school's hue
+    // however it is authored — both of those are what the round-15 measurement was reading.
+    for (let b = 0; b < 2; b++) {
+      const an = er() * 6.2832, rr = (0.5 + er() * 0.8) * s;
+      const ex = x + Math.cos(an) * rr, ez = z + Math.sin(an) * rr;
+      boltChain(x, py, z, ex, G.groundY(ex, ez) + 0.07, ez, 3, 0.30 * s, 0.095 * s, STORM_BODY,
+                0.22 + er() * 0.08);
     }
     // (the old 2.9 u "cold bruise" soft blob that used to close this out is gone with the
     //  ring: two overlapping gaussians were most of what made storm read as a tinted puff.)
@@ -29574,6 +30296,12 @@ VFX.zapHit = (x, y, z, hop, e) => {
   E.x = x; E.y = y; E.z = z; E.tile = T_SOFT; E.mode = 3; E.s0 = 1.05; E.s1 = 1.50;
   elemCol(SC.hot, 0.95); E.a = 0.55; E.life = 0.07; E.fade = 2;
   E.lead = 0.005; push(BB);
+  // r15-VFX §3 — "no impact point and no emissive spill on either the target or the ground".
+  // Both halves, and neither costs a light slot or a draw call the game did not already have:
+  // BL_KIND row 4 is a 0.12 s violet practical out of the same six-slot pool the blasts use,
+  // and emitSpill is the additive ground quad every brazier on the field already lays down.
+  claimBlast(x, y + 0.20, z, 1, 4);
+  emitSpill(x, z, 0.52, 0.30, 0.12, 1.20, 0.26);
   if (!(hop | 0)) {
     const EN = G.enemies;
     let ni = -1, nd = 81;                                            // 9 u, squared
@@ -29585,57 +30313,37 @@ VFX.zapHit = (x, y, z, hop, e) => {
     }
     if (ni >= 0) {
       const o = EN[ni], tx = o.px, tz = o.pz, ty = G.groundY(tx, tz) + 0.95;
-      for (let k = 0; k < 5; k++) {                                  // the jump, jointed
-        const f0 = k / 5, f1 = (k + 1) / 5;
-        eReset();
-        E.x = x + (tx - x) * f0 + es1() * 0.50;
-        E.y = y + (ty - y) * f0 + es1() * 0.38;
-        E.z = z + (tz - z) * f0 + es1() * 0.50;
-        E.vx = (tx - x) * (f1 - f0) * 30; E.vy = (ty - y) * (f1 - f0) * 30; E.vz = (tz - z) * (f1 - f0) * 30;
-        E.drag = 40; E.tile = SC.tile; E.mode = 2;
-        E.s0 = 0.30; E.s1 = 0.11; E.asp = 9 + er() * 5;
-        elemCol(SC.col, 1.85); E.a = 1; E.life = 0.24 + er() * 0.10; E.fade = 2;
-        E.lead = 0.01; push(BB);
-        // ...and a wide DIM copy under it, which is the only way an additive arc keeps a hue.
-        // A bright additive streak over a sunlit tan road sums past the clip on every channel and
-        // arrives white no matter what it was authored as (measured: the chain read white at both
-        // hot*1.15 and col*1.85). A second pass at 2.4x the width and a third of the brightness
-        // stays under the clip, so the core is white-hot and the glow around it is blue — which
-        // is what lightning actually looks like and what the finding asks for.
-        E.s0 *= 2.4; E.s1 *= 2.4; elemCol(SC.col, 0.62); E.a = 0.55; push(BB);
-        if (k === 2) {                                               // one fork off the middle
-          eReset();
-          const ba = Math.atan2(tz - z, tx - x) + (er() < 0.5 ? 1.0 : -1.0) + es1() * 0.30;
-          E.x = x + (tx - x) * f1; E.y = y + (ty - y) * f1; E.z = z + (tz - z) * f1;
-          E.vx = Math.cos(ba) * 15; E.vy = 3 + er() * 5; E.vz = Math.sin(ba) * 15;
-          E.drag = 34; E.tile = SC.tile; E.mode = 2;
-          E.s0 = 0.20; E.s1 = 0.07; E.asp = 7 + er() * 4;
-          elemCol(SC.hot, 1.00); E.a = 0.92; E.life = 0.20 + er() * 0.08; E.fade = 2;
-          E.lead = 0.012; push(BB);
-        }
+      // r15-VFX §3 — the jump is now a CONNECTED polyline that lands on the body: four links,
+      // each starting where the last one ended, the final joint unjittered. The dim wide copy
+      // the FIX6 note describes is gone with it — boltSeg's alpha body IS the hue-bearing pass
+      // and it does not have to stay under a clip to keep its colour.
+      boltChain(x, y, z, tx, ty, tz, 4, 0.80, 0.150, STORM_BODY, 0.26 + er() * 0.08);
+      {                                                              // one fork off the middle
+        const ba = Math.atan2(tz - z, tx - x) + (er() < 0.5 ? 1.0 : -1.0) + es1() * 0.30;
+        const mx2 = x + (tx - x) * 0.5, mz2 = z + (tz - z) * 0.5, my2 = y + (ty - y) * 0.5;
+        const fl = 1.1 + er() * 0.9;
+        boltSeg(mx2, my2, mz2, mx2 + Math.cos(ba) * fl, my2 + 0.45 + er() * 0.55, mz2 + Math.sin(ba) * fl,
+                0.090, STORM_BODY, 0.20 + er() * 0.06, 0.012);
       }
+      eReset();                                                      // ...and the ARRIVAL
+      E.x = tx; E.y = ty; E.z = tz; E.tile = T_FLASH; E.mode = 3;
+      E.s0 = 0.13; E.s1 = 0.26; elemCore(SC.hot, 1.05);
+      E.a = 0.86; E.life = 0.09; E.fade = 2; E.lead = 0.004; push(BB);
     }
   }
-  // FORKED, not sprayed. Three branches, each a chain of screen-space streaks with a
-  // jittered kink at every joint — a lightning arc has a shape, and eight isotropic
-  // sparks is the one shape it does not have.
-  for (let b = 0; b < 3; b++) {
-    const an = er() * 6.2832, dip = -0.25 - er() * 0.75, len = 1.5 + er() * 1.9;
-    let px = x, py = y, pz = z;
-    for (let k = 0; k < 3; k++) {
-      const f = (k + 1) / 3;
-      const nx = x + Math.cos(an) * len * f + es1() * 0.34;
-      const ny = y + dip * len * f + es1() * 0.30;
-      const nz = z + Math.sin(an) * len * f + es1() * 0.34;
-      eReset();
-      E.x = px; E.y = py; E.z = pz;
-      E.vx = (nx - px) * 26; E.vy = (ny - py) * 26; E.vz = (nz - pz) * 26;
-      E.drag = 34; E.tile = SC.tile; E.mode = 2;
-      E.s0 = 0.46; E.s1 = 0.16; E.asp = 7 + er() * 4;
-      elemCol(SC.col, 1.85); E.a = 1; E.life = 0.26 + er() * 0.12; E.fade = 2;
-      E.lead = 0.01; push(BB);
-      px = nx; py = ny; pz = nz;
-    }
+  // ══ r15-VFX §3 — A FORK GOES TO EARTH; IT DOES NOT GO ANYWHERE ════════════════════
+  // Round 15: bolts "fanning in directions unrelated to the target, crossing each other". They
+  // were, exactly: three branches thrown at `er() * 6.2832` — ANY bearing, including up and
+  // including back through the target — 3 to 5 u long at 0.46 u of width, which at gameplay
+  // pitch is the 20 px bar the critic photographed. Nothing about a random bearing is readable,
+  // and a stack of them crossing each other is the "debug gizmo" verdict in one image.
+  // A discharge does exactly one thing the eye already knows: it finds earth. So two forks
+  // remain and both run DOWN to the dirt beside the struck body — a direction that can be
+  // named — at a sixth of the old width, jointed by boltChain like the jump above.
+  for (let b = 0; b < 2; b++) {
+    const an = er() * 6.2832, rr = 0.5 + er() * 0.8;
+    const ex = x + Math.cos(an) * rr, ez = z + Math.sin(an) * rr;
+    boltChain(x, y, z, ex, G.groundY(ex, ez) + 0.07, ez, 3, 0.30, 0.095, STORM_BODY, 0.22 + er() * 0.08);
   }
   // VFX-FIX3 §3: the 2.05 u soft "body envelope" and the 2.3 u grounding hoop at the feet
   // both went with the flash ring. Between them they put a round glow and a flat ellipse on
@@ -30579,6 +31287,12 @@ VFX.explosion = (x, y, z, power) => {
   eseed((x * 131 + z * 61) | 0, (G.vt() * 733) | 0);
   VFX.shakeAt(x, gy, z, 1.25 * p);
   decal(x, z, 6.2 * p, 0, 20, 0.052, 0.042, 0.033, er());          // scorch, ~20 s
+  // r15-VFX §2 — ...and a TIGHT inner char at the crater itself. The finding's own number is
+  // "0.45x albedo, ~3 wu radius under the crater", and the 6.2 p ring above is nearly ten metres
+  // wide at a catapult's p: spread over that area its alpha profile is a soft smudge by the time
+  // it reaches the two metres the eye is actually looking at. A second, smaller, darker patch on
+  // its own seed lands the char where the fireball was.
+  decal(x, z, 2.9 * p, 0, 20, 0.030, 0.024, 0.019, er());          // the crater char itself
   decal(x, z, 11 * p, 1, 0.95, 0.72, 0.62, 0.46, er());            // ground shockwave
 
   // FIX6 §4b: the source stays LOW, and the reason is measured rather than assumed. The obvious
@@ -30730,7 +31444,13 @@ VFX.explosion = (x, y, z, power) => {
     const w = lit ? 0.52 : 0.20 + er() * 0.13;
     E.r = w; E.g = w * (lit ? 0.82 : 0.76); E.b = w * (lit ? 0.58 : 0.55);
     if (EJ && !lit) { E.r *= EJ[0]; E.g *= EJ[1]; E.b *= EJ[2]; }   // fire-lit dirt stays warm
-    E.a = 0.78 + er() * 0.10; E.life = 1.05 + er() * 0.85;
+    // r15-VFX §2 — 0.78-0.88 -> 0.40-0.58. Thirty-eight quads at 0.83 mean alpha over one crater
+    // is not a fountain of earth, it is a LID: whatever their individual silhouettes are, the sum
+    // is opaque within two overlaps and what the eye reads is one smooth mass with a feathered
+    // rim — the "soft dark-brown lozenge with uniform value" of the finding, and the reason no
+    // debris chunk in the frame could be seen (they are BEHIND this). Under 0.55 the quads
+    // composite as a volume with structure in it, which is the whole of what the note asks for.
+    E.a = 0.44 + er() * 0.18; E.life = 1.05 + er() * 0.85;
     E.rot = er() * 6.28; E.rotV = es1() * 1.5; E.lead = 0.12 + er() * 0.44;
     push(BA);
   }
@@ -30750,13 +31470,18 @@ VFX.explosion = (x, y, z, power) => {
     const an = er() * 6.2832, sp = (7 + er() * 17) * p;
     E.x = x + Math.cos(an) * 0.4; E.y = gy + 0.45; E.z = z + Math.sin(an) * 0.4;
     E.vx = Math.cos(an) * sp; E.vy = sp * (0.60 + er() * 1.30); E.vz = Math.sin(an) * sp;
-    E.grav = 28; E.drag = 0.30; E.tile = T_CHUNK;
-    E.s0 = (0.26 + er() * 0.40) * p; E.s1 = E.s0;
+    // r15-VFX §2 — "I cannot find a single debris chunk in the frame". They are drawn (26 of
+    // them) and they were 0.26-0.66 p across — 4 to 10 px at gameplay pitch — thrown INTO a
+    // 0.83-alpha dirt lid on a 0.9-1.65 s life, i.e. small, occluded and gone. The lid is fixed
+    // above; here the shard gets a size the eye can resolve and the finding's "~2 s dirt-fall
+    // arc": gravity down to 24 so the throw hangs, and a life long enough to land.
+    E.grav = 24; E.drag = 0.30; E.tile = T_CHUNK;
+    E.s0 = (0.36 + er() * 0.56) * p; E.s1 = E.s0;
     // mode 5: a shard leaving a fireball is lit from BELOW by it. The warm-lit underside is
     // half painted into the tile (see T_CHUNK) and half this, so the two agree.
     E.mode = 5;
     E.r = 0.94; E.g = 0.88; E.b = 0.82; E.a = 1;
-    E.life = 0.90 + er() * 0.75; E.rot = er() * 6.28; E.rotV = es1() * 52; E.lead = 0.15 + er() * 0.14;
+    E.life = 1.35 + er() * 0.80; E.rot = er() * 6.28; E.rotV = es1() * 52; E.lead = 0.15 + er() * 0.14;
     push(BA);
   }
   for (let i = 0; i < 16; i++) {                                   // embers
@@ -30764,9 +31489,19 @@ VFX.explosion = (x, y, z, power) => {
     const an = er() * 6.2832, sp = (5 + er() * 13) * p;
     E.x = x; E.y = gy + 0.6; E.z = z;
     E.vx = Math.cos(an) * sp; E.vy = sp * (0.55 + er() * 1.25); E.vz = Math.sin(an) * sp;
-    E.grav = 13; E.drag = 1.5; E.tile = T_EMBER;
-    E.s0 = 0.14 + er() * 0.20; E.s1 = 0.05;
-    E.r = 2.3; E.g = 0.95 + er() * 0.5; E.b = 0.24; E.a = 1;
+    // ══ r15-VFX §2 — "THE ORANGE DOTS ARE FLAT UNIFORM DISCS ... EMBERS READ AS BOKEH" ════
+    // Exactly right, and both halves are one line each. T_EMBER is a radial blob on a mode-0
+    // billboard, so a cinder travelling at 18 m/s was drawn as a round dot that could have been
+    // going anywhere — mode 2 lays the quad along its own flight, which is the difference between
+    // a spark thrown and a light out of focus (the tower braziers have drawn theirs this way
+    // since FIX10 §2). And a cinder COOLS: two in three now run at the deep red end of the burn
+    // instead of every one of them at the same hot orange, so a frame of them has a value and a
+    // hue range in it rather than sixteen copies of one dot.
+    E.grav = 13; E.drag = 1.5; E.tile = T_SPARK; E.mode = 2;
+    E.s0 = 0.085 + er() * 0.075; E.s1 = 0.030; E.asp = 4.5 + er() * 4.0;
+    const hotE = er() < 0.34;
+    E.r = hotE ? 2.60 : 1.95; E.g = hotE ? 1.20 + er() * 0.40 : 0.42 + er() * 0.22;
+    E.b = hotE ? 0.30 : 0.075; E.a = 1;
     E.life = 0.5 + er() * 0.9; E.lead = 0.12; E.fade = 2; push(BB);
   }
   // low dirt fan: ground-aligned so it never intersects the terrain. Spawned on a ring
@@ -30811,8 +31546,15 @@ VFX.explosion = (x, y, z, power) => {
     // of the nominal, and that is a factor of THREE — enough that no two puffs in a column read
     // as the same object. Rotation was already per-puff; the alpha ramp is the emitter's default
     // fade curve (pow(1-f, 1.45)), so what was missing was the per-puff spread, here and below.
+    // r15-VFX §2 — the crown quads come in from a 7.2 p ceiling to 5.6 p. On `battle3` this
+    // plume is the "opaque near-white paper cut-out with a straight silhouette edge slicing
+    // through the tree canopies" the finding photographs, and the straight edge is not an alpha
+    // artefact at all — it is the DEPTH TEST cutting a 16 u billboard against a tree. A soft
+    // (depth-faded) particle is the textbook cure and it needs a depth texture this pipeline does
+    // not have; a smaller quad is the cure this one can afford, because the length of the
+    // intersection line falls with the quad's own width. Alpha comes down with it (see below).
     const jz = 0.60 + er() * 1.20;
-    E.s0 = (1.2 + er() * 1.4) * p * jz; E.s1 = (4.2 + er() * 3.0) * p * jz;
+    E.s0 = (1.0 + er() * 1.1) * p * jz; E.s1 = (3.3 + er() * 2.3) * p * jz;
     // colour by the puff's own place in the column: the ones spawned late (small lead) are
     // still at the crater and hot, the early ones have already risen and cooled.
     // FIX6 §4: 0.44 -> 0.30 at the base and 0.28 -> 0.15 at the apex. The finding asks for a
@@ -30860,7 +31602,7 @@ VFX.explosion = (x, y, z, power) => {
     E.r = w * (SMH[0] + (SMC[0] - SMH[0]) * k) + sun * 1.06;
     E.g = w * (SMH[1] + (SMC[1] - SMH[1]) * k) + sun * 0.70;
     E.b = w * (SMH[2] + (SMC[2] - SMH[2]) * k) + sun * 0.33;
-    E.a = 0.30 + er() * 0.30;                                      // FIX5 §4b: a real spread
+    E.a = 0.26 + er() * 0.24;                                      // FIX5 §4b: a real spread
     // The column keeps its smoke weight — only its HUE follows the ground, so a Frostfell
     // plume is cold grey rather than a tan cloud parked over a white valley.
     if (EJ) { const m = 3 / (EJ[0] + EJ[1] + EJ[2]); E.r *= EJ[0] * m; E.g *= EJ[1] * m; E.b *= EJ[2] * m; }
@@ -30897,7 +31639,7 @@ VFX.explosion = (x, y, z, power) => {
     E.r = w * (SMH[0] + (SMC[0] - SMH[0]) * k) + sun * 1.06;
     E.g = w * (SMH[1] + (SMC[1] - SMH[1]) * k) + sun * 0.70;
     E.b = w * (SMH[2] + (SMC[2] - SMH[2]) * k) + sun * 0.33;
-    E.a = 0.20 + er() * 0.22;
+    E.a = 0.17 + er() * 0.19;                                      // r15 §2 — see the crown note
     if (EJ) { const m = 3 / (EJ[0] + EJ[1] + EJ[2]); E.r *= EJ[0] * m; E.g *= EJ[1] * m; E.b *= EJ[2] * m; }
     E.life = 1.4 + er() * 0.8; E.rot = er() * 6.28; E.rotV = es1() * 0.9; E.lead = lead;
     push(BA);
@@ -30914,10 +31656,15 @@ VFX.explosion = (x, y, z, power) => {
   // — after the fountain, the plume and the lobes, before the fire bands — so it composites over
   // the pale dirt it is meant to be inside and under the fire that is meant to be climbing out
   // of it. (See the ORDER note immediately below: in the alpha bucket, push order IS draw order.)
-  for (let i = 0; i < 8; i++) {
+  // r15-VFX §2 — 8 -> 11 puffs and the alpha band 0.58-0.84 -> 0.30-0.52. The finding's cap is
+  // "peak alpha <= 0.55", and the reason is not exposure: at 0.7 mean alpha three overlapping
+  // quads are opaque, so the core had no INTERNAL structure however many puffs were in it — the
+  // "one soft dark-brown lozenge with uniform value" the crop shows. More of them, each thinner,
+  // is the only way a quad system builds a volume you can see into.
+  for (let i = 0; i < 11; i++) {
     eReset();
-    const an = er() * 6.2832, rr = er() * 1.6 * p;
-    const ld = 0.02 + er() * 0.22;
+    const an = er() * 6.2832, rr = er() * 1.9 * p;
+    const ld = 0.02 + er() * 0.26;
     E.x = x + Math.cos(an) * rr; E.y = gy + (0.45 + er() * 1.35) * p; E.z = z + Math.sin(an) * rr;
     E.vx = Math.cos(an) * (0.6 + er() * 1.3) + WX * 1.1; E.vy = 0.8 + er() * 1.3;
     E.vz = Math.sin(an) * (0.6 + er() * 1.3) + WZ * 1.1;
@@ -30928,9 +31675,17 @@ VFX.explosion = (x, y, z, power) => {
     // finding asks for is keyed to the puff's BIRTH ORDER: the earliest core puffs are the ones
     // buried inside the mass and are darkest, the late ones have already rolled clear.
     const ao = 0.34 + 0.66 * Math.min(1, ld / 0.24);
-    E.r = 0.085 * ao; E.g = 0.070 * ao; E.b = 0.058 * ao;
+    // r15-VFX §2 — THE RIM. The finding's clause (a) ends "and a rim term lit by the fire colour
+    // so the top-lit side wraps", and this was the one population in the plume with no light term
+    // at all: a flat charcoal quad has no side facing the fireball it is supposed to be rolling
+    // out of. mode 5 is the billboard whose sun ramp runs warm at the BOTTOM edge, which is
+    // exactly where a fireball is relative to its own soot, and `fr` is a small explicit warm
+    // addition that dies with the puff's birth order the same way `ao` does.
+    E.mode = 5;
+    const fr = 0.115 * (1 - Math.min(1, ld / 0.24));
+    E.r = 0.085 * ao + fr * 1.00; E.g = 0.070 * ao + fr * 0.52; E.b = 0.058 * ao + fr * 0.18;
     if (EJ) { const m = 3 / (EJ[0] + EJ[1] + EJ[2]); E.r *= EJ[0] * m; E.g *= EJ[1] * m; E.b *= EJ[2] * m; }
-    E.a = 0.58 + er() * 0.26; E.life = 0.55 + er() * 0.55;
+    E.a = 0.30 + er() * 0.22; E.life = 0.55 + er() * 0.55;
     E.rot = er() * 6.28; E.rotV = es1() * 1.25; E.lead = ld;
     push(BA);
   }
@@ -31110,14 +31865,31 @@ VFX.smite = (x, z, rad) => {
   // ground ring pulled in from R*3.1 to R*1.15 so the strike has a tight FOOT rather than a
   // radial wash. The drag is high and the velocity is unit-length: `iVel` here is a DIRECTION,
   // not a motion, and the quad must not drift off the point it struck.
-  for (let k = 0; k < 2; k++) {
+  // ══ r15-VFX §2d — THE COLUMN ENDS IN AIR, NOT ON A CUT ═════════════════════════
+  // Round 15: "_smite's holy beam is a straight-sided flat gradient wedge that terminates mid-air
+  // on a hard horizontal cut", with the prescription "give every beam/cone a soft edge falloff
+  // and a fade-to-transparent at its far end instead of a geometric cut".
+  // Both defects come out of the TILE. T_SOFT is one radial gradient (1.0 at the centre, 0.52 at
+  // half radius, 0 at the rim); stretched 11:1 by a mode-2 streak, its alpha spends the whole
+  // fall-off in the last tenth of the length, and at r 2.40 / a 0.90 additive every bit of the
+  // rest is far past the display ceiling — so what the frame shows is the ISO-CONTOUR of a
+  // clipped quad, which is a hard-edged wedge with a flat top. T_BOLT is the tile this needed all
+  // along: a real gaussian ACROSS the beam and a taper to zero at BOTH ends (see its note).
+  // A third, wide, very faint pass is added under the pair, because a pillar of holy fire should
+  // have a halo the eye cannot find the edge of; and the core's exposure comes down so its
+  // silhouette is drawn by the tile rather than by the clip.
+  for (let k = 0; k < 3; k++) {
     eReset();
     E.x = x; E.y = gy + 13.0; E.z = z;
-    E.vy = 1; E.drag = 30; E.tile = T_SOFT; E.mode = 2;
-    E.s0 = k ? R * 0.62 : R * 0.30; E.s1 = k ? R * 0.40 : R * 0.16;
-    E.asp = k ? 5.4 : 11.0;
-    E.r = k ? 1.55 : 2.40; E.g = k ? 1.20 : 2.05; E.b = k ? 0.62 : 1.30;
-    E.a = k ? 0.34 : 0.90; E.life = k ? 0.30 : 0.18; E.fade = 2;
+    E.vy = 1; E.drag = 30; E.tile = T_BOLT; E.mode = 2;
+    E.s0 = k === 0 ? R * 0.30 : k === 1 ? R * 0.62 : R * 1.05;
+    E.s1 = k === 0 ? R * 0.18 : k === 1 ? R * 0.44 : R * 0.80;
+    E.asp = k === 0 ? 11.0 : k === 1 ? 5.4 : 3.2;
+    E.r = k === 0 ? 1.90 : k === 1 ? 1.35 : 0.72;
+    E.g = k === 0 ? 1.66 : k === 1 ? 1.05 : 0.56;
+    E.b = k === 0 ? 1.10 : k === 1 ? 0.56 : 0.30;
+    E.a = k === 0 ? 0.80 : k === 1 ? 0.30 : 0.16;
+    E.life = k === 0 ? 0.18 : k === 1 ? 0.30 : 0.40; E.fade = 2;
     E.lead = 0.02 + k * 0.02; push(BB);
   }
   eReset();                                                         // the hot foot of the column
@@ -33473,7 +34245,12 @@ const ASH_C = [0.80, 0.720, 0.580], ASH_E = [2.20, 0.95, 0.30];
 // unclamped width at 85 u is 2.0 px pins most of the far field to one size, and an 18 px ceiling
 // lets a near one draw the "large soft ellipse" the finding photographed. 1.05-13.0 is the same
 // shape of band snow runs, at ash's own scale.
-const MOTE_PX = MAPID === 3 ? [1.05, 13.0] : MOTE_MIST ? [7, 21] : SNOWFALL ? [1.05, 9.5]
+// r15-VFX §1 — the snow band opens 1.05-9.5 -> 0.95-14.0. A clamp is a DEPTH CUE DELETED (the
+// r14 note beside EMBER_PX says so about the floor); a 9:1 band is what lets a near flake and a
+// far one be different objects, and at 9.5 px of ceiling the whole near layer was resolving to
+// the same ellipse whatever the perspective divide handed it. See the three-layer note in the
+// SNOWFALL branch of stepMotes.
+const MOTE_PX = MAPID === 3 ? [1.05, 13.0] : MOTE_MIST ? [7, 21] : SNOWFALL ? [0.95, 14.0]
               : MOTE_SAND ? [1.50, 3.80] : [1.2, 19];
 // r13-VFX §3 — world-size gain per weather, the other half of the clamp fix above. Applied to the
 // AUTHORED size only, so the clamp band still owns both extremes.
@@ -33710,7 +34487,7 @@ function stepMotes(t, n, B) {
       if (_mp.x < -0.53 && _mp.y > 0.52) continue;
     }
     const big = MH[h + 2] > 0.80;
-    let s, av, wisp = false, snf = false;            // r12 §4a — snf: this flake is out of focus
+    let s, av, wisp = false, snf = false, lay = -1;  // r12 §4a — snf: this flake is out of focus
     if (W) {
       // WORLD-LOCKED, then clamped into MOTE_PX. This is the inverse of the pollen rule and
       // it is the whole fix: a screen-locked flake is the same disc at 8 u and at 50 u, so
@@ -33720,8 +34497,16 @@ function stepMotes(t, n, B) {
       // SIZE SPREAD ×3 (VFX-FIX2): 0.075..0.150 was a 2:1 range, and once the clamp band
       // bit, every flake in the frame resolved to the same ellipse. A ~6:1 cubed spread
       // means a near flake is genuinely a different object from a far one.
+      // r15-VFX §1 — the per-flake SIZE HASH is cut from ~6.9:1 to ~2.7:1 on snow, and the
+      // `big` bonus with it. FIX2 opened this spread to stop the clamp band flattening every
+      // flake to one ellipse, which was the right cure for the wrong disease: a 6.9:1 random
+      // spread laid over a 3:1 depth ratio means the hash DOMINATES, so the field's biggest
+      // marks are as likely to be at the horizon as at the lens — which is precisely a zero
+      // corr(screen-y, area). With three explicit depth layers below carrying the separation,
+      // the hash only has to keep neighbouring flakes from being identical.
       const sp3 = MH[h] * MH[h] * MH[h];
-      s = (0.040 + sp3 * 0.235) * W.size * MOTE_SZ * WSIZE_K * (big ? 1.45 : 1) * (LOWQ ? 1.25 : 1);
+      const spB = SNOWFALL ? (0.075 + sp3 * 0.130) : (0.040 + sp3 * 0.235);
+      s = spB * W.size * MOTE_SZ * WSIZE_K * (big ? (SNOWFALL ? 1.18 : 1.45) : 1) * (LOWQ ? 1.25 : 1);
       // ══ r14-VFX §3 — THE AERIAL SHRINK, i.e. THE HALF OF DEPTH THE DIVIDE DOES NOT BUY ══════
       // Perspective alone gives a far flake its smaller SIZE and nothing else; what the eye reads
       // as distance in real weather is that a far flake also loses its EDGES into the haze, so its
@@ -33736,6 +34521,29 @@ function stepMotes(t, n, B) {
       // floor still stops the far field resolving to stuck pixels. Ash takes twice the taper snow
       // does — the Wastes are the dustiest air in the campaign and the map that failed hardest.
       s *= 1 - (MOTE_ASH ? 0.42 : 0.36) * sstep(40 * DK, 100 * DK, qc);
+      // ══ r15-VFX §1 — THREE PARALLAX LAYERS, i.e. THE DEPTH THIS FIELD NEVER HAD ═════════
+      // Round 15, measured on `_hex`: 630 flake blobs, corr(screen-y, blob area) = -0.047 and a
+      // peak-luminance CV of 0.177 — "every flake is the same size and the same brightness
+      // regardless of depth ... it reads as a screensaver overlay". Both numbers are produced by
+      // this branch and neither is an accident:
+      //   SIZE. The base `s` does fall with 1/qc, but the clamp two lines down squeezed it into a
+      //   1.05-9.5 px band while the r14 aerial taper pulled the far half down INTO the floor, so
+      //   most of the field resolved to the same two-pixel mark. The 6:1 per-flake size hash then
+      //   swamped what little depth ordering survived, which is exactly a zero correlation.
+      //   VALUE. `av` was ceilinged at 0.80 AFTER the depth band had been multiplied in, and the
+      //   product reached that ceiling at BOTH ends of the band — so the clamp was eating the one
+      //   term that carried depth. A CV of 0.177 is what a clamp looks like.
+      // The finding's prescription taken literally: three bands with explicit size and alpha
+      // (near 1.0/1.0, mid 0.6/0.7, far 0.35/0.4), the far band thinned ~40%, a per-layer drift
+      // rate (see the SNOW_DRIFT block) and +/-8 deg of tilt jitter (see the WSTREAK block).
+      // Keyed to VIEW DEPTH and not to a per-flake hash, because the meter correlates area
+      // against SCREEN Y and only real depth moves that. Applied BEFORE the clamp so the floor
+      // still stops the far band resolving into stuck pixels.
+      if (SNOWFALL) {
+        lay = qc < 30 ? 0 : qc < 58 ? 1 : 2;
+        if (lay === 2 && MH[h + 3] < 0.40) continue;   // the far band is thinned 40%
+        s *= lay === 0 ? 1.00 : lay === 1 ? 0.55 : 0.30;
+      }
       s = clamp(s, MOTE_PX[0] * qc / PPW, MOTE_PX[1] * qc / PPW);
       // Half the opacity, twice the flakes: many faint reads as weather, few opaque reads
       // as dirt on the sensor. Opacity now also varies by DEPTH BAND — the near field is
@@ -33790,7 +34598,7 @@ function stepMotes(t, n, B) {
         // of a 2800 bucket, and the two depth dims come off hard: the near dim exists to stop white
         // capsules three metres off the lens and the WIDTH CLAMP (1.90-4.20 px) already makes that
         // impossible, so 0.30 of it was buying nothing but absence.
-        const near = 1 - sstep(9, 17, qc), far = sstep(30, 52, qc);
+        const near = 1 - sstep(9, 17, qc);
         // Second cut. With the count at 1815 the field went from eight marks to ~20, and the
         // remaining twenty are all on the ROAD or on rock — over lit snow the flakes still
         // disappear, and that is the value ceiling, not the count. In the alpha bucket SNOW_C is a
@@ -33815,8 +34623,15 @@ function stepMotes(t, n, B) {
         // r14-VFX §2/§3 — 0.95 -> 0.80. With the fall laid on the ground slab the near band is
         // genuinely near (25-40 u rather than 8), so the r12 near-field dim below no longer
         // fires on it and the ceiling is the only thing holding a foreground flake off opaque.
-        av = Math.min(0.80, av) * (1 - 0.62 * near) * (1 - 0.06 * far);
-        if (near > 0.01) { s *= 1 + 2.60 * near; snf = near > 0.42; }
+        // r15-VFX §1 — the ceiling FIRST, then the layer. The old line multiplied the depth
+        // band in before clamping and the clamp then flattened it; this order is what makes the
+        // three layers separable in value at all. The r12 near-field dim survives underneath it
+        // (a bright in-focus particle three metres off the lens is still the one failure mode
+        // this field can have) but it no longer has to carry the depth cue on its own, and the
+        // 2.6x near inflation is retired: layer 0 IS the near band now, and perspective plus the
+        // widened clamp already make it the biggest mark in the frame.
+        av = Math.min(0.80, av) * (lay === 0 ? 1.00 : lay === 1 ? 0.70 : 0.40) * (1 - 0.34 * near);
+        snf = qc < 15;                                 // ...and the near band is out of focus
       }
       if (MOTE_MIST) {
         // Ground mist is a LAYER. Without this the lattice fills its whole 45u-tall cell
@@ -33922,8 +34737,13 @@ function stepMotes(t, n, B) {
     if (SNOWFALL) {
       // VFX-FIX4 §2 — per-flake DRIFT. Its own phase and its own rate, so no two flakes in
       // the lattice wander together; without this the whole field translates as one sheet.
-      aP[j] += Math.sin(t * (0.55 + MH[h + 1] * 0.9) + ph * 3.1) * SNOW_DRIFT;
-      aP[j + 2] += Math.cos(t * (0.48 + MH[h + 2] * 0.8) + ph * 2.3) * SNOW_DRIFT;
+      // r15-VFX §1 — "give each layer its own drift speed". A world-locked lattice already
+      // parallaxes correctly in TRANSLATION; what it had no version of is a near layer that
+      // WANDERS faster than the field behind it, which is the cue a lens gives for "this one is
+      // close". `dk` is 1.35 / 1.00 / 0.72 by layer on both the rate and the amplitude.
+      const dk = lay === 0 ? 1.35 : lay === 2 ? 0.72 : 1.00;
+      aP[j] += Math.sin(t * (0.55 + MH[h + 1] * 0.9) * dk + ph * 3.1) * SNOW_DRIFT * dk;
+      aP[j + 2] += Math.cos(t * (0.48 + MH[h + 2] * 0.8) * dk + ph * 2.3) * SNOW_DRIFT * dk;
     }
     if (WSTREAK) {
       // Screen-space streak mode (iAux.z = 2): the quad is laid along the projection of the
@@ -33935,7 +34755,13 @@ function stepMotes(t, n, B) {
       // from its own hash, by rotating the vector it is drawn along.
       // r11-VFX §2a — the sign flip is gone (see the SNOW_TILT note): one bearing, a spread
       // about it, so every streak in the frame reads as the same weather.
-      const tl = SNOW_TILT + MH[h + 1] * SNOW_TILT_R;
+      // r15-VFX §1 — "all at the same vertical tilt", and the frame agrees: one bearing plus a
+      // ONE-SIDED 6-15 deg spread is a set of parallel lozenges, which is the shape the r11 note
+      // above was trying to get away from and only half did. +/-8 deg of two-sided jitter about
+      // the same mean bearing keeps r11's rule (every streak still reads as the same weather)
+      // while making no two of them parallel.
+      const tl = SNOW_TILT + MH[h + 1] * SNOW_TILT_R
+               + (SNOWFALL ? (MH[h + 2] - 0.5) * 0.28 : 0);
       const ct = Math.cos(tl), st2 = Math.sin(tl);
       // r13-VFX §3 — a live cinder RISES. Same streak mode, same instance, vector inverted and
       // its lateral component cut, so the Wastes' embers draw short upward flicks through a field
@@ -38045,11 +38871,27 @@ UI.buildMenu = () => {
     // trade is free: the wave's ordinal is on the dispatch card, which is on screen in precisely
     // this state, and the standards gate is the one question the sheet cannot answer for itself.
     // See the `#hud.sheet` block in main.css and the toggle in UI.sync.
+    // ══ r15-UI §5 — WHAT THE PEEK MAY STILL WITHHOLD ═════════════════════════════════════════
+    // Round 15, finding 5 (major): "the mobile GARRISON card shows only DMG/RATE/RNG/DPS plus
+    // UPGRADE/DISMANTLE … The first two are information loss; the third is a gameplay control that
+    // simply does not exist on phone. There is no space argument — the card is 240px tall on an
+    // 844px screen with roughly 590px of empty viewport above it."
+    // Correct on all three counts, and the space argument is the one that settles it: FIX13-UI §3b
+    // cut this block when the sheet measured 347px of 844 and was pushing the tower it is about off
+    // the bottom of the world. The sheet is 240px now, so the premise the cut was made on is gone —
+    // and of the four rows it cut, only ONE is a read the player goes looking for. School and
+    // resisted-by come back as a single line in the stat labels' voice, standing orders comes back
+    // as the 44px three-up rail the phone stylesheet already has a rule for, and the RUNEBOND row
+    // is the one thing that stays behind the handle (see main.css).
+    // …which means the handle is now only worth drawing when there IS a bond row behind it.
+    // Runebinding is off by default, so an unconditional chevron would be a control that expands a
+    // sheet into nothing — worse than the missing rows it used to hide.
+    const bRow = bondRow(tw, d);
     tm.innerHTML =
     '<div class="pHead"><div class="pT">' + L(max ? 'tm.veteran' : 'tm.garrison') + '</div><div class="rule"></div>' +
       // FIX13-UI §3b — the peek/expand handle. One button, the direction of its chevron carries the
       // state, and it is a real 44px target because it is the only way back to the orders rail.
-      '<button class="exp" id="mExp" title="' + esc(L(tmPeek(tw) ? 'tm.more' : 'tm.less')) + '"></button>' +
+      (bRow ? '<button class="exp" id="mExp" title="' + esc(L(tmPeek(tw) ? 'tm.more' : 'tm.less')) + '"></button>' : '') +
       '<button class="x" id="mX">✕</button></div>' +
       '<div class="tHead"><span class="tpor"></span><div><div class="tN">' + T_NAME(tw.type) + '</div>' +
       // FIX5-UI §1 — the school chip has MOVED OUT of this line. It rode here beside the
@@ -38074,7 +38916,7 @@ UI.buildMenu = () => {
         '<button class="tgt" id="mTgt" title="' + esc(L('tm.tgtT')) + '"><span class="tgS">' +
         G.MODES.map(m => '<i class="' + ((tw.mode || 'first') === m ? 'on' : '') + '">' +
           G.MODE_NAME[m] + '</i>').join('') +
-        '</span></button></em></div>') + bondRow(tw, d)) +
+        '</span></button></em></div>') + bRow) +
       '<div class="tBtns"><button class="tBtn up" id="mUp"' + (max || state.gold < upCost ? ' disabled' : '') + '>' +
         L(max ? 'tm.built' : 'tm.up') + (max ? '' : '<span class="s2">🪙 ' + upCost + '</span>') + '</button>' +
       '<button class="tBtn sell' + (sellArm ? ' arm' : '') + '" id="mSell">' + L(sellArm ? 'tm.confirm' : 'tm.sell') +
@@ -38087,7 +38929,7 @@ UI.buildMenu = () => {
     // rail and the wave call are both anchored to barH() — which is written in UI.sync and nowhere
     // else. Rebuilding the panel alone would leave the two discs standing on the sheet's header
     // until the next coin landed.
-    $('mExp').onclick = () => { tmFull = tmPeek(tw) ? tw.uid : -1; UI.sync(); };
+    if ($('mExp')) $('mExp').onclick = () => { tmFull = tmPeek(tw) ? tw.uid : -1; UI.sync(); };
     $('mUp').onclick = () => { sellArm = false; upgradeTower(tw); UI.buildMenu(); };
     $('mSell').onclick = () => { if (!sellArm) { sellArm = true; UI.buildMenu(); return; } sellArm = false; sellTower(tw); UI.deselect(); };
     $('mX').onclick = () => UI.deselect();
@@ -39624,6 +40466,18 @@ const FL_NEAR = 26, FL_CELL = 100, FL_CELLMAX = 2, FL_GOLDA = 137.5 * Math.PI / 
 // midpoint of the two. A merge is strictly better than a separation here — one 138 is readable
 // where '91 47' is not, however far apart they are pushed.
 const FL_MX = 40, FL_MY = 24;
+// r15-UI §2a — the spatio-temporal merge window. 1.5 world units is the finding's own bucket (one
+// body width at this scale, so it can only ever fold blows that landed on the same knot of men)
+// and 0.25 s its own slice. Applied as a half-open window in x and z rather than as a grid, so a
+// pair straddling a cell edge cannot escape it. See the note at pushFloater.
+const FL_MW = 1.5, FL_MT = 0.25;
+// …and the SCREEN rule that catches the pair the window above cannot: two labels born a third of a
+// second apart (one full, one mid-fade) are in different time buckets by construction, and the
+// round-15 frame photographs exactly that. Equal VALUES are the case where a separation buys the
+// reader nothing at all — "38 38" is not two facts, it is one fact printed twice and a four-digit
+// blob at a glance — so equal-valued labels fold at the finding's own 80 px acceptance radius,
+// while unequal ones still fold only when their boxes actually overlap (r14-UI §2a).
+const FL_EQX = 80, FL_EQY = 34;
 // FIX10-UI §3b — the merge keeps the loudest of the two classes it folds. A crit is the loudest
 // thing a number can be; an element grade (burn/chill) outranks a plain hit because it is the
 // only place the school shows up in the numerals at all.
@@ -39675,6 +40529,9 @@ const FL_FRESH = 0.20;
 //   §2c  MAGNITUDE IN SIZE AND HUE, off the running damage percentile.
 // 24 px is the finding's own bucket, and it is also very close to the cap height of the type.
 const FL_BUCKET = 24;
+// r15-UI §2b — the fraction of a label's life it spends pinned to the head it belongs to before
+// the drift starts. 0.4 s of a 1.05 s life; see the note in layoutFloaters.
+const FL_HOLD = 0.4 / 1.05;
 // ── §2c — the running distribution. A percentile needs a reference set and the wave IS one: 64
 // recent blows, a ring, no allocation. Rank is computed at PUSH so a label's weight is fixed for
 // its life (a number that grew while you read it would be worse than a flat one).
@@ -39716,10 +40573,18 @@ function flWeigh(rec, record) {
   rec.hw = rec.txt.length * parseFloat(rec.fs) * 0.30 + 3;
   rec.hh = parseFloat(rec.fs) * 0.37 + 3;
 }
-const _flSafe = { x0: 8, x1: 1e4, y0: 8, y1: 1e4, n: -99 };
+// r15-UI §2b — THE CACHE IS KEYED ON THE VIEWPORT, NOT ONLY ON A FRAME COUNTER. The note above
+// says the resize path bumps this cache; nothing does, and under the shot harness that is a
+// measured defect rather than a theoretical one. The harness fires a LATE RESIZE just before it
+// captures (GAME_SPEC §2.3a), so the shipped frame lays out at 1600x1000 while this rect still
+// holds the pre-resize answer: probed on `_endless`, safe y1 = 655 against a build rail that
+// actually starts painting at 755, and every label the clamp touched was parked 95 px above the
+// chrome, standing on open meadow. That is round 15's "floaters hover over EMPTY terrain" — from
+// the one direction neither the anchor fix nor the merge could reach. Two integers of state.
+const _flSafe = { x0: 8, x1: 1e4, y0: 8, y1: 1e4, n: -99, w: 0, h: 0 };
 function flSafe(fr) {
-  if (fr - _flSafe.n < 20 && _flSafe.n >= 0) return _flSafe;
-  _flSafe.n = fr;
+  if (fr - _flSafe.n < 20 && _flSafe.n >= 0 && _flSafe.w === innerWidth && _flSafe.h === innerHeight) return _flSafe;
+  _flSafe.n = fr; _flSafe.w = innerWidth; _flSafe.h = innerHeight;
   _flSafe.x0 = 10; _flSafe.x1 = innerWidth - 10; _flSafe.y0 = 10; _flSafe.y1 = innerHeight - 10;
   const hud = $('hud'), bar = $('buildMenu');
   if (hud && hud.getClientRects().length) _flSafe.y0 = hud.getBoundingClientRect().bottom + 6;
@@ -39728,7 +40593,10 @@ function flSafe(fr) {
   return _flSafe;
 }
 const flDrawn = (e, t) => (e && e.def && e._rt !== undefined && Math.abs(t - e._rt) <= FL_FRESH) ? e : null;
-const flHeadY = (e) => e._ry + (e.def.scale || 1) * 1.55;
+// r15-UI §2b — the crown ARMIES actually drew, plus a third of a unit of clear air (the same
+// offset the ordinary health bar takes). The def.scale fallback is only for a body whose first
+// render frame has not landed yet.
+const flHeadY = (e) => (e._rcy !== undefined ? e._rcy : e._ry + (e.def.scale || 1) * 1.55) + 0.34;
 function flAnchor(e) {
   if (!G.camera || !flDrawn(e, G.vt())) return null;
   _fs.set(e._rx, flHeadY(e), e._rz).project(G.camera);
@@ -39736,10 +40604,40 @@ function flAnchor(e) {
 }
 function pushFloater(rec) {
   rec.sx = 0; rec.sy = 0;
+  // r15-UI §2a — the world-space half of the merge key. Recorded on every label so the
+  // spatio-temporal fold below can compare two labels without re-reading two bodies that may
+  // already have walked on. `wx/wz` is the DRAWN position (r10-ARMIES §3a), same source as the
+  // anchor, so the two never disagree about where a hit landed.
+  rec.wx = rec.e && rec.e._rx !== undefined ? rec.e._rx : 0;
+  rec.wz = rec.e && rec.e._rz !== undefined ? rec.e._rz : 0;
   const a = flAnchor(rec.e);
   if (a) {
     const bx = (a.x * 0.5 + 0.5) * innerWidth, by = (-a.y * 0.5 + 0.5) * innerHeight;
     rec.ax = bx; rec.ay = by;
+    // ══ r15-UI §2a — MERGE ON A SPATIO-TEMPORAL KEY, NOT ON IDENTITY ═════════════════════════
+    // Round 15, on `_endless`: "TWO identical '38' floaters 66px apart … the merge pass missed
+    // them". It did, and every merge rule this file owns explains why: FIX10 §3b folds on SAME
+    // BODY, r13 §6 folds inside a 40x24 px box, r14 §2a folds when the drawn boxes OVERLAP. Two
+    // chargers abreast on the road are two bodies, ~1.5 wu apart, whose labels project 60 px from
+    // each other — outside all three windows and inside the one the reader actually applies,
+    // which is "those are the same number twice".
+    // The fix the finding asks for is a bucket on the WORLD position and the CLOCK rather than on
+    // the victim: two blows that land within 1.5 wu of each other inside a quarter second are one
+    // event to the player however many bodies took them. Written as a window rather than as a
+    // literal round(x/1.5) grid, because a grid splits a pair that straddles a cell boundary and
+    // the whole point is that the pair must not survive. Values SUM (the finding's own "turns
+    // those two 38s into a single 76") and the survivor keeps the louder class.
+    for (let i = 0; i < FLN; i++) {
+      const o = flR[i];
+      if (!o || o.ax === undefined || o.wx === undefined) continue;
+      if (Math.abs(o.wx - rec.wx) >= FL_MW || Math.abs(o.wz - rec.wz) >= FL_MW) continue;
+      if (Math.abs(o.t0 - rec.t0) >= FL_MT) continue;
+      o.txt = '' + ((+o.txt | 0) + (+rec.txt | 0));
+      if (FL_RANK(rec.cls) > FL_RANK(o.cls)) o.cls = rec.cls;
+      o.t0 = Math.max(o.t0, rec.t0);
+      flWeigh(o, false);
+      return;
+    }
     // ══ FIX10-UI §3b — ONE BODY, ONE LABEL, AND THE MERGE NO LONGER CARES ABOUT THE CLASS ════
     // The finding reads the `47 47 / 91` cluster as "the merge emits a third label instead of
     // consuming its two sources". It does not — the branch below has always mutated the SURVIVOR
@@ -39896,6 +40794,9 @@ const _flX = new Float64Array(FLN), _flY = new Float64Array(FLN),
       _flF = new Float64Array(FLN), _flVis = new Uint8Array(FLN);
 function layoutFloaters(t) {
   const test = (_flFrame++ & 3) === 0, occ = test ? flOccluders() : null;
+  // r15-UI §2a — the safe rect is resolved BEFORE the projection pass, not after the merge, so the
+  // positions the merge compares are the positions the reader sees. See the note at the clamp.
+  const S = flSafe(_flFrame);
   for (let i = 0; i < FLN; i++) {
     const r = flR[i], el = flEl[i];
     _flVis[i] = 0;
@@ -39936,14 +40837,42 @@ function layoutFloaters(t) {
     // '388' read as struck through (shots\battle2.png).
     // FIX9-UI §1 — sx/sy is the spiral slot pushFloater resolved at spawn, fixed for the whole
     // life of the label so a settled number never crawls sideways over its neighbour.
+    // ══ r15-UI §2b — THE LABEL STANDS ON ITS VICTIM BEFORE IT DRIFTS ═══════════════════════════
+    // Round 15: "all four floaters hover over EMPTY terrain with no unit or tower beneath them …
+    // parent each floater to its source entity's head transform for its first 0.4s and only then
+    // release it to drift, so it is still over its target while it is readable."
+    // Half of that is already true and must stay true — the label re-projects the body's DRAWN head
+    // every frame (FIX10-UI §3a), and RELEASING it would put it back on the stale anchor that fix
+    // was written to delete. What is NOT true is the second half: the rise starts on frame one, so
+    // by the time a numeral is legible it has already climbed clear of a low body. On the Vale's
+    // chargers — 1.55 scale units of head offset over a knee-high boar — that is the whole gap the
+    // finding photographs. So the arc gets a HOLD: 0.4 s pinned to the head at a 4 px lift (the
+    // number sits ON the victim while it is being read), then the same 28 px drift over what is
+    // left of the life. Total travel and end point are unchanged; only the phase moves.
+    const dr = f <= FL_HOLD ? 0 : (f - FL_HOLD) / (1 - FL_HOLD);
     const x = (_fv.x * 0.5 + 0.5) * innerWidth + r.sx,
     // FIX10-UI §3a — THE RISE, cut from 46+18 px to 28+10. With the anchor finally landing on the
     // body (see above) the rise became the remaining distance: a number that climbs 64 px off a
     // 30 px soldier ends its life two body-heights into open sky, which reads as detached even
     // when it is attached. 38 px of total travel still separates a number from the health bar it
     // used to be struck through by, and it keeps the label inside the crowd it belongs to.
-          y = (-_fv.y * 0.5 + 0.5) * innerHeight + r.sy - 28 * Math.sqrt(f) - 10;
-    _flX[i] = x; _flY[i] = y; _flF[i] = f; _flVis[i] = 1;
+          y = (-_fv.y * 0.5 + 0.5) * innerHeight + r.sy - 28 * Math.sqrt(dr) - (4 + 6 * dr);
+    // ══ r15-UI §2a — THE CLAMP MOVES AHEAD OF THE MERGE ════════════════════════════════════════
+    // Round 15's twin '38's measured 57 px apart in x and 47 px apart in y BEFORE the safe rect and
+    // 57 x 0 AFTER it: the bottom clamp (r14-UI §2b) parks every label that would slide under the
+    // build rail on one baseline, which is precisely how two numbers born a third of a second apart
+    // end up printed side by side. Running the merge on the pre-clamp arc therefore compares
+    // positions that are not on screen. Cull and clamp happen here, in the projection pass, and the
+    // merge below reads the drawn box — which is what r14-UI §2a said it was doing all along.
+    // OFF-SCREEN IS NOT UNDER-THE-CHROME. A body past the edge of the viewport has nothing on
+    // screen for its number to belong to, so the label is dropped rather than pinned to the rim —
+    // the clamp exists for a victim the CHROME is covering, which is a body the player can still
+    // see the rest of. (Measured on _trueui_m: without this test a hit on a unit off the right
+    // edge printed a lone "60" hard against the frame with no unit anywhere near it.)
+    if (x < -24 || x > innerWidth + 24 || y < -24 || y > innerHeight + 24) { el.style.opacity = '0'; continue; }
+    _flX[i] = Math.max(S.x0 + r.hw, Math.min(S.x1 - r.hw, x));
+    _flY[i] = Math.max(S.y0 + r.hh, Math.min(S.y1 - r.hh, y));
+    _flF[i] = f; _flVis[i] = 1;
   }
   // ══ r14-UI §2a — THE MERGE, ON THE DRAWN BOXES ═══════════════════════════════════════════════
   // Two labels are one label when the reader cannot tell them apart, and that is a property of
@@ -39961,7 +40890,12 @@ function layoutFloaters(t) {
       const dx = Math.abs(_flX[i] - _flX[j]), dy = Math.abs(_flY[i] - _flY[j]);
       const same = a.e === b.e && dx < FL_BUCKET && dy < FL_BUCKET;
       const overlap = dx < a.hw + b.hw && dy < a.hh + b.hh;
-      if (!same && !overlap) continue;
+      // r15-UI §2a — …and two labels showing the SAME NUMBER inside the finding's 80 px radius.
+      // The spawn-time window cannot reach these (they are born too far apart in time to share a
+      // bucket) and the reader cannot tell them apart at any distance: one 76 is the truth, and it
+      // is the only reading of "38 38" that is not a four-digit blob.
+      const twin = a.txt === b.txt && dx < FL_EQX && dy < FL_EQY;
+      if (!same && !overlap && !twin) continue;
       const av = +a.txt | 0, bv = +b.txt | 0;
       const w = av >= bv ? i : j, l = w === i ? j : i;     // winner keeps its slot and its anchor
       const kr = flR[w], lr = flR[l];
@@ -39980,20 +40914,13 @@ function layoutFloaters(t) {
   // travel into the bottom rail's rect with no exclusion. Clamp, do not clip." The clamp is applied
   // to the DRAWN point, once, at the end of the arc, so the number still rises off its victim and
   // simply stops short of the chrome instead of sliding under it. Half the box is subtracted on
-  // each side, because the transform origin is the label's own top-left.
-  const S = flSafe(_flFrame);
+  // each side, because the transform origin is the label's own top-left. r15-UI §2a moved it INTO
+  // the projection pass above — the merge has to see the clamped box or it compares two labels at
+  // coordinates neither of them is drawn at — so this pass is now paint and nothing else.
   for (let i = 0; i < FLN; i++) {
     if (!_flVis[i]) continue;
     const r = flR[i], el = flEl[i], f = _flF[i];
-    let x = _flX[i], y = _flY[i];
-    // OFF-SCREEN IS NOT UNDER-THE-CHROME. A body past the edge of the viewport has nothing on
-    // screen for its number to belong to, so the label is dropped rather than pinned to the rim —
-    // the clamp exists for a victim the CHROME is covering, which is a body the player can still
-    // see the rest of. (Measured on _trueui_m: without this test a hit on a unit off the right
-    // edge printed a lone "60" hard against the frame with no unit anywhere near it.)
-    if (x < -24 || x > innerWidth + 24 || y < -24 || y > innerHeight + 24) { el.style.opacity = '0'; continue; }
-    x = Math.max(S.x0 + r.hw, Math.min(S.x1 - r.hw, x));
-    y = Math.max(S.y0 + r.hh, Math.min(S.y1 - r.hh, y));
+    const x = _flX[i], y = _flY[i];
     if (el.textContent !== r.txt) el.textContent = r.txt;
     if (el.className !== r.cls) el.className = r.cls;
     // r14-UI §2c — magnitude, written as two inline properties. The class still owns the outline,
@@ -40018,13 +40945,15 @@ function layoutFloaters(t) {
   if (SHOT && P.has('dbg') && test) {
     let live = 0, hid = 0;
     for (let i = 0; i < FLN; i++) if (flR[i]) { live++; hid += _flHid[i]; }
-    console.log('FLDBG occ=' + flOccluders().length + ' live=' + live + ' hidden=' + hid);
+    console.log('FLDBG occ=' + flOccluders().length + ' live=' + live + ' hidden=' + hid +
+      ' safe=' + _flSafe.y0.toFixed(0) + '..' + _flSafe.y1.toFixed(0) + ' vp=' + innerWidth + 'x' + innerHeight);
     // FIX10-UI §3a — the per-label row that found the anchor bug. A label's DRAWN offset from its
     // victim's sim position is what §3a is about, so the probe prints both.
     for (let i = 0; i < FLN; i++) {
       const r = flR[i]; if (!r) continue;
       const e = r.e;
       console.log('FLROW ' + r.txt + ' ty=' + e.type + ' alive=' + e.alive +
+        ' scr=' + _flX[i].toFixed(0) + ',' + _flY[i].toFixed(0) + ' vis=' + _flVis[i] +
         ' sim=' + e.px.toFixed(1) + ',' + e.pz.toFixed(1) +
         ' drawn=' + (e._rx === undefined ? 'none' : e._rx.toFixed(1) + ',' + e._rz.toFixed(1)) +
         ' age=' + (t - r.t0).toFixed(2));
