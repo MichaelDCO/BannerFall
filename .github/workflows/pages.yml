@@ -22,6 +22,45 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # AUDIT-1 PERF-4 / CH-7 - DEPLOY-TIME MINIFICATION. The repo stays READABLE SOURCE: its
+      # comments are the documentation the agent fleets work from (~59% of game.js, ~56% of
+      # main.css). Only this throwaway deploy copy is minified - never commit its output.
+      # ORDER: this step runs BEFORE the two stamping steps below, so whatever gets stamped is
+      # the file that actually ships (today only index.html and sw.js carry the tokens and neither
+      # is minified; the order keeps that true if a token ever lands in a minified file).
+      # Flags, and why:
+      #   no --bundle      imports, import-map specifiers and `?v=` query strings stay as written
+      #   --format=esm     all three are ES modules (game.js imports three; lobby/net are modules)
+      #   --target=es2022  the lowest target that needs no down-levelling (game.js uses top-level
+      #                    await); its output is byte-identical to esnext - no syntax is rewritten
+      #   --minify         whitespace + syntax + identifiers. Safe to rename: nothing reads a
+      #                    Function.name, a function's source, or a variable by string; every
+      #                    onBeforeCompile fork that must share a program has a string
+      #                    customProgramCacheKey, and the one that keys on its own source is unique
+      #   --charset=utf8   keep the French strings as UTF-8 (esbuild's default would \u-escape them)
+      #   css: --minify-whitespace ONLY (comments + whitespace). The full --minify syntax pass
+      #                    rewrites ~600 rgba() colours as #rrggbbaa, re-quantising every alpha to
+      #                    1/255 steps (.35 -> 89/255); whitespace-only keeps every authored value
+      #                    exact, and the syntax pass would save only ~0.7 KB gzip more
+      # NOT minified: js/vendor/* (already minified upstream, and hashed into __IMM__ below),
+      # sw.js (tiny - keep it readable), index.html.
+      - name: Minify our JS modules and stylesheet in the deploy copy (esbuild, pinned)
+        run: |
+          set -euo pipefail
+          ESB="npx --yes esbuild@0.25.10"
+          for f in js/game.js js/net.js js/lobby.js; do
+            $ESB "$f" --format=esm --target=es2022 --minify --charset=utf8 --log-level=warning --allow-overwrite --outfile="$f"
+          done
+          $ESB css/main.css --minify-whitespace --charset=utf8 --log-level=warning --allow-overwrite --outfile=css/main.css
+          # guards: V8 still parses every module, and every file is still clean UTF-8 (strict
+          # decode, no U+FFFD, no cp1252 mojibake leads U+00C3/U+00C2 - tools/enccheck.py's rule)
+          for f in js/game.js js/net.js js/lobby.js; do cp "$f" "$RUNNER_TEMP/chk.mjs"; node --check "$RUNNER_TEMP/chk.mjs"; done
+          python3 -c 'import sys
+          for f in sys.argv[1:]:
+              t = open(f, "rb").read().decode("utf-8")
+              bad = [hex(c) for c in (0xC3, 0xC2, 0xFFFD) if chr(c) in t]
+              assert not bad, f + " encoding: " + repr(bad)
+              print("minified", f, len(t.encode("utf-8")), "bytes")' js/game.js js/net.js js/lobby.js css/main.css
       - name: Stamp build id into asset URLs and SW cache name (cache busting)
         run: |
           SHA7=${GITHUB_SHA::7}

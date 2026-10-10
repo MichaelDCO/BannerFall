@@ -25,6 +25,10 @@ python -m http.server 8321
 
 Then visit `http://localhost:8321/`.
 
+**Deploy:** the source in this repo stays readable and commented; the live site's copy of
+`js/game.js`, `js/net.js`, `js/lobby.js` and `css/main.css` is minified at deploy time by the
+GitHub Pages workflow (`.github/workflows/pages.yml`, esbuild).
+
 ## Features
 
 - **5 campaigns**, each unlocked by holding the one before it: The Vale (easy) · Frostfell Pass
