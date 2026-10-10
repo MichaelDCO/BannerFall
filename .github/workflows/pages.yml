@@ -26,6 +26,13 @@ jobs:
         run: |
           SHA7=${GITHUB_SHA::7}
           sed -i "s/__BUILD__/${SHA7}/g" index.html sw.js
+      # AUDIT-1 PERF-3 - the service worker's IMMUTABLE cache (vendor bundles + baked tiles) is
+      # named by a hash of exactly that payload, so a deploy that changes neither keeps it and
+      # players do not re-download ~3.6 MB of unchanged files on every push.
+      - name: Stamp immutable-payload hash into the SW's vendor/texture cache name
+        run: |
+          IMM=$(find js/vendor textures -type f | LC_ALL=C sort | xargs sha1sum | sha1sum | cut -c1-10)
+          sed -i "s/__IMM__/${IMM}/g" sw.js
       - uses: actions/configure-pages@v5
         with:
           enablement: true

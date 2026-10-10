@@ -1,6 +1,15 @@
 // ══════════════════════ SECTION: CORE (owner: architect — do not restructure) ══════════════════════
 window.__errors = [];
-const __err = (m) => { window.__errors.push(String(m)); document.title = 'ERROR'; };
+// AUDIT-1 CH-3 — the 'ERROR' title is a HARNESS signal (shots/tests poll for it), so only SHOT
+// and TESTQ pages raise it. In live play a stray console.error (Trystero logs every WebRTC peer
+// hiccup that way) used to retitle the player's tab 'ERROR' for the rest of the session. The list
+// is still kept live (tools read window.__errors) but bounded. SHOT is read lazily; the catch is
+// for an error raised before its declaration below (TDZ), which keeps the old loud behaviour.
+const __err = (m) => {
+  if (window.__errors.length < 200) window.__errors.push(String(m));
+  let h = true; try { h = !!SHOT; } catch (_) { /* TDZ: too early to know — be loud */ }
+  if (h) document.title = 'ERROR';
+};
 window.onerror = (m, s, l) => __err(m + ' @' + (s||'').split('/').pop() + ':' + l);
 window.addEventListener('unhandledrejection', e => __err('promise: ' + e.reason));
 const _cerr = console.error.bind(console); console.error = (...a) => { __err(a.join(' ')); _cerr(...a); };
@@ -10468,6 +10477,7 @@ if (TILE_LOADS.length) {
     U_TILEK.value = 0; U_TILEN.value = 0;
     console.log('TILEWARN detail tiles unavailable (' + TILE_MISS.join(',') +
       ') — world falls back to procedural shading');
+    if (SHOT) __err('TILEWARN ' + TILE_MISS.join(','));   // AUDIT-1 CH-1a — the gate must see it
   } else {
     console.log('TILELOG kind=' + TILE_KIND + ' pairs=' + Object.keys(TILES).length +
       ' aniso=' + TILES[TILE_KIND].a.anisotropy + ' k=' + U_TILEK.value +
@@ -10699,6 +10709,32 @@ await World.build();
 // 4 four-legged gallop · 5 ogre stomp (one-shot, re-phased by the CPU each frame).
 // Contract: Armies.syncVisuals(vt) reads G.enemies/G.knights every frame. Sim fields
 // are owned by SIM; this section never writes them (only render-only `_`-prefixed cache).
+// AUDIT-1 PERF-1 — PARTIAL INSTANCE-BUFFER UPLOADS. three r170 re-sends an attribute's WHOLE
+// typed array (sized to the cap, not the crowd) every time needsUpdate is set: measured 1.45 MB
+// per frame with nobody on the field. An update range makes it send only the live prefix.
+//   bufUp(a, n)         — the first n elements (instances / vertices) changed. REPLACES any
+//                         pending range, so a mesh that skips a render never grows the list,
+//                         and reuses one range object per attribute (no per-frame garbage).
+//                         n = 0 uploads nothing: a count-0 mesh draws nothing, and WebGL2's
+//                         bufferSubData reads a 0 length as "to the end of the array".
+//   bufAdd(a, at, n)    — elements [at, at+n) changed; APPENDS (several decals in one frame).
+//                         Past 16 pending ranges it collapses to one whole-array range.
+// Render-only: nothing here is read by the sim, and the drawn prefix is byte-for-byte what the
+// full upload sent, so shots and the matrix are unaffected.
+function bufUp(a, n) {
+  if (!a || !(n > 0)) return;
+  const R = a.updateRanges, r = a._upR || (a._upR = { start: 0, count: 0 });
+  r.start = 0; r.count = Math.min(n * a.itemSize, a.array.length);
+  R.length = 0; R.push(r);
+  a.needsUpdate = true;
+}
+function bufAdd(a, at, n) {
+  if (!a || !(n > 0)) return;
+  const R = a.updateRanges;
+  if (R.length >= 16) { R.length = 0; R.push({ start: 0, count: a.array.length }); }
+  else R.push({ start: at * a.itemSize, count: n * a.itemSize });
+  a.needsUpdate = true;
+}
 const KNIGHT_CAP = 64;
 // r10-ARMIES §5 — the drawn height of a champion, in world units: 2.2x the levyman's 1.80.
 const CHAMP_H = 3.96;
@@ -11018,7 +11054,7 @@ await BOOT.stage('boot.host');
     // r14-ARMIES — the tripwire the CIRON/IPAV bug needed. An unassigned name is `undefined`,
     // `tOX` returns NaN, `translate(NaN, NaN)` is a documented no-op, and the tile is then
     // painted straight over slot 0 with nothing anywhere reporting it. Loud and harmless.
-    if (!(t >= 0)) { console.log('TILEWARN unassigned slot — paint discarded'); return; }
+    if (!(t >= 0)) { console.log('TILEWARN unassigned slot — paint discarded'); if (SHOT) __err('TILEWARN unassigned slot'); return; }
     const x0 = tOX(t), y0 = tOY(t);
     ag.save(); ag.translate(x0, y0); ag.beginPath(); ag.rect(0, 0, S, S); ag.clip(); fn(ag); ag.restore();
     mg.fillStyle = 'rgb(0,' + Math.round(rough * 255) + ',' + Math.round(metal * 255) + ')';
@@ -17636,8 +17672,13 @@ void main(){
     shadTex.generateMipmaps = false;
     shadTex.minFilter = THREE.LinearFilter; shadTex.magFilter = THREE.LinearFilter;
     const smat = new THREE.MeshBasicMaterial({
+      // AUDIT-1 PERF-10 — FrontSide, not DoubleSide. three draws a transparent DoubleSide
+      // material as two passes (back, then front) and bumps its version for each, i.e. a
+      // program-cache lookup twice a frame. The quad is rotateX(-PI/2) (front face +Y) with
+      // positive scales and the camera is always above the ground, so the front pass was the
+      // only one ever producing pixels; this is that pass alone.
       map: shadTex, transparent: true, depthWrite: false, fog: false,
-      side: THREE.DoubleSide, toneMapped: false,
+      side: THREE.FrontSide, toneMapped: false,
       blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
       blendSrc: THREE.DstColorFactor, blendDst: THREE.ZeroFactor,
       polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -8,
@@ -18508,6 +18549,9 @@ const vLane = (lane, id, blocked) => {
 // at ±0.62 it is wider than the rank interval itself, so a body from rank n draws in the bare
 // dirt behind rank n-1. Same head count, same arrival times, no visible rank lines left.
 const vStag = (id) => (H1(id * 23 + 17) - 0.5) * 1.24;
+// AUDIT-1 PERF-5a — the density ladder's shadow lever. castShadow is not part of any program key,
+// so toggling it compiles nothing (the depth programs were warmed at boot and stay cached).
+Armies.setDense = (on) => { for (const m of Armies.meshes) m.castShadow = !on; };
 Armies.syncVisuals = (vtNow) => {
   const sub = clamp(G.subT || 0, 0, 1);
   const at = vtNow + sub * TICK;                 // smooth, deterministic animation clock
@@ -18530,7 +18574,11 @@ Armies.syncVisuals = (vtNow) => {
   // or written, and `G.dense` is computed in MAIN off the same alive count.
   for (let i = 0; i < KNIGHT_CAP; i++) _kFace[i * 3 + 2] = 0;   // ARMIES-FIX6 §4
   const dense = !!G.dense;
-  const shadQ = dense ? Q.shadCut * Q.shadCut : 0;
+  // AUDIT-1 PERF-5a — no distance cut any more. While dense the army stops CASTING into the
+  // shadow map (Armies.setDense, driven by MAIN's densityStep) — that pass was re-drawing the
+  // whole skinned horde, ~half the frame's triangles at 1000 bodies — so the cheap contact decal
+  // is now the grounding for every body, near or far (r9: never gate detail off at distance).
+  const shadQ = 0;
   const cpx = G.camera ? G.camera.position.x : 0, cpz = G.camera ? G.camera.position.z : 0;
   const cpy = G.camera ? G.camera.position.y : 0;   // ARMIES-FIX8 §1 — the distance livery ramp
   const retRoom = G.enemies.length;                 // r10-ARMIES §4 — see the retinue pass
@@ -19411,43 +19459,34 @@ Armies.syncVisuals = (vtNow) => {
   }
   champKit.mesh.count = champKit.n;
   champPool.count = champKit.n;
-  if (champKit.n || champKit._was) {
-    champKit.mesh.instanceMatrix.needsUpdate = true;
-    if (champKit.mesh.instanceColor) champKit.mesh.instanceColor.needsUpdate = true;
-    champKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
-    champPool.instanceMatrix.needsUpdate = true;
+  // AUDIT-1 PERF-1 — live-prefix uploads (bufUp, top of this section). A kit whose count fell
+  // to 0 needs no upload at all: count 0 draws nothing, so the old `_was` frame is moot.
+  {
+    const cm = champKit.mesh;
+    bufUp(cm.instanceMatrix, champKit.n); bufUp(cm.instanceColor, champKit.n);
+    bufUp(cm.geometry.attributes.aAnim, champKit.n); bufUp(champPool.instanceMatrix, champKit.n);
   }
-  champKit._was = champKit.n > 0;
   if (bannKit) {
-    bannKit.mesh.count = bannKit.n;
-    if (bannKit.n || bannKit._was) {
-      bannKit.mesh.instanceMatrix.needsUpdate = true;
-      if (bannKit.mesh.instanceColor) bannKit.mesh.instanceColor.needsUpdate = true;
-      bannKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
-    }
-    bannKit._was = bannKit.n > 0;
+    const bm = bannKit.mesh; bm.count = bannKit.n;
+    bufUp(bm.instanceMatrix, bannKit.n); bufUp(bm.instanceColor, bannKit.n);
+    bufUp(bm.geometry.attributes.aAnim, bannKit.n);
   }
   if (sergKit) {
-    sergKit.mesh.count = sergKit.n;
-    if (sergKit.n || sergKit._was) {
-      sergKit.mesh.instanceMatrix.needsUpdate = true;
-      if (sergKit.mesh.instanceColor) sergKit.mesh.instanceColor.needsUpdate = true;
-      sergKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
-    }
-    sergKit._was = sergKit.n > 0;
+    const sm = sergKit.mesh; sm.count = sergKit.n;
+    bufUp(sm.instanceMatrix, sergKit.n); bufUp(sm.instanceColor, sergKit.n);
+    bufUp(sm.geometry.attributes.aAnim, sergKit.n);
   }
   for (const src of [AM, KITM]) for (const key in src) {
-    const A = src[key];
-    A.mesh.count = A.n;
-    A.mesh.instanceMatrix.needsUpdate = true;
-    if (A.mesh.instanceColor) A.mesh.instanceColor.needsUpdate = true;
-    A.mesh.geometry.attributes.aAnim.needsUpdate = true;
+    const A = src[key], M = A.mesh;
+    M.count = A.n;
+    bufUp(M.instanceMatrix, A.n); bufUp(M.instanceColor, A.n);
+    bufUp(M.geometry.attributes.aAnim, A.n);
   }
   barMesh.count = bn;
-  barMesh.instanceMatrix.needsUpdate = true;
-  barMesh.geometry.attributes.aBar.needsUpdate = true;
+  bufUp(barMesh.instanceMatrix, bn);
+  bufUp(barMesh.geometry.attributes.aBar, bn);
   shadDecal.count = sn;
-  shadDecal.instanceMatrix.needsUpdate = true;
+  bufUp(shadDecal.instanceMatrix, sn);
   // ══ ARMIES-FIX7 §1 — THE DEFERRED WARD PASS ═══════════════════════════════════════════
   // Everything the round-7 blocker asks for is a decision about the FRAME, so it is made once
   // the frame's warded roster is known, in two O(n) sweeps over `_wRow` and one hash grid.
@@ -19547,10 +19586,10 @@ Armies.syncVisuals = (vtNow) => {
   // SPEC3 §D: the ward buffers only move on frames a ward is (or has just stopped being)
   // on the road, so an unwarded campaign never uploads them at all.
   if (nw > 0 || _wardWas) {
-    for (const key in AM) if (AM[key].wardA) AM[key].wardA.needsUpdate = true;
+    for (const key in AM) bufUp(AM[key].wardA, AM[key].n);   // AUDIT-1 PERF-1
     wardRing.count = nw;
-    wardRing.instanceMatrix.needsUpdate = true;
-    if (wardDomeA) wardDomeA.needsUpdate = true;   // ARMIES-FIX7 §1c — the crowding divide
+    bufUp(wardRing.instanceMatrix, nw);
+    bufUp(wardDomeA, nw);   // ARMIES-FIX7 §1c — the crowding divide
     // VFX-FIX8 §1b — the shell wore WARD_SHELL, not the school's hue, so that "warded" was one
     // read and "against what" was the sigil's. VFX-FIX10 §1d overturns the first half only: the
     // round-10 finding asks for the shell IN THE SCHOOL HUE, and the reason FIX8 could not give
@@ -19568,7 +19607,7 @@ Armies.syncVisuals = (vtNow) => {
       // ARMIES-FIX7 §1b — ...but no longer one per row. `_wSig` is the eight (or fewer) the
       // deferred pass actually spent.
       wardSigil.count = _wSig;
-      wardSigil.instanceMatrix.needsUpdate = true;
+      bufUp(wardSigil.instanceMatrix, _wSig);
       const U = wardSigil.material.uniforms;
       // The sigil's colour is the school's HIT colour rather than the shell's: this mark is a
       // legend, so it should agree with the light the player sees coming off their own towers
@@ -21272,7 +21311,7 @@ function syncProj(at) {
     // (white when there is no rider) because a stale tint would otherwise persist in a pooled slot
     // and paint an ordinary arrow with the last bonded one's colour.
     if (RUNEBOND) {
-      const rc = p.rb ? RBT_COL[p.rb] : null;
+      const rc = p.rb ? VFX.schoolCol(p.rb) : null;
       if (rc) _pcol.setRGB(1 + (rc[0] - 1) * 0.55, 1 + (rc[1] - 1) * 0.55, 1 + (rc[2] - 1) * 0.55);
       else _pcol.setRGB(1, 1, 1);
       arrowMesh.setColorAt(ai, _pcol);
@@ -21298,11 +21337,12 @@ function syncProj(at) {
       dx: _pv.x, dy: _pv.y, dz: _pv.z });
   }
   arrowMesh.count = ai; rockMesh.count = ri; streakMesh.count = si;
-  arrowMesh.instanceMatrix.needsUpdate = true; rockMesh.instanceMatrix.needsUpdate = true; streakMesh.instanceMatrix.needsUpdate = true;
-  if (rockMesh.instanceColor) rockMesh.instanceColor.needsUpdate = true;
+  // AUDIT-1 PERF-1 — live-prefix uploads (bufUp, SECTION: ARMIES).
+  bufUp(arrowMesh.instanceMatrix, ai); bufUp(rockMesh.instanceMatrix, ri); bufUp(streakMesh.instanceMatrix, si);
+  bufUp(rockMesh.instanceColor, ri);
   // SPEC_8 §G — flagged upload only. Unflagged, `_rbTint` never goes true and this attribute is
   // never re-uploaded, so the arrow's all-ones buffer stays exactly the buffer PROGDIET allocated.
-  if (_rbTint && arrowMesh.instanceColor) arrowMesh.instanceColor.needsUpdate = true;
+  if (_rbTint) bufUp(arrowMesh.instanceColor, ai);
 }
 
 // ══ shared brazier / coal glow — one additive instanced mesh for every tower ══
@@ -21372,7 +21412,7 @@ function syncGlow(at) {
     }
   }
   glowMesh.count = gi;
-  glowMesh.instanceMatrix.needsUpdate = true;
+  bufUp(glowMesh.instanceMatrix, gi);   // AUDIT-1 PERF-1
 }
 
 // ══ storm chain lightning: one dynamic ribbon mesh for every arc in the air ════
@@ -21492,17 +21532,12 @@ Towers.zap = (x0, y0, z0, x1, y1, z1, seed, kind) => {
     s: (Math.imul(seed + 1, 2654435761) ^ 0x9e3779b9) >>> 0 });
   if (BOLTS.length > ARC_MAX) BOLTS.shift();           // SPEC_8 §G — arcs evict arcs, never tethers
 };
-// SPEC_8 §G — the tether's per-school tint. These five triples are a MIRROR of SECTION: VFX's
-// SCHOOL_FX `col` values and they are duplicated here for a structural reason, not out of laziness:
-// SECTION: VFX is wrapped in a block (`const VFX = {}; {` …), so SCHOOL_FX is block-scoped and is
-// genuinely unreachable from SECTION: TOWERS. The file already has this exact situation documented
-// in ARMIES (the Elemental Ward tint, ~line 11215) and mirrors the numbers there the same way.
-// IF SCHOOL_FX's HUES EVER MOVE, THIS TABLE MOVES WITH THEM — there is no assertion binding them,
-// only this sentence and the `_bond` preset.
-const RBT_COL = {
-  pierce: [1.00, 0.93, 0.76], crush: [0.62, 0.57, 0.51], fire: [1.00, 0.30, 0.05],
-  storm:  [0.50, 0.83, 1.00], frost: [0.72, 0.88, 1.00],
-};
+// SPEC_8 §G — the tether's per-school tint IS the school's hit colour. AUDIT-1 CH-5: this used to
+// be a hand-kept mirror of SECTION: VFX's SCHOOL_FX (block-scoped, unreachable from here) and it
+// had drifted on four of five schools — storm riders drew frost-cyan. It now reads the live
+// palette through VFX.schoolCol() at frame time (VFX is initialised long before any tower
+// renders), so there is nothing left to keep in step.
+const rbtCol = (k) => VFX.schoolCol(k) || VFX.schoolCol('pierce');
 const _bj = (s, i) => { let h = Math.imul(s ^ Math.imul(i + 1, 374761393), 1274126177); h ^= h >>> 15; return ((h >>> 0) / 4294967296) * 2 - 1; };
 const _bw = new THREE.Vector3(), _bu = new THREE.Vector3(), _bd = new THREE.Vector3(), _bp = new THREE.Vector3();
 function syncBolts(at) {
@@ -21611,8 +21646,8 @@ function syncBolts(at) {
       // TINTED FROM BOTH ENDS, because that is the information: tw's end wears the school tw is
       // LENDING (its own), ot's end wears ot's. So an archer bonded to a Frostspire shows a gold
       // end and an ice end, and the player can read which way each rider is flowing off one ribbon.
-      const ca = RBT_COL[TOWER_DEFS[tw.type].element] || RBT_COL.pierce;
-      const cb = RBT_COL[TOWER_DEFS[ot.type].element] || RBT_COL.pierce;
+      const ca = rbtCol(TOWER_DEFS[tw.type].element);
+      const cb = rbtCol(TOWER_DEFS[ot.type].element);
       _bd.set(ot.x - tw.x, by - ay, ot.z - tw.z);
       const len = _bd.length() || 1; _bd.divideScalar(len);
       _bw.subVectors(G.camera.position, _bp.set(tw.x, ay, tw.z)).normalize();
@@ -21688,9 +21723,10 @@ function syncBolts(at) {
   boltMesh.visible = n > 0;
   if (n) {
     boltMesh.geometry.setDrawRange(0, n * BOLT_SEG * 6);
-    boltMesh.geometry.attributes.position.needsUpdate = true;
-    boltMesh.geometry.attributes.color.needsUpdate = true;
-    boltMesh.geometry.attributes.uv.needsUpdate = true;      // SPEC_8 §F — the per-arc band
+    const BA = boltMesh.geometry.attributes, nv = n * BOLT_V;   // AUDIT-1 PERF-1
+    bufUp(BA.position, nv);
+    bufUp(BA.color, nv);
+    bufUp(BA.uv, nv);      // SPEC_8 §F — the per-arc band
   }
 }
 
@@ -21765,7 +21801,7 @@ function syncFire(at) {
   }
   for (let i = li; i < EMBL.length; i++) EMBL[i].intensity = 0;
   fireMesh.count = n; fireMesh.visible = n > 0;
-  fireMesh.instanceMatrix.needsUpdate = true;
+  bufUp(fireMesh.instanceMatrix, n);   // AUDIT-1 PERF-1
 }
 
 // ══ ROAD TRAPS — the props (SPEC4 §D) ═════════════════════════════════════════
@@ -26720,6 +26756,13 @@ function tickSim() {
           if (SHOT && laneLoad) laneLoad[h.to]++;
           break;
         }
+        // AUDIT-1 PERF-12 — the LIVE `&horde=N` bench is a measurement, not a battle: its bodies
+        // walk during the held first muster, and they used to breach the gate ~10 s in, lose the
+        // run and leave the stats line timing a frozen defeat screen. Live only (`!SHOT`): the
+        // `_thousand` preset and every matrix row never take this branch.
+        if (!SHOT && G.benched && e.pathId === G.endRoute && e.d >= PTS[e.pathId].len - 1.5) {
+          e.pathId = G.spawnRoutes[0]; e.d = G.pathLen * 0.05;
+        }
         if (e.pathId === G.endRoute && e.d >= PTS[e.pathId].len - 1.5) {
           e.alive = false; e.deathT = -2; state.lives = Math.max(0, state.lives - e.def.leak); state.leaked++;
           // SPEC5 §A — a cutpurse through the gate cuts the PURSE as well as the vale, down
@@ -26727,7 +26770,7 @@ function tickSim() {
           // twice and can never be dodged by a leak that arrives some other way.
           let stole = 0;
           if (e.def.steal) stole = takeAll(e.def.steal);   // §C2 — he cuts the BAND'S purse
-          UI.msg(stole ? { breach: true, steal: stole } : { breach: true }); Audio.play('leak'); UI.sync();
+          UI.msg(stole ? { breach: true, steal: stole } : { breach: true }); Audio.play('leak'); UI.syncSoon();
           // HOOK: VFX/AUDIO (SPEC5 §A) — the purse going through the gate with him. Scaled by
           // what was ACTUALLY taken, so an empty treasury produces no scatter and no cue: the
           // one leak that costs gold must not claim to when there was none left to cut.
@@ -27416,7 +27459,7 @@ function killEnemy(e, element) {
   // HOOK: VFX — the generic death spark takes the species' own colour. A gravemold and its
   // offspring burst fungal green (SPEC5 §A); everything else keeps the horde's crimson.
   VFX.burst(e.px, 1, e.pz, (e.def.split || e.isSplit) ? 0x8fbf3a : 0xc03828, 1.1, 0.4);
-  Audio.play('die', e.px, e.pz); UI.sync();
+  Audio.play('die', e.px, e.pz); UI.syncSoon();   // AUDIT-1 PERF-2 — coalesced (SECTION: UI)
   // HOOK: VFX builder — coin pop / death effect (e)
   VFX.death(e);
   // SPEC5 §A. Order matters: the corpse is registered BEFORE the split, so a necromancer
@@ -28405,9 +28448,9 @@ function stepBucket(B, t, max) {
 function flush(B, n) {
   B.n = n; B.geo.instanceCount = n;
   if (!n) return;
-  const A = B.geo.attributes;
-  A.iPos.needsUpdate = true; A.iVel.needsUpdate = true;
-  A.iSize.needsUpdate = true; A.iCol.needsUpdate = true; A.iAux.needsUpdate = true;
+  const A = B.geo.attributes;   // AUDIT-1 PERF-1 — live prefix only (bufUp, SECTION: ARMIES)
+  bufUp(A.iPos, n); bufUp(A.iVel, n);
+  bufUp(A.iSize, n); bufUp(A.iCol, n); bufUp(A.iAux, n);
 }
 
 // ══ terrain-conforming decals: scorch craters + expanding ground shockwaves ═══
@@ -28543,9 +28586,10 @@ function decal(x, z, rad, type, dur, r, g, b, seed, lead) {
     I[k * 4] = born; I[k * 4 + 1] = dur; I[k * 4 + 2] = type; I[k * 4 + 3] = seed;
     T[k * 3] = r; T[k * 3 + 1] = g; T[k * 3 + 2] = b;
   }
-  geo.attributes.position.needsUpdate = true;
-  geo.attributes.aInf.needsUpdate = true;
-  geo.attributes.aTint.needsUpdate = true;
+  // AUDIT-1 PERF-1 — only this slot's DG*DG vertices changed (bufAdd, SECTION: ARMIES).
+  bufAdd(geo.attributes.position, vo, DG * DG);
+  bufAdd(geo.attributes.aInf, vo, DG * DG);
+  bufAdd(geo.attributes.aTint, vo, DG * DG);
 }
 
 // ══ camera shake: impulse + exponential falloff ══════════════════════════════
@@ -29312,6 +29356,9 @@ const SCHOOL_FX = {
   // light rather than as an element. It lives on this table so that nothing authors gold inline.
   holy:   { col: [1.000, 0.949, 0.753], hot: [2.10, 1.94, 1.45], tile: T_FLASH, bloom: true,  hue: 48, support: true },
 };
+// AUDIT-1 CH-5 — the one door to the palette from outside this block (SECTION: TOWERS' runebond
+// tint). Returns the live `col` triple, or null for a key that is not a school.
+VFX.schoolCol = (k) => (SCHOOL_FX[k] ? SCHOOL_FX[k].col : null);
 // `hot` is deliberately MORE saturated than `col`, which looks backwards until you remember
 // these are ADDITIVE quads over a golden-hour meadow: the core of a bright additive always
 // clips, and a clipped pale blue clips to white. Only a core whose red channel stays well
@@ -32696,14 +32743,22 @@ VFX.coin = (x, y, z) => {
   CO[o + 4] = 5.4 + er() * 1.8; CO[o + 5] = er() * 6.28;
 };
 const _hv = new THREE.Vector3();
+// AUDIT-1 PERF-9a — the #gold rect was read (a forced layout) on every frame a coin was in the
+// air. It is now cached and re-read only after UI.sync() (VFX.hudDirty — the only thing that
+// moves the HUD) or a viewport change. SHOT always reads, so harness frames are unchanged.
+const _hudR = { ok: false, w: 0, h: 0, nx: -0.855, ny: 0.945 };
+VFX.hudDirty = () => { _hudR.ok = false; };
 function hudPoint(out) {
-  let nx = -0.855, ny = 0.945;
-  const el = document.getElementById('gold');
-  if (el) {
-    const r = el.getBoundingClientRect();
-    if (r.width > 0) { nx = (r.left + r.width * 0.5) / innerWidth * 2 - 1; ny = -((r.top + r.height * 0.5) / innerHeight * 2 - 1); }
+  if (SHOT || !_hudR.ok || _hudR.w !== innerWidth || _hudR.h !== innerHeight) {
+    let nx = -0.855, ny = 0.945;
+    const el = document.getElementById('gold');
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0) { nx = (r.left + r.width * 0.5) / innerWidth * 2 - 1; ny = -((r.top + r.height * 0.5) / innerHeight * 2 - 1); }
+    }
+    _hudR.nx = nx; _hudR.ny = ny; _hudR.w = innerWidth; _hudR.h = innerHeight; _hudR.ok = true;
   }
-  out.set(nx, ny, 0.5).unproject(G.camera);
+  out.set(_hudR.nx, _hudR.ny, 0.5).unproject(G.camera);
   out.sub(G.camera.position).normalize().multiplyScalar(11).add(G.camera.position);
   return out;
 }
@@ -38578,8 +38633,17 @@ UI.msg = (ev, sub) => {
     m.style.opacity = 0; UI.msgMoved();
   }, wave ? 1800 : 2400);
 };
+// AUDIT-1 PERF-2 / CH-4 — THE COALESCED SYNC. UI.sync() rebuilds the HUD, the wave dispatch and
+// the build bar (busts, closures, two forced layouts): ~2 ms a call, and the kill and breach paths
+// called it once PER BODY, which at horde kill rates was most of a frame. Hot paths now call
+// UI.syncSoon(): live play marks the HUD dirty and UI.frame() runs ONE sync before the next draw;
+// under SHOT/TESTQ it is still the immediate call, so every preset, test and matrix row sees the
+// exact DOM sequence it always did.
+UI.dirty = false;
+UI.syncSoon = () => { if (SHOT) UI.sync(); else UI.dirty = true; };
 UI.sync = () => {
   const onTitle = state.phase === 'title', ended = state.phase === 'won' || state.phase === 'lost';
+  if (VFX.hudDirty) VFX.hudDirty();                     // AUDIT-1 PERF-9a — the coin anchor may have moved
   const chrome = !onTitle && !ended;
   // FIX2-UI §5 — one flag on the root that every keyboard-only affordance hangs off. A
   // `(pointer:coarse)` media query cannot see the harness's `&coarse=1`, so the class
@@ -38673,7 +38737,7 @@ UI.sync = () => {
     // anything to say (which is where "OMENS AT WAVE 14" lives).
     if (!offerUp && !tail) h += omenLine(nx, pre);
     wp.innerHTML = h;
-    const row = wp.querySelector('.wpRow');
+    let row = wp.querySelector('.wpRow');
     // FIX3-UI §5 — the roster row is a HARD FOUR. It was a flex-wrap with a 6-type cap and no
     // overflow plan, which is not a plan: at five types the fifth bust broke to a second line,
     // lost its ×N to the wrap and came down on top of the wave-strength bar (wave 13 endless,
@@ -38683,13 +38747,21 @@ UI.sync = () => {
     // can never again be orphaned from the silhouette it belongs to.
     const ranked = mix.slice().sort((a, b) => b[1] - a[1]);
     const SHOWN = 4;
-    for (const [t, c] of ranked.slice(0, SHOWN)) row.appendChild(UI.bust(t, c));
-    if (ranked.length > SHOWN) {
-      const rest = ranked.slice(SHOWN);
-      const more = document.createElement('span'); more.className = 'wpN wpMore';
-      more.textContent = L('wave.more', rest.length);
-      more.title = rest.map(m => (E_NAME[m[0]] || L('wave.foe')) + ' ×' + m[1]).join(' · ');
-      row.appendChild(more);
+    // AUDIT-1 PERF-2d — the roster row is a pure function of the wave's mix and the tongue, so
+    // live play re-seats the row it already built instead of painting four new bust canvases on
+    // every sync. SHOT always rebuilds (byte-identical DOM to every earlier round).
+    const rowK = ranked.map(m => m[0] + ':' + m[1]).join(',') + '|' + L('wave.foe');
+    if (!SHOT && wp._row && wp._rowK === rowK) { row.replaceWith(wp._row); row = wp._row; }
+    else {
+      for (const [t, c] of ranked.slice(0, SHOWN)) row.appendChild(UI.bust(t, c));
+      if (ranked.length > SHOWN) {
+        const rest = ranked.slice(SHOWN);
+        const more = document.createElement('span'); more.className = 'wpN wpMore';
+        more.textContent = L('wave.more', rest.length);
+        more.title = rest.map(m => (E_NAME[m[0]] || L('wave.foe')) + ' ×' + m[1]).join(' · ');
+        row.appendChild(more);
+      }
+      wp._row = row; wp._rowK = rowK;
     }
   }
   UI.buildMenu();
@@ -38954,29 +39026,40 @@ function hexLine(n) {
     '<s>' + L('hex.spread') + '</s></div>';
 }
 UI.hexLine = hexLine;                                     // the `_hex` rig asserts on this
+// AUDIT-1 PERF-9b — write a DOM property only when the value differs from the last one THIS
+// helper wrote (memo `_s<prop>` on the element). Only syncCountdown writes #btnWave's markup and
+// title; a `.wpS` line is a fresh element after every UI.sync rebuild, so its memo starts empty.
+function setIf(el, prop, v) {
+  const k = '_s' + prop;
+  if (el[k] === v) return;
+  el[k] = v; el[prop] = v;
+}
 UI.syncCountdown = () => {
   if (state.phase !== 'prewave') return;
   // SPEC6 §D2 — while the opening muster is held there is no clock to print. The horn says
   // what it does instead, and the dispatch card says why it is waiting.
+  // AUDIT-1 PERF-9b — `setIf` writes only on change: the held branch runs every tick and was
+  // re-parsing identical markup 30 times a second.
+  const bw = $('btnWave');
   if (G.waveHeld()) {
-    $('btnWave').innerHTML = L('bw.first') + hornTag();
-    $('btnWave').title = G.COOP.seats > 1
-      ? (G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT')) : L('bw.firstT');
+    setIf(bw, 'innerHTML', L('bw.first') + hornTag());
+    setIf(bw, 'title', G.COOP.seats > 1
+      ? (G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT')) : L('bw.firstT'));
     const s0 = $('wavePrev').querySelector('.wpS');
-    if (s0) s0.textContent = L('bw.firstT');
+    if (s0) setIf(s0, 'textContent', L('bw.firstT'));
     return;
   }
   if (state.tick % 15 === 0) {
-    $('btnWave').innerHTML = L('call.wave', state.wave + 1) +
-      ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>' + hornTag();
+    setIf(bw, 'innerHTML', L('call.wave', state.wave + 1) +
+      ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>' + hornTag());
     if (G.COOP.seats > 1)
-      $('btnWave').title = G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT');
+      setIf(bw, 'title', G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT'));
     // FIX6-UI §5 — and the per-tick write respects the same rule the builder does: while the
     // offer stands the omen panel's clock is the only clock, so this must not paint a second one
     // back over the strength line the card put there.
     const O = G.omens, offerUp = O.offer.length > 0 && O.forWave === state.wave + 1;
     const s = offerUp ? null : $('wavePrev').querySelector('.wpS');
-    if (s) s.textContent = L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown))));
+    if (s) setIf(s, 'textContent', L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown)))));
     UI.omenClock();
   }
 };
@@ -41830,6 +41913,7 @@ UI.frame = (rt) => {
   if (SHOT) { if (_shotFrames++ >= 2) return; }
   const dt = _uiLast < 0 ? 0.016 : clamp(rt - _uiLast, 0, 0.1); _uiLast = rt;
   if (!SHOT) {
+    if (UI.dirty) { UI.dirty = false; UI.sync(); }                 // AUDIT-1 PERF-2 — one per frame
     if (showGold !== state.gold) {                                     // animated count-up
       const d = state.gold - showGold;
       showGold += Math.sign(d) * Math.min(Math.abs(d), Math.max(1, Math.abs(d) * 6 * dt + 24 * dt));
@@ -42244,7 +42328,12 @@ if (!SHOT) {
 
 // ══════════════════════ SECTION: MAIN (owner: architect — renderer, camera, loop, SHOT HARNESS) ══
 const canvas = $('gl');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: tier !== 'mobile', powerPreference: 'high-performance', preserveDrawingBuffer: !!SHOT });
+// AUDIT-1 PERF-6 — antialias OFF on every tier. The scene renders into the composer's own
+// (non-MSAA) targets; the canvas only receives the fullscreen post passes, whose single quad has
+// no interior edge to resolve, so a 4x MSAA backbuffer was memory and resolve bandwidth for
+// pixel-identical output (A/B: identical PNGs). Scene AA proper would be an MSAA composer
+// target — a visual change, left to the architect.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!SHOT });
 renderer.info.autoReset = false;
 renderer.setPixelRatio(Math.min(devicePixelRatio, Q.px));
 renderer.setSize(innerWidth, innerHeight);
@@ -42543,6 +42632,9 @@ addEventListener('keydown', e => {
   // no-op on a Set, which is exactly the semantics wanted — the camera's speed is a constant,
   // not a function of the keyboard's repeat rate.
   if (panSlot(e)) { CAM_KEYS.add(e.code); e.preventDefault(); }   // arrows would scroll the page
+  // AUDIT-1 CH-2 — no hotkey fires while the player is typing (the co-op lobby's name and code
+  // fields) or holding a browser chord (Ctrl+1 is a tab switch, not a ballista).
+  if (typing() || e.ctrlKey || e.altKey || e.metaKey) return;
   if (e.key === ' ') $('btnPause').click();
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
   // SPEC3 §F — T cycles the selected tower's targeting doctrine.
@@ -42552,8 +42644,18 @@ addEventListener('keydown', e => {
   }
   // SPEC3 §D — 8/9/0 take the omen on the table. They sit past the seven build hotkeys on
   // purpose: the number row reads left-to-right as "what you build" then "what you accept".
-  const oi = { '8': 0, '9': 1, '0': 2 }[e.key];
-  if (oi !== undefined) { if (state.phase === 'prewave' && !NET.hold('omen', [oi])) G.omens.pick(oi); return; }
+  // AUDIT-1 CH-2 — the digit is the PHYSICAL key (e.code), so the number row works on AZERTY,
+  // where the unshifted keys type & é " ' ( - è _ ç à, and the numpad works everywhere. 9/0 take
+  // the omen while an offer stands; 8 does only while it is still UNPICKED — the Warbanner card
+  // is labelled 8 too, and with the omen branch first it could never be reached by key.
+  const dm = /^(?:Digit|Numpad)(\d)$/.exec(e.code || '');
+  const dg = dm ? +dm[1] : NaN;
+  const oi = { 8: 0, 9: 1, 0: 2 }[dg];
+  const O = G.omens, offerUp = state.phase === 'prewave' && O.offer.length > 0 && O.forWave === state.wave + 1;
+  if (oi !== undefined && offerUp && (dg !== 8 || O.picked < 0)) {
+    if (!NET.hold('omen', [oi])) G.omens.pick(oi);
+    return;
+  }
   // SPEC4 §C/§D — Q/W call the two powers, Z/X/C arm the three road traps. They sit off the
   // number row on purpose: 1-7 buy fortifications, 8-0 take omens, and neither of those is
   // what these are. All five ARM placement mode exactly as a build card does, so the ghost,
@@ -42563,7 +42665,7 @@ addEventListener('keydown', e => {
   if (pw) { UI.deselect(); if (G.enterCast(pw)) G.placeAtCursor(); return; }
   const tk = { z: 'caltrops', x: 'tar', c: 'keg' }[lk];
   if (tk) { UI.deselect(); if (G.enterTrap(tk)) G.placeAtCursor(); return; }
-  const keys = Object.keys(TOWER_DEFS), n = parseInt(e.key);
+  const keys = Object.keys(TOWER_DEFS), n = dg;          // AUDIT-1 CH-2 — physical digit
   if (n >= 1 && n <= keys.length) {                    // hotkeys ARM the hammer
     UI.deselect();
     if (G.enterPlace(keys[n - 1])) G.placeAtCursor();
@@ -42605,7 +42707,7 @@ G.dense = false;
 let _dprNow = -1;
 function densityStep(alive) {
   const want = G.dense ? alive > Q.denseOff : alive > Q.denseOn;
-  if (want !== G.dense) G.dense = want;
+  if (want !== G.dense) { G.dense = want; Armies.setDense(want); }   // AUDIT-1 PERF-5a
   const px = Math.min(devicePixelRatio, Q.px * (G.dense ? Q.dpr : 1));
   if (Math.abs(px - _dprNow) > 0.01) { _dprNow = px; renderer.setPixelRatio(px); }
 }
@@ -42889,9 +42991,9 @@ function warmStandins() {
       try {
         const g = Towers.build({ type, level, x: 0, z: 0 });
         g.name = 'WARM_' + type + level; scene.add(g); made.push(g);
-      } catch (e) { console.log('WARMWARN tower ' + type + level + ': ' + e.message); }
+      } catch (e) { console.log('WARMWARN tower ' + type + level + ': ' + e.message); if (SHOT) __err('WARMWARN tower ' + type + level + ': ' + e.message); }
     }
-    try { ghostFor(type); } catch (e) { console.log('WARMWARN ghost ' + type + ': ' + e.message); }
+    try { ghostFor(type); } catch (e) { console.log('WARMWARN ghost ' + type + ': ' + e.message); if (SHOT) __err('WARMWARN ghost ' + type + ': ' + e.message); }
   }
   return made;
 }
@@ -42928,7 +43030,7 @@ async function warmView(objs, a, b) {
   const B = 1;
   for (let i = 0; i < objs.length; i += B) {
     proxy.children = objs.slice(i, i + B);
-    try { renderer.compile(proxy, camera, scene); } catch (e) { console.log('WARMWARN issue: ' + e.message); break; }
+    try { renderer.compile(proxy, camera, scene); } catch (e) { console.log('WARMWARN issue: ' + e.message); if (SHOT) __err('WARMWARN issue: ' + e.message); break; }
     await BOOT.sub(a + (b - a) * Math.min(1, (i + B) / objs.length));
   }
   proxy.children = [];
@@ -43090,7 +43192,7 @@ async function glRestore() {
   renderer.shadowMap.needsUpdate = true;
   let nPass = -1;
   try { composer.setSize(innerWidth, innerHeight); nPass = composer.passes.length; }
-  catch (e) { console.log('GLWARN composer: ' + e.message); }
+  catch (e) { console.log('GLWARN composer: ' + e.message); if (SHOT) __err('GLWARN composer: ' + e.message); }
   const nTex = texSweep();
   _pgN = 0; _pgSeen.clear();
   let nProg = -1;
@@ -43109,7 +43211,7 @@ async function glRestore() {
     // census: 43 after the warm, 53 after this line, and 53 is what was up before the loss.
     composer.render();
     nProg = renderer.info.programs.length;
-  } catch (e) { console.log('GLWARN warm: ' + e.message); }
+  } catch (e) { console.log('GLWARN warm: ' + e.message); if (SHOT) __err('GLWARN warm: ' + e.message); }
   // Back to the fight. `acc` is dropped rather than carried: at most one tick, and paying back a
   // suspended phone's worth of accumulator is the one thing the clamp cannot protect against.
   _camT = -1; last = performance.now(); acc = 0; _capNext = 0;
