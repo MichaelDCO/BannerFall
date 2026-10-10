@@ -1811,8 +1811,10 @@ const srng = (salt, i) => {
 //   date can be tested); the harness PINS it, so the chooser frame is byte-identical on
 //   any machine on any day.
 const TODAY = (() => {
+  // AUDIT-1 A1-B9 (balance) — honoured under the harness and `&dbg` only: in live play a forged
+  // date would open any day's Daily War (and its +2 laurels) from a link.
   const q = (P.get('today') || '').replace(/\D/g, '');
-  if (q.length === 8) return q;
+  if (q.length === 8 && (SHOT || P.has('dbg'))) return q;
   if (SHOT) return '20260101';
   const d = new Date();
   return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
@@ -1825,7 +1827,18 @@ const DAILY_ROT = [1, 2, 3, 1, 2, 3, 2];           // Sun..Sat — three roads o
 const DAILY_MAP = DAILY_ROT[DAILY_DOW] || 1;
 const DAILY_SEED = (+TODAY) >>> 0;                 // the date IS the war seed
 // The date key of the run IN PROGRESS ('' = not a daily). Written by the chip's deep link.
-const DAILY = ((P.get('daily') || '').replace(/\D/g, '') || '');
+// AUDIT-1 A1-B3 (balance) — a tag is only a Daily War when the page IS that day's war: the date's
+// own seed, the date's own road (its weekday's DAILY_ROT entry, so a daily resumed after midnight
+// still counts) and the campaign. A re-rolled seed, a stray `&mode=` or a tag carried onto another
+// road used to keep the tag (chip lit, end-plate row, snapshot field) on a run that is not the day's.
+const DAILY = (() => {
+  const d = (P.get('daily') || '').replace(/\D/g, '');
+  if (d.length !== 8 || (runSeed >>> 0) !== ((+d) >>> 0)) return '';
+  const md = (P.get('mode') || '').toLowerCase();
+  if (md === 'horde' || md === 'endless' || P.has('endless')) return '';
+  const dw = new Date(Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8))).getUTCDay();
+  return (parseInt(P.get('map') || '', 10) || 1) === (DAILY_ROT[dw] || 1) ? d : '';
+})();
 const isTouch = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) < 900;
 // ══ v7-MENUCAM §1 — WHERE THE QUALITY TIER COMES FROM ════════════════════════════
 // Three inputs, strict precedence, resolved ONCE here at module scope (Q is read by every
@@ -1976,8 +1989,12 @@ G.talTrap = () => (TAL.e >= 3 ? 0.9 : 1);   // tier-3 Engineer also cheapens roa
 // `&talents=q2,d1,e3` — the harness override. It is the ONLY source of talents in SHOT mode
 // (a screenshot must never depend on what this machine happens to have unlocked), and it
 // outranks the store in live play too, so a talent build can be handed over as a link.
+// AUDIT-1 A1-B9 (balance) — under SHOT and `&dbg` only. A live `?talents=q3,d3,e3` was a free
+// full council; and a live run fought with ANY override (talents/unlock/today) files no record
+// (see saveProg), so a dev link cannot mint stars, laurels or deeds.
+const DEV_OVR = !SHOT && P.has('dbg') && (P.has('talents') || P.has('unlock') || P.has('today'));
 const TAL_OVR = (() => {
-  const s = P.get('talents');
+  const s = (SHOT || P.has('dbg')) ? P.get('talents') : null;
   if (!s) return null;
   const o = { q: 0, d: 0, e: 0 };
   for (const t of s.split(',')) {
@@ -26426,7 +26443,14 @@ function setTalents(q, d, e) {
   for (const k in TRAP_DEFS) TRAP_DEFS[k].cost = Math.round(TRAP_BASE[k] * tm);
 }
 G.applyTalents = () => {
-  const src = TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
+  // AUDIT-1 A1-B1 (balance) — A WAR-BAND FIGHTS AT THE SHIPPED GRADES. The council record is per
+  // BROWSER, nothing on the wire carries it, and setTalents cuts every purse (GOLDS, hashed by the
+  // desync tripwire), the knights' hp and the refund from it — so two captains with different
+  // councils desynced at tick 0. Zero on every seat is the one value every peer already agrees on
+  // (and the matrix's own baseline); carrying the captain's grades over the lobby is the BACKLOG
+  // alternative. Read off COOP.seats (the band's shape, which NET.arm writes before any road opens)
+  // rather than NET, which is declared after MAIN's shot-path call. Solo is untouched.
+  const src = COOP.seats > 1 ? null : TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
   setTalents(src ? src.q : 0, src ? src.d : 0, src ? src.e : 0);
   if (SHOT && (TAL.q || TAL.d || TAL.e))
     console.log('TALENTLOG q=' + TAL.q + ' d=' + TAL.d + ' e=' + TAL.e +
@@ -40077,7 +40101,7 @@ let PROG_C = { q: 0, d: 0, e: 0 }, PROG_A = {};
 const STAT0 = () => ({ burn: 0, storm: 0, steel: 0, trap: 0, power: 0, wyv: 0,
                        champ: 0, risen: 0, hex: 0, slow: 0, kind: {} });
 let PROG_S = STAT0(), PROG_H = {};
-function saveProg() { if (SHOT) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 4, stars: PROG, endless: PROG_E, daily: PROG_D, council: PROG_C, deeds: PROG_A, stats: PROG_S, horde: PROG_H })); } catch (e) { /* private mode */ } }
+function saveProg() { if (SHOT || DEV_OVR) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 4, stars: PROG, endless: PROG_E, daily: PROG_D, council: PROG_C, deeds: PROG_A, stats: PROG_S, horde: PROG_H })); } catch (e) { /* private mode */ } }
 if (!SHOT) try {
   const o = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
   if (o) { PROG = o.stars || o; PROG_E = o.endless || {}; PROG_D = o.daily || {};
@@ -40133,7 +40157,7 @@ function dailyBest(won) {
   if (prev && (prev.won > rec.won || (prev.won === rec.won && prev.wave >= rec.wave && prev.stars >= rec.stars))) return;
   PROG_D[G.DAILY] = rec; saveProg();
 }
-const unlocked = id => id === 1 || P.has('unlock') || starsOf(id - 1) >= 1;
+const unlocked = id => id === 1 || ((SHOT || P.has('dbg')) && P.has('unlock')) || starsOf(id - 1) >= 1;   // AUDIT-1 A1-B9
 // SPEC2 §E: three stars for ≥90% of the garrison still standing, two for ≥50%, one for a win.
 const starsFor = lives => lives <= 0 ? 0 : lives >= LIVES0 * 0.9 ? 3 : lives >= LIVES0 * 0.5 ? 2 : 1;
 
@@ -40152,7 +40176,10 @@ function laurelsEarned() {
   for (const m of MAPS) {
     const st = starsOf(m.id);
     if (st > 0) n += st + 2;                       // stars, plus the first-victory bounty
-    n += Math.floor(endlessOf(m.id) / 5);          // every fifth wave held past the finale
+    // AUDIT-1 A1-B4 (balance) — PAST the finale, as the rate always said. PROG_E keeps the ABSOLUTE
+    // wave (UI.endlessBest stores state.wave), so `best / 5` paid the campaign itself: one wave
+    // past each finale was worth 13 laurels, a third of the tree. Subtract the road's own finale.
+    n += Math.floor(Math.max(0, endlessOf(m.id) - (WAVE_TABLES[m.id] || []).length) / 5);
   }
   for (const k in PROG_D) if (PROG_D[k] && PROG_D[k].won) n += 2;
   // SPEC6 §D3d — a road whose HORDE has been broken pays two, once, exactly like a first
@@ -40166,7 +40193,9 @@ const talSpent = () => G.TAL_BRANCH.reduce((s, b) => {
   for (let i = 0; i < (PROG_C[b] | 0); i++) t += G.TAL_COST[i];
   return s + t;
 }, 0);
-const laurels = () => laurelsEarned() - talSpent();
+// AUDIT-1 A1-B4 — clamped: a save that bought tiers under the old endless rate keeps them (a bought
+// tier is never revoked) and simply reads 0 until it has earned its way back into credit.
+const laurels = () => Math.max(0, laurelsEarned() - talSpent());
 G.laurels = laurels; G.laurelsEarned = laurelsEarned; G.talSpent = talSpent;
 // What the council has BOUGHT, read by SIM's applyTalents() at run start. Live play only —
 // under SHOT applyTalents never asks (see its comment), so a screenshot cannot be coloured
@@ -42391,6 +42420,7 @@ const rollSeed = () => {
   if (!(globalThis.crypto && crypto.getRandomValues)) return;
   const q = new URLSearchParams(location.search);
   q.set('seed', String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000)));
+  q.delete('daily');                                   // AUDIT-1 A1-B3 — a new seed is not the day's war
   location.search = q.toString();
 };
 document.querySelectorAll('.seedTag .sD').forEach(b => { b.onclick = rollSeed; });
