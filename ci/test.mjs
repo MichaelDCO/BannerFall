@@ -139,7 +139,7 @@ async function node(file, args = [], env = {}) {
     p.on('close', (code) => r({ code, lines: buf.split(/\r?\n/) }));
   });
 }
-{
+if (!skipped('static')) {   // BF_SKIP covers static too (e.g. a replica of the stamped deploy copy, which is not a git tree)
   const f = sib('static.mjs');
   const r = f ? await node(f, [ROOT]) : { code: 1, lines: ['STATICSUM missing static.mjs'] };
   keep('static', r.lines);
