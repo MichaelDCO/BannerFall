@@ -5,10 +5,12 @@
 A medieval tower-defense game built with Three.js — procedural art, deterministic simulation,
 five campaigns, free tower placement, elemental warfare, per-run War Omens, hero powers,
 road traps, choreographed waves, a persistent War Council, 31 Deeds, endless / daily / horde
-modes. English and French.
+modes, and **2–4 player co-op** played browser to browser. English and French.
 
 **Installable PWA**: works offline after first load, installs to the home screen on phones
-(fullscreen, landscape). Three.js 0.170.0 is vendored — no CDN, no build step, no dependencies.
+(fullscreen, landscape). Three.js 0.170.0 and Trystero 0.25.4 are vendored — no CDN, no build
+step, no package install. Solo play never contacts a third party; co-op is the one feature that
+uses the network (see [Network & privacy](#network--privacy)).
 
 The title screen paints in a fraction of a second; the vale is forged behind it against a real
 progress bar that names what it is doing, and the tab stays responsive the whole way down.
@@ -83,6 +85,9 @@ Then visit `http://localhost:8321/`.
   desktop, compressed economy, no finale boss — the last wave *is* the boss). Plus the
   **Daily War**: one shared map and seed for everyone, rotating by weekday
 - **Per-run seeds** with elite wave variations and seeded champions for replayability
+- **Co-op for two to four captains** — one vale, one horde, a purse each, played peer to peer
+  with no game server: raise a war-band from the title screen and send the five-character code
+  (or the summons link) to your friends. See [Co-op](#co-op-24-captains)
 - **English and French**, auto-detected and switchable in settings
 - Full mouse/keyboard + touch controls; ×1/×2/×3 speed, optional auto wave-call; scales from
   phones to desktop
@@ -91,8 +96,14 @@ Then visit `http://localhost:8321/`.
 
 Build with the bottom bar (hotkeys 1–8), click/tap to place — the range ring previews before you
 spend. Traps go on the road (Z X C), powers are cast from the bottom-left discs (Q W). Space
-pauses, Esc cancels, T cycles targeting, 8–0 picks an omen. The full sheet is in-game: press
-**H**, or click the key disc.
+pauses during a battle, Esc cancels (and closes any open sheet), T cycles targeting. While an
+omen is on offer, **8 / 9 / 0** take the first, second and third card — and once you have
+picked, 8 goes back to being the Warbanner. The full sheet is in-game: press **H**, or click the
+key disc.
+
+Number hotkeys are read by **physical key**, so the number row works on a French AZERTY
+keyboard without Shift, and the numpad works everywhere. Hotkeys never fire while you are typing
+in a text field (a war-band name, a code).
 
 ### Camera
 
@@ -111,6 +122,53 @@ panning; the arrows always pan.
 The **first wave never musters on its own**: the horn reads "Begin the Battle" and waits until
 you have built in peace. From wave 2 the countdown behaves as it always did — unless you switch
 auto-call on, in which case wave 1 musters like every other wave.
+
+## Co-op (2–4 captains)
+
+**Raising a band.** On the title screen, press **CO-OP**, then **Raise a war-band**. You are the
+*captain*: the lobby shows a five-character war-band code and **Copy the summons** copies a link
+that ends in `?join=CODE`. Send either one to up to three friends.
+
+**Joining.** Open the summons link — the lobby opens on the join sheet with the code filled in —
+or press **CO-OP → Join a war-band**, type the code and **Ride out**.
+
+**Setting out.** The captain picks the road (war-bands ride the Campaign at the Knight's trial for
+now). Every captain presses **Ready**; when the whole band is ready the captain **sounds the
+horn** and every browser opens the same road on the same seed.
+
+**What is shared, and what is yours.**
+
+- **A purse each.** Every captain builds out of their own gold. Bounties, the early-call prize
+  and the War Chest omen are the band's, split evenly (the remainder walks round the band).
+- **Your standards are yours.** Only the captain who raised a tower can upgrade it, change its
+  orders or dismantle it; anyone else's attempt is refused on every screen.
+- **A bigger muster.** The tower limit grows by three for every captain past the first.
+- **The horn is a ready-check.** A wave marches when the *last* captain sounds the horn; the omen
+  choice passes from captain to captain.
+- **The War Council sits out.** Every seat fights at the shipped grades, whatever each player has
+  bought, so no one's purse or knights differ from what the other browsers compute.
+
+**How it stays in step.** Only *commands* cross the wire (build, upgrade, sell, cast, horn…). The
+captain's browser puts every command in order and every browser runs the identical simulation
+from that one log, comparing checksums as it goes. If two fields ever disagree, the battle is
+called ("The vales have parted") and the band returns to the lobby rather than play on two
+different battles. If a rider drops, their works pass to the captain; if the captain leaves, the
+band is broken. The captain's browser decides the *order* of commands, so ride with people you
+trust. A run saved during a war-band resumes as a solo run.
+
+**If no band answers**, the code may have gone cold, or your network may block direct browser to
+browser connections (some campus and corporate networks do). Try another network, or let the
+other captain host.
+
+## Network & privacy
+
+Solo play makes no request to anyone but the site that served the game, and once installed it
+runs fully offline. **Co-op** uses [Trystero](https://github.com/dmotz/trystero) (vendored in
+`js/vendor/trystero-nostr.min.js`): to find each other, browsers exchange connection offers
+through **public Nostr relays**, and a public **STUN** server (for example Cloudflare's) tells each
+browser its public address. After that, play is a direct WebRTC connection between the players.
+Joining a band therefore reveals your IP address to the other captains, and the relays see that a
+connection was brokered. Nothing is ever sent unless you raise or join a war-band.
 
 ## Settings
 

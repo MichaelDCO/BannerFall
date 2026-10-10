@@ -46223,6 +46223,13 @@ async function runTests(which) {
     console.log('TESTLOG ' + (p ? 'PASS' : 'FAIL') + ' ' + name + (p || !detail ? '' : ' — ' + detail));
   };
   const has = s => which === 'all' || which.split(',').includes(s);
+  // AUDIT-1 T7-02 — a suite name nothing answers to (`?test=rizen`) used to run ZERO asserts and
+  // still title the page TESTPASS (total=0). Every requested name must be one this function knows.
+  const KNOWN = ['audio', 'sim', 'place', 'ui', 'i18n', 'harness', 'risen', 'turns', 'omen', 'council',
+    'net', 'cmd', 'coop', 'coope2e', 'all'];
+  for (const n of which.split(',')) if (KNOWN.indexOf(n) < 0) T('harness.unknownSuite.' + n, false, 'no suite is named "' + n + '"');
+  // What the boot handed the suites, read before any suite moves it (the council suite's baseline).
+  const BOOT0 = { gold: state.gold, tal: { q: TAL.q, d: TAL.d, e: TAL.e } };
 
   if (has('audio')) {
     // Render the real graph offline; assert by output RMS. This is the test that would have
@@ -46327,8 +46334,24 @@ async function runTests(which) {
     const orphans = Object.keys(SHOT_MAPS).filter(k => !(k in SHOT_PRESETS));
     T('harness.shotMapsResolve', orphans.length === 0, orphans.join(','));
     T('harness.noPageErrors', window.__errors.length === 0, window.__errors.slice(0, 2).join(' | '));
+    // AUDIT-1 CH-1b — a co-op module that failed to load left this suite GREEN: a failed
+    // <script type=module> raises nothing on window.onerror. Both modules publish their string
+    // tables even under ?test= (everything else in them sits behind their own SHOT guard).
+    T('harness.modules', !!window.BF_LOBBY_STR && !!window.BF_NET_STR,
+      'lobby.js=' + !!window.BF_LOBBY_STR + ' net.js=' + !!window.BF_NET_STR);
+    // AUDIT-1 T7-04 — the gates the LIVE suite (tools/livetest.mjs) exists because of: under
+    // SHOT/TESTQ nothing reads or writes the run snapshot or the deed store, so no preset and no
+    // matrix row can be coloured by what this machine has played.
+    { const s0 = JSON.stringify(PROG_S), a0 = G.deedCount();
+      G.deedBump('burn'); G.deedMark('muster', 14);
+      T('harness.persistenceGatedUnderShot', G.runSave(true) === false && G.runSnap() === null &&
+        G.runRestore({ tal: [0, 0, 0] }) === false && G.deedGrant('pyre') === false &&
+        JSON.stringify(PROG_S) === s0 && G.deedCount() === a0 && DEEDS_ON === false,
+        'runSave/runSnap/runRestore/deedGrant/deedBump must all refuse under SHOT'); }
   }
 
+  // AUDIT-1 T7-02 — named on the wrong road, a map-bound suite used to skip in silence and pass.
+  if (which !== 'all' && has('risen') && MAP.id !== 4) T('risen.wrongMap', false, 'risen needs &map=4, got map=' + MAP.id);
   if (has('risen') && MAP.id === 4) {
     state.phase = 'wave'; state.wave = 9;
     const spawn = () => { const k = G.spawnAt('grunt', 60, 0); return G.enemies[G.enemies.length - 1]; };
@@ -46344,6 +46367,7 @@ async function runTests(which) {
     T('risen.fireDenies', G.riseStats.burned > burnedBefore);
   }
 
+  if (which !== 'all' && has('turns') && MAP.id !== 5) T('turns.wrongMap', false, 'turns needs &map=5, got map=' + MAP.id);
   if (has('turns') && MAP.id === 5) {
     // The real contract (lattice handoff): campaign spawns carry a turns array drawn at
     // spawn; rig-spawned bodies may carry null and fall back to the seeded per-(id,node)
@@ -46359,6 +46383,129 @@ async function runTests(which) {
       JSON.stringify(arr));
   }
 
+
+  // == AUDIT-1 T7-05 — THE OMEN SUITE (?test=omen&map=1) =====================================
+  // Every omen's effect, read numerically off the one bundle the sim reads (OMEN_FX) and, where
+  // the effect is a number on a body, off a REAL body: spawned through the harness's own
+  // G.spawnAt, struck through the real dealDamage, felled through the real hurtKnight. Each case
+  // is applied, measured and reset, so no case depends on the one before it; the page is put back
+  // (bodies, purse, school tally, phase) at the end.
+  if (has('omen')) {
+    const keys = Object.keys(OMENS);
+    const chal = keys.filter(k => OMENS[k].kind === 'challenge'), boon = keys.filter(k => OMENS[k].kind === 'boon');
+    T('omen.table.tenOmens', keys.length === 10 && chal.length === 5 && boon.length === 5,
+      'keys=' + keys.join(',') + ' challenges=' + chal.length);
+    const neutral = () => OMEN_FX.spd === 1 && OMEN_FX.hp === 1 && OMEN_FX.ward === 0 && OMEN_FX.wardEl === '' &&
+      OMEN_FX.interval === 1 && OMEN_FX.count === 1 && OMEN_FX.noSlow === 0 &&
+      Object.keys(OMEN_FX.dmg).length === 0 && OMEN_FX.chain === 0 && OMEN_FX.respawn === 1 && OMEN_FX.bounty === 1;
+    const fx = () => JSON.stringify(OMEN_FX);
+    const dmg0 = Object.assign({}, dmgBySchool), gold0 = state.gold, en0 = G.enemies.length;
+    const phase0 = state.phase, wave0 = state.wave, omen0 = state.omen;
+    state.phase = 'wave'; state.wave = Math.max(5, state.wave);
+    // A target with no resist and no runes; `ward` is the unit's Elemental Ward school, if any.
+    const dummy = (ward) => ({ alive: true, hp: 1000, maxhp: 1000, id: 980000 + R.pass + R.fail, type: 'dummy',
+      def: { resist: {}, scale: 1, bounty: 0, leak: 1, speed: 1, hp: 1000 },
+      px: 0, pz: 0, d: 10, lane: 0, pathId: 0, wardN: 0, wardT: -9999, slowT: 0, slowF: 1, ward: ward || '' });
+    const hit = (el, ward) => { const e = dummy(ward); G.dealDamage(e, 100, el); return 1000 - e.hp; };
+    const grunt = () => G.spawnAt('grunt', 20, 0);
+    const take = (k) => { applyOmen(k); return state.omen === k; };
+    applyOmen('');
+    T('omen.none.neutral', neutral() && state.omen === '', fx());
+    const g0 = grunt();
+    const base = { hp: g0.maxhp, spd: g0.spdM, noSlow: g0.noSlow, ward: g0.ward, pierce: hit('pierce'), fire: hit('fire') };
+    // -- the five challenges ---------------------------------------------------------------
+    { const ok = take('march'), g = grunt();
+      T('omen.march.pace125', ok && OMEN_FX.spd === 1.25 && g.spdM === base.spd * 1.25,
+        fx() + ' spdM=' + g.spdM + ' base=' + base.spd); }
+    { const ok = take('ironskin'), g = grunt();
+      T('omen.ironskin.hp140', ok && OMEN_FX.hp === 1.40 && Math.abs(g.maxhp - base.hp * 1.40) < 1e-9,
+        'maxhp=' + g.maxhp + ' base=' + base.hp); }
+    { for (const s of SCHOOLS) dmgBySchool[s] = 0;
+      dmgBySchool.fire = 1e6;                              // the run has leaned on fire
+      const ok = take('ward'), g = grunt();
+      T('omen.ward.turnsTopSchool', ok && OMEN_FX.ward === 0.5 && OMEN_FX.wardEl === 'fire' &&
+        topSchool() === 'fire' && g.ward === 'fire' && base.ward === '', 'wardEl=' + OMEN_FX.wardEl + ' unit=' + g.ward);
+      const warded = hit('fire', OMEN_FX.wardEl), other = hit('pierce', OMEN_FX.wardEl);
+      T('omen.ward.halvesThatSchoolOnly', Math.abs(warded - base.fire * 0.5) < 1e-9 && Math.abs(other - base.pierce) < 1e-9,
+        'fire ' + base.fire + '->' + warded + ' pierce ' + base.pierce + '->' + other); }
+    { const ok = take('night');
+      T('omen.night.interval055', ok && OMEN_FX.interval === 0.55 && OMEN_FX.count === 1, fx()); }
+    { const ok = take('sappers'), g = grunt();
+      T('omen.sappers.noSlow', ok && OMEN_FX.noSlow === 1 && g.noSlow === 1 && base.noSlow === 0, 'unit=' + g.noSlow); }
+    T('omen.challenges.dangerMoney120', chal.every(k => { applyOmen(k); return OMEN_FX.bounty === 1.2; }), chal.join(','));
+    // -- the five boons ----------------------------------------------------------------------
+    { const ok = take('shafts'), p = hit('pierce'), f = hit('fire');
+      T('omen.shafts.pierce130', ok && OMEN_FX.dmg.pierce === 1.3 && Math.abs(p - base.pierce * 1.3) < 1e-9 &&
+        Math.abs(f - base.fire) < 1e-9, 'pierce=' + p + ' fire=' + f); }
+    { const ok = take('front'); T('omen.front.chainPlus2', ok && OMEN_FX.chain === 2, fx()); }
+    { const g1 = state.gold, ok = take('chest');
+      T('omen.chest.pays60', ok && state.gold === g1 + 60, g1 + '->' + state.gold); }
+    { const ok = take('wind'), r = OMEN_FX.respawn;
+      const kn = { alive: true, hp: 5, target: -1, x: 0, z: 0 }; hurtKnight(kn, 99);
+      applyOmen('');
+      const kn0 = { alive: true, hp: 5, target: -1, x: 0, z: 0 }; hurtKnight(kn0, 99);
+      T('omen.wind.halvesRespawn', ok && r === 0.5 && kn.respawn === 4 && kn0.respawn === 8,
+        'wind=' + kn.respawn + ' none=' + kn0.respawn); }
+    { const ok = take('thin');
+      T('omen.thin.countAndPurse', ok && OMEN_FX.count === 0.8 && OMEN_FX.bounty === 0.75, fx()); }
+    T('omen.boons.noDangerMoney', boon.filter(k => k !== 'thin').every(k => { applyOmen(k); return OMEN_FX.bounty === 1; }),
+      boon.join(','));
+    // -- and the edges -------------------------------------------------------------------------
+    applyOmen('bogus');
+    T('omen.unknown.isNoOmen', state.omen === '' && neutral(), fx());
+    applyOmen('ironskin'); applyOmen('');
+    T('omen.reset.clearsEverything', state.omen === '' && neutral(), fx());
+    G.enemies.splice(en0);
+    for (const s of SCHOOLS) dmgBySchool[s] = dmg0[s];
+    state.gold = gold0; state.phase = phase0; state.wave = wave0; applyOmen(omen0 || '');
+  }
+
+  // == AUDIT-1 T7-05 — THE COUNCIL SUITE (?test=council&map=1[&talents=q2,d1,e3]) ============
+  // The War Council's grades become numbers in exactly one place (setTalents), and a run gets its
+  // grades from exactly one place (G.applyTalents). This suite reads both: what the boot applied
+  // (the `&talents=` override under the harness, or the shipped zeros), every grade of every
+  // branch through the same setTalents a run start uses, the two numbers that reach the sim
+  // through a real tower (Engineer refund, Drillmaster knights), and the war-band rule that every
+  // seat fights at grade zero (AUDIT-1 A1-B1). tools/test.ps1 boots it with and without an override.
+  if (has('council')) {
+    const want = TAL_OVR || { q: 0, d: 0, e: 0 };
+    const purse0 = GOLD0 * (HORDE ? 2 : 1);
+    T('council.boot.gradesApplied', BOOT0.tal.q === want.q && BOOT0.tal.d === want.d && BOOT0.tal.e === want.e,
+      JSON.stringify(BOOT0.tal) + ' want ' + JSON.stringify(want));
+    T('council.boot.purse', BOOT0.gold === purse0 + TAL_GOLD[want.q], 'gold=' + BOOT0.gold + ' GOLD0=' + GOLD0);
+    T('council.tables.shape', [TAL_GOLD, TAL_HP, TAL_SELL].every(a => a.length === 4 && a.every((v, i) => i === 0 || v > a[i - 1])) &&
+      TAL_GOLD[0] === 0 && TAL_HP[0] === 1 && TAL_SELL[0] === 0.70,
+      'gold=' + TAL_GOLD + ' hp=' + TAL_HP + ' sell=' + TAL_SELL);
+    const bad = [];
+    for (let g = 0; g <= 3; g++) {
+      setTalents(g, g, g);
+      if (state.gold !== purse0 + TAL_GOLD[g]) bad.push('q' + g + ' gold=' + state.gold);
+      if (G.talHp() !== TAL_HP[g]) bad.push('d' + g + ' hp=' + G.talHp());
+      if (G.talSell() !== TAL_SELL[g]) bad.push('e' + g + ' sell=' + G.talSell());
+      for (const k in TRAP_DEFS) if (TRAP_DEFS[k].cost !== Math.round(TRAP_BASE[k] * (g >= 3 ? 0.9 : 1)))
+        bad.push('trap ' + k + '@e' + g + '=' + TRAP_DEFS[k].cost);
+    }
+    T('council.grades.everyGradeEveryBranch', bad.length === 0, bad.slice(0, 4).join(' | '));
+    setTalents(0, 2, 3);
+    { const n0 = G.towersList.length;
+      G.placeTower(32, -31, 'archer', 1, true);
+      const tw = G.towersList[G.towersList.length - 1], inv = tw.invested, gb = state.gold;
+      G.sellTower(tw);
+      T('council.engineer.refund85', G.towersList.length === n0 && inv > 0 && state.gold === gb + Math.round(inv * 0.85),
+        'invested=' + inv + ' refund=' + (state.gold - gb)); }
+    { G.placeTower(32, -31, 'barracks', 1, true);
+      const tw = G.towersList[G.towersList.length - 1], ks = G.knights.filter(k => k.tower === tw);
+      T('council.drillmaster.knightHp116', ks.length === 3 && ks.every(k => k.maxhp === 90 * TAL_HP[2] && k.hp === k.maxhp),
+        'knights=' + ks.map(k => k.maxhp).join(','));
+      G.sellTower(tw); }
+    { const seats0 = COOP.seats;
+      COOP.seats = 2; G.applyTalents();
+      const z = TAL.q === 0 && TAL.d === 0 && TAL.e === 0 && GOLDS.length === 2 && GOLDS[0] === purse0 && GOLDS[1] === purse0;
+      const zs = JSON.stringify(TAL) + ' purses=' + GOLDS.join('/');
+      COOP.seats = seats0; G.applyTalents();
+      T('council.coop.everySeatAtGradeZero', z && TAL.q === want.q && TAL.d === want.d && TAL.e === want.e &&
+        GOLDS.length === 1 && state.gold === purse0 + TAL_GOLD[want.q], 'band ' + zs + ' -> solo ' + JSON.stringify(TAL)); }
+  }
 
   // == GAME_SPEC_9 SB - THE LOCKSTEP DETERMINISM SUITE (?test=net) ==========================
   // Co-op is host-sequenced lockstep: only COMMANDS travel, and every peer re-derives the
@@ -46848,7 +46995,11 @@ async function runTests(which) {
       // js/net.js installs NOTHING under ?test= (its own SHOT guard), so its module scope is
       // inert and window.BFCoopNet is deliberately absent. Its EXPORTS are the transport, and
       // this is the same module instance index.html already loaded - not a second copy.
-      const NM = await import('./net.js');
+      // AUDIT-1 T7-10 — module records are keyed by the FULL URL, so the import carries the very
+      // query string index.html loaded both files with (`?v=<build>`); a bare './net.js' was a
+      // second, separate instance. The string table identity below proves it is the same one.
+      const NM = await import('./net.js' + new URL(import.meta.url).search);
+      T(E('sameNetModuleInstance'), NM.NET_STR === window.BF_NET_STR, 'import resolved to a second js/net.js instance');
       const strat = await NM.transport();
       T(E('loopbackStrategy'), !!strat && NM.strategyName() === 'bc',
         'strategy=' + NM.strategyName() + ' got=' + !!strat);
@@ -47042,6 +47193,11 @@ async function runTests(which) {
     })();
   }
 
+  // AUDIT-1 T7-02 — two ways this page used to title itself TESTPASS having proved nothing: no
+  // assert ran at all, or a page error fired (title 'ERROR', see SECTION: CORE) and the line below
+  // overwrote it. Both only ever ADD a failure, so a green run's counts are unchanged.
+  if (R.pass + R.fail === 0) T('harness.someAssertRan', false, 'suites=' + which + ' ran zero asserts');
+  if (window.__errors.length) T('harness.noPageErrors.atEnd', false, window.__errors.slice(0, 3).join(' | '));
   console.log('TESTSUM total=' + (R.pass + R.fail) + ' pass=' + R.pass + ' fail=' + R.fail +
     ' suites=' + which);
   document.title = R.fail ? 'TESTFAIL' : 'TESTPASS';
