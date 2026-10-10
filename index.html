@@ -7,8 +7,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Bannerfall</title>
+<!-- AUDIT-1 UX-13 — the boot veil goes up BEFORE the first paint. SECTION: CORE adds html.booting only
+     once three.module.js and game.js have been fetched and evaluated, so on a slow link the raw shell
+     (HUD chips reading 0 gold / wave 0/10 over the title) painted first. Same gate as CORE: never
+     under ?shot= / ?test=. CORE's BOOT.done() removes the class exactly as before. -->
+<script>if(!/[?&](shot|test)=[^&]/.test(location.search))document.documentElement.classList.add('booting');</script>
 <!-- ╔══════════════════════════════════════════════════════════════════╗
-     ║ BANNERFALL — single-file AAA tower defense. See GAME_SPEC.md.     ║
+     ║ BANNERFALL — AAA tower defense PWA; game code in js/game.js       ║
      ║ Sections are owned by builder agents; edit only your section and  ║
      ║ marked HOOK points. The shot harness (SECTION: MAIN) is sacred.   ║
      ╚══════════════════════════════════════════════════════════════════╝ -->
@@ -37,7 +42,7 @@
 <body>
 <canvas id="gl"></canvas>
 <!-- ══ SECTION: UI-HTML ══ (owner: UI builder). All ornament is inline SVG — no external
-     files, nothing fetched, and nothing that has to decode before the first shot render. -->
+     files, no ornament fetches, and nothing that has to decode before the first shot render. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#fff3cf"/><stop offset=".42" stop-color="#e8b64c"/>
@@ -229,7 +234,8 @@
       <div id="bootTrack"><div id="bootFill"></div></div>
       <div id="bootStage"></div>
     </div>
-    <div id="titleFoot">10 waves &nbsp;·&nbsp; 4 fortifications &nbsp;·&nbsp; one road</div>
+    <!-- AUDIT-1 UX-13: empty on purpose — SECTION: UI writes it from L('foot', …); the static copy was stale English. -->
+    <div id="titleFoot"></div>
   </div>
 
   <div id="maps" class="overlay hidden">
@@ -320,9 +326,12 @@
 <script type="module" src="js/net.js?v=__BUILD__"></script>
 <script>
 // PWA service worker — NEVER in shot mode (a stale cache would poison the deterministic harness).
+// AUDIT-1 CH-3 — nor under ?test= (the unit runner boots under the same SHOT discipline), and a
+// refused registration (private mode, a blocked SW, a 404) is swallowed: it is not a game error.
 if ('serviceWorker' in navigator && !new URLSearchParams(location.search).has('shot')
+    && !new URLSearchParams(location.search).has('test')
     && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=__BUILD__'));
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=__BUILD__').catch(() => {}));
 }
 </script>
 </body>

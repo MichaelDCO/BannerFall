@@ -1,0 +1,72 @@
+# Bannerfall — headless test suites on every pull request (AUDIT-1 T7-03, user-approved).
+#
+# The runner is ci/test.mjs: a zero-dependency Node port of the local gate tools/test.ps1. ci/ is
+# self-contained (its own static server, its own helpers beside it) and reads nothing from the
+# gitignored tools/ tree, so this bare checkout is all it needs.
+#
+# What runs: the shell contract (sw.js precache vs tracked files, __BUILD__/__IMM__ stamping,
+# import map, manifest, node --check), the in-page suites with minimum assert counts, the
+# double-process lockstep determinism gate, the two-tab co-op E2E and the live save/restore + deeds
+# suite. The live lobby smoke is skipped on this GPU-less runner (see BF_SKIP below).
+# Everything is offline: the co-op paths use the BroadcastChannel loopback, never the public relays.
+#
+# This does NOT gate the deploy: pages.yml still deploys on every push to main. To gate it, give
+# pages.yml's deploy job a test job to `needs:` (or trigger it with `workflow_run` on this one).
+# Note pages.yml uploads `path: .`, so ci/ is published with the site too (harmless, ~60 KB).
+name: Tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      # ci/ supports Node >= 20 (ci/ws.mjs stands in for the global WebSocket Node 20 lacks); CI runs
+      # the 22 LTS, where the global exists.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # PINNED Chrome major (Chrome for Testing build): a new stable can change headless/GL behaviour
+      # under a PR that did not touch anything. 154 is the major the runner was proven on locally;
+      # bump it deliberately, in its own PR.
+      - id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: '154'
+          install-dependencies: true
+      - name: Chrome version
+        run: '"${{ steps.chrome.outputs.chrome-path }}" --version'
+      - name: Headless suites
+        timeout-minutes: 12
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+          # ubuntu-24.04 restricts unprivileged user namespaces, so Chrome's sandbox cannot start;
+          # there is no GPU, so WebGL runs on SwiftShader.
+          CHROME_EXTRA: --no-sandbox --use-angle=swiftshader --enable-unsafe-swiftshader
+          BF_SLOW: '4'
+          # coopsmoke drives two FULL game tabs; on SwiftShader they never finish booting (measured
+          # locally: 26 min, rider never booted at a 6 min window). The co-op wire is still proven here
+          # by the `coop` E2E; the lobby DOM contract stays a local gate (tools/test.ps1 runs smoke).
+          BF_SKIP: smoke
+          BF_OUT: ${{ runner.temp }}/bf-ci
+        run: node ci/test.mjs
+      # Every suite's console transcript (TESTLOG/TESTSUM/NETCRC/NETCMD, page errors), for a red run.
+      - name: Upload suite transcripts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-transcripts
+          path: ${{ runner.temp }}/bf-ci/
+          if-no-files-found: ignore
+          retention-days: 14

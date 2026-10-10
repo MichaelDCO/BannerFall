@@ -1,6 +1,15 @@
 // ══════════════════════ SECTION: CORE (owner: architect — do not restructure) ══════════════════════
 window.__errors = [];
-const __err = (m) => { window.__errors.push(String(m)); document.title = 'ERROR'; };
+// AUDIT-1 CH-3 — the 'ERROR' title is a HARNESS signal (shots/tests poll for it), so only SHOT
+// and TESTQ pages raise it. In live play a stray console.error (Trystero logs every WebRTC peer
+// hiccup that way) used to retitle the player's tab 'ERROR' for the rest of the session. The list
+// is still kept live (tools read window.__errors) but bounded. SHOT is read lazily; the catch is
+// for an error raised before its declaration below (TDZ), which keeps the old loud behaviour.
+const __err = (m) => {
+  if (window.__errors.length < 200) window.__errors.push(String(m));
+  let h = true; try { h = !!SHOT; } catch (_) { /* TDZ: too early to know — be loud */ }
+  if (h) document.title = 'ERROR';
+};
 window.onerror = (m, s, l) => __err(m + ' @' + (s||'').split('/').pop() + ':' + l);
 window.addEventListener('unhandledrejection', e => __err('promise: ' + e.reason));
 const _cerr = console.error.bind(console); console.error = (...a) => { __err(a.join(' ')); _cerr(...a); };
@@ -164,6 +173,12 @@ en: {
   'co.horns': '{0}/{1}',
   'co.hornT': 'Sound the horn — the wave marches when every captain has',
   'co.hornMine': 'You have sounded. Waiting on the band — {0} of {1}.',
+  // AUDIT-1 UX-10b / UX-11 — the drop banner, and why the reloading settings are shut in a band.
+  'co.gone': '{0} has fallen out of the band',
+  'co.goneS': 'Their works pass to the captain.',
+  'co.noReload': 'Not while the band rides — this would reload your page and leave the war-band.',
+  // AUDIT-1 UX-12 — the reach chip's unit, drawn by .tag.rg::before from data-u.
+  'bm.reachU': 'rng',
   // §C1 — ownership.
   'co.owner': 'Raised by {0}',
   'co.notYours': 'Another captain raised this standard — theirs to upgrade, theirs to dismantle.',
@@ -223,6 +238,8 @@ en: {
   'coop.failed': 'No band answered. Either the code has gone cold, or your network blocks the direct crossing — some routers and campus networks will not let two browsers speak. Try another network, or let the other captain host.',
   'coop.nolib': 'The co-op courier is missing from this build, so no band can be raised.',
   'coop.hostLeft': 'The captain has ridden off. The band is broken.',
+  'coop.full': 'This war-band already rides four captains.',
+  'coop.diffSoon': 'Only the Knight’s trial rides in a war-band — for now',
   'coop.starting': 'The horn sounds in {0}…',
   'coop.badCode': 'A code is five letters and numbers.',
   'coop.back': '← Back',
@@ -260,7 +277,7 @@ en: {
   'boot.rally': 'Rallying the garrison',
   'boot.ready': 'Sounding the horn',
   'foot': '{0} roads &nbsp;·&nbsp; {1} fortifications &nbsp;·&nbsp; ',
-  'seed': 'War Seed {0}',
+  'seed': 'War Seal {0}',          // AUDIT-1 UX-12 — one name in both tongues (Sceau)
   'seed.roll': 'Roll',
   'seed.rollT': 'Roll a new war seed — new elite swaps, new omen draws',
   'maps.kick': 'The campaign',
@@ -552,6 +569,7 @@ en: {
   'pl.noMore': 'no more may be raised',
   'pl.raiseFor': 'raise a standard for <i>{0}</i> gold, or dismantle one',
   'cp.mfull': 'All standards fielded',
+  'bm.musterMax': 'Muster at its height',             // AUDIT-1 GC-13
   'cp.off': 'Off the map',
   'cp.beyond': 'Beyond the vale',
   'cp.steep': 'Ground too steep',
@@ -934,6 +952,10 @@ fr: {
   'co.horns': '{0}/{1}',
   'co.hornT': 'Sonner du cor — la vague part quand chaque capitaine a sonné',
   'co.hornMine': 'Vous avez sonné. En attente de la compagnie — {0} sur {1}.',
+  'co.gone': '{0} a quitté la compagnie',
+  'co.goneS': 'Ses ouvrages passent au capitaine.',
+  'co.noReload': 'Pas tant que la compagnie chevauche — la page se rechargerait et vous quitteriez la compagnie.',
+  'bm.reachU': 'port',
   'co.owner': 'Levée par {0}',
   'co.notYours': 'Un autre capitaine a levé cette bannière — à lui de l’améliorer, à lui de la démonter.',
   'co.speaks': '{0} parle pour le conseil',
@@ -984,6 +1006,8 @@ fr: {
   'coop.failed': 'Aucune compagnie n’a répondu. Soit le code est éteint, soit votre réseau bloque la liaison directe — certains routeurs et réseaux d’entreprise interdisent à deux navigateurs de se parler. Essayez un autre réseau, ou laissez l’autre capitaine héberger.',
   'coop.nolib': 'Le messager de coopération manque à cette version : aucune compagnie ne peut être levée.',
   'coop.hostLeft': 'Le capitaine est parti. La compagnie est rompue.',
+  'coop.full': 'Cette compagnie compte déjà quatre capitaines.',
+  'coop.diffSoon': 'Seule l’épreuve du Chevalier se court en compagnie — pour l’instant',
   'coop.starting': 'Le cor sonne dans {0}…',
   'coop.badCode': 'Un code compte cinq lettres et chiffres.',
   'coop.back': '← Retour',
@@ -1239,6 +1263,7 @@ fr: {
   'pl.noMore': 'aucune de plus',
   'pl.raiseFor': 'levez une bannière pour <i>{0}</i> d’or, ou rasez-en une',
   'cp.mfull': 'Toutes les bannières au champ',
+  'bm.musterMax': 'Ost à son comble',
   'cp.off': 'Hors carte',
   'cp.beyond': 'Hors du val',
   'cp.steep': 'Terrain trop raide',
@@ -1786,8 +1811,10 @@ const srng = (salt, i) => {
 //   date can be tested); the harness PINS it, so the chooser frame is byte-identical on
 //   any machine on any day.
 const TODAY = (() => {
+  // AUDIT-1 A1-B9 (balance) — honoured under the harness and `&dbg` only: in live play a forged
+  // date would open any day's Daily War (and its +2 laurels) from a link.
   const q = (P.get('today') || '').replace(/\D/g, '');
-  if (q.length === 8) return q;
+  if (q.length === 8 && (SHOT || P.has('dbg'))) return q;
   if (SHOT) return '20260101';
   const d = new Date();
   return String(d.getFullYear()) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
@@ -1800,7 +1827,18 @@ const DAILY_ROT = [1, 2, 3, 1, 2, 3, 2];           // Sun..Sat — three roads o
 const DAILY_MAP = DAILY_ROT[DAILY_DOW] || 1;
 const DAILY_SEED = (+TODAY) >>> 0;                 // the date IS the war seed
 // The date key of the run IN PROGRESS ('' = not a daily). Written by the chip's deep link.
-const DAILY = ((P.get('daily') || '').replace(/\D/g, '') || '');
+// AUDIT-1 A1-B3 (balance) — a tag is only a Daily War when the page IS that day's war: the date's
+// own seed, the date's own road (its weekday's DAILY_ROT entry, so a daily resumed after midnight
+// still counts) and the campaign. A re-rolled seed, a stray `&mode=` or a tag carried onto another
+// road used to keep the tag (chip lit, end-plate row, snapshot field) on a run that is not the day's.
+const DAILY = (() => {
+  const d = (P.get('daily') || '').replace(/\D/g, '');
+  if (d.length !== 8 || (runSeed >>> 0) !== ((+d) >>> 0)) return '';
+  const md = (P.get('mode') || '').toLowerCase();
+  if (md === 'horde' || md === 'endless' || P.has('endless')) return '';
+  const dw = new Date(Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8))).getUTCDay();
+  return (parseInt(P.get('map') || '', 10) || 1) === (DAILY_ROT[dw] || 1) ? d : '';
+})();
 const isTouch = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) < 900;
 // ══ v7-MENUCAM §1 — WHERE THE QUALITY TIER COMES FROM ════════════════════════════
 // Three inputs, strict precedence, resolved ONCE here at module scope (Q is read by every
@@ -1951,8 +1989,12 @@ G.talTrap = () => (TAL.e >= 3 ? 0.9 : 1);   // tier-3 Engineer also cheapens roa
 // `&talents=q2,d1,e3` — the harness override. It is the ONLY source of talents in SHOT mode
 // (a screenshot must never depend on what this machine happens to have unlocked), and it
 // outranks the store in live play too, so a talent build can be handed over as a link.
+// AUDIT-1 A1-B9 (balance) — under SHOT and `&dbg` only. A live `?talents=q3,d3,e3` was a free
+// full council; and a live run fought with ANY override (talents/unlock/today) files no record
+// (see saveProg), so a dev link cannot mint stars, laurels or deeds.
+const DEV_OVR = !SHOT && P.has('dbg') && (P.has('talents') || P.has('unlock') || P.has('today'));
 const TAL_OVR = (() => {
-  const s = P.get('talents');
+  const s = (SHOT || P.has('dbg')) ? P.get('talents') : null;
   if (!s) return null;
   const o = { q: 0, d: 0, e: 0 };
   for (const t of s.split(',')) {
@@ -10468,6 +10510,7 @@ if (TILE_LOADS.length) {
     U_TILEK.value = 0; U_TILEN.value = 0;
     console.log('TILEWARN detail tiles unavailable (' + TILE_MISS.join(',') +
       ') — world falls back to procedural shading');
+    if (SHOT) __err('TILEWARN ' + TILE_MISS.join(','));   // AUDIT-1 CH-1a — the gate must see it
   } else {
     console.log('TILELOG kind=' + TILE_KIND + ' pairs=' + Object.keys(TILES).length +
       ' aniso=' + TILES[TILE_KIND].a.anisotropy + ' k=' + U_TILEK.value +
@@ -10699,6 +10742,32 @@ await World.build();
 // 4 four-legged gallop · 5 ogre stomp (one-shot, re-phased by the CPU each frame).
 // Contract: Armies.syncVisuals(vt) reads G.enemies/G.knights every frame. Sim fields
 // are owned by SIM; this section never writes them (only render-only `_`-prefixed cache).
+// AUDIT-1 PERF-1 — PARTIAL INSTANCE-BUFFER UPLOADS. three r170 re-sends an attribute's WHOLE
+// typed array (sized to the cap, not the crowd) every time needsUpdate is set: measured 1.45 MB
+// per frame with nobody on the field. An update range makes it send only the live prefix.
+//   bufUp(a, n)         — the first n elements (instances / vertices) changed. REPLACES any
+//                         pending range, so a mesh that skips a render never grows the list,
+//                         and reuses one range object per attribute (no per-frame garbage).
+//                         n = 0 uploads nothing: a count-0 mesh draws nothing, and WebGL2's
+//                         bufferSubData reads a 0 length as "to the end of the array".
+//   bufAdd(a, at, n)    — elements [at, at+n) changed; APPENDS (several decals in one frame).
+//                         Past 16 pending ranges it collapses to one whole-array range.
+// Render-only: nothing here is read by the sim, and the drawn prefix is byte-for-byte what the
+// full upload sent, so shots and the matrix are unaffected.
+function bufUp(a, n) {
+  if (!a || !(n > 0)) return;
+  const R = a.updateRanges, r = a._upR || (a._upR = { start: 0, count: 0 });
+  r.start = 0; r.count = Math.min(n * a.itemSize, a.array.length);
+  R.length = 0; R.push(r);
+  a.needsUpdate = true;
+}
+function bufAdd(a, at, n) {
+  if (!a || !(n > 0)) return;
+  const R = a.updateRanges;
+  if (R.length >= 16) { R.length = 0; R.push({ start: 0, count: a.array.length }); }
+  else R.push({ start: at * a.itemSize, count: n * a.itemSize });
+  a.needsUpdate = true;
+}
 const KNIGHT_CAP = 64;
 // r10-ARMIES §5 — the drawn height of a champion, in world units: 2.2x the levyman's 1.80.
 const CHAMP_H = 3.96;
@@ -11018,7 +11087,7 @@ await BOOT.stage('boot.host');
     // r14-ARMIES — the tripwire the CIRON/IPAV bug needed. An unassigned name is `undefined`,
     // `tOX` returns NaN, `translate(NaN, NaN)` is a documented no-op, and the tile is then
     // painted straight over slot 0 with nothing anywhere reporting it. Loud and harmless.
-    if (!(t >= 0)) { console.log('TILEWARN unassigned slot — paint discarded'); return; }
+    if (!(t >= 0)) { console.log('TILEWARN unassigned slot — paint discarded'); if (SHOT) __err('TILEWARN unassigned slot'); return; }
     const x0 = tOX(t), y0 = tOY(t);
     ag.save(); ag.translate(x0, y0); ag.beginPath(); ag.rect(0, 0, S, S); ag.clip(); fn(ag); ag.restore();
     mg.fillStyle = 'rgb(0,' + Math.round(rough * 255) + ',' + Math.round(metal * 255) + ')';
@@ -17636,8 +17705,13 @@ void main(){
     shadTex.generateMipmaps = false;
     shadTex.minFilter = THREE.LinearFilter; shadTex.magFilter = THREE.LinearFilter;
     const smat = new THREE.MeshBasicMaterial({
+      // AUDIT-1 PERF-10 — FrontSide, not DoubleSide. three draws a transparent DoubleSide
+      // material as two passes (back, then front) and bumps its version for each, i.e. a
+      // program-cache lookup twice a frame. The quad is rotateX(-PI/2) (front face +Y) with
+      // positive scales and the camera is always above the ground, so the front pass was the
+      // only one ever producing pixels; this is that pass alone.
       map: shadTex, transparent: true, depthWrite: false, fog: false,
-      side: THREE.DoubleSide, toneMapped: false,
+      side: THREE.FrontSide, toneMapped: false,
       blending: THREE.CustomBlending, blendEquation: THREE.AddEquation,
       blendSrc: THREE.DstColorFactor, blendDst: THREE.ZeroFactor,
       polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -8,
@@ -18508,6 +18582,9 @@ const vLane = (lane, id, blocked) => {
 // at ±0.62 it is wider than the rank interval itself, so a body from rank n draws in the bare
 // dirt behind rank n-1. Same head count, same arrival times, no visible rank lines left.
 const vStag = (id) => (H1(id * 23 + 17) - 0.5) * 1.24;
+// AUDIT-1 PERF-5a — the density ladder's shadow lever. castShadow is not part of any program key,
+// so toggling it compiles nothing (the depth programs were warmed at boot and stay cached).
+Armies.setDense = (on) => { for (const m of Armies.meshes) m.castShadow = !on; };
 Armies.syncVisuals = (vtNow) => {
   const sub = clamp(G.subT || 0, 0, 1);
   const at = vtNow + sub * TICK;                 // smooth, deterministic animation clock
@@ -18530,7 +18607,11 @@ Armies.syncVisuals = (vtNow) => {
   // or written, and `G.dense` is computed in MAIN off the same alive count.
   for (let i = 0; i < KNIGHT_CAP; i++) _kFace[i * 3 + 2] = 0;   // ARMIES-FIX6 §4
   const dense = !!G.dense;
-  const shadQ = dense ? Q.shadCut * Q.shadCut : 0;
+  // AUDIT-1 PERF-5a — no distance cut any more. While dense the army stops CASTING into the
+  // shadow map (Armies.setDense, driven by MAIN's densityStep) — that pass was re-drawing the
+  // whole skinned horde, ~half the frame's triangles at 1000 bodies — so the cheap contact decal
+  // is now the grounding for every body, near or far (r9: never gate detail off at distance).
+  const shadQ = 0;
   const cpx = G.camera ? G.camera.position.x : 0, cpz = G.camera ? G.camera.position.z : 0;
   const cpy = G.camera ? G.camera.position.y : 0;   // ARMIES-FIX8 §1 — the distance livery ramp
   const retRoom = G.enemies.length;                 // r10-ARMIES §4 — see the retinue pass
@@ -19411,43 +19492,34 @@ Armies.syncVisuals = (vtNow) => {
   }
   champKit.mesh.count = champKit.n;
   champPool.count = champKit.n;
-  if (champKit.n || champKit._was) {
-    champKit.mesh.instanceMatrix.needsUpdate = true;
-    if (champKit.mesh.instanceColor) champKit.mesh.instanceColor.needsUpdate = true;
-    champKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
-    champPool.instanceMatrix.needsUpdate = true;
+  // AUDIT-1 PERF-1 — live-prefix uploads (bufUp, top of this section). A kit whose count fell
+  // to 0 needs no upload at all: count 0 draws nothing, so the old `_was` frame is moot.
+  {
+    const cm = champKit.mesh;
+    bufUp(cm.instanceMatrix, champKit.n); bufUp(cm.instanceColor, champKit.n);
+    bufUp(cm.geometry.attributes.aAnim, champKit.n); bufUp(champPool.instanceMatrix, champKit.n);
   }
-  champKit._was = champKit.n > 0;
   if (bannKit) {
-    bannKit.mesh.count = bannKit.n;
-    if (bannKit.n || bannKit._was) {
-      bannKit.mesh.instanceMatrix.needsUpdate = true;
-      if (bannKit.mesh.instanceColor) bannKit.mesh.instanceColor.needsUpdate = true;
-      bannKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
-    }
-    bannKit._was = bannKit.n > 0;
+    const bm = bannKit.mesh; bm.count = bannKit.n;
+    bufUp(bm.instanceMatrix, bannKit.n); bufUp(bm.instanceColor, bannKit.n);
+    bufUp(bm.geometry.attributes.aAnim, bannKit.n);
   }
   if (sergKit) {
-    sergKit.mesh.count = sergKit.n;
-    if (sergKit.n || sergKit._was) {
-      sergKit.mesh.instanceMatrix.needsUpdate = true;
-      if (sergKit.mesh.instanceColor) sergKit.mesh.instanceColor.needsUpdate = true;
-      sergKit.mesh.geometry.attributes.aAnim.needsUpdate = true;
-    }
-    sergKit._was = sergKit.n > 0;
+    const sm = sergKit.mesh; sm.count = sergKit.n;
+    bufUp(sm.instanceMatrix, sergKit.n); bufUp(sm.instanceColor, sergKit.n);
+    bufUp(sm.geometry.attributes.aAnim, sergKit.n);
   }
   for (const src of [AM, KITM]) for (const key in src) {
-    const A = src[key];
-    A.mesh.count = A.n;
-    A.mesh.instanceMatrix.needsUpdate = true;
-    if (A.mesh.instanceColor) A.mesh.instanceColor.needsUpdate = true;
-    A.mesh.geometry.attributes.aAnim.needsUpdate = true;
+    const A = src[key], M = A.mesh;
+    M.count = A.n;
+    bufUp(M.instanceMatrix, A.n); bufUp(M.instanceColor, A.n);
+    bufUp(M.geometry.attributes.aAnim, A.n);
   }
   barMesh.count = bn;
-  barMesh.instanceMatrix.needsUpdate = true;
-  barMesh.geometry.attributes.aBar.needsUpdate = true;
+  bufUp(barMesh.instanceMatrix, bn);
+  bufUp(barMesh.geometry.attributes.aBar, bn);
   shadDecal.count = sn;
-  shadDecal.instanceMatrix.needsUpdate = true;
+  bufUp(shadDecal.instanceMatrix, sn);
   // ══ ARMIES-FIX7 §1 — THE DEFERRED WARD PASS ═══════════════════════════════════════════
   // Everything the round-7 blocker asks for is a decision about the FRAME, so it is made once
   // the frame's warded roster is known, in two O(n) sweeps over `_wRow` and one hash grid.
@@ -19547,10 +19619,10 @@ Armies.syncVisuals = (vtNow) => {
   // SPEC3 §D: the ward buffers only move on frames a ward is (or has just stopped being)
   // on the road, so an unwarded campaign never uploads them at all.
   if (nw > 0 || _wardWas) {
-    for (const key in AM) if (AM[key].wardA) AM[key].wardA.needsUpdate = true;
+    for (const key in AM) bufUp(AM[key].wardA, AM[key].n);   // AUDIT-1 PERF-1
     wardRing.count = nw;
-    wardRing.instanceMatrix.needsUpdate = true;
-    if (wardDomeA) wardDomeA.needsUpdate = true;   // ARMIES-FIX7 §1c — the crowding divide
+    bufUp(wardRing.instanceMatrix, nw);
+    bufUp(wardDomeA, nw);   // ARMIES-FIX7 §1c — the crowding divide
     // VFX-FIX8 §1b — the shell wore WARD_SHELL, not the school's hue, so that "warded" was one
     // read and "against what" was the sigil's. VFX-FIX10 §1d overturns the first half only: the
     // round-10 finding asks for the shell IN THE SCHOOL HUE, and the reason FIX8 could not give
@@ -19568,7 +19640,7 @@ Armies.syncVisuals = (vtNow) => {
       // ARMIES-FIX7 §1b — ...but no longer one per row. `_wSig` is the eight (or fewer) the
       // deferred pass actually spent.
       wardSigil.count = _wSig;
-      wardSigil.instanceMatrix.needsUpdate = true;
+      bufUp(wardSigil.instanceMatrix, _wSig);
       const U = wardSigil.material.uniforms;
       // The sigil's colour is the school's HIT colour rather than the shell's: this mark is a
       // legend, so it should agree with the light the player sees coming off their own towers
@@ -21272,7 +21344,7 @@ function syncProj(at) {
     // (white when there is no rider) because a stale tint would otherwise persist in a pooled slot
     // and paint an ordinary arrow with the last bonded one's colour.
     if (RUNEBOND) {
-      const rc = p.rb ? RBT_COL[p.rb] : null;
+      const rc = p.rb ? VFX.schoolCol(p.rb) : null;
       if (rc) _pcol.setRGB(1 + (rc[0] - 1) * 0.55, 1 + (rc[1] - 1) * 0.55, 1 + (rc[2] - 1) * 0.55);
       else _pcol.setRGB(1, 1, 1);
       arrowMesh.setColorAt(ai, _pcol);
@@ -21298,11 +21370,12 @@ function syncProj(at) {
       dx: _pv.x, dy: _pv.y, dz: _pv.z });
   }
   arrowMesh.count = ai; rockMesh.count = ri; streakMesh.count = si;
-  arrowMesh.instanceMatrix.needsUpdate = true; rockMesh.instanceMatrix.needsUpdate = true; streakMesh.instanceMatrix.needsUpdate = true;
-  if (rockMesh.instanceColor) rockMesh.instanceColor.needsUpdate = true;
+  // AUDIT-1 PERF-1 — live-prefix uploads (bufUp, SECTION: ARMIES).
+  bufUp(arrowMesh.instanceMatrix, ai); bufUp(rockMesh.instanceMatrix, ri); bufUp(streakMesh.instanceMatrix, si);
+  bufUp(rockMesh.instanceColor, ri);
   // SPEC_8 §G — flagged upload only. Unflagged, `_rbTint` never goes true and this attribute is
   // never re-uploaded, so the arrow's all-ones buffer stays exactly the buffer PROGDIET allocated.
-  if (_rbTint && arrowMesh.instanceColor) arrowMesh.instanceColor.needsUpdate = true;
+  if (_rbTint) bufUp(arrowMesh.instanceColor, ai);
 }
 
 // ══ shared brazier / coal glow — one additive instanced mesh for every tower ══
@@ -21372,7 +21445,7 @@ function syncGlow(at) {
     }
   }
   glowMesh.count = gi;
-  glowMesh.instanceMatrix.needsUpdate = true;
+  bufUp(glowMesh.instanceMatrix, gi);   // AUDIT-1 PERF-1
 }
 
 // ══ storm chain lightning: one dynamic ribbon mesh for every arc in the air ════
@@ -21492,17 +21565,12 @@ Towers.zap = (x0, y0, z0, x1, y1, z1, seed, kind) => {
     s: (Math.imul(seed + 1, 2654435761) ^ 0x9e3779b9) >>> 0 });
   if (BOLTS.length > ARC_MAX) BOLTS.shift();           // SPEC_8 §G — arcs evict arcs, never tethers
 };
-// SPEC_8 §G — the tether's per-school tint. These five triples are a MIRROR of SECTION: VFX's
-// SCHOOL_FX `col` values and they are duplicated here for a structural reason, not out of laziness:
-// SECTION: VFX is wrapped in a block (`const VFX = {}; {` …), so SCHOOL_FX is block-scoped and is
-// genuinely unreachable from SECTION: TOWERS. The file already has this exact situation documented
-// in ARMIES (the Elemental Ward tint, ~line 11215) and mirrors the numbers there the same way.
-// IF SCHOOL_FX's HUES EVER MOVE, THIS TABLE MOVES WITH THEM — there is no assertion binding them,
-// only this sentence and the `_bond` preset.
-const RBT_COL = {
-  pierce: [1.00, 0.93, 0.76], crush: [0.62, 0.57, 0.51], fire: [1.00, 0.30, 0.05],
-  storm:  [0.50, 0.83, 1.00], frost: [0.72, 0.88, 1.00],
-};
+// SPEC_8 §G — the tether's per-school tint IS the school's hit colour. AUDIT-1 CH-5: this used to
+// be a hand-kept mirror of SECTION: VFX's SCHOOL_FX (block-scoped, unreachable from here) and it
+// had drifted on four of five schools — storm riders drew frost-cyan. It now reads the live
+// palette through VFX.schoolCol() at frame time (VFX is initialised long before any tower
+// renders), so there is nothing left to keep in step.
+const rbtCol = (k) => VFX.schoolCol(k) || VFX.schoolCol('pierce');
 const _bj = (s, i) => { let h = Math.imul(s ^ Math.imul(i + 1, 374761393), 1274126177); h ^= h >>> 15; return ((h >>> 0) / 4294967296) * 2 - 1; };
 const _bw = new THREE.Vector3(), _bu = new THREE.Vector3(), _bd = new THREE.Vector3(), _bp = new THREE.Vector3();
 function syncBolts(at) {
@@ -21611,8 +21679,8 @@ function syncBolts(at) {
       // TINTED FROM BOTH ENDS, because that is the information: tw's end wears the school tw is
       // LENDING (its own), ot's end wears ot's. So an archer bonded to a Frostspire shows a gold
       // end and an ice end, and the player can read which way each rider is flowing off one ribbon.
-      const ca = RBT_COL[TOWER_DEFS[tw.type].element] || RBT_COL.pierce;
-      const cb = RBT_COL[TOWER_DEFS[ot.type].element] || RBT_COL.pierce;
+      const ca = rbtCol(TOWER_DEFS[tw.type].element);
+      const cb = rbtCol(TOWER_DEFS[ot.type].element);
       _bd.set(ot.x - tw.x, by - ay, ot.z - tw.z);
       const len = _bd.length() || 1; _bd.divideScalar(len);
       _bw.subVectors(G.camera.position, _bp.set(tw.x, ay, tw.z)).normalize();
@@ -21688,9 +21756,10 @@ function syncBolts(at) {
   boltMesh.visible = n > 0;
   if (n) {
     boltMesh.geometry.setDrawRange(0, n * BOLT_SEG * 6);
-    boltMesh.geometry.attributes.position.needsUpdate = true;
-    boltMesh.geometry.attributes.color.needsUpdate = true;
-    boltMesh.geometry.attributes.uv.needsUpdate = true;      // SPEC_8 §F — the per-arc band
+    const BA = boltMesh.geometry.attributes, nv = n * BOLT_V;   // AUDIT-1 PERF-1
+    bufUp(BA.position, nv);
+    bufUp(BA.color, nv);
+    bufUp(BA.uv, nv);      // SPEC_8 §F — the per-arc band
   }
 }
 
@@ -21765,7 +21834,7 @@ function syncFire(at) {
   }
   for (let i = li; i < EMBL.length; i++) EMBL[i].intensity = 0;
   fireMesh.count = n; fireMesh.visible = n > 0;
-  fireMesh.instanceMatrix.needsUpdate = true;
+  bufUp(fireMesh.instanceMatrix, n);   // AUDIT-1 PERF-1
 }
 
 // ══ ROAD TRAPS — the props (SPEC4 §D) ═════════════════════════════════════════
@@ -23881,7 +23950,11 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
 // than by thickening the ramp — a flood that turns into a brute line stops being a flood.
 // The minis RIDE the floods (§D3d) rather than replacing them.
 const HORDE_W = 8;
-const HORDE_PEAK = Q.peak;                              // ~1000 desktop / ~400 mobile
+// AUDIT-1 GC-07 — PINNED PER RUN. The peak used to follow the graphics tier, so a quality switch
+// mid-run (a reload through runNav) shrank the remaining waves by 60%. `&hp=` carries the run's
+// own peak across that reload (resumeParams writes it, runSave records it, runFits checks it);
+// only 400 and 1000 are honoured, so the URL cannot invent a third table.
+const HORDE_PEAK = [400, 1000].indexOf(+P.get('hp')) >= 0 ? +P.get('hp') : Q.peak;   // ~1000 desktop / ~400 mobile
 const HORDE_RAMP = [0.10, 0.16, 0.23, 0.33, 0.45, 0.60, 0.78, 1.00];
 // [type, share of the wave's head count, formation]. Shares sum to 1.00 per wave.
 const HORDE_MIX = [
@@ -25590,9 +25663,18 @@ function buildWave(n, part) {
 // SPEC6 §D2 — true while the opening muster is suspended. Live play only: UI.startGame()
 // is the only thing that ever sets it, and the harness never walks through it.
 let waveHold = false;
+// AUDIT-1 GC-03 — the muster as it stood the instant BEFORE the horn: purse, countdown, the
+// first-wave hold and the omen pick. The horn snapshot (startWave -> runSave(true)) rolls the
+// run back to that muster, so it must hold the purse from before the horn paid its early-call
+// bonus and the War Chest its 60 — otherwise every replay of the wave pays them again. Read by
+// runSave only; nothing in the sim reads it.
+let hornPre = null;
 G.waveHeld = () => waveHold;
 G.holdFirstWave = () => { waveHold = true; };
 function startWave(n) {
+  // AUDIT-1 GC-03 — a horn that was not CALLED (the countdown ran out) still needs its muster
+  // recorded before commitOmen pays the War Chest; G.callWave has already taken it otherwise.
+  if (!hornPre || hornPre.w !== n) hornPre = { w: n, gold: state.gold, cd: state.countdown, hold: waveHold, pick: Omens.picked };
   waveHold = false;
   // §C3 — the horns are per-muster: the mask clears with the wave it called. Zero solo, always.
   COOP.horn = 0; COOP.omenT = 0;
@@ -25631,6 +25713,7 @@ function startWave(n) {
   // the player actually built; `true` lets it fire from phase 'wave', and the rollback the flag
   // performs lands the restore exactly here — at the muster for the wave now beginning.
   runSave(true);
+  hornPre = null;                                       // AUDIT-1 GC-03 — spent by the save above
 }
 // ══ GATE HERALDS — DATA (SPEC5 §B3) ══════════════════════════════════
 // What FRACTION of wave `n` comes out of each gate. A group tagged with a gate (the 5th
@@ -25733,6 +25816,7 @@ G.startWave = startWave;
 // so the button and the command layer's `wave` op share ONE body and cannot drift apart.
 G.callWave = () => {
   if (state.phase !== 'prewave') return false;
+  hornPre = { w: state.wave + 1, gold: state.gold, cd: state.countdown, hold: waveHold, pick: Omens.picked };
   // §C2 — the early-call prize is the BAND'S: seconds thrown away are thrown away by everyone,
   // so the coins divide with the remainder walking. At one seat payAll IS `state.gold +=`.
   if (!waveHold) payAll(Math.ceil(state.countdown));
@@ -25764,7 +25848,6 @@ G.hornReady = (p) => {
 // Free placement: (x,z) is anywhere G.canPlace() allows. `free` skips the purse AND the
 // validity gate — that is the shot harness / preset path only.
 function placeTower(x, z, type, level = 1, free = false) {
-  if (DEEDS_ON && G.deedMark) G.deedMark('muster', G.towersList.length + 1);
   const def = TOWER_DEFS[type];
   if (!free) {
     if (state.gold < def.cost || !canPlace(x, z).ok) return false;
@@ -25801,6 +25884,8 @@ function placeTower(x, z, type, level = 1, free = false) {
   tw.group.position.set(x, tw.y, z);
   scene.add(tw.group);
   G.towersList.push(tw);
+  // AUDIT-1 GC-11 — marked AFTER the tower stands: a refused 14th placement used to grant it.
+  if (DEEDS_ON && G.deedMark) G.deedMark('muster', G.towersList.length);
   G.covDirty();                                   // SPEC_8 §B — the coverage cache is now a lie
   if (type === 'barracks') spawnKnights(tw);
   // HOOK: WORLD — stamp a contact-AO footprint so the tower sits IN the terrain instead of
@@ -25839,7 +25924,18 @@ function sellTower(tw) {
   scene.remove(tw.group);
   G.towersList.splice(G.towersList.indexOf(tw), 1);
   G.covDirty();                                   // §B — selling is how a lane becomes open again
-  G.knights = G.knights.filter(k => k.tower !== tw);
+  // AUDIT-1 GC-04 — e.blockedBy is an INDEX into G.knights, so the compaction remaps every hold
+  // in the same pass (reapMilitia's pattern). A plain filter left foes frozen on the road,
+  // struck from range by a different knight, and never fought. A foe held by a sold knight is
+  // released (-1).
+  { const K = G.knights; let hit = false;
+    for (let i = 0; i < K.length; i++) if (K[i].tower === tw) { hit = true; break; }
+    if (hit) {
+      const map = new Int32Array(K.length), keep = [];
+      for (let i = 0; i < K.length; i++) { if (K[i].tower === tw) { map[i] = -1; continue; } map[i] = keep.length; keep.push(K[i]); }
+      for (const e of G.enemies) if (e.blockedBy >= 0) e.blockedBy = e.blockedBy < map.length ? map[e.blockedBy] : -1;
+      G.knights = keep;
+    } }
   state.selTower = -1;
   UI.sync(); Audio.play('coin');
 }
@@ -26347,7 +26443,14 @@ function setTalents(q, d, e) {
   for (const k in TRAP_DEFS) TRAP_DEFS[k].cost = Math.round(TRAP_BASE[k] * tm);
 }
 G.applyTalents = () => {
-  const src = TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
+  // AUDIT-1 A1-B1 (balance) — A WAR-BAND FIGHTS AT THE SHIPPED GRADES. The council record is per
+  // BROWSER, nothing on the wire carries it, and setTalents cuts every purse (GOLDS, hashed by the
+  // desync tripwire), the knights' hp and the refund from it — so two captains with different
+  // councils desynced at tick 0. Zero on every seat is the one value every peer already agrees on
+  // (and the matrix's own baseline); carrying the captain's grades over the lobby is the BACKLOG
+  // alternative. Read off COOP.seats (the band's shape, which NET.arm writes before any road opens)
+  // rather than NET, which is declared after MAIN's shot-path call. Solo is untouched.
+  const src = COOP.seats > 1 ? null : TAL_OVR || (SHOT ? null : (G.councilTalents && G.councilTalents()));
   setTalents(src ? src.q : 0, src ? src.d : 0, src ? src.e : 0);
   if (SHOT && (TAL.q || TAL.d || TAL.e))
     console.log('TALENTLOG q=' + TAL.q + ' d=' + TAL.d + ' e=' + TAL.e +
@@ -26720,6 +26823,13 @@ function tickSim() {
           if (SHOT && laneLoad) laneLoad[h.to]++;
           break;
         }
+        // AUDIT-1 PERF-12 — the LIVE `&horde=N` bench is a measurement, not a battle: its bodies
+        // walk during the held first muster, and they used to breach the gate ~10 s in, lose the
+        // run and leave the stats line timing a frozen defeat screen. Live only (`!SHOT`): the
+        // `_thousand` preset and every matrix row never take this branch.
+        if (!SHOT && G.benched && e.pathId === G.endRoute && e.d >= PTS[e.pathId].len - 1.5) {
+          e.pathId = G.spawnRoutes[0]; e.d = G.pathLen * 0.05;
+        }
         if (e.pathId === G.endRoute && e.d >= PTS[e.pathId].len - 1.5) {
           e.alive = false; e.deathT = -2; state.lives = Math.max(0, state.lives - e.def.leak); state.leaked++;
           // SPEC5 §A — a cutpurse through the gate cuts the PURSE as well as the vale, down
@@ -26727,7 +26837,7 @@ function tickSim() {
           // twice and can never be dodged by a leak that arrives some other way.
           let stole = 0;
           if (e.def.steal) stole = takeAll(e.def.steal);   // §C2 — he cuts the BAND'S purse
-          UI.msg(stole ? { breach: true, steal: stole } : { breach: true }); Audio.play('leak'); UI.sync();
+          UI.msg(stole ? { breach: true, steal: stole } : { breach: true }); Audio.play('leak'); UI.syncSoon();
           // HOOK: VFX/AUDIO (SPEC5 §A) — the purse going through the gate with him. Scaled by
           // what was ACTUALLY taken, so an empty treasury produces no scatter and no cue: the
           // one leak that costs gold must not claim to when there was none left to cut.
@@ -27416,7 +27526,7 @@ function killEnemy(e, element) {
   // HOOK: VFX — the generic death spark takes the species' own colour. A gravemold and its
   // offspring burst fungal green (SPEC5 §A); everything else keeps the horde's crimson.
   VFX.burst(e.px, 1, e.pz, (e.def.split || e.isSplit) ? 0x8fbf3a : 0xc03828, 1.1, 0.4);
-  Audio.play('die', e.px, e.pz); UI.sync();
+  Audio.play('die', e.px, e.pz); UI.syncSoon();   // AUDIT-1 PERF-2 — coalesced (SECTION: UI)
   // HOOK: VFX builder — coin pop / death effect (e)
   VFX.death(e);
   // SPEC5 §A. Order matters: the corpse is registered BEFORE the split, so a necromancer
@@ -27568,18 +27678,23 @@ function runSave(now) {
   if (SHOT) return false;
   const mid = state.phase === 'wave';
   if (state.phase !== 'prewave' && !(mid && now)) return false;
+  const hp0 = mid && hornPre && hornPre.w === state.wave ? hornPre : null;   // AUDIT-1 GC-03
   const s = {
     v: RUN_V, t: Date.now(), map: MAP.id, mode: MODE, seed: runSeed, daily: DAILY,
     wave: mid ? Math.max(0, state.wave - 1) : state.wave,
-    tick: state.tick, gold: state.gold, lives: state.lives, muster: state.muster,
+    tick: state.tick, gold: hp0 ? hp0.gold : state.gold, lives: state.lives, muster: state.muster,
     kills: state.kills, leaked: state.leaked, invested: state.invested, peak: state.peak,
-    endless: state.endless ? 1 : 0, hold: G.waveHeld() ? 1 : 0, speed: state.speed,
-    countdown: mid ? INTERWAVE : state.countdown,
+    endless: state.endless ? 1 : 0, speed: state.speed,
+    // AUDIT-1 GC-03 — mid-wave (the horn save) the muster is the one from BEFORE the horn.
+    hold: mid ? (hp0 && hp0.hold ? 1 : 0) : (G.waveHeld() ? 1 : 0),
+    countdown: mid ? (hp0 ? Math.max(0, +hp0.cd || 0) : INTERWAVE) : state.countdown,
+    hp: HORDE ? HORDE_PEAK : 0,                                     // AUDIT-1 GC-07
+    dd: G.deedRunState ? G.deedRunState() : undefined,               // AUDIT-1 GC-12
     // The omen the NEXT wave will ride is not committed yet, so what has to survive is the
     // player's PICK (an index into an offer that omenTick re-deals from srng — same seed, same
     // hand) and the four-school damage tally, because Elemental Ward turns whichever school the
     // run has leaned on hardest. Lose the tally and a resumed run's ward answers the wrong one.
-    pick: mid ? -1 : Omens.picked,
+    pick: mid ? (hp0 ? hp0.pick : -1) : Omens.picked,
     dmg: SCHOOLS.map(k => Math.round(dmgBySchool[k])),
     // The Long Night's light is FALLING, not switched: it is a function of (tick - night.t0),
     // and at a prewave boundary after a surge wave the vale is still dark and coming back up.
@@ -27631,7 +27746,8 @@ G.runSnap = () => {
 // resolved from the URL at module scope, so a matching snapshot can be restored in place and a
 // non-matching one needs the navigation runSnapUrl() builds.
 G.runFits = (s) => !!s && s.map === MAP.id && s.mode === MODE && s.seed === runSeed &&
-                   (s.daily || '') === (DAILY || '');
+                   (s.daily || '') === (DAILY || '') &&
+                   (!HORDE || !s.hp || s.hp === HORDE_PEAK);         // AUDIT-1 GC-07 (old snapshots carry none)
 // THE RESTORE. Runs from MAIN's boot pipeline between `boot.forge` and `boot.ready`: the world
 // exists and its shaders are warm, and the render loop has not started, so nothing here is ever
 // seen half-built. Everything it calls is a constructor the game already uses.
@@ -28405,9 +28521,9 @@ function stepBucket(B, t, max) {
 function flush(B, n) {
   B.n = n; B.geo.instanceCount = n;
   if (!n) return;
-  const A = B.geo.attributes;
-  A.iPos.needsUpdate = true; A.iVel.needsUpdate = true;
-  A.iSize.needsUpdate = true; A.iCol.needsUpdate = true; A.iAux.needsUpdate = true;
+  const A = B.geo.attributes;   // AUDIT-1 PERF-1 — live prefix only (bufUp, SECTION: ARMIES)
+  bufUp(A.iPos, n); bufUp(A.iVel, n);
+  bufUp(A.iSize, n); bufUp(A.iCol, n); bufUp(A.iAux, n);
 }
 
 // ══ terrain-conforming decals: scorch craters + expanding ground shockwaves ═══
@@ -28543,9 +28659,10 @@ function decal(x, z, rad, type, dur, r, g, b, seed, lead) {
     I[k * 4] = born; I[k * 4 + 1] = dur; I[k * 4 + 2] = type; I[k * 4 + 3] = seed;
     T[k * 3] = r; T[k * 3 + 1] = g; T[k * 3 + 2] = b;
   }
-  geo.attributes.position.needsUpdate = true;
-  geo.attributes.aInf.needsUpdate = true;
-  geo.attributes.aTint.needsUpdate = true;
+  // AUDIT-1 PERF-1 — only this slot's DG*DG vertices changed (bufAdd, SECTION: ARMIES).
+  bufAdd(geo.attributes.position, vo, DG * DG);
+  bufAdd(geo.attributes.aInf, vo, DG * DG);
+  bufAdd(geo.attributes.aTint, vo, DG * DG);
 }
 
 // ══ camera shake: impulse + exponential falloff ══════════════════════════════
@@ -29312,6 +29429,9 @@ const SCHOOL_FX = {
   // light rather than as an element. It lives on this table so that nothing authors gold inline.
   holy:   { col: [1.000, 0.949, 0.753], hot: [2.10, 1.94, 1.45], tile: T_FLASH, bloom: true,  hue: 48, support: true },
 };
+// AUDIT-1 CH-5 — the one door to the palette from outside this block (SECTION: TOWERS' runebond
+// tint). Returns the live `col` triple, or null for a key that is not a school.
+VFX.schoolCol = (k) => (SCHOOL_FX[k] ? SCHOOL_FX[k].col : null);
 // `hot` is deliberately MORE saturated than `col`, which looks backwards until you remember
 // these are ADDITIVE quads over a golden-hour meadow: the core of a bright additive always
 // clips, and a clipped pale blue clips to white. Only a core whose red channel stays well
@@ -32696,14 +32816,22 @@ VFX.coin = (x, y, z) => {
   CO[o + 4] = 5.4 + er() * 1.8; CO[o + 5] = er() * 6.28;
 };
 const _hv = new THREE.Vector3();
+// AUDIT-1 PERF-9a — the #gold rect was read (a forced layout) on every frame a coin was in the
+// air. It is now cached and re-read only after UI.sync() (VFX.hudDirty — the only thing that
+// moves the HUD) or a viewport change. SHOT always reads, so harness frames are unchanged.
+const _hudR = { ok: false, w: 0, h: 0, nx: -0.855, ny: 0.945 };
+VFX.hudDirty = () => { _hudR.ok = false; };
 function hudPoint(out) {
-  let nx = -0.855, ny = 0.945;
-  const el = document.getElementById('gold');
-  if (el) {
-    const r = el.getBoundingClientRect();
-    if (r.width > 0) { nx = (r.left + r.width * 0.5) / innerWidth * 2 - 1; ny = -((r.top + r.height * 0.5) / innerHeight * 2 - 1); }
+  if (SHOT || !_hudR.ok || _hudR.w !== innerWidth || _hudR.h !== innerHeight) {
+    let nx = -0.855, ny = 0.945;
+    const el = document.getElementById('gold');
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0) { nx = (r.left + r.width * 0.5) / innerWidth * 2 - 1; ny = -((r.top + r.height * 0.5) / innerHeight * 2 - 1); }
+    }
+    _hudR.nx = nx; _hudR.ny = ny; _hudR.w = innerWidth; _hudR.h = innerHeight; _hudR.ok = true;
   }
-  out.set(nx, ny, 0.5).unproject(G.camera);
+  out.set(_hudR.nx, _hudR.ny, 0.5).unproject(G.camera);
   out.sub(G.camera.position).normalize().multiplyScalar(11).add(G.camera.position);
   return out;
 }
@@ -38429,13 +38557,19 @@ UI.coName = coName;
 // button on each of the others that moves the spec's 50-gold step. Rebuilt only when something
 // in it changed, because it carries live buttons and blowing them away on every coin would
 // cancel a click in progress. Solo: one classList.toggle that toggles nothing.
-let _coSig = '';
+let _coSig = '', _coGone = 0;
 function coopBand() {
   const el = $('coBand');
   if (!el) return;
   const C = G.COOP, on = C.seats > 1;
   el.classList.toggle('hidden', !on);
-  if (!on) { _coSig = ''; return; }
+  if (!on) { _coSig = ''; _coGone = 0; return; }
+  // AUDIT-1 UX-10b — A CAPTAIN WHO DROPS IS SAID, NOT ONLY GREYED. The NET verb `inherit` moves the
+  // works and marks the seat `gone`, then calls UI.sync(); until now the only trace on the other
+  // screens was a dimmed purse chip. The banner fires once per newly-gone seat (live only).
+  const ng = C.gone & ~_coGone; _coGone = C.gone;
+  if (ng && !SHOT) for (let i = 0; i < C.seats; i++)
+    if (ng & (1 << i)) UI.msg(esc(L('co.gone', coName(i))), esc(L('co.goneS')));
   const G$ = G.GOLDS;
   const sig = C.seats + '|' + C.me + '|' + C.gone + '|' + G$.join(',');
   if (sig === _coSig) return;
@@ -38578,8 +38712,17 @@ UI.msg = (ev, sub) => {
     m.style.opacity = 0; UI.msgMoved();
   }, wave ? 1800 : 2400);
 };
+// AUDIT-1 PERF-2 / CH-4 — THE COALESCED SYNC. UI.sync() rebuilds the HUD, the wave dispatch and
+// the build bar (busts, closures, two forced layouts): ~2 ms a call, and the kill and breach paths
+// called it once PER BODY, which at horde kill rates was most of a frame. Hot paths now call
+// UI.syncSoon(): live play marks the HUD dirty and UI.frame() runs ONE sync before the next draw;
+// under SHOT/TESTQ it is still the immediate call, so every preset, test and matrix row sees the
+// exact DOM sequence it always did.
+UI.dirty = false;
+UI.syncSoon = () => { if (SHOT) UI.sync(); else UI.dirty = true; };
 UI.sync = () => {
   const onTitle = state.phase === 'title', ended = state.phase === 'won' || state.phase === 'lost';
+  if (VFX.hudDirty) VFX.hudDirty();                     // AUDIT-1 PERF-9a — the coin anchor may have moved
   const chrome = !onTitle && !ended;
   // FIX2-UI §5 — one flag on the root that every keyboard-only affordance hangs off. A
   // `(pointer:coarse)` media query cannot see the harness's `&coarse=1`, so the class
@@ -38673,7 +38816,7 @@ UI.sync = () => {
     // anything to say (which is where "OMENS AT WAVE 14" lives).
     if (!offerUp && !tail) h += omenLine(nx, pre);
     wp.innerHTML = h;
-    const row = wp.querySelector('.wpRow');
+    let row = wp.querySelector('.wpRow');
     // FIX3-UI §5 — the roster row is a HARD FOUR. It was a flex-wrap with a 6-type cap and no
     // overflow plan, which is not a plan: at five types the fifth bust broke to a second line,
     // lost its ×N to the wrap and came down on top of the wave-strength bar (wave 13 endless,
@@ -38683,13 +38826,21 @@ UI.sync = () => {
     // can never again be orphaned from the silhouette it belongs to.
     const ranked = mix.slice().sort((a, b) => b[1] - a[1]);
     const SHOWN = 4;
-    for (const [t, c] of ranked.slice(0, SHOWN)) row.appendChild(UI.bust(t, c));
-    if (ranked.length > SHOWN) {
-      const rest = ranked.slice(SHOWN);
-      const more = document.createElement('span'); more.className = 'wpN wpMore';
-      more.textContent = L('wave.more', rest.length);
-      more.title = rest.map(m => (E_NAME[m[0]] || L('wave.foe')) + ' ×' + m[1]).join(' · ');
-      row.appendChild(more);
+    // AUDIT-1 PERF-2d — the roster row is a pure function of the wave's mix and the tongue, so
+    // live play re-seats the row it already built instead of painting four new bust canvases on
+    // every sync. SHOT always rebuilds (byte-identical DOM to every earlier round).
+    const rowK = ranked.map(m => m[0] + ':' + m[1]).join(',') + '|' + L('wave.foe');
+    if (!SHOT && wp._row && wp._rowK === rowK) { row.replaceWith(wp._row); row = wp._row; }
+    else {
+      for (const [t, c] of ranked.slice(0, SHOWN)) row.appendChild(UI.bust(t, c));
+      if (ranked.length > SHOWN) {
+        const rest = ranked.slice(SHOWN);
+        const more = document.createElement('span'); more.className = 'wpN wpMore';
+        more.textContent = L('wave.more', rest.length);
+        more.title = rest.map(m => (E_NAME[m[0]] || L('wave.foe')) + ' ×' + m[1]).join(' · ');
+        row.appendChild(more);
+      }
+      wp._row = row; wp._rowK = rowK;
     }
   }
   UI.buildMenu();
@@ -38954,29 +39105,40 @@ function hexLine(n) {
     '<s>' + L('hex.spread') + '</s></div>';
 }
 UI.hexLine = hexLine;                                     // the `_hex` rig asserts on this
+// AUDIT-1 PERF-9b — write a DOM property only when the value differs from the last one THIS
+// helper wrote (memo `_s<prop>` on the element). Only syncCountdown writes #btnWave's markup and
+// title; a `.wpS` line is a fresh element after every UI.sync rebuild, so its memo starts empty.
+function setIf(el, prop, v) {
+  const k = '_s' + prop;
+  if (el[k] === v) return;
+  el[k] = v; el[prop] = v;
+}
 UI.syncCountdown = () => {
   if (state.phase !== 'prewave') return;
   // SPEC6 §D2 — while the opening muster is held there is no clock to print. The horn says
   // what it does instead, and the dispatch card says why it is waiting.
+  // AUDIT-1 PERF-9b — `setIf` writes only on change: the held branch runs every tick and was
+  // re-parsing identical markup 30 times a second.
+  const bw = $('btnWave');
   if (G.waveHeld()) {
-    $('btnWave').innerHTML = L('bw.first') + hornTag();
-    $('btnWave').title = G.COOP.seats > 1
-      ? (G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT')) : L('bw.firstT');
+    setIf(bw, 'innerHTML', L('bw.first') + hornTag());
+    setIf(bw, 'title', G.COOP.seats > 1
+      ? (G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT')) : L('bw.firstT'));
     const s0 = $('wavePrev').querySelector('.wpS');
-    if (s0) s0.textContent = L('bw.firstT');
+    if (s0) setIf(s0, 'textContent', L('bw.firstT'));
     return;
   }
   if (state.tick % 15 === 0) {
-    $('btnWave').innerHTML = L('call.wave', state.wave + 1) +
-      ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>' + hornTag();
+    setIf(bw, 'innerHTML', L('call.wave', state.wave + 1) +
+      ' &nbsp;<span style="opacity:.7">' + Math.ceil(state.countdown) + 's</span>' + hornTag());
     if (G.COOP.seats > 1)
-      $('btnWave').title = G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT');
+      setIf(bw, 'title', G.hornMine() ? L('co.hornMine', G.horns(), G.COOP.seats) : L('co.hornT'));
     // FIX6-UI §5 — and the per-tick write respects the same rule the builder does: while the
     // offer stands the omen panel's clock is the only clock, so this must not paint a second one
     // back over the strength line the card put there.
     const O = G.omens, offerUp = O.offer.length > 0 && O.forWave === state.wave + 1;
     const s = offerUp ? null : $('wavePrev').querySelector('.wpS');
-    if (s) s.textContent = L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown))));
+    if (s) setIf(s, 'textContent', L('wave.musterIn', mmss(Math.max(0, Math.ceil(state.countdown)))));
     UI.omenClock();
   }
 };
@@ -39240,7 +39402,7 @@ const TRAP_KEY = { caltrops: 'Z', tar: 'X', keg: 'C' };
       '<div class="nm">' + T_NAME(k) + '</div><div class="nmS">' + (T_SHORT[k] || T_NAME(k)) +
       '</div><div class="cost"><i class="ic ic-gold"></i>' + d.cost + '</div>' +
       '<div class="tags">' + elemChip(dSchool(k)) +
-      '<span class="tag rg" title="' + L('bm.reachT') + '"><i class="dg-rng"></i><b>' + d.range + '</b></span></div>' +
+      '<span class="tag rg" data-u="' + esc(L('bm.reachU')) + '" title="' + L('bm.reachT') + '"><i class="dg-rng"></i><b>' + d.range + '</b></span></div>' +
       // INTEGRATE: the writ and the stat table used to stand open on all seven cards at
       // once, which made the persistent shop 355 px tall — a third of every gameplay frame
       // on every map. Same information, folded into a flyout that opens over the card on
@@ -39268,7 +39430,7 @@ const TRAP_KEY = { caltrops: 'Z', tar: 'X', keg: 'C' };
       '<div class="nm">' + (T_SHORT[k] || T_NAME(k)) + '</div><div class="nmS">' + (T_SHORT[k] || T_NAME(k)) +
       '</div><div class="cost"><i class="ic ic-gold"></i>' + d.cost + '</div>' +
       '<div class="tags">' + elemChip(DTYPE[d.element] ? d.element : 'pierce') +
-      '<span class="tag rg rd" title="' + esc(L('bm.trapsT', 0, G.TRAP_MAX)) + '"><i class="dg-rng"></i><b>' + d.rad + '</b></span></div>' +
+      '<span class="tag rg rd" data-u="' + esc(L('bm.reachU')) + '" title="' + esc(L('bm.trapsT', 0, G.TRAP_MAX)) + '"><i class="dg-rng"></i><b>' + d.rad + '</b></span></div>' +
       '<div class="det"><div class="dNm">' + T_NAME(k) + '</div><div class="hnt">' + LNUM(T_HINT(k)) + '</div>' +
         trapRows(k) + '<div class="dGo"></div></div>';
     litePortrait(b, k);
@@ -39682,7 +39844,9 @@ UI.buildMenu = () => {
     mb.innerHTML = '<i class="mIc ic-must"></i><span class="lg">' + L('bm.muster') + '</span>' +
       '<span class="lgS">' + L('bm.musterS') + '</span>' +
       '<b>' + G.towersList.length + '/' + G.musterCap() + '</b>' +
-      (mCap ? '<span class="why">' + L('cp.mfull') + '</span>'
+      // AUDIT-1 GC-13 — bought to the cap is not the same as fielded to it: 'All standards fielded'
+      // beside a 0/14 read-out contradicted itself. cp.mfull stays for a field that IS full.
+      (mCap ? '<span class="why">' + L(G.towersList.length >= G.musterCap() ? 'cp.mfull' : 'bm.musterMax') + '</span>'
         : mPoor ? '<span class="why">' + LNUM(L('bm.needG', mc)) + '</span>'
         : '<span class="c"><i class="ic ic-gold"></i>' + mc + '</span>');
     mb.title = mCap ? L('bm.capT') : L('bm.raiseT', mc);
@@ -39937,7 +40101,7 @@ let PROG_C = { q: 0, d: 0, e: 0 }, PROG_A = {};
 const STAT0 = () => ({ burn: 0, storm: 0, steel: 0, trap: 0, power: 0, wyv: 0,
                        champ: 0, risen: 0, hex: 0, slow: 0, kind: {} });
 let PROG_S = STAT0(), PROG_H = {};
-function saveProg() { if (SHOT) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 4, stars: PROG, endless: PROG_E, daily: PROG_D, council: PROG_C, deeds: PROG_A, stats: PROG_S, horde: PROG_H })); } catch (e) { /* private mode */ } }
+function saveProg() { if (SHOT || DEV_OVR) return; try { localStorage.setItem(PROG_KEY, JSON.stringify({ v: 4, stars: PROG, endless: PROG_E, daily: PROG_D, council: PROG_C, deeds: PROG_A, stats: PROG_S, horde: PROG_H })); } catch (e) { /* private mode */ } }
 if (!SHOT) try {
   const o = JSON.parse(localStorage.getItem(PROG_KEY) || 'null');
   if (o) { PROG = o.stars || o; PROG_E = o.endless || {}; PROG_D = o.daily || {};
@@ -39983,12 +40147,17 @@ UI.endlessBest = (w) => {
 // separate record and does not overwrite it.)
 function dailyBest(won) {
   if (!G.DAILY) return;
+  // AUDIT-1 GC-06 — only the day's own road, on the day's own seed, files under that date. A
+  // stray &daily= that rode along into another map must not overwrite the record.
+  { const d = String(G.DAILY);
+    const dow = new Date(Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8))).getUTCDay();
+    if (MODE !== 'campaign' || MAP.id !== (DAILY_ROT[dow] || 1) || (runSeed >>> 0) !== ((+d) >>> 0)) return; }
   const prev = PROG_D[G.DAILY], stars = won ? starsFor(state.lives) : 0;
   const rec = { map: MAP.id, wave: state.wave, won: !!won, stars };
   if (prev && (prev.won > rec.won || (prev.won === rec.won && prev.wave >= rec.wave && prev.stars >= rec.stars))) return;
   PROG_D[G.DAILY] = rec; saveProg();
 }
-const unlocked = id => id === 1 || P.has('unlock') || starsOf(id - 1) >= 1;
+const unlocked = id => id === 1 || ((SHOT || P.has('dbg')) && P.has('unlock')) || starsOf(id - 1) >= 1;   // AUDIT-1 A1-B9
 // SPEC2 §E: three stars for ≥90% of the garrison still standing, two for ≥50%, one for a win.
 const starsFor = lives => lives <= 0 ? 0 : lives >= LIVES0 * 0.9 ? 3 : lives >= LIVES0 * 0.5 ? 2 : 1;
 
@@ -40007,7 +40176,10 @@ function laurelsEarned() {
   for (const m of MAPS) {
     const st = starsOf(m.id);
     if (st > 0) n += st + 2;                       // stars, plus the first-victory bounty
-    n += Math.floor(endlessOf(m.id) / 5);          // every fifth wave held past the finale
+    // AUDIT-1 A1-B4 (balance) — PAST the finale, as the rate always said. PROG_E keeps the ABSOLUTE
+    // wave (UI.endlessBest stores state.wave), so `best / 5` paid the campaign itself: one wave
+    // past each finale was worth 13 laurels, a third of the tree. Subtract the road's own finale.
+    n += Math.floor(Math.max(0, endlessOf(m.id) - (WAVE_TABLES[m.id] || []).length) / 5);
   }
   for (const k in PROG_D) if (PROG_D[k] && PROG_D[k].won) n += 2;
   // SPEC6 §D3d — a road whose HORDE has been broken pays two, once, exactly like a first
@@ -40021,7 +40193,9 @@ const talSpent = () => G.TAL_BRANCH.reduce((s, b) => {
   for (let i = 0; i < (PROG_C[b] | 0); i++) t += G.TAL_COST[i];
   return s + t;
 }, 0);
-const laurels = () => laurelsEarned() - talSpent();
+// AUDIT-1 A1-B4 — clamped: a save that bought tiers under the old endless rate keeps them (a bought
+// tier is never revoked) and simply reads 0 until it has earned its way back into credit.
+const laurels = () => Math.max(0, laurelsEarned() - talSpent());
 G.laurels = laurels; G.laurelsEarned = laurelsEarned; G.talSpent = talSpent;
 // What the council has BOUGHT, read by SIM's applyTalents() at run start. Live play only —
 // under SHOT applyTalents never asks (see its comment), so a screenshot cannot be coloured
@@ -40182,11 +40356,17 @@ G.deedMark = (what, n) => {
 // ── the run's own deeds ───────────────────────────────────────────────────────
 // Six deeds are about a RUN and nothing else, so they are judged once, on the victory plate,
 // out of flags the run itself set. `runLow` and `omenAll` are reset by UI.startGame().
-let runLow = false, omenAll = true, omenTook = 0;
-G.deedRunReset = () => { runLow = false; omenAll = true; omenTook = 0; };
+let runLow = false, omenAll = true, omenTook = 0, omenLast = 0;
+G.deedRunReset = () => { runLow = false; omenAll = true; omenTook = 0; omenLast = 0; };
+// AUDIT-1 GC-12 — the ledger rides the run snapshot, so a resumed run keeps what it earned (and
+// what it forfeited); `omenLast` stops a replayed wave's banner counting its omen twice.
+G.deedRunState = () => [runLow, omenAll, omenTook, omenLast];
+G.deedRunLoad = (a) => { a = Array.isArray(a) ? a : [];
+  runLow = !!a[0]; omenAll = a[1] === undefined ? true : !!a[1]; omenTook = a[2] | 0; omenLast = a[3] | 0; };
 // Called by UI.msg when a wave banner goes up: did the player take the CHALLENGE on offer?
 G.deedOmen = (n) => {
-  if (SHOT || n < G.OMEN_FROM) return;
+  if (SHOT || n < G.OMEN_FROM || n === omenLast) return;
+  omenLast = n;
   const o = G.OMENS[state.omen];
   if (o && o.kind === 'challenge') omenTook++; else omenAll = false;
 };
@@ -40337,6 +40517,18 @@ function fitDeeds() {
   }
   if (best > 140) g.style.height = Math.round(best + DD_BAND) + 'px';
 }
+// AUDIT-1 UX-06c — AN OVERLAY THAT OPENS TAKES THE FOCUS WITH IT. Every screen change hid the
+// focused control and dropped focus to <body>, so a keyboard player's next Tab started over at the
+// top of the document. Called from the live click paths only (never under SHOT); a script focus
+// after a MOUSE click does not match :focus-visible, so the ring stays a keyboard-only thing.
+const focusIn = (el) => {
+  if (SHOT || !el) return;
+  const shown = x => x.getClientRects().length > 0;             // offsetParent is null for fixed HUD
+  const f = el.matches('button,[tabindex="0"]') && shown(el) ? el
+    : [...el.querySelectorAll('button:not([disabled]),[tabindex="0"]')].find(shown);
+  if (f) try { f.focus({ preventScroll: true }); } catch (e) { /* never fatal */ }
+};
+UI.focusIn = focusIn;
 UI.showDeeds = () => {
   for (const id of deedDerived()) deedWin(id);      // catch up a record that moved elsewhere
   deedFlush();
@@ -40667,7 +40859,11 @@ function buildMapCards() {
   MAPS.forEach((m, i) => {
     const open = unlocked(m.id), st = starsOf(m.id), prev = MAPS[i - 1];
     const nw = (WAVE_TABLES[m.id] || []).length;
-    const b = document.createElement('button');
+    // AUDIT-1 UX-06 — a div[role=button], so the mode chips can be real focusable <button>s (a
+    // button may not nest one). main.css restates the old UA button box so the frame is unchanged.
+    const b = document.createElement('div');
+    b.setAttribute('role', 'button'); b.tabIndex = 0;
+    if (!open) b.setAttribute('aria-disabled', 'true');
     b.className = 'mCard' + (open ? '' : ' lock') + (open && m === nextM ? ' next' : '');
     const prevN = prev ? prev.name : L('maps.first');
     b.innerHTML = '<div class="mWrap"></div><div class="mTxt"><div class="mN">' + m.name + '</div>' +
@@ -40700,8 +40896,9 @@ function buildMapCards() {
       // Vale's ~748); an empty rail holds the row open and costs nothing to read.
       '<div class="mMode">' + (open ? ['camp', 'endl', 'horde'].map(k => {
         const lk = k !== 'camp' && !st;
-        return '<span class="mMc m-' + k + (lk ? ' lk' : '') + '" data-m="' + k + '" data-id="' + m.id +
-          '" title="' + esc(lk ? L('mode.hordeLk') : L('mode.' + k + 'T')) + '">' + L('mode.' + k) + '</span>';
+        return '<button type="button" class="mMc m-' + k + (lk ? ' lk' : '') + '" data-m="' + k + '" data-id="' + m.id +
+          (lk ? '" aria-disabled="true' : '') +
+          '" title="' + esc(lk ? L('mode.hordeLk') : L('mode.' + k + 'T')) + '">' + L('mode.' + k) + '</button>';
       }).join('') : '') + '</div>' +
       '</div>' +
       (open && m === nextM ? '<span class="rib">' + L(st ? 'maps.replay' : 'maps.cont') + '</span>' : '');
@@ -40710,6 +40907,12 @@ function buildMapCards() {
       b.querySelector('.mWrap').appendChild(lk); }
     b.title = open ? L('maps.cardT', m.name, nw, st) : L('maps.lockT', m.name, prevN);
     if (open) b.onclick = () => chooseMap(m.id);
+    // the keyboard half of role=button: Enter and Space on the CARD itself (a focused chip is a
+    // real button and activates on its own)
+    if (open) b.onkeydown = (ev) => {
+      if (ev.target !== b || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+      ev.preventDefault(); chooseMap(m.id);
+    };
     for (const c of b.querySelectorAll('.mMc')) c.onclick = (ev) => {
       ev.stopPropagation(); ev.preventDefault();
       if (c.classList.contains('lk')) { Audio.play('ui'); return; }
@@ -40722,6 +40925,11 @@ function buildMapCards() {
   laurelChip();
   deedChip();
 }
+// AUDIT-1 UX-10a — THE LOBBY'S ROAD PICKER NAMES ITS ROADS. lobby.js (contract §5) reads
+// `window.BF_COOP_MAPS` lazily on its first build and fell back to "Road I–V" because nothing ever
+// published it. Names in the page's tongue; `open:true` for all five keeps today's rule (a band may
+// ride any road) — whether a captain's own campaign locks should gate co-op is an open decision.
+if (!SHOT) try { window.BF_COOP_MAPS = MAPS.map(m => ({ id: m.id, name: m.name, open: true })); } catch (e) { /* never fatal */ }
 // ── FIX13-UI §4 — THE KEY. Five charts carry two coloured pips each and nothing on the screen
 // said what either one meant; the old cross-in-a-disc was read as "remove this map" precisely
 // because it had no key to be read against. Two items, one line, drawn with the chart's own
@@ -40765,6 +40973,8 @@ function buildDaily() {
     const q = new URLSearchParams(location.search);
     q.set('map', String(G.DAILY_MAP)); q.set('seed', String(G.DAILY_SEED));
     q.set('daily', G.TODAY); q.set('auto', '1'); q.delete('maps'); q.delete('endless');
+    // AUDIT-1 GC-06 — a daily is a plain campaign: no mode, no resume, no band, no horde peak.
+    q.delete('mode'); q.delete('resume'); q.delete('coop'); q.delete('join'); q.delete('hp');
     location.search = q.toString();
   };
 }
@@ -40870,11 +41080,15 @@ function chooseMap(id, mode) {
   const md = mode === 'horde' ? 'horde' : mode === 'endl' ? 'endless' : 'campaign';
   // SPEC6 §D3d — the MODE is resolved at load beside the map (the horde swaps the whole wave
   // table in SECTION: SIM), so changing it is a reload exactly as changing the road is.
-  if (id === MAP.id && md === MODE) { $('maps').classList.add('hidden'); UI.startGame(); return; }
+  // AUDIT-1 GC-06 — a daily page cannot shortcut: DAILY is resolved from the URL at load.
+  if (id === MAP.id && md === MODE && !DAILY) { $('maps').classList.add('hidden'); UI.startGame(); return; }
   // The world, the wave tables and the palette are all resolved from `&map=` at load, so a
   // different road is a reload. `auto` drops the player straight in rather than back to the title.
   const q = new URLSearchParams(location.search);
   q.set('map', id); q.set('auto', '1'); q.delete('maps'); q.delete('endless');
+  // AUDIT-1 GC-06 — a new road is a new run: the daily's date, its pinned seed, a pending
+  // resume and the last run's horde peak do not ride along.
+  q.delete('daily'); q.delete('seed'); q.delete('resume'); q.delete('hp');
   if (md === 'campaign') q.delete('mode'); else q.set('mode', md);
   location.search = q.toString();
 }
@@ -40929,7 +41143,18 @@ UI.startGame = (gesture) => {
   // first horn still has something to come back to, and the stale snapshot (which the title
   // screen was offering a moment ago) stops being offerable the instant a different run exists.
   G.runSave();
+  // AUDIT-1 GC-05 — and the address bar now names THIS run, so a refresh (F5, a tab restore)
+  // takes the resume path instead of `&auto=1` opening a fresh run over the snapshot.
+  runUrlStamp();
 };
+function runUrlStamp() {
+  if (SHOT || NET.active) return;            // a war-band's URL is SECTION: NET's (?coop=)
+  try {
+    const p = resumeParams(new URLSearchParams(location.search),
+      { map: MAP.id, seed: runSeed, mode: MODE, daily: DAILY, hp: HORDE ? HORDE_PEAK : 0 });
+    history.replaceState(history.state, '', location.pathname + '?' + p.toString() + location.hash);
+  } catch (e) { /* a sandboxed frame may refuse replaceState: the run itself is unaffected */ }
+}
 // ── first-placement writ (localStorage-gated, never shown under the harness) ────
 let tutDone = true;
 if (!SHOT) try { tutDone = !!localStorage.getItem(TUT_KEY); } catch (e) { tutDone = true; }
@@ -41054,6 +41279,7 @@ UI.showEnd = (won) => {
     (G.DAILY ? '<tr><td>' + L('es.daily') + '</td><td>' + G.DAILY + '</td></tr>' : '') + '</table>';
   $('end').classList.remove('hidden');
   UI.sync();
+  focusIn($('endPlate'));                                // AUDIT-1 UX-06c — live only (no-op under SHOT)
 };
 // ══ damage floaters (pooled DOM, projected world → screen) ═════════════════════
 const FLN = 20, flEl = [], flR = [];
@@ -41826,10 +42052,13 @@ function layoutPlates() {
 // Called from MAIN's render(). In SHOT mode it stops mutating the DOM before the FINAL
 // render so the headless compositor never repaints after the GL frame is presented.
 let _uiLast = -1, _shotFrames = 0, _pwT = -1;
+// AUDIT-1 UX-07 — a live MediaQueryList, so flipping the OS setting mid-session is honoured.
+const RMQ = SHOT || !window.matchMedia ? null : matchMedia('(prefers-reduced-motion: reduce)');
 UI.frame = (rt) => {
   if (SHOT) { if (_shotFrames++ >= 2) return; }
   const dt = _uiLast < 0 ? 0.016 : clamp(rt - _uiLast, 0, 0.1); _uiLast = rt;
   if (!SHOT) {
+    if (UI.dirty) { UI.dirty = false; UI.sync(); }                 // AUDIT-1 PERF-2 — one per frame
     if (showGold !== state.gold) {                                     // animated count-up
       const d = state.gold - showGold;
       showGold += Math.sign(d) * Math.min(Math.abs(d), Math.max(1, Math.abs(d) * 6 * dt + 24 * dt));
@@ -41837,8 +42066,10 @@ UI.frame = (rt) => {
       $('gold').textContent = fmt(Math.round(showGold));
     }
     if (state.phase === 'title') {                                     // Ken-Burns backdrop drift
-      CAM.dist = 152 + Math.sin(rt * 0.055) * 9;
-      CAM.tx = -2 + Math.sin(rt * 0.037) * 11; CAM.tz = -18 + Math.cos(rt * 0.029) * 7;
+      // AUDIT-1 UX-07 — the OS asked for less motion: the backdrop holds its first pose.
+      const ot = RMQ && RMQ.matches ? 0 : rt;
+      CAM.dist = 152 + Math.sin(ot * 0.055) * 9;
+      CAM.tx = -2 + Math.sin(ot * 0.037) * 11; CAM.tz = -18 + Math.cos(ot * 0.029) * 7;
     }
     // SPEC4 §C — the cooldown sweeps move between UI.sync()s, so they are written here. Under
     // the harness UI.sync() has already written them once and this branch never runs, which
@@ -41885,8 +42116,22 @@ UI.setPaused = (v) => { state.paused = !!v;
   $('btnPause').title = L(state.paused ? 'hud.resume' : 'hud.pause');
   $('btnPause').classList.toggle('on', state.paused); };
 $('btnPause').onclick = () => { if (NET.hold('pause', [!state.paused])) return; UI.setPaused(!state.paused); };
+// AUDIT-1 UX-11 — Language, Quality, Runebinding and Restart all RELOAD the page, and a reload
+// in a war-band silently drops this captain out of the band (and used to resume the band's field as
+// a solo run). In a band they are shut, and say why; runNav/btnReset refuse as well.
+const coopLockSettings = () => {
+  const on = G.COOP.seats > 1;
+  for (const id of ['btnLang', 'btnRb', 'btnQual', 'btnReset']) {
+    const b = $(id); if (!b) continue;
+    b.disabled = on;
+    if (on) b.title = L('co.noReload'); else if (b.dataset.lt) b.title = L(b.dataset.lt); else b.removeAttribute('title');
+  }
+  if (on) { $('qualMenu').classList.add('hidden'); $('btnQual').setAttribute('aria-expanded', 'false'); $('btnQual').classList.remove('on'); }
+};
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
   $('btnGear').classList.toggle('on', !s.classList.contains('hidden'));
+  coopLockSettings();
+  if (!s.classList.contains('hidden')) focusIn(s);                  // AUDIT-1 UX-06c
   // FIX9-UI §3 — the sheet is capped on a phone (main.css), so it can genuinely become a
   // scroller once the quality submenu is open. `.scr` is what lets the fade + chevron exist at
   // all and `.atEnd` retires it at the last row; both are measured HERE, on a real open, so the
@@ -41952,6 +42197,7 @@ function resumeParams(p, s) {
   p.delete('maps'); p.delete('auto'); p.delete('endless');
   if (s.mode === 'campaign') p.delete('mode'); else p.set('mode', s.mode);
   if (s.daily) p.set('daily', s.daily); else p.delete('daily');
+  if (s.hp) p.set('hp', String(s.hp)); else p.delete('hp');          // AUDIT-1 GC-07
   return p;
 }
 // Assigning an identical location.search does not navigate in every browser, so the same-URL
@@ -41961,11 +42207,19 @@ function navTo(p) {
   if (url === location.pathname + location.search + location.hash) location.reload(); else location.href = url;
 }
 function runNav(p) {
+  if (G.COOP.seats > 1) { Audio.play('ui'); return; }              // AUDIT-1 UX-11 — never in a band
   // `true` = save even mid-wave. A player who switches tongue during wave 7 is rolled back to
   // wave 7's muster with the purse, the garrison and the losses they have now — the horn sounds
   // again for that wave. Restoring mid-wave would mean serialising a hundred bodies; see the
   // save block in SECTION: SIM for why that trade is not close.
-  if (G.runSave(true)) { const s = G.runSnap(); if (s) resumeParams(p, s); }
+  // AUDIT-1 GC-03 — MID-WAVE, NO NEW SNAPSHOT. Writing the live purse/kills against a rolled-back
+  // wave counter replayed the wave with its bounty kept: an unlimited gold and deed farm. The
+  // horn already wrote the right snapshot (startWave -> runSave(true), holding the muster from
+  // before the horn), so a mid-wave toggle reuses it. Towers bought mid-wave revert with their gold.
+  let ok;
+  if (state.phase === 'wave') { const s0 = G.runSnap(); ok = !!s0 && G.runFits(s0) && s0.wave === state.wave - 1; }
+  else ok = G.runSave(true);
+  if (ok) { const s = G.runSnap(); if (s) resumeParams(p, s); }
   navTo(p);
 }
 // ══ v7-MENUCAM §1 — THE QUALITY MENU ═══════════════════════════════════════════════
@@ -42051,12 +42305,13 @@ $('btnFps').onclick = () => { $('fpsV').textContent = L(G.setFpsCap(G.fpsCap() =
 // v7-RESILIENCE §1 — "Restart Campaign" throws the saved run away as well. It used to be a bare
 // reload, which (now that a snapshot exists) would have landed back on a title offering to
 // resume the very run the player had just asked to be rid of.
-$('btnReset').onclick = () => { G.runClear(); location.reload(); };
+$('btnReset').onclick = () => { if (G.COOP.seats > 1) return; G.runClear(); retryNav(); };   // UX-11   // AUDIT-1 GC-10 — same URL rule as 'Try again'
 // Title → map select → game. `&map=` names a road outright, so it skips the chooser and
 // Play drops straight into that map (the shot harness and any deep link rely on this).
 // BOOTPIPE §1 — the one hard gate on the staged boot. The bar dims this button and the CSS
 // makes it inert, but a keyboard activation ignores pointer-events, so the check lives here too.
-$('btnPlay').onclick = () => { if (!BOOT.ready) return; if (P.has('map')) UI.startGame(); else UI.showMaps(); };
+$('btnPlay').onclick = () => { if (!BOOT.ready) return; if (P.has('map')) UI.startGame();
+  else { UI.showMaps(); focusIn($('mapCards').querySelector('.mCard.next') || $('mapCards')); } };   // AUDIT-1 UX-06c
 // ══ v7-RESILIENCE §1 — THE OFFER ON THE PLINTH ══════════════════════════════════════
 // A saved run puts a second button on the title screen, above Play, and RELABELS Play as "New
 // campaign". Relabelling is not decoration: with two buttons on the plinth "Play" stops being a
@@ -42092,6 +42347,8 @@ UI.resumeRun = (s, gesture) => {
   // the run actually fought with, which is the whole point of snapshotting them.
   laurelMark();
   if (!G.runRestore(s)) { $('title').classList.remove('hidden'); return false; }
+  G.deedRunLoad(s.dd);                                 // AUDIT-1 GC-12
+  runUrlStamp();                                       // AUDIT-1 GC-05
   // ARMIES-FIX8 §5 — the same starting stand-off UI.startGame sets; see its note there.
   CAM.dist = MAP.id >= 4 ? 82 : 100; CAM.tx = -2; CAM.tz = 2;
   if (gesture === false) {
@@ -42114,14 +42371,14 @@ $('btnResume').onclick = () => {
 // link that drops straight into a run (`&auto=`, `&resume=`) must not spend a storage read
 // dressing a plinth nobody will see.
 UI.resumeOffer = resumeOffer;
-$('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); };
+$('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); focusIn($('btnPlay')); };
 // SPEC6 §B — the council opens off the chooser and returns to it, so it never becomes a
 // screen you can get stranded on: there is exactly one way in and one way out.
-$('btnCouncil').onclick = () => { Audio.play('ui'); UI.showCouncil(); };
-$('btnCBack').onclick = () => { $('council').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); };
+$('btnCouncil').onclick = () => { Audio.play('ui'); UI.showCouncil(); focusIn($('council')); };
+$('btnCBack').onclick = () => { $('council').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); focusIn($('btnCouncil')); };
 // SPEC6 §C — the chronicle, in the council's own in/out contract.
-$('btnDeeds').onclick = () => { Audio.play('ui'); UI.showDeeds(); };
-$('btnDDBack').onclick = () => { $('deeds').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); };
+$('btnDeeds').onclick = () => { Audio.play('ui'); UI.showDeeds(); focusIn($('deeds')); };
+$('btnDDBack').onclick = () => { $('deeds').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); focusIn($('btnDeeds')); };
 // The counter ledger is debounced (a wave of a thousand must not serialise the record a
 // thousand times), so the page going away is the last place it can be honest.
 if (!SHOT) {
@@ -42129,10 +42386,21 @@ if (!SHOT) {
   addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') deedFlush(); });
 }
 $('btnCRespec').onclick = councilRespec;
+// AUDIT-1 GC-10 — 'Try again' BUILDS the next run's URL. A bare reload of a resume URL found the
+// snapshot endGame had just cleared and stopped at the title. A daily keeps its date and seed (it
+// IS that seed); any other retry draws a fresh one, as the chooser's `&auto=1` always did.
+function retryNav() {
+  const q = new URLSearchParams(location.search);
+  q.delete('resume');
+  if (q.has('map')) q.set('auto', '1');
+  if (!q.get('daily')) q.delete('seed');
+  if (q.toString() === location.search.replace(/^\?/, '')) location.reload(); else location.search = q.toString();
+}
 $('btnRestart').onclick = () => {
-  if (state.phase !== 'won') { location.reload(); return; }
+  if (state.phase !== 'won') { retryNav(); return; }
   const q = new URLSearchParams(location.search);      // a held road sends you back to the campaign
   q.delete('map'); q.delete('auto'); q.set('maps', '1');
+  q.delete('daily'); q.delete('seed'); q.delete('resume'); q.delete('hp');   // AUDIT-1 GC-06
   location.search = q.toString();
 };
 $('chipWave').title = L('hud.waveT', MAP.name, WAVES.length);
@@ -42152,6 +42420,7 @@ const rollSeed = () => {
   if (!(globalThis.crypto && crypto.getRandomValues)) return;
   const q = new URLSearchParams(location.search);
   q.set('seed', String(1000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 9000)));
+  q.delete('daily');                                   // AUDIT-1 A1-B3 — a new seed is not the day's war
   location.search = q.toString();
 };
 document.querySelectorAll('.seedTag .sD').forEach(b => { b.onclick = rollSeed; });
@@ -42188,10 +42457,63 @@ if (!SHOT) {
   };
   $('hintT').addEventListener('click', hintTog);
   addEventListener('keydown', e => {
+    // AUDIT-1 GC-09 — never while typing: the co-op join code's alphabet contains G and H.
+    { const a = document.activeElement;
+      if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return; }
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.key === 'g' || e.key === 'G') $('btnGear').click();
     if (e.key === 'h' || e.key === 'H') hintTog();
-    if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false'); }
+    if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false');
+      // AUDIT-1 UX-06b — Escape closes the sheet or screen in front, topmost first, through each
+      // one's own Back control so every close path stays the one the mouse uses. The lobby has
+      // its own Escape (lobby.js); the end plate has no "close", only its calls.
+      const shown = id => $(id) && !$(id).classList.contains('hidden');
+      if (shown('settings')) { $('btnGear').click(); focusIn($('btnGear')); }
+      else if (shown('council')) $('btnCBack').click();
+      else if (shown('deeds')) $('btnDDBack').click();
+      else if (shown('maps')) $('btnBack').click();
+    }
   });
+  // AUDIT-1 UX-05 — PRESS AND HOLD TO READ. Schools, resistances, mode rules, the Daily War, omen
+  // effects and the lobby's difficulty texts are all `title` tooltips, which a touch screen never
+  // shows. One delegated layer on #ui: a TOUCH (or pen) press held 420 ms without travel lifts the
+  // element's own title into #tapTip; the next touch anywhere drops it, and the click that the
+  // same press would have produced is swallowed (a read is not an order). Mouse is untouched.
+  {
+    const tip = document.createElement('div');
+    tip.id = 'tapTip'; tip.className = 'iron hidden'; tip.setAttribute('role', 'tooltip');
+    $('ui').appendChild(tip);
+    let tm = 0, x0 = 0, y0 = 0, held = false, eat = false;
+    const hide = () => { tip.classList.add('hidden'); held = false; };
+    const show = (el) => {
+      const s = el.isConnected && el.getAttribute('title');
+      if (!s) return;
+      tip.textContent = s; tip.classList.remove('hidden');
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+      const x = clamp(r.left + r.width / 2 - w / 2, 8, Math.max(8, innerWidth - w - 8));
+      let y = r.top - h - 10;
+      if (y < 8) y = Math.min(Math.max(8, innerHeight - h - 8), r.bottom + 10);
+      tip.style.left = Math.round(x) + 'px'; tip.style.top = Math.round(y) + 'px';
+      held = true; eat = true;                       // the click THIS press may still fire
+    };
+    $('ui').addEventListener('pointerdown', e => {
+      clearTimeout(tm); eat = false;                  // a new press: its click is its own
+      if (held) hide();
+      if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+      const el = e.target && e.target.closest ? e.target.closest('[title]') : null;
+      if (!el || !el.getAttribute('title')) return;
+      x0 = e.clientX; y0 = e.clientY;
+      tm = setTimeout(() => show(el), 420);
+    }, { passive: true });
+    $('ui').addEventListener('pointermove', e => {
+      if (Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 10) clearTimeout(tm);
+    }, { passive: true });
+    for (const ev of ['pointerup', 'pointercancel']) $('ui').addEventListener(ev, () => clearTimeout(tm), { passive: true });
+    $('ui').addEventListener('click', e => {
+      if (eat) { eat = false; e.stopPropagation(); e.preventDefault(); }
+    }, true);
+    $('ui').addEventListener('contextmenu', e => { if (held) e.preventDefault(); });
+  }
   $('title').addEventListener('pointerdown', e => { if (BOOT.ready && e.target === $('title')) $('btnPlay').click(); });
   // FIX9-UI §3 — THE `.atEnd` LATCH THE FADES WERE ALREADY WRITTEN AGAINST. main.css has carried
   // `#ddGrid.atEnd::after{ display:none }` since FIX2-UI §1 and nothing ever set the class, so
@@ -42244,7 +42566,12 @@ if (!SHOT) {
 
 // ══════════════════════ SECTION: MAIN (owner: architect — renderer, camera, loop, SHOT HARNESS) ══
 const canvas = $('gl');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: tier !== 'mobile', powerPreference: 'high-performance', preserveDrawingBuffer: !!SHOT });
+// AUDIT-1 PERF-6 — antialias OFF on every tier. The scene renders into the composer's own
+// (non-MSAA) targets; the canvas only receives the fullscreen post passes, whose single quad has
+// no interior edge to resolve, so a 4x MSAA backbuffer was memory and resolve bandwidth for
+// pixel-identical output (A/B: identical PNGs). Scene AA proper would be an MSAA composer
+// target — a visual change, left to the architect.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!SHOT });
 renderer.info.autoReset = false;
 renderer.setPixelRatio(Math.min(devicePixelRatio, Q.px));
 renderer.setSize(innerWidth, innerHeight);
@@ -42543,7 +42870,20 @@ addEventListener('keydown', e => {
   // no-op on a Set, which is exactly the semantics wanted — the camera's speed is a constant,
   // not a function of the keyboard's repeat rate.
   if (panSlot(e)) { CAM_KEYS.add(e.code); e.preventDefault(); }   // arrows would scroll the page
-  if (e.key === ' ') $('btnPause').click();
+  // AUDIT-1 CH-2 — no hotkey fires while the player is typing (the co-op lobby's name and code
+  // fields) or holding a browser chord (Ctrl+1 is a tab switch, not a ballista).
+  if (typing() || e.ctrlKey || e.altKey || e.metaKey) return;
+  // AUDIT-1 GC-09 — Space is the pause key and nothing else: preventDefault stops a focused HUD
+  // button (x1/x2/x3) from ALSO being activated by the same keystroke, and it only means
+  // pause while a battle is on the field.
+  if (e.key === ' ') {
+    if (state.phase === 'wave' || state.phase === 'prewave') {
+      e.preventDefault();
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      $('btnPause').click();
+    }
+    return;
+  }
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
   // SPEC3 §F — T cycles the selected tower's targeting doctrine.
   if ((e.key === 't' || e.key === 'T') && state.selTower >= 0) {
@@ -42552,8 +42892,18 @@ addEventListener('keydown', e => {
   }
   // SPEC3 §D — 8/9/0 take the omen on the table. They sit past the seven build hotkeys on
   // purpose: the number row reads left-to-right as "what you build" then "what you accept".
-  const oi = { '8': 0, '9': 1, '0': 2 }[e.key];
-  if (oi !== undefined) { if (state.phase === 'prewave' && !NET.hold('omen', [oi])) G.omens.pick(oi); return; }
+  // AUDIT-1 CH-2 — the digit is the PHYSICAL key (e.code), so the number row works on AZERTY,
+  // where the unshifted keys type & é " ' ( - è _ ç à, and the numpad works everywhere. 9/0 take
+  // the omen while an offer stands; 8 does only while it is still UNPICKED — the Warbanner card
+  // is labelled 8 too, and with the omen branch first it could never be reached by key.
+  const dm = /^(?:Digit|Numpad)(\d)$/.exec(e.code || '');
+  const dg = dm ? +dm[1] : NaN;
+  const oi = { 8: 0, 9: 1, 0: 2 }[dg];
+  const O = G.omens, offerUp = state.phase === 'prewave' && O.offer.length > 0 && O.forWave === state.wave + 1;
+  if (oi !== undefined && offerUp && (dg !== 8 || O.picked < 0)) {
+    if (!NET.hold('omen', [oi])) G.omens.pick(oi);
+    return;
+  }
   // SPEC4 §C/§D — Q/W call the two powers, Z/X/C arm the three road traps. They sit off the
   // number row on purpose: 1-7 buy fortifications, 8-0 take omens, and neither of those is
   // what these are. All five ARM placement mode exactly as a build card does, so the ghost,
@@ -42563,7 +42913,7 @@ addEventListener('keydown', e => {
   if (pw) { UI.deselect(); if (G.enterCast(pw)) G.placeAtCursor(); return; }
   const tk = { z: 'caltrops', x: 'tar', c: 'keg' }[lk];
   if (tk) { UI.deselect(); if (G.enterTrap(tk)) G.placeAtCursor(); return; }
-  const keys = Object.keys(TOWER_DEFS), n = parseInt(e.key);
+  const keys = Object.keys(TOWER_DEFS), n = dg;          // AUDIT-1 CH-2 — physical digit
   if (n >= 1 && n <= keys.length) {                    // hotkeys ARM the hammer
     UI.deselect();
     if (G.enterPlace(keys[n - 1])) G.placeAtCursor();
@@ -42605,7 +42955,7 @@ G.dense = false;
 let _dprNow = -1;
 function densityStep(alive) {
   const want = G.dense ? alive > Q.denseOff : alive > Q.denseOn;
-  if (want !== G.dense) G.dense = want;
+  if (want !== G.dense) { G.dense = want; Armies.setDense(want); }   // AUDIT-1 PERF-5a
   const px = Math.min(devicePixelRatio, Q.px * (G.dense ? Q.dpr : 1));
   if (Math.abs(px - _dprNow) > 0.01) { _dprNow = px; renderer.setPixelRatio(px); }
 }
@@ -42889,9 +43239,9 @@ function warmStandins() {
       try {
         const g = Towers.build({ type, level, x: 0, z: 0 });
         g.name = 'WARM_' + type + level; scene.add(g); made.push(g);
-      } catch (e) { console.log('WARMWARN tower ' + type + level + ': ' + e.message); }
+      } catch (e) { console.log('WARMWARN tower ' + type + level + ': ' + e.message); if (SHOT) __err('WARMWARN tower ' + type + level + ': ' + e.message); }
     }
-    try { ghostFor(type); } catch (e) { console.log('WARMWARN ghost ' + type + ': ' + e.message); }
+    try { ghostFor(type); } catch (e) { console.log('WARMWARN ghost ' + type + ': ' + e.message); if (SHOT) __err('WARMWARN ghost ' + type + ': ' + e.message); }
   }
   return made;
 }
@@ -42928,7 +43278,7 @@ async function warmView(objs, a, b) {
   const B = 1;
   for (let i = 0; i < objs.length; i += B) {
     proxy.children = objs.slice(i, i + B);
-    try { renderer.compile(proxy, camera, scene); } catch (e) { console.log('WARMWARN issue: ' + e.message); break; }
+    try { renderer.compile(proxy, camera, scene); } catch (e) { console.log('WARMWARN issue: ' + e.message); if (SHOT) __err('WARMWARN issue: ' + e.message); break; }
     await BOOT.sub(a + (b - a) * Math.min(1, (i + B) / objs.length));
   }
   proxy.children = [];
@@ -43090,7 +43440,7 @@ async function glRestore() {
   renderer.shadowMap.needsUpdate = true;
   let nPass = -1;
   try { composer.setSize(innerWidth, innerHeight); nPass = composer.passes.length; }
-  catch (e) { console.log('GLWARN composer: ' + e.message); }
+  catch (e) { console.log('GLWARN composer: ' + e.message); if (SHOT) __err('GLWARN composer: ' + e.message); }
   const nTex = texSweep();
   _pgN = 0; _pgSeen.clear();
   let nProg = -1;
@@ -43109,7 +43459,7 @@ async function glRestore() {
     // census: 43 after the warm, 53 after this line, and 53 is what was up before the loss.
     composer.render();
     nProg = renderer.info.programs.length;
-  } catch (e) { console.log('GLWARN warm: ' + e.message); }
+  } catch (e) { console.log('GLWARN warm: ' + e.message); if (SHOT) __err('GLWARN warm: ' + e.message); }
   // Back to the fight. `acc` is dropped rather than carried: at most one tick, and paying back a
   // suspended phone's worth of accumulator is the one thing the clamp cannot protect against.
   _camT = -1; last = performance.now(); acc = 0; _capNext = 0;
@@ -45501,30 +45851,41 @@ const netOwn = (tw, c) => !!tw && (COOP.seats <= 1 || tw.owner === (c.p | 0));
 
 // THE OP TABLE IS THE PROTOCOL. `a` is the argument arity a transport may validate against
 // before it trusts a peer's packet; `now` marks the two ops that are not sim state at all.
+// AUDIT-1 NET-4 — `v` is the argument TYPE check, run by NET.apply before `run`. Arity alone let
+// `place [x, z, 'nope']` throw inside the tick on every peer and `place 'constructor'` turn the
+// purse into NaN. Each validator is a pure function of the arguments, so a refusal is identical on
+// every peer and cannot desync.
+const netOwnKey = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+const netXZ = (x, z) => Number.isFinite(x) && Number.isFinite(z) && Math.abs(x) <= 400 && Math.abs(z) <= 400;
+const netInt = (v) => Number.isInteger(v) && Math.abs(v) <= 1e9;
+const netBool = (v) => v === true || v === false || v === 0 || v === 1;
 const NET_OPS = {
   // ── the board ──
   // SC1 - the crest is stamped inside placeTower now, off the seat whose purse pays, so the
   // restore path and the shot rigs get an owner too and this verb is one call again.
-  place:  { a: 3, run: (g) => G.placeTower(g[0], g[1], g[2]) },     // [x, z, type]
-  up:     { a: 1, run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.upgradeTower(tw); } },
-  sell:   { a: 1, run: (g, c) => { const tw = netTower(g[0]); if (!netOwn(tw, c)) return false;
+  place:  { a: 3, v: (g) => netXZ(g[0], g[1]) && netOwnKey(TOWER_DEFS, g[2]),
+            run: (g) => G.placeTower(g[0], g[1], g[2]) },     // [x, z, type]
+  up:     { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.upgradeTower(tw); } },
+  sell:   { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); if (!netOwn(tw, c)) return false;
               G.sellTower(tw); return true; } },
-  mode:   { a: 1, run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.cycleMode(tw) !== null; } },
+  mode:   { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.cycleMode(tw) !== null; } },
   // A forge takes BOTH crests. It spends the caller's purse, changes what two towers ARE, and
   // its 50% break refund is paid to whoever breaks it - so a captain may only bind their own
   // pair. (The panel offers no cross-owner candidate either; this is the rule under it.)
-  bond:   { a: 2, run: (g, c) => { const a = netTower(g[0]), b = netTower(g[1]);
+  bond:   { a: 2, v: (g) => netInt(g[0]) && netInt(g[1]), run: (g, c) => { const a = netTower(g[0]), b = netTower(g[1]);
               return netOwn(a, c) && netOwn(b, c) && G.forgeBond(a, b); } },
-  unbond: { a: 1, run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.breakBond(tw, true); } },
-  trap:   { a: 3, run: (g) => G.layTrap(g[0], g[1], g[2]) },        // [kind, x, z]
-  cast:   { a: 3, run: (g) => G.castPower(g[0], g[1], g[2]) },      // [power, x, z]
+  unbond: { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.breakBond(tw, true); } },
+  trap:   { a: 3, v: (g) => netOwnKey(TRAP_DEFS, g[0]) && netXZ(g[1], g[2]),
+            run: (g) => G.layTrap(g[0], g[1], g[2]) },        // [kind, x, z]
+  cast:   { a: 3, v: (g) => netOwnKey(POWERS, g[0]) && netXZ(g[1], g[2]),
+            run: (g) => G.castPower(g[0], g[1], g[2]) },      // [power, x, z]
   // ── the run ──
   // SC3 - a horn is a READY, not a start. G.hornReady collapses to G.callWave() at one seat.
   wave:   { a: 0, run: (g, c) => G.hornReady(c.p) },
   // SC5 - only the Council Speaker's pick is heard. Everyone else's is refused, counted, and
   // refused the same way on every peer, so a second captain hammering the cards cannot move
   // one board without moving the others.
-  omen:   { a: 1, run: (g, c) => (COOP.seats <= 1 || (c.p | 0) === G.omenSpeaker()) && G.omens.pick(g[0]) },
+  omen:   { a: 1, v: (g) => Number.isInteger(g[0]) && g[0] >= 0 && g[0] <= 2, run: (g, c) => (COOP.seats <= 1 || (c.p | 0) === G.omenSpeaker()) && G.omens.pick(g[0]) },
   // SC6 - the muster is SHARED and any captain may widen it, out of their own purse.
   muster: { a: 0, run: () => G.raiseMuster() },
   // ── the two that are NOT sim state ──
@@ -45537,7 +45898,7 @@ const NET_OPS = {
   // is what the loop obeys, so x1 beats x2 beats x3 and no captain can fast-forward the vale
   // out from under someone still siting a tower. A dropped seat stops holding the band back.
   // Solo: one seat, the min of one number, and the shipped line.
-  speed:  { a: 1, now: 1, run: (g, c) => { const v = g[0] | 0; if (v < 1 || v > 3) return false;
+  speed:  { a: 1, now: 1, v: (g) => netInt(g[0]), run: (g, c) => { const v = g[0] | 0; if (v < 1 || v > 3) return false;
               COOP.speeds[c.p & 3] = v;
               let m = v;
               for (let i = 0; i < COOP.seats; i++)
@@ -45546,7 +45907,7 @@ const NET_OPS = {
   // SC4 - ANY captain may call a halt, and any captain may lift it. Deliberately not a mask:
   // a pause nobody can lift without four clicks is a grief in the other direction, and the
   // sequencer already gives the band one order for the two commands.
-  pause:  { a: 1, now: 1, run: (g) => {
+  pause:  { a: 1, now: 1, v: (g) => netBool(g[0]), run: (g) => {
               if (UI.setPaused) UI.setPaused(!!g[0]); else state.paused = !!g[0]; return true; } },
   // ── SC2 - SEND-GOLD, now that there is more than one purse ──
   // [toSeat, amount], in 50-gold steps from the HUD's ally row. Every term is validated in the
@@ -45554,7 +45915,7 @@ const NET_OPS = {
   // rules refuse is refused identically on every peer off identical purses, so it is inside
   // the same no-desync argument every other verb is. `pending.gold` keeps counting what has
   // moved - the transport's action log reads it and it costs nothing to keep honest.
-  gold:   { a: 2, run: (g, c) => {
+  gold:   { a: 2, v: (g) => netInt(g[0]) && netInt(g[1]), run: (g, c) => {
               const to = g[0] | 0, amt = g[1] | 0, from = c.p | 0;
               if (purses() <= 1) return false;                 // one purse: nothing to move
               if (to === from || to < 0 || to >= purses() || from < 0 || from >= purses()) return false;
@@ -45573,7 +45934,7 @@ const NET_OPS = {
   // is the AND (bandAuto, SECTION: SIM). The mask starts empty and every peer sends its own
   // state once, on its first sequenced tick - see NET.pre - so a band never inherits a
   // preference nobody in it can see.
-  auto:   { a: 1, run: (g, c) => { const b = 1 << (c.p | 0);
+  auto:   { a: 1, v: (g) => netBool(g[0]), run: (g, c) => { const b = 1 << (c.p | 0);
               if (g[0]) COOP.auto |= b; else COOP.auto &= ~b; return true; } },
   // ── SB's drop rule, SC1's verb ──
   // [fromSeat, toSeat]. A captain went silent for 30 s and the transport declared the saddle
@@ -45581,7 +45942,7 @@ const NET_OPS = {
   // they change hands - by contract to the host. Their purse goes with the works, because gold
   // nobody can spend is gold the band lost; and the seat is marked `gone`, which is what stops
   // it holding up a horn, a pace or a council for the rest of the road.
-  inherit: { a: 2, run: (g, c) => {
+  inherit: { a: 2, v: (g) => netInt(g[0]) && netInt(g[1]), run: (g, c) => {
               const from = g[0] | 0, to = g[1] | 0;
               // THE HOST'S VERB, AND ONLY THE HOST'S. It is the one command that can move every
               // standard on the board at once, so it is the one command that must not be
@@ -45624,7 +45985,7 @@ NET.submit = (op, args) => {
 
 // ── 3. DELIVER ───────────────────────────────────────────────────────────────────────────────
 NET.recv = (c) => {
-  if (!NET.active || !c || !NET_OPS[c.op]) return false;
+  if (!NET.active || !c || !netOwnKey(NET_OPS, c.op)) return false;   // AUDIT-1 NET-4 — own keys only
   if (NET_OPS[c.op].now) return NET.apply(c);
   let t = c.t | 0;
   // A command stamped for a tick this peer has already stepped is, strictly, a desync - the
@@ -45642,8 +46003,8 @@ NET.stamp = () => state.tick + NET.LEAD;      // the host's stamping rule, publi
 
 // ── 4. APPLY ─────────────────────────────────────────────────────────────────────────────────
 NET.apply = (c) => {
+  if (!c || !netOwnKey(NET_OPS, c.op)) return false;
   const spec = NET_OPS[c.op];
-  if (!spec) return false;
   // GAME_SPEC_9 SC2 - WHOSE PURSE PAYS. Every verb below spends through `state.gold`, which is
   // an accessor over the seat's purse (SECTION: SIM); point it at the COMMANDING seat for the
   // length of one verb and every peer debits the same purse, whichever browser is watching -
@@ -45657,11 +46018,14 @@ NET.apply = (c) => {
   // or a write past the end of a four-slot array. Solo the roster is one seat and the whole
   // test is skipped, exactly as `?test=cmd`'s out-of-order (p, s) plan needs it to be.
   if (COOP.seats > 1 && (p < 0 || p >= COOP.seats)) { NET.refused++; return false; }
+  // AUDIT-1 NET-4 — arity and argument types, at the same door, before any verb sees them.
+  const ga = Array.isArray(c.args) ? c.args : c.args == null ? [] : null;
+  if (!ga || ga.length !== spec.a || (spec.v && !spec.v(ga))) { NET.refused++; return false; }
   const wasPay = COOP.pay, wasAct = COOP.act;
   if (p >= 0 && p < purses()) COOP.pay = p;
   if (p >= 0 && p < COOP.seats) COOP.act = p;
   let ok;
-  try { ok = spec.run(c.args || [], c) !== false; }
+  try { ok = spec.run(ga, c) !== false; }
   finally { COOP.pay = wasPay; COOP.act = wasAct; }
   NET.applied++; if (!ok) NET.refused++;
   NET.last = c;
@@ -45859,6 +46223,13 @@ async function runTests(which) {
     console.log('TESTLOG ' + (p ? 'PASS' : 'FAIL') + ' ' + name + (p || !detail ? '' : ' — ' + detail));
   };
   const has = s => which === 'all' || which.split(',').includes(s);
+  // AUDIT-1 T7-02 — a suite name nothing answers to (`?test=rizen`) used to run ZERO asserts and
+  // still title the page TESTPASS (total=0). Every requested name must be one this function knows.
+  const KNOWN = ['audio', 'sim', 'place', 'ui', 'i18n', 'harness', 'risen', 'turns', 'omen', 'council',
+    'net', 'cmd', 'coop', 'coope2e', 'all'];
+  for (const n of which.split(',')) if (KNOWN.indexOf(n) < 0) T('harness.unknownSuite.' + n, false, 'no suite is named "' + n + '"');
+  // What the boot handed the suites, read before any suite moves it (the council suite's baseline).
+  const BOOT0 = { gold: state.gold, tal: { q: TAL.q, d: TAL.d, e: TAL.e } };
 
   if (has('audio')) {
     // Render the real graph offline; assert by output RMS. This is the test that would have
@@ -45924,6 +46295,18 @@ async function runTests(which) {
     G.sellTower(tw);
     T('econ.sellRefund', state.gold === goldBefore + Math.round(inv * 0.7), 'gold=' + state.gold);
     T('place.sellFreesGround', canPlace(32, -31).ok === true && G.towersList.length === before);
+    // AUDIT-1 GC-04 — selling a Barracks remaps every enemy hold into the compacted knight list:
+    // a foe held by the sold barracks is released, a foe held by the other one keeps its knight.
+    { G.placeTower(32, -31, 'barracks', 1, true); const A = G.towersList[G.towersList.length - 1];
+      G.placeTower(44, -31, 'barracks', 1, true); const B = G.towersList[G.towersList.length - 1];
+      const K = G.knights, ia = K.findIndex(k => k.tower === A), ib = K.findIndex(k => k.tower === B);
+      const fa = { alive: true, blockedBy: ia, gc04: 1 }, fb = { alive: true, blockedBy: ib, gc04: 1 };
+      G.enemies.push(fa, fb);
+      G.sellTower(A);
+      T('econ.sellBarracks.remapsHolds', ia >= 0 && ib > ia && fa.blockedBy === -1 && fb.blockedBy >= 0 &&
+        G.knights[fb.blockedBy] === K[ib] && G.knights.every(k => k.tower !== A),
+        'ia=' + ia + ' ib=' + ib + ' fa=' + fa.blockedBy + ' fb=' + fb.blockedBy);
+      G.enemies = G.enemies.filter(x => !x.gc04); G.sellTower(B); }
   }
 
   if (has('ui')) {
@@ -45951,8 +46334,24 @@ async function runTests(which) {
     const orphans = Object.keys(SHOT_MAPS).filter(k => !(k in SHOT_PRESETS));
     T('harness.shotMapsResolve', orphans.length === 0, orphans.join(','));
     T('harness.noPageErrors', window.__errors.length === 0, window.__errors.slice(0, 2).join(' | '));
+    // AUDIT-1 CH-1b — a co-op module that failed to load left this suite GREEN: a failed
+    // <script type=module> raises nothing on window.onerror. Both modules publish their string
+    // tables even under ?test= (everything else in them sits behind their own SHOT guard).
+    T('harness.modules', !!window.BF_LOBBY_STR && !!window.BF_NET_STR,
+      'lobby.js=' + !!window.BF_LOBBY_STR + ' net.js=' + !!window.BF_NET_STR);
+    // AUDIT-1 T7-04 — the gates the LIVE suite (tools/livetest.mjs) exists because of: under
+    // SHOT/TESTQ nothing reads or writes the run snapshot or the deed store, so no preset and no
+    // matrix row can be coloured by what this machine has played.
+    { const s0 = JSON.stringify(PROG_S), a0 = G.deedCount();
+      G.deedBump('burn'); G.deedMark('muster', 14);
+      T('harness.persistenceGatedUnderShot', G.runSave(true) === false && G.runSnap() === null &&
+        G.runRestore({ tal: [0, 0, 0] }) === false && G.deedGrant('pyre') === false &&
+        JSON.stringify(PROG_S) === s0 && G.deedCount() === a0 && DEEDS_ON === false,
+        'runSave/runSnap/runRestore/deedGrant/deedBump must all refuse under SHOT'); }
   }
 
+  // AUDIT-1 T7-02 — named on the wrong road, a map-bound suite used to skip in silence and pass.
+  if (which !== 'all' && has('risen') && MAP.id !== 4) T('risen.wrongMap', false, 'risen needs &map=4, got map=' + MAP.id);
   if (has('risen') && MAP.id === 4) {
     state.phase = 'wave'; state.wave = 9;
     const spawn = () => { const k = G.spawnAt('grunt', 60, 0); return G.enemies[G.enemies.length - 1]; };
@@ -45968,6 +46367,7 @@ async function runTests(which) {
     T('risen.fireDenies', G.riseStats.burned > burnedBefore);
   }
 
+  if (which !== 'all' && has('turns') && MAP.id !== 5) T('turns.wrongMap', false, 'turns needs &map=5, got map=' + MAP.id);
   if (has('turns') && MAP.id === 5) {
     // The real contract (lattice handoff): campaign spawns carry a turns array drawn at
     // spawn; rig-spawned bodies may carry null and fall back to the seeded per-(id,node)
@@ -45983,6 +46383,129 @@ async function runTests(which) {
       JSON.stringify(arr));
   }
 
+
+  // == AUDIT-1 T7-05 — THE OMEN SUITE (?test=omen&map=1) =====================================
+  // Every omen's effect, read numerically off the one bundle the sim reads (OMEN_FX) and, where
+  // the effect is a number on a body, off a REAL body: spawned through the harness's own
+  // G.spawnAt, struck through the real dealDamage, felled through the real hurtKnight. Each case
+  // is applied, measured and reset, so no case depends on the one before it; the page is put back
+  // (bodies, purse, school tally, phase) at the end.
+  if (has('omen')) {
+    const keys = Object.keys(OMENS);
+    const chal = keys.filter(k => OMENS[k].kind === 'challenge'), boon = keys.filter(k => OMENS[k].kind === 'boon');
+    T('omen.table.tenOmens', keys.length === 10 && chal.length === 5 && boon.length === 5,
+      'keys=' + keys.join(',') + ' challenges=' + chal.length);
+    const neutral = () => OMEN_FX.spd === 1 && OMEN_FX.hp === 1 && OMEN_FX.ward === 0 && OMEN_FX.wardEl === '' &&
+      OMEN_FX.interval === 1 && OMEN_FX.count === 1 && OMEN_FX.noSlow === 0 &&
+      Object.keys(OMEN_FX.dmg).length === 0 && OMEN_FX.chain === 0 && OMEN_FX.respawn === 1 && OMEN_FX.bounty === 1;
+    const fx = () => JSON.stringify(OMEN_FX);
+    const dmg0 = Object.assign({}, dmgBySchool), gold0 = state.gold, en0 = G.enemies.length;
+    const phase0 = state.phase, wave0 = state.wave, omen0 = state.omen;
+    state.phase = 'wave'; state.wave = Math.max(5, state.wave);
+    // A target with no resist and no runes; `ward` is the unit's Elemental Ward school, if any.
+    const dummy = (ward) => ({ alive: true, hp: 1000, maxhp: 1000, id: 980000 + R.pass + R.fail, type: 'dummy',
+      def: { resist: {}, scale: 1, bounty: 0, leak: 1, speed: 1, hp: 1000 },
+      px: 0, pz: 0, d: 10, lane: 0, pathId: 0, wardN: 0, wardT: -9999, slowT: 0, slowF: 1, ward: ward || '' });
+    const hit = (el, ward) => { const e = dummy(ward); G.dealDamage(e, 100, el); return 1000 - e.hp; };
+    const grunt = () => G.spawnAt('grunt', 20, 0);
+    const take = (k) => { applyOmen(k); return state.omen === k; };
+    applyOmen('');
+    T('omen.none.neutral', neutral() && state.omen === '', fx());
+    const g0 = grunt();
+    const base = { hp: g0.maxhp, spd: g0.spdM, noSlow: g0.noSlow, ward: g0.ward, pierce: hit('pierce'), fire: hit('fire') };
+    // -- the five challenges ---------------------------------------------------------------
+    { const ok = take('march'), g = grunt();
+      T('omen.march.pace125', ok && OMEN_FX.spd === 1.25 && g.spdM === base.spd * 1.25,
+        fx() + ' spdM=' + g.spdM + ' base=' + base.spd); }
+    { const ok = take('ironskin'), g = grunt();
+      T('omen.ironskin.hp140', ok && OMEN_FX.hp === 1.40 && Math.abs(g.maxhp - base.hp * 1.40) < 1e-9,
+        'maxhp=' + g.maxhp + ' base=' + base.hp); }
+    { for (const s of SCHOOLS) dmgBySchool[s] = 0;
+      dmgBySchool.fire = 1e6;                              // the run has leaned on fire
+      const ok = take('ward'), g = grunt();
+      T('omen.ward.turnsTopSchool', ok && OMEN_FX.ward === 0.5 && OMEN_FX.wardEl === 'fire' &&
+        topSchool() === 'fire' && g.ward === 'fire' && base.ward === '', 'wardEl=' + OMEN_FX.wardEl + ' unit=' + g.ward);
+      const warded = hit('fire', OMEN_FX.wardEl), other = hit('pierce', OMEN_FX.wardEl);
+      T('omen.ward.halvesThatSchoolOnly', Math.abs(warded - base.fire * 0.5) < 1e-9 && Math.abs(other - base.pierce) < 1e-9,
+        'fire ' + base.fire + '->' + warded + ' pierce ' + base.pierce + '->' + other); }
+    { const ok = take('night');
+      T('omen.night.interval055', ok && OMEN_FX.interval === 0.55 && OMEN_FX.count === 1, fx()); }
+    { const ok = take('sappers'), g = grunt();
+      T('omen.sappers.noSlow', ok && OMEN_FX.noSlow === 1 && g.noSlow === 1 && base.noSlow === 0, 'unit=' + g.noSlow); }
+    T('omen.challenges.dangerMoney120', chal.every(k => { applyOmen(k); return OMEN_FX.bounty === 1.2; }), chal.join(','));
+    // -- the five boons ----------------------------------------------------------------------
+    { const ok = take('shafts'), p = hit('pierce'), f = hit('fire');
+      T('omen.shafts.pierce130', ok && OMEN_FX.dmg.pierce === 1.3 && Math.abs(p - base.pierce * 1.3) < 1e-9 &&
+        Math.abs(f - base.fire) < 1e-9, 'pierce=' + p + ' fire=' + f); }
+    { const ok = take('front'); T('omen.front.chainPlus2', ok && OMEN_FX.chain === 2, fx()); }
+    { const g1 = state.gold, ok = take('chest');
+      T('omen.chest.pays60', ok && state.gold === g1 + 60, g1 + '->' + state.gold); }
+    { const ok = take('wind'), r = OMEN_FX.respawn;
+      const kn = { alive: true, hp: 5, target: -1, x: 0, z: 0 }; hurtKnight(kn, 99);
+      applyOmen('');
+      const kn0 = { alive: true, hp: 5, target: -1, x: 0, z: 0 }; hurtKnight(kn0, 99);
+      T('omen.wind.halvesRespawn', ok && r === 0.5 && kn.respawn === 4 && kn0.respawn === 8,
+        'wind=' + kn.respawn + ' none=' + kn0.respawn); }
+    { const ok = take('thin');
+      T('omen.thin.countAndPurse', ok && OMEN_FX.count === 0.8 && OMEN_FX.bounty === 0.75, fx()); }
+    T('omen.boons.noDangerMoney', boon.filter(k => k !== 'thin').every(k => { applyOmen(k); return OMEN_FX.bounty === 1; }),
+      boon.join(','));
+    // -- and the edges -------------------------------------------------------------------------
+    applyOmen('bogus');
+    T('omen.unknown.isNoOmen', state.omen === '' && neutral(), fx());
+    applyOmen('ironskin'); applyOmen('');
+    T('omen.reset.clearsEverything', state.omen === '' && neutral(), fx());
+    G.enemies.splice(en0);
+    for (const s of SCHOOLS) dmgBySchool[s] = dmg0[s];
+    state.gold = gold0; state.phase = phase0; state.wave = wave0; applyOmen(omen0 || '');
+  }
+
+  // == AUDIT-1 T7-05 — THE COUNCIL SUITE (?test=council&map=1[&talents=q2,d1,e3]) ============
+  // The War Council's grades become numbers in exactly one place (setTalents), and a run gets its
+  // grades from exactly one place (G.applyTalents). This suite reads both: what the boot applied
+  // (the `&talents=` override under the harness, or the shipped zeros), every grade of every
+  // branch through the same setTalents a run start uses, the two numbers that reach the sim
+  // through a real tower (Engineer refund, Drillmaster knights), and the war-band rule that every
+  // seat fights at grade zero (AUDIT-1 A1-B1). tools/test.ps1 boots it with and without an override.
+  if (has('council')) {
+    const want = TAL_OVR || { q: 0, d: 0, e: 0 };
+    const purse0 = GOLD0 * (HORDE ? 2 : 1);
+    T('council.boot.gradesApplied', BOOT0.tal.q === want.q && BOOT0.tal.d === want.d && BOOT0.tal.e === want.e,
+      JSON.stringify(BOOT0.tal) + ' want ' + JSON.stringify(want));
+    T('council.boot.purse', BOOT0.gold === purse0 + TAL_GOLD[want.q], 'gold=' + BOOT0.gold + ' GOLD0=' + GOLD0);
+    T('council.tables.shape', [TAL_GOLD, TAL_HP, TAL_SELL].every(a => a.length === 4 && a.every((v, i) => i === 0 || v > a[i - 1])) &&
+      TAL_GOLD[0] === 0 && TAL_HP[0] === 1 && TAL_SELL[0] === 0.70,
+      'gold=' + TAL_GOLD + ' hp=' + TAL_HP + ' sell=' + TAL_SELL);
+    const bad = [];
+    for (let g = 0; g <= 3; g++) {
+      setTalents(g, g, g);
+      if (state.gold !== purse0 + TAL_GOLD[g]) bad.push('q' + g + ' gold=' + state.gold);
+      if (G.talHp() !== TAL_HP[g]) bad.push('d' + g + ' hp=' + G.talHp());
+      if (G.talSell() !== TAL_SELL[g]) bad.push('e' + g + ' sell=' + G.talSell());
+      for (const k in TRAP_DEFS) if (TRAP_DEFS[k].cost !== Math.round(TRAP_BASE[k] * (g >= 3 ? 0.9 : 1)))
+        bad.push('trap ' + k + '@e' + g + '=' + TRAP_DEFS[k].cost);
+    }
+    T('council.grades.everyGradeEveryBranch', bad.length === 0, bad.slice(0, 4).join(' | '));
+    setTalents(0, 2, 3);
+    { const n0 = G.towersList.length;
+      G.placeTower(32, -31, 'archer', 1, true);
+      const tw = G.towersList[G.towersList.length - 1], inv = tw.invested, gb = state.gold;
+      G.sellTower(tw);
+      T('council.engineer.refund85', G.towersList.length === n0 && inv > 0 && state.gold === gb + Math.round(inv * 0.85),
+        'invested=' + inv + ' refund=' + (state.gold - gb)); }
+    { G.placeTower(32, -31, 'barracks', 1, true);
+      const tw = G.towersList[G.towersList.length - 1], ks = G.knights.filter(k => k.tower === tw);
+      T('council.drillmaster.knightHp116', ks.length === 3 && ks.every(k => k.maxhp === 90 * TAL_HP[2] && k.hp === k.maxhp),
+        'knights=' + ks.map(k => k.maxhp).join(','));
+      G.sellTower(tw); }
+    { const seats0 = COOP.seats;
+      COOP.seats = 2; G.applyTalents();
+      const z = TAL.q === 0 && TAL.d === 0 && TAL.e === 0 && GOLDS.length === 2 && GOLDS[0] === purse0 && GOLDS[1] === purse0;
+      const zs = JSON.stringify(TAL) + ' purses=' + GOLDS.join('/');
+      COOP.seats = seats0; G.applyTalents();
+      T('council.coop.everySeatAtGradeZero', z && TAL.q === want.q && TAL.d === want.d && TAL.e === want.e &&
+        GOLDS.length === 1 && state.gold === purse0 + TAL_GOLD[want.q], 'band ' + zs + ' -> solo ' + JSON.stringify(TAL)); }
+  }
 
   // == GAME_SPEC_9 SB - THE LOCKSTEP DETERMINISM SUITE (?test=net) ==========================
   // Co-op is host-sequenced lockstep: only COMMANDS travel, and every peer re-derives the
@@ -46377,6 +46900,17 @@ async function runTests(which) {
     const ref0 = NET.refused;
     T('coop.door.rosterBounds', run(9, 'muster', []) === false && NET.refused === ref0 + 1,
       'refused ' + ref0 + ' -> ' + NET.refused);
+    // AUDIT-1 NET-4 — argument TYPES are refused at the same door: junk never reaches a verb, never
+    // throws, and never touches a purse (the shipped bug: `place 'constructor'` made it NaN).
+    { const g0 = GD.join('/'), n0 = G.towersList.length, r0 = NET.refused; let threw = '';
+      const junk = [['place', [32, -31, 'nope']], ['place', [32, -31, 'constructor']], ['place', [32, -31, '__proto__']],
+        ['place', ['a', 'b', 'archer']], ['trap', ['constructor', 32, -31]], ['cast', ['__proto__', 32, -31]],
+        ['omen', [1e9]], ['up', [{}]], ['pause', ['x']], ['constructor', []], ['__proto__', []], ['toString', []]];
+      let okN = 0;
+      for (const j of junk) { try { if (run(0, j[0], j[1]) !== false) okN++; } catch (e) { threw = String(e && e.message); } }
+      T('coop.door.argTypes', okN === 0 && !threw && GD.join('/') === g0 && G.towersList.length === n0 &&
+        GD.every(Number.isFinite) && NET.refused >= r0 + junk.length - 3,
+        'accepted=' + okN + ' threw=' + threw + ' purses=' + GD.join('/') + ' refused+' + (NET.refused - r0)); }
 
     // -- 10. AND THE WHOLE OF IT GOES AWAY. Disbanded, the band is one seat, one purse, and
     //        every rule above is the shipped line again. This is the assertion the 29-row
@@ -46461,7 +46995,11 @@ async function runTests(which) {
       // js/net.js installs NOTHING under ?test= (its own SHOT guard), so its module scope is
       // inert and window.BFCoopNet is deliberately absent. Its EXPORTS are the transport, and
       // this is the same module instance index.html already loaded - not a second copy.
-      const NM = await import('./net.js');
+      // AUDIT-1 T7-10 — module records are keyed by the FULL URL, so the import carries the very
+      // query string index.html loaded both files with (`?v=<build>`); a bare './net.js' was a
+      // second, separate instance. The string table identity below proves it is the same one.
+      const NM = await import('./net.js' + new URL(import.meta.url).search);
+      T(E('sameNetModuleInstance'), NM.NET_STR === window.BF_NET_STR, 'import resolved to a second js/net.js instance');
       const strat = await NM.transport();
       T(E('loopbackStrategy'), !!strat && NM.strategyName() === 'bc',
         'strategy=' + NM.strategyName() + ' got=' + !!strat);
@@ -46655,6 +47193,11 @@ async function runTests(which) {
     })();
   }
 
+  // AUDIT-1 T7-02 — two ways this page used to title itself TESTPASS having proved nothing: no
+  // assert ran at all, or a page error fired (title 'ERROR', see SECTION: CORE) and the line below
+  // overwrote it. Both only ever ADD a failure, so a green run's counts are unchanged.
+  if (R.pass + R.fail === 0) T('harness.someAssertRan', false, 'suites=' + which + ' ran zero asserts');
+  if (window.__errors.length) T('harness.noPageErrors.atEnd', false, window.__errors.slice(0, 3).join(' | '));
   console.log('TESTSUM total=' + (R.pass + R.fail) + ' pass=' + R.pass + ' fail=' + R.fail +
     ' suites=' + which);
   document.title = R.fail ? 'TESTFAIL' : 'TESTPASS';

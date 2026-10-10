@@ -97,6 +97,8 @@ en: {
   'coop.failed': 'No band answered. Either the code has gone cold, or your network blocks the direct crossing — some routers and campus networks will not let two browsers speak. Try another network, or let the other captain host.',
   'coop.nolib': 'The co-op courier is missing from this build, so no band can be raised.',
   'coop.hostLeft': 'The captain has ridden off. The band is broken.',
+  'coop.full': 'This war-band already rides four captains.',
+  'coop.diffSoon': 'Only the Knight’s trial rides in a war-band — for now',
   'coop.starting': 'The horn sounds in {0}…',
   'coop.badCode': 'A code is five letters and numbers.',
   'coop.back': '← Back',
@@ -145,6 +147,8 @@ fr: {
   'coop.failed': 'Aucune compagnie n’a répondu. Soit le code est éteint, soit votre réseau bloque la liaison directe — certains routeurs et réseaux d’entreprise interdisent à deux navigateurs de se parler. Essayez un autre réseau, ou laissez l’autre capitaine héberger.',
   'coop.nolib': 'Le messager de coopération manque à cette version : aucune compagnie ne peut être levée.',
   'coop.hostLeft': 'Le capitaine est parti. La compagnie est rompue.',
+  'coop.full': 'Cette compagnie compte déjà quatre capitaines.',
+  'coop.diffSoon': 'Seule l’épreuve du Chevalier se court en compagnie — pour l’instant',
   'coop.starting': 'Le cor sonne dans {0}…',
   'coop.badCode': 'Un code compte cinq lettres et chiffres.',
   'coop.back': '← Retour',
@@ -327,7 +331,12 @@ function buildPicks() {
     map: ROADS().map(m => ({ v: String(m.id), t: m.name, lk: m.open === false, tip: m.name })),
     mode: [{ v: 'camp', t: L('coop.camp') }, { v: 'endl', t: L('coop.endl'), lk: true, tip: L('coop.v2') },
            { v: 'horde', t: L('coop.horde'), lk: true, tip: L('coop.v2') }],
-    diff: ['squire', 'knight', 'warlord'].map(d => ({ v: d, t: L('coop.' + d), tip: L('coop.' + d + 'T') })),
+    // AUDIT-1 GC-02 — the Trial is carried to NET.diff and read by nothing in the sim, so Squire
+    // and Warlord promised a road they never delivered. Shown and LOCKED (the same reading the
+    // v2 modes have) until the balance stage gives them levers; only the Knight rides today.
+    diff: ['squire', 'knight', 'warlord'].map(d => d === 'knight'
+      ? { v: d, t: L('coop.' + d), tip: L('coop.' + d + 'T') }
+      : { v: d, t: L('coop.' + d), lk: true, tip: L('coop.diffSoon') }),
   };
   for (const k in rails) {
     const box = document.querySelector('#clPicks .clPk[data-k="' + k + '"] .clCs');
@@ -371,6 +380,7 @@ function render() {
   else if (S.net === 'failed') msg = L('coop.failed');
   else if (S.net === 'nolib') msg = L('coop.nolib');
   else if (S.net === 'hostleft') msg = L('coop.hostLeft');
+  else if (S.net === 'full') msg = L('coop.full');
   else if (S.net === 'starting') msg = L('coop.starting', S.count);
   else if (n < 2) msg = L('coop.waitPeer');
   else msg = L('coop.waitBand', rdy, n);
@@ -384,7 +394,7 @@ function render() {
   rb.textContent = L('coop.ready');
   rb.title = S.ready ? L('coop.unready') : L('coop.readyT');
   rb.classList.toggle('on', S.ready);
-  rb.disabled = S.net === 'starting' || S.net === 'hostleft';
+  rb.disabled = S.net === 'starting' || S.net === 'hostleft' || S.net === 'full';
 
   const sb = $('btnClStart');
   sb.disabled = !(S.role === 'host' && S.net === 'live' && n >= 2 && rdy === n);
@@ -474,8 +484,9 @@ async function transport() {
 // One adapter each, so re-pinning the vendor bundle cannot silently break the lobby.
 const act = (room, name) => {
   const a = room.makeAction(name);
-  if (Array.isArray(a)) return { send: a[0], on: a[1] };
-  return { send: (d) => a.send(d), on: (fn) => { a.onMessage = fn; } };
+  // AUDIT-1 NET-5 — the options go through, normalised to `{ target }` exactly as net.js does.
+  if (Array.isArray(a)) return { send: (d, o) => a[0](d, o && o.target), on: a[1] };
+  return { send: (d, o) => a.send(d, o), on: (fn) => { a.onMessage = fn; } };
 };
 const onPeer = (room, key, fn) => {
   if (typeof room[key] === 'function') room[key](fn); else room[key] = fn;
@@ -485,6 +496,7 @@ const pid = (m) => (m && typeof m === 'object' && m.peerId) ? m.peerId : m;
 
 async function connect(role, code) {
   S.role = role; S.code = code; S.view = 'room'; S.net = 'connecting'; S.copied = false;
+  S.hostId = '';                                         // AUDIT-1 NET-5 — re-pinned per room
   S.peers.clear(); S.players = []; S.ready = false;
   render();
 
@@ -504,7 +516,12 @@ async function connect(role, code) {
     S.hostId = S.selfId; S.seed = newSeed(); S.net = 'live';
     rebuildRoster(); pushLobby();
     onPeer(room, 'onPeerJoin', (id) => {
-      if (S.peers.size >= 3) return;                      // 4 seats, host included
+      // AUDIT-1 NET-5 — a 5th browser is TOLD, not ignored: silence sent it to the 20 s
+      // 'your network blocks P2P' message, which was a lie.
+      if (S.peers.size >= 3) {                            // 4 seats, host included
+        try { const r = S.send.lobby({ full: true }, { target: id }); if (r && r.catch) r.catch(() => {}); } catch (e) { /* gone */ }
+        return;
+      }
       S.peers.set(id, { id, name: L('coop.rider'), ready: false });
       rebuildRoster(); pushLobby(); render();
     });
@@ -521,17 +538,27 @@ async function connect(role, code) {
     // exactly the case that has to say so in words rather than spin forever.
     onPeer(room, 'onPeerJoin', () => pushSeat());
     onPeer(room, 'onPeerLeave', (id) => { if (id === S.hostId) { S.net = 'hostleft'; render(); } });
-    onLobby((d) => {
-      if (!d || !Array.isArray(d.players)) return;
+    onLobby((d, m) => {
+      // AUDIT-1 NET-5 — the captain is PINNED on the first lobby message, by the sender id the
+      // transport saw (not the id the packet claims), and nobody else may speak for the band.
+      const from = pid(m);
+      if (!d || typeof d !== 'object') return;
+      if (S.hostId && from && from !== S.hostId) return;
+      if (d.full === true) { clearTimeout(S.to); leave(); S.view = 'room'; S.net = 'full'; render(); return; }
+      if (!Array.isArray(d.players) || d.players.length > 4) return;
+      if (!S.hostId && from) S.hostId = from;
       clearTimeout(S.to);
+      // A full roster that does not hold this browser is the same answer as `full`.
+      if (d.players.length >= 4 && !d.players.some(p => p && p.id === S.selfId)) { leave(); S.view = 'room'; S.net = 'full'; render(); return; }
       S.net = S.net === 'starting' ? 'starting' : 'live';
-      S.hostId = d.host; S.seed = d.seed; S.map = d.map; S.mode = d.mode; S.diff = d.diff;
+      S.seed = d.seed; S.map = d.map; S.mode = d.mode; S.diff = d.diff;
       S.players = d.players;
       const me = d.players.find(p => p.id === S.selfId);
       if (me) S.ready = !!me.ready;
       render();
     });
-    onGo((d) => { if (d && Array.isArray(d.players)) countdown(d); });
+    // AUDIT-1 NET-5 — the horn is the pinned captain's alone.
+    onGo((d, m) => { if (!S.hostId || pid(m) !== S.hostId) return; if (d && Array.isArray(d.players)) countdown(d); });
     pushSeat();
     S.to = setTimeout(() => { if (S.net === 'connecting') { S.net = 'failed'; render(); } }, 20000);
   }
@@ -593,6 +620,9 @@ function countdown(d) {
 
 function fire(d) {
   const i = d.players.findIndex(p => p.id === S.selfId);
+  // AUDIT-1 NET-5 — a browser that is not on the roster has no seat. It used to be handed seat 0,
+  // which made it a SECOND captain on the far side of the navigation.
+  if (i < 0) { leave(); S.view = 'room'; S.net = 'full'; render(); return; }
   const detail = { seed: d.seed, map: d.map, mode: d.mode, diff: d.diff,
     players: d.players, localIdx: i < 0 ? 0 : i };
   hide();
