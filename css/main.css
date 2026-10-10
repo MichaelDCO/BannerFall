@@ -500,7 +500,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    color:#c2ab7c; margin-left:2px; }
 #omenRow .omCoin.less{ color:#f0a58c; border-color:rgba(226,120,90,.5); }
 #omenRow .omCoin.less em{ color:#c08a76; }
-#omenRow .omCoin.none{ color:#c2ab7c; border-color:rgba(232,182,76,.28); }
+#omenRow .omCoin.none{ color:#d0bb8e; border-color:rgba(232,182,76,.28); }
 #omenRow .omCoin.none .ic{ opacity:.55; }
 /* the hotkey is a KEYBOARD hint, so it reads as one: unboxed, dimmed, tucked in the corner —
    never a second badge competing with the coin pill (FIX2-UI §3d/§5) */
@@ -752,7 +752,9 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #wavePrev .wpCz s{ color:#e8a06a; }
 #wavePrev .wpHx b{ color:#6fc6b4; }
 #wavePrev .wpHx s{ color:#b6a488; }
-#wavePrev .wpOm b{ color:#c8544a; }
+/* AUDIT-1 UX-09 — the line itself kept its parchment-era ink (#6b5527, 2.69:1 on the iron card). */
+#wavePrev .wpOm{ color:#bfa978; }
+#wavePrev .wpOm b{ color:#dc6c60; }   /* AUDIT-1 UX-09 — was #c8544a, 4.3:1 at 10px */
 #wavePrev .wpOm b.boon{ color:#7fa8dd; }
 #wavePrev .bar{ background:rgba(0,0,0,.5); }
 /* the recessed plate under each silhouette — a dark bust needs a ground of its own */
@@ -776,7 +778,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #omenRow .omN{ color:#f2e5c6; }
 #omenRow .omKd{ display:block; margin-top:1px; font-family:var(--sans); font-weight:600;
    font-size:8.5px; letter-spacing:.22em; text-transform:uppercase; }
-#omenRow .omC.chal .omKd{ color:#c8544a; }
+#omenRow .omC.chal .omKd{ color:#dc6c60; }   /* AUDIT-1 UX-09 — was #c8544a (4.36:1) */
 #omenRow .omC.boon .omKd{ color:#7fa8dd; }
 #omenRow .omD{ color:#d8cdb4; }
 #omenRow .omD b{ color:#ffdc8e; }
@@ -929,9 +931,10 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    their feet laid out differently. A zero delta is also real information here ("this portent
    costs you nothing" is the reason to take it), so it is drawn — muted to the disabled-iron tone
    so it reads as a stated zero rather than as a price. */
-#omenRow.mdl .omCoin.none{ display:inline-flex; color:#8a7a58; border-color:rgba(232,182,76,.24);
+#omenRow.mdl .omCoin.none{ display:inline-flex; color:#978862;   /* UX-09: #8a7a58 was 4.36:1 */
+   border-color:rgba(232,182,76,.24);
    background:linear-gradient(180deg,rgba(34,28,18,.94),rgba(15,12,8,.94)); }
-#omenRow.mdl .omCoin.none em{ color:#8a7a58; }
+#omenRow.mdl .omCoin.none em{ color:#978862; }
 #omenRow.mdl .omCoin.none .ic{ opacity:.45; }
 /* ══ FIX10-UI §6 — AND THE KEYCAP SAYS IT IS A KEY ════════════════════════════════════════════
    FIX6-UI §5 gave the hotkey the build bar's own numbered square, and round 9 and round 10 both
@@ -1105,6 +1108,16 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    used to bury. The trap block keeps a hairline rule of its own so it still reads as a
    separate register of the same shop. */
 #buildMenu{ width:max-content; max-width:calc(100vw - 24px); }
+/* AUDIT-1 UX-03 — THE POWERS TRAY SAT ON THE CHEAPEST TOWER. The dock is centred on the frame and
+   the tray is pinned at left:6..165 (z 2), the '?' disc at left:26 (z 4); below ~1560px the centred
+   dock's left edge runs under both, and at 1280×720 elementFromPoint on the ARCHER card's name
+   returned the tray's icon (72% of the card covered). Between the phone dock (≤760) and the width at
+   which the centred dock clears the tray, the dock is centred on the ground RIGHT of the tray
+   instead: shifted by half of a 172px reservation and narrowed by the same, so its left edge lands
+   at x≥184 and the existing .cRail.ovf scroller absorbs the narrower bar. 1600 frames unchanged. */
+@media (min-width:761px) and (max-width:1560px){
+  #buildMenu{ left:calc(50% + 86px); max-width:calc(100vw - 196px); }
+}
 #buildMenu .pBody{ display:flex; align-items:stretch; gap:13px; }
 #buildMenu .cRail{ position:relative; min-width:0; }
 /* FIX2-UI §3 — THE SWIPE AFFORDANCE. At 390px the tower row is a 442px scroller in a 374px
@@ -1736,8 +1749,13 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    narrower than it was, and the whole of that goes into the label and the number: at 9px in a
    condensed 600 face "RNG" was letter-mush beside a 9.5px value, which is the same complaint
    the school words (PIERCE / SUPPORT) carry two rules down. */
-.tag.rg::before{ content:'rng'; font-size:10px; letter-spacing:.05em; text-transform:uppercase;
+/* AUDIT-1 UX-12 — the unit comes from the string layer (data-u = L('bm.reachU')): 'RNG' was the
+   last English word in the French DOM, on every build and trap card. */
+.tag.rg::before{ content:attr(data-u); font-size:10px; letter-spacing:.05em; text-transform:uppercase;
    color:#c2b189; margin-right:2px; }
+/* 'PORT' is a letter longer than 'RNG': tracked flat and a half-point smaller in French so the school
+   word beside it (FOUDRE on the narrowest card) keeps its last glyphs. */
+html[data-lang="fr"] #ui .tag.rg::before{ letter-spacing:-.01em; font-size:8.5px; margin-right:1px; }
 .dg-bnr{ background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='4.4' y='2' width='2.2' height='20' rx='1' fill='%236d4a10'/><path d='M6.6 3.4h13l-3 4.6 3 4.6h-13z' fill='%233468b0' stroke='%23e8b64c' stroke-width='1'/><circle cx='5.5' cy='1.8' r='1.8' fill='%23e8b64c'/></svg>"); }
 /* SPEC3 §A: the badge now names the SCHOOL, so pierce stops borrowing the melee sword and
    crush stops borrowing the catapult — a school is a property of the damage, not of the
@@ -1946,18 +1964,53 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #maps{ background-image: var(--hdrScrim),
    radial-gradient(ellipse 56% 44% at 50% 46%, rgba(10,8,6,.62), rgba(10,8,6,.26) 52%, rgba(10,8,6,0) 74%),
    linear-gradient(180deg, rgba(6,5,3,0) 54%, rgba(6,4,2,.44) 80%, rgba(4,3,1,.90) 100%); }
-#mapsKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#e2d3ad; opacity:1;
+#mapsKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#f8f0da; opacity:1;
            text-shadow:0 1px 0 rgba(0,0,0,.9), 0 1px 5px #000, 0 0 12px rgba(0,0,0,.9); }
 #mapsT{ margin:4px 0 0; font-size:min(7.4vw,42px); line-height:1; letter-spacing:.14em; font-weight:400; color:#f2cf74;
    text-shadow:0 1px 0 #fff6da, 1px 2px 0 #5d3d0c, 0 4px 0 #2e1e05, 0 1px 0 rgba(0,0,0,.9), 0 8px 16px rgba(0,0,0,.9), 0 0 44px rgba(232,182,76,.3); }
 #mapsRule{ width:min(56vw,470px); margin:9px auto 0; }
 #mapCards{ display:flex; gap:16px; margin-top:22px; align-items:stretch; justify-content:center; }
+/* AUDIT-1 UX-01 — THE RAIL THAT PUSHED THE VALE OFF THE LEFT EDGE. Five 274px cards and four 16px
+   gaps are a 1434px row; between the phone column (≤760) and ~1450 that row was centred with no
+   overflow, so the surplus went out of BOTH edges and the left half is unreachable (the same flexbox
+   start-edge trap FIX8-UI §6a fixed for the phone column). Measured --emulate _maps fr at 768×1024:
+   The Vale at x −333..−59. `safe center` centres while the row fits and falls back to START when it
+   does not, so the first road is always at the left edge and the rest scroll in. */
+@media (min-width:761px){
+  #mapCards{ justify-content:safe center; max-width:100vw; box-sizing:border-box; overflow-x:auto; overflow-y:hidden;
+             margin-top:2px; margin-bottom:-30px; flex-shrink:0;
+             /* the padding is the cards' shadow (and hover lift) room — a scroller clips paint at
+                its padding box — and the margins hand it straight back, so nothing moves */
+             overscroll-behavior-x:contain; padding:20px 16px 30px; scroll-snap-type:x proximity; scroll-padding-inline:16px;
+             scrollbar-width:thin; scrollbar-color:#c69a3a rgba(0,0,0,.28); }
+  #mapCards::-webkit-scrollbar{ height:4px; }
+  #mapCards::-webkit-scrollbar-thumb{ background:#c69a3a; border-radius:2px; }
+  .mCard{ flex:0 0 auto; scroll-snap-align:start; }
+}
+/* Landscape phone (844×390): an overflow:auto rail is a flex item with min-height 0, so the column
+   squeezed the cards to 57px. The rail keeps its height and the PLATE scrolls instead. */
+@media (min-width:761px) and (max-height:520px){
+  #maps{ justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain; padding-top:8px; padding-bottom:10px; }
+  #maps > *{ flex-shrink:0; }
+  #mapsT{ font-size:28px; }
+  #mapCards{ margin-top:10px; }
+}
 .mCard{ position:relative; width:274px; padding:11px 11px 12px; border-radius:7px; text-align:left; pointer-events:auto;
    background-image:var(--noise),linear-gradient(176deg,#2b261f,#171310 68%,#100d0a);
    background-size:180px 180px,100% 100%,100% 100%;
    box-shadow:0 8px 20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,228,178,.12);
    border:1px solid rgba(232,182,76,.3); font-family:var(--serif);
    transition:transform .15s, box-shadow .15s, filter .15s; }
+/* AUDIT-1 UX-06 — the card is a div[role=button] now, so the mode chips inside it can be real,
+   focusable <button>s (a button may not nest a button). These lines re-state what the UA gave the
+   old <button> box — border-box sizing, the 13.33px control font, normal metrics, centred content
+   in a stretched card — so the chooser frame is unchanged; the ring is the HUD's own gold one. */
+.mCard{ box-sizing:border-box; font-size:13.3333px; line-height:normal; letter-spacing:normal; word-spacing:normal;
+   text-transform:none; text-indent:0; text-shadow:none; color:#f6ecd6; cursor:pointer; user-select:none; -webkit-user-select:none; }
+@media (min-width:761px){ .mCard{ display:flex; flex-direction:column; justify-content:center; } }
+#ui .mCard:focus{ outline:none; }
+#ui .mCard:focus-visible{ outline:none;
+   box-shadow:0 8px 20px rgba(0,0,0,.6), 0 0 0 2px rgba(232,182,76,.75); }
 .mCard:not(.lock):hover{ transform:translateY(-4px); filter:brightness(1.14);
    box-shadow:0 14px 30px rgba(0,0,0,.66), 0 0 26px rgba(232,182,76,.34), inset 0 1px 0 rgba(255,228,178,.2); }
 .mCard:not(.lock):active{ transform:translateY(-1px) scale(.99); }
@@ -2046,7 +2099,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #mapsLeg .mLgP{ display:block; width:19px; height:19px;
    filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
 #mapsLeg b{ font-weight:400; font-size:10.5px; letter-spacing:.2em; text-transform:uppercase;
-   color:#bcab8a; text-shadow:0 1px 0 rgba(0,0,0,.85); }
+   color:#ddcda8; text-shadow:0 1px 0 rgba(0,0,0,.85); }
 #mapsFoot{ margin-top:20px; display:flex; gap:12px; align-items:center; }
 #btnBack{ border-radius:6px; padding:10px 26px; font-size:14px; letter-spacing:.18em; text-transform:uppercase; color:#e2d4b4;
    background-image:var(--noise),linear-gradient(178deg,#2c2620,#16130f); background-size:180px 180px,100% 100%;
@@ -2134,7 +2187,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 #council{ background-image: var(--hdrScrim),
    radial-gradient(ellipse 58% 46% at 50% 46%, rgba(10,8,6,.66), rgba(10,8,6,.28) 52%, rgba(10,8,6,0) 76%),
    linear-gradient(180deg, rgba(6,5,3,0) 54%, rgba(6,4,2,.44) 80%, rgba(4,3,1,.90) 100%); }
-#cKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#e2d3ad; opacity:1;
+#cKick{ font-size:min(2.6vw,11.5px); letter-spacing:.42em; text-transform:uppercase; color:#f8f0da; opacity:1;
   text-shadow:0 1px 0 rgba(0,0,0,.9), 0 1px 5px #000, 0 0 12px rgba(0,0,0,.9); }
 #cT{ margin:4px 0 0; font-size:min(6.6vw,36px); line-height:1; letter-spacing:.14em; font-weight:400; color:#f2cf74;
   text-shadow:0 1px 0 #fff6da, 1px 2px 0 #5d3d0c, 0 4px 0 #2e1e05, 0 1px 0 rgba(0,0,0,.9), 0 8px 16px rgba(0,0,0,.9), 0 0 44px rgba(232,182,76,.3); }
@@ -2241,7 +2294,7 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
 .cN.nxt::before{
   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M6 1.2l4.8 4.8L6 10.8 1.2 6z' fill='%231e1810' stroke='%23e8b64c' stroke-width='1.8'/></svg>"),
     linear-gradient(180deg,#8a7444,#8a7444); }
-.cNr{ position:absolute; top:6px; right:9px; font-size:12px; letter-spacing:.14em; color:#a2947a; }
+.cNr{ position:absolute; top:6px; right:9px; font-size:12px; letter-spacing:.14em; color:#c2b391; }   /* AUDIT-1 UX-09 */
 /* FIX6-UI §2 — ONE TYPE REGISTER PER SHEET. The row label was the only run on this parchment
    set in true lowercase with no tracking, so next to the small-caps branch name and the
    small-caps flavour line it read as another product's body copy pasted in. (The critic called
@@ -2446,8 +2499,20 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
    scroll container, and that alone shifts its bottom border-image edge by Δ≤3 on a 200px strip
    — a real (if invisible) diff in the `_gear` shot. On a viewport tall enough to hold the open
    sheet there is nothing to scroll, so the container should not exist. */
-@media (max-height:660px){
-  #settings{ max-height:calc(100vh - 70px); overflow-y:auto; overscroll-behavior:contain; }
+/* AUDIT-1 UX-04a — 660 was too low a ceiling: at 1280×720 with Quality open (fr) Langue / Liens
+   runiques / Tout recommencer ran under the build dock and off the frame. Every desktop-short
+   viewport up to 900 tall now caps the sheet, and the sheet wins the paint over #buildMenu and
+   #powers (the same z 12 the ≤900-wide rule below gives it). The 1600×1000 shot frames do not
+   match, so the `_gear` frame is unchanged. */
+@media (max-height:900px){
+  #settings{ max-height:calc(100vh - 70px); overflow-y:auto; overscroll-behavior:contain; z-index:12; }
+  #settings.scr::after{ content:''; display:block; position:sticky; bottom:0; height:26px;
+     margin:0 -12px -12px; pointer-events:none;
+     background-repeat:no-repeat,no-repeat; background-position:50% calc(100% - 5px), 0 0;
+     background-size:18px 11px, 100% 100%;
+     background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 12'><path d='M2.6 2.8L10 9.4l7.4-6.6' fill='none' stroke='%23e8b64c' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
+       linear-gradient(180deg, rgba(14,11,8,0), rgba(14,11,8,.72) 52%, rgba(12,10,7,.96)); }
+  #settings.atEnd::after{ display:none; }
 }
 /* ══ FIX9-UI §3 — THE SHEET IS BOUNDED ON THE PHONE TOO ══════════════════════════════════════
    The cap above is behind `max-height:660px`, which a 390×844 portrait phone does not match — so
@@ -2498,6 +2563,8 @@ html,body{ margin:0; height:100%; overflow:hidden; background:#0c0f14; font-fami
       border:1px solid rgba(232,182,76,.3); box-shadow:0 4px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,228,178,.12);
       transition:filter .14s; }
 #settings button:hover{ filter:brightness(1.22); }
+/* AUDIT-1 UX-11 — the reloading rows are shut while a war-band rides (title says why) */
+#settings button:disabled{ opacity:.45; cursor:default; filter:none; }
 #settings button b{ float:right; color:#ffdc8e; font-weight:400; letter-spacing:.12em; }
 /* ── Volume sliders (user order) — the same iron voice as the buttons around them: a row of
    [label · track · value], the track a struck-iron channel, the thumb a gold rivet. */
@@ -2917,9 +2984,9 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #medals{ display:flex; justify-content:center; gap:20px; margin:15px 0 2px; }
 #medals .md{ display:flex; flex-direction:column; align-items:center; gap:6px; }
 #medals svg{ width:68px; height:92px; filter:drop-shadow(0 3px 9px rgba(0,0,0,.85)); }
-#medals .mL{ font-size:8.5px; letter-spacing:.2em; text-transform:uppercase; color:#e6c982; text-shadow:0 1px 0 #000; }
+#medals .mL{ font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:#e6c982; text-shadow:0 1px 0 #000; }
 #medals .md.off svg{ opacity:.2; filter:grayscale(1) brightness(.55); }
-#medals .md.off .mL{ color:#7d7361; opacity:.6; }
+#medals .md.off .mL{ color:#a99d86; opacity:1; }   /* AUDIT-1 UX-09 — was #7d7361 at .6 */
 #endStats{ margin:13px 0 0; }
 #endStats table{ width:100%; border-collapse:collapse; font-size:14px; }
 #endStats td{ padding:5px 2px; border-bottom:1px solid rgba(232,182,76,.11); }
@@ -2927,6 +2994,19 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #endStats td:first-child{ text-align:left; letter-spacing:.14em; text-transform:uppercase; font-size:10.5px; color:#ab9c7b; }
 #endStats td:last-child{ text-align:right; color:#f2e5c6; font-variant-numeric:tabular-nums; font-size:16px; }
 #endPlate .bigBtn{ display:block; margin:20px auto 0; padding:13px 40px; font-size:min(4.6vw,19px); }
+/* AUDIT-1 UX-04b — THE PLATE TALLER THAN THE FRAME. The victory plate is ~823px with medals, laurels
+   and the three calls, and #end centres it in a 720px frame with no overflow: −51px at the top, the
+   Replay call under the bottom edge, neither reachable. Below 860px tall the overlay becomes the
+   scroller and centres SAFELY (start-aligned once it overflows, so the title is never cut off the
+   top edge, the same trap UX-01 fixed for the map rail), and the plate gives back what it can. */
+@media (max-height:860px){
+  #end{ justify-content:safe center; overflow-y:auto; overscroll-behavior:contain; }
+  #endPlate{ flex-shrink:0; margin:10px auto; }
+  #endStats td{ padding:4px 2px; }
+  #medals{ margin:9px 0 0; }
+  #medals svg{ width:58px; height:79px; }
+  #endPlate .bigBtn{ margin-top:14px; }
+}
 #stats{ position:absolute; bottom:5px; right:8px; font:11px/1.3 ui-monospace,monospace; color:#8fd48f;
         text-shadow:0 1px 2px #000; text-align:right; }
 
@@ -4534,7 +4614,8 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
      which is what the 2.00:1 reading on "3 / 5" was really about. */
   font-variant-numeric:lining-nums; color:#3a2f1e;
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.ddC.on .ddD{ color:#5e4818; }
+.ddC.on .ddD{ color:#30230a; }
+.ddC.pr .ddD{ color:#2c2416; }   /* AUDIT-1 UX-09 — full-value ink, as FIX10 did for the locked plate */
 /* FIX7-UI §3 — the progress read-out is the SAME sentence's number said again, so it is set in
    the same face at the same weight and only a shade quieter. It used to read as a second
    typeface (letterspaced to .16em against the body's .01em, and a stop greyer), which put one
@@ -4684,6 +4765,20 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 .mCard .mMc.lk{ color:#6f6656; cursor:default; box-shadow:inset 0 0 0 1px rgba(96,84,62,.34); }
 .mCard .mMc.lk:hover{ filter:none; transform:none; }
 .mCard .mE.mH i{ color:#e0a877; font-size:11px; font-style:normal; }
+/* AUDIT-1 UX-06 — the chips are <button>s: `#ui button{ color }` is (1,0,1) and would out-rank the
+   chip inks, and the UA border would add 2px a side. Restated at #ui weight. */
+#ui .mCard .mMc{ border:0; margin:0; font-family:inherit; line-height:normal; color:#c4b391; }
+#ui .mCard .mMc.m-horde{ color:#e0a877; }
+#ui .mCard .mMc.lk{ color:#a0947b; cursor:default; }   /* UX-09 — a shut door still has to be legible (was #6f6656, 2.67:1) */
+
+/* AUDIT-1 UX-05 — PRESS AND HOLD TO READ. Every rule in the game that is not on a card lives in a
+   `title` tooltip, which a touch screen never shows. A held press (420ms, no travel) lifts the same
+   sentence into this plate; any next touch drops it. Built by SECTION: UI, live + touch only. */
+#tapTip{ position:fixed; z-index:40; left:8px; top:8px; max-width:min(300px, calc(100vw - 16px));
+   padding:8px 11px 9px; border-radius:6px; pointer-events:none;
+   font-size:12.5px; line-height:1.42; letter-spacing:.02em; color:#efe3c2; text-align:left; white-space:pre-line;
+   text-shadow:0 1px 0 rgba(0,0,0,.8);
+   box-shadow:0 8px 22px rgba(0,0,0,.7), inset 0 0 0 1px rgba(232,182,76,.38); }
 
 @media (max-width:760px){
   #deeds{ justify-content:flex-start; padding-top:calc(12px + env(safe-area-inset-top)); }
@@ -4793,7 +4888,14 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    color:#f0dcae; text-align:center; padding:0 22px; line-height:1.5;
    text-shadow:0 2px 0 rgba(0,0,0,.8), 0 0 26px rgba(255,196,120,.3); }
 @keyframes vSpin{ to{ transform:rotate(360deg); } }
-@media (prefers-reduced-motion:reduce){ #veil .vI{ animation:none; } }
+/* AUDIT-1 UX-07 — the OS's reduced-motion request now reaches the whole interface, not just the
+   veil's spinner: the sell shimmer, the HUD pulses and every slide/fade end on their first frame.
+   Inert under the harness (which already freezes animation) and wherever the OS does not ask. */
+@media (prefers-reduced-motion:reduce){
+  #ui *, #ui *::before, #ui *::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important;
+     transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  #veil .vI{ animation:none; }
+}
 
 
 /* == GAME_SPEC_9 SECTION A - THE CO-OP LOBBY ==================================================
@@ -4971,7 +5073,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    entire job is getting a second player in. */
 #clLinkRow{ margin-top:7px; }
 #clLinkRow em{ font-style:normal; font-family:var(--sans); font-weight:600; font-size:9px;
-   letter-spacing:.2em; text-transform:uppercase; color:#8d7f66; }
+   letter-spacing:.2em; text-transform:uppercase; color:#b3a07c; font-size:10px; }   /* AUDIT-1 UX-09 */
 #coopLobby #clLink{ display:block; margin-top:2px; font-family:var(--sans); font-size:10.5px;
    letter-spacing:.01em; color:#bca77e; word-break:break-all; }
 
@@ -5006,7 +5108,7 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #coopLobby .clP.em .clCrW{ background:50% 50%/22px 26px no-repeat;
    background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 28'><path d='M2.2 2.2h19.6v14.2c0 7.4-6.1 10.2-9.8 11.4C8.3 26.6 2.2 23.8 2.2 16.4z' fill='rgba(0,0,0,.28)' stroke='%237c6c4e' stroke-width='1.4' stroke-dasharray='3 2.6'/></svg>"); }
 #coopLobby .clP.em .clN{ font-size:12px; letter-spacing:.05em; font-variant-caps:small-caps;
-   color:#7d7260; }
+   color:#a39478; }   /* AUDIT-1 UX-09 — was #7d7260 */
 
 /* -- the captain's pickers ---------------------------------------------------------------- */
 /* The map card's mode chips, reused wholesale - they are already the game's word for "a small
@@ -5025,7 +5127,8 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
 #coopLobby .clC:hover{ filter:brightness(1.3); transform:translateY(-1px); }
 #coopLobby .clC.on{ color:#3a2708; background:linear-gradient(180deg,#ffe6a2,#e8b64c 55%,#ad7a1e);
    box-shadow:inset 0 1px 0 rgba(255,250,224,.6), 0 0 12px rgba(232,182,76,.28); }
-#coopLobby .clC.lk{ color:#6f6656; cursor:default;
+/* AUDIT-1 UX-09 — locked-chip ink was #6f6656 (2.6:1) */
+#coopLobby .clC.lk{ color:#a0947b; cursor:default;
    box-shadow:inset 0 0 0 1px rgba(96,84,62,.34); }
 #coopLobby .clC.lk:hover{ filter:none; transform:none; }
 /* A RIDER reads the muster, a CAPTAIN sets it. Rather than dim eleven dead chips on the guest's
@@ -5078,6 +5181,14 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
    transition:filter .14s; }
 #coopLobby #btnClBack:hover{ filter:brightness(1.24); }
 
+/* AUDIT-1 UX-04c — the desktop-short band (621-860 tall) matched neither the phone query nor the
+   620 height query, so at 1280x720 the room sheet ran unbounded and the foot's Leave call fell
+   below the frame. The sheet is the bounded scroller here too (lockup ~110 + foot ~66 + margins),
+   and the overlay centres SAFELY so the H1 can never be pushed off the top edge. */
+@media (min-width:761px) and (min-height:621px) and (max-height:860px){
+  #coopLobby{ justify-content:safe center; }
+  #clPlate{ max-height:calc(100vh - 200px); overflow-y:auto; overscroll-behavior:contain; }
+}
 /* -- PHONE. Measured at a true 390 with tools/mshots.ps1 - the sheet is the widest thing on the
    screen and it is the thing that has to fit, so it goes to the rail's full width inside a 12px
    gutter, the picker labels stack above their rails instead of eating 52px of a 312px content
@@ -5137,4 +5248,40 @@ h1#endTitle{ margin:0; font-size:min(8.6vw,46px); letter-spacing:.15em; line-hei
   #clLead{ margin-bottom:10px; }
   #clFoot{ margin-top:8px; }
   #coopLobby #btnClBack{ padding:7px 18px; font-size:11.5px; letter-spacing:.14em; }
+}
+
+/* ══ AUDIT-1 UX-08 — THE 44px THUMB FLOOR, FOR EVERY THUMB ══════════════════════════════════
+   Measured (uxprobe, fr) at 390×844 and 768×1024: the Towers/Traps segment (the ONLY door to the
+   trap shop on a phone) 48×26 / 69×26, council tiers 342×33, Revoke 208×37, the volume sliders
+   ×22, the doctrine row 302×40 — and a coarse-pointer tablet got the desktop's 26px ✕ and 21px
+   doctrine row. One block, keyed on the phone width OR a touch pointer (live play mirrors
+   `.coarse` from the same media query), so a desktop mouse frame is untouched.
+   Where growing the plate would move the frame (the segment's gold plate, the ✕, the doctrine
+   row, the sliders) the TARGET grows and the paint does not: a pseudo-element or a negative
+   margin carries the extra rows, the same idiom the phone ✕ has used since FIX5. */
+@media (max-width:760px), (pointer:coarse){
+  /* the segment's plate clipped its children (overflow:hidden for the gold .on corners), which
+     would clip the hit area too — the corners are rounded on the buttons themselves instead. */
+  #buildMenu.min .segT{ overflow:visible; }
+  #buildMenu.min .sgB{ position:relative; z-index:2; }
+  #buildMenu.min .sgB:first-child{ border-radius:5px 0 0 5px; }
+  #buildMenu.min .sgB:last-child{ border-radius:0 5px 5px 0; }
+  /* the dock is a scroller on the phone and clips at its own top edge ~5px above the segment, so the
+     band reaches DOWN instead: it takes the top 10px of the card row under it (an 88px card keeps 78) */
+  #buildMenu.min .sgB::after{ content:''; position:absolute; left:0; right:0; top:-12px; bottom:-16px; }
+  .cN{ min-height:44px; }
+  #btnCRespec, #btnCBack{ min-height:44px; }
+  #settings .sVol input[type=range]{ height:44px; margin:-11px 0; }
+  .pHead .x{ width:44px; height:44px; margin:-9px -8px -9px 2px; }
+  .pHead .mus{ min-height:44px; }
+  #towerMenu .ordR .tgt{ position:relative; z-index:1; }
+  /* centred 44px band: ±2px on the phone's 40px row, ±11.5 on the tablet's 21px one, so it never
+     reaches further into the neighbouring rows than the floor requires */
+  #towerMenu .ordR .tgt::after{ content:''; position:absolute; left:0; right:0; top:50%; height:44px; transform:translateY(-50%); }
+  #coopLobby .clC{ display:inline-flex; align-items:center; min-height:44px; padding:0 12px; }
+  #coopLobby #clName, #coopLobby #clIn, #coopLobby .clChip{ min-height:44px; box-sizing:border-box; }
+  /* the map card's mode chips (real buttons since UX-06): a centred 44px band over the card's own
+     foot row, so a thumb on 'Endless' cannot land on the card's Campaign instead */
+  #ui .mCard .mMc{ position:relative; }
+  #ui .mCard .mMc::after{ content:''; position:absolute; left:0; right:0; top:50%; height:44px; transform:translateY(-50%); }
 }

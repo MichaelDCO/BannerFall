@@ -173,6 +173,12 @@ en: {
   'co.horns': '{0}/{1}',
   'co.hornT': 'Sound the horn — the wave marches when every captain has',
   'co.hornMine': 'You have sounded. Waiting on the band — {0} of {1}.',
+  // AUDIT-1 UX-10b / UX-11 — the drop banner, and why the reloading settings are shut in a band.
+  'co.gone': '{0} has fallen out of the band',
+  'co.goneS': 'Their works pass to the captain.',
+  'co.noReload': 'Not while the band rides — this would reload your page and leave the war-band.',
+  // AUDIT-1 UX-12 — the reach chip's unit, drawn by .tag.rg::before from data-u.
+  'bm.reachU': 'rng',
   // §C1 — ownership.
   'co.owner': 'Raised by {0}',
   'co.notYours': 'Another captain raised this standard — theirs to upgrade, theirs to dismantle.',
@@ -271,7 +277,7 @@ en: {
   'boot.rally': 'Rallying the garrison',
   'boot.ready': 'Sounding the horn',
   'foot': '{0} roads &nbsp;·&nbsp; {1} fortifications &nbsp;·&nbsp; ',
-  'seed': 'War Seed {0}',
+  'seed': 'War Seal {0}',          // AUDIT-1 UX-12 — one name in both tongues (Sceau)
   'seed.roll': 'Roll',
   'seed.rollT': 'Roll a new war seed — new elite swaps, new omen draws',
   'maps.kick': 'The campaign',
@@ -946,6 +952,10 @@ fr: {
   'co.horns': '{0}/{1}',
   'co.hornT': 'Sonner du cor — la vague part quand chaque capitaine a sonné',
   'co.hornMine': 'Vous avez sonné. En attente de la compagnie — {0} sur {1}.',
+  'co.gone': '{0} a quitté la compagnie',
+  'co.goneS': 'Ses ouvrages passent au capitaine.',
+  'co.noReload': 'Pas tant que la compagnie chevauche — la page se rechargerait et vous quitteriez la compagnie.',
+  'bm.reachU': 'port',
   'co.owner': 'Levée par {0}',
   'co.notYours': 'Un autre capitaine a levé cette bannière — à lui de l’améliorer, à lui de la démonter.',
   'co.speaks': '{0} parle pour le conseil',
@@ -38523,13 +38533,19 @@ UI.coName = coName;
 // button on each of the others that moves the spec's 50-gold step. Rebuilt only when something
 // in it changed, because it carries live buttons and blowing them away on every coin would
 // cancel a click in progress. Solo: one classList.toggle that toggles nothing.
-let _coSig = '';
+let _coSig = '', _coGone = 0;
 function coopBand() {
   const el = $('coBand');
   if (!el) return;
   const C = G.COOP, on = C.seats > 1;
   el.classList.toggle('hidden', !on);
-  if (!on) { _coSig = ''; return; }
+  if (!on) { _coSig = ''; _coGone = 0; return; }
+  // AUDIT-1 UX-10b — A CAPTAIN WHO DROPS IS SAID, NOT ONLY GREYED. The NET verb `inherit` moves the
+  // works and marks the seat `gone`, then calls UI.sync(); until now the only trace on the other
+  // screens was a dimmed purse chip. The banner fires once per newly-gone seat (live only).
+  const ng = C.gone & ~_coGone; _coGone = C.gone;
+  if (ng && !SHOT) for (let i = 0; i < C.seats; i++)
+    if (ng & (1 << i)) UI.msg(esc(L('co.gone', coName(i))), esc(L('co.goneS')));
   const G$ = G.GOLDS;
   const sig = C.seats + '|' + C.me + '|' + C.gone + '|' + G$.join(',');
   if (sig === _coSig) return;
@@ -39362,7 +39378,7 @@ const TRAP_KEY = { caltrops: 'Z', tar: 'X', keg: 'C' };
       '<div class="nm">' + T_NAME(k) + '</div><div class="nmS">' + (T_SHORT[k] || T_NAME(k)) +
       '</div><div class="cost"><i class="ic ic-gold"></i>' + d.cost + '</div>' +
       '<div class="tags">' + elemChip(dSchool(k)) +
-      '<span class="tag rg" title="' + L('bm.reachT') + '"><i class="dg-rng"></i><b>' + d.range + '</b></span></div>' +
+      '<span class="tag rg" data-u="' + esc(L('bm.reachU')) + '" title="' + L('bm.reachT') + '"><i class="dg-rng"></i><b>' + d.range + '</b></span></div>' +
       // INTEGRATE: the writ and the stat table used to stand open on all seven cards at
       // once, which made the persistent shop 355 px tall — a third of every gameplay frame
       // on every map. Same information, folded into a flyout that opens over the card on
@@ -39390,7 +39406,7 @@ const TRAP_KEY = { caltrops: 'Z', tar: 'X', keg: 'C' };
       '<div class="nm">' + (T_SHORT[k] || T_NAME(k)) + '</div><div class="nmS">' + (T_SHORT[k] || T_NAME(k)) +
       '</div><div class="cost"><i class="ic ic-gold"></i>' + d.cost + '</div>' +
       '<div class="tags">' + elemChip(DTYPE[d.element] ? d.element : 'pierce') +
-      '<span class="tag rg rd" title="' + esc(L('bm.trapsT', 0, G.TRAP_MAX)) + '"><i class="dg-rng"></i><b>' + d.rad + '</b></span></div>' +
+      '<span class="tag rg rd" data-u="' + esc(L('bm.reachU')) + '" title="' + esc(L('bm.trapsT', 0, G.TRAP_MAX)) + '"><i class="dg-rng"></i><b>' + d.rad + '</b></span></div>' +
       '<div class="det"><div class="dNm">' + T_NAME(k) + '</div><div class="hnt">' + LNUM(T_HINT(k)) + '</div>' +
         trapRows(k) + '<div class="dGo"></div></div>';
     litePortrait(b, k);
@@ -40472,6 +40488,18 @@ function fitDeeds() {
   }
   if (best > 140) g.style.height = Math.round(best + DD_BAND) + 'px';
 }
+// AUDIT-1 UX-06c — AN OVERLAY THAT OPENS TAKES THE FOCUS WITH IT. Every screen change hid the
+// focused control and dropped focus to <body>, so a keyboard player's next Tab started over at the
+// top of the document. Called from the live click paths only (never under SHOT); a script focus
+// after a MOUSE click does not match :focus-visible, so the ring stays a keyboard-only thing.
+const focusIn = (el) => {
+  if (SHOT || !el) return;
+  const shown = x => x.getClientRects().length > 0;             // offsetParent is null for fixed HUD
+  const f = el.matches('button,[tabindex="0"]') && shown(el) ? el
+    : [...el.querySelectorAll('button:not([disabled]),[tabindex="0"]')].find(shown);
+  if (f) try { f.focus({ preventScroll: true }); } catch (e) { /* never fatal */ }
+};
+UI.focusIn = focusIn;
 UI.showDeeds = () => {
   for (const id of deedDerived()) deedWin(id);      // catch up a record that moved elsewhere
   deedFlush();
@@ -40802,7 +40830,11 @@ function buildMapCards() {
   MAPS.forEach((m, i) => {
     const open = unlocked(m.id), st = starsOf(m.id), prev = MAPS[i - 1];
     const nw = (WAVE_TABLES[m.id] || []).length;
-    const b = document.createElement('button');
+    // AUDIT-1 UX-06 — a div[role=button], so the mode chips can be real focusable <button>s (a
+    // button may not nest one). main.css restates the old UA button box so the frame is unchanged.
+    const b = document.createElement('div');
+    b.setAttribute('role', 'button'); b.tabIndex = 0;
+    if (!open) b.setAttribute('aria-disabled', 'true');
     b.className = 'mCard' + (open ? '' : ' lock') + (open && m === nextM ? ' next' : '');
     const prevN = prev ? prev.name : L('maps.first');
     b.innerHTML = '<div class="mWrap"></div><div class="mTxt"><div class="mN">' + m.name + '</div>' +
@@ -40835,8 +40867,9 @@ function buildMapCards() {
       // Vale's ~748); an empty rail holds the row open and costs nothing to read.
       '<div class="mMode">' + (open ? ['camp', 'endl', 'horde'].map(k => {
         const lk = k !== 'camp' && !st;
-        return '<span class="mMc m-' + k + (lk ? ' lk' : '') + '" data-m="' + k + '" data-id="' + m.id +
-          '" title="' + esc(lk ? L('mode.hordeLk') : L('mode.' + k + 'T')) + '">' + L('mode.' + k) + '</span>';
+        return '<button type="button" class="mMc m-' + k + (lk ? ' lk' : '') + '" data-m="' + k + '" data-id="' + m.id +
+          (lk ? '" aria-disabled="true' : '') +
+          '" title="' + esc(lk ? L('mode.hordeLk') : L('mode.' + k + 'T')) + '">' + L('mode.' + k) + '</button>';
       }).join('') : '') + '</div>' +
       '</div>' +
       (open && m === nextM ? '<span class="rib">' + L(st ? 'maps.replay' : 'maps.cont') + '</span>' : '');
@@ -40845,6 +40878,12 @@ function buildMapCards() {
       b.querySelector('.mWrap').appendChild(lk); }
     b.title = open ? L('maps.cardT', m.name, nw, st) : L('maps.lockT', m.name, prevN);
     if (open) b.onclick = () => chooseMap(m.id);
+    // the keyboard half of role=button: Enter and Space on the CARD itself (a focused chip is a
+    // real button and activates on its own)
+    if (open) b.onkeydown = (ev) => {
+      if (ev.target !== b || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+      ev.preventDefault(); chooseMap(m.id);
+    };
     for (const c of b.querySelectorAll('.mMc')) c.onclick = (ev) => {
       ev.stopPropagation(); ev.preventDefault();
       if (c.classList.contains('lk')) { Audio.play('ui'); return; }
@@ -40857,6 +40896,11 @@ function buildMapCards() {
   laurelChip();
   deedChip();
 }
+// AUDIT-1 UX-10a — THE LOBBY'S ROAD PICKER NAMES ITS ROADS. lobby.js (contract §5) reads
+// `window.BF_COOP_MAPS` lazily on its first build and fell back to "Road I–V" because nothing ever
+// published it. Names in the page's tongue; `open:true` for all five keeps today's rule (a band may
+// ride any road) — whether a captain's own campaign locks should gate co-op is an open decision.
+if (!SHOT) try { window.BF_COOP_MAPS = MAPS.map(m => ({ id: m.id, name: m.name, open: true })); } catch (e) { /* never fatal */ }
 // ── FIX13-UI §4 — THE KEY. Five charts carry two coloured pips each and nothing on the screen
 // said what either one meant; the old cross-in-a-disc was read as "remove this map" precisely
 // because it had no key to be read against. Two items, one line, drawn with the chart's own
@@ -41206,6 +41250,7 @@ UI.showEnd = (won) => {
     (G.DAILY ? '<tr><td>' + L('es.daily') + '</td><td>' + G.DAILY + '</td></tr>' : '') + '</table>';
   $('end').classList.remove('hidden');
   UI.sync();
+  focusIn($('endPlate'));                                // AUDIT-1 UX-06c — live only (no-op under SHOT)
 };
 // ══ damage floaters (pooled DOM, projected world → screen) ═════════════════════
 const FLN = 20, flEl = [], flR = [];
@@ -41978,6 +42023,8 @@ function layoutPlates() {
 // Called from MAIN's render(). In SHOT mode it stops mutating the DOM before the FINAL
 // render so the headless compositor never repaints after the GL frame is presented.
 let _uiLast = -1, _shotFrames = 0, _pwT = -1;
+// AUDIT-1 UX-07 — a live MediaQueryList, so flipping the OS setting mid-session is honoured.
+const RMQ = SHOT || !window.matchMedia ? null : matchMedia('(prefers-reduced-motion: reduce)');
 UI.frame = (rt) => {
   if (SHOT) { if (_shotFrames++ >= 2) return; }
   const dt = _uiLast < 0 ? 0.016 : clamp(rt - _uiLast, 0, 0.1); _uiLast = rt;
@@ -41990,8 +42037,10 @@ UI.frame = (rt) => {
       $('gold').textContent = fmt(Math.round(showGold));
     }
     if (state.phase === 'title') {                                     // Ken-Burns backdrop drift
-      CAM.dist = 152 + Math.sin(rt * 0.055) * 9;
-      CAM.tx = -2 + Math.sin(rt * 0.037) * 11; CAM.tz = -18 + Math.cos(rt * 0.029) * 7;
+      // AUDIT-1 UX-07 — the OS asked for less motion: the backdrop holds its first pose.
+      const ot = RMQ && RMQ.matches ? 0 : rt;
+      CAM.dist = 152 + Math.sin(ot * 0.055) * 9;
+      CAM.tx = -2 + Math.sin(ot * 0.037) * 11; CAM.tz = -18 + Math.cos(ot * 0.029) * 7;
     }
     // SPEC4 §C — the cooldown sweeps move between UI.sync()s, so they are written here. Under
     // the harness UI.sync() has already written them once and this branch never runs, which
@@ -42038,8 +42087,22 @@ UI.setPaused = (v) => { state.paused = !!v;
   $('btnPause').title = L(state.paused ? 'hud.resume' : 'hud.pause');
   $('btnPause').classList.toggle('on', state.paused); };
 $('btnPause').onclick = () => { if (NET.hold('pause', [!state.paused])) return; UI.setPaused(!state.paused); };
+// AUDIT-1 UX-11 — Language, Quality, Runebinding and Restart all RELOAD the page, and a reload
+// in a war-band silently drops this captain out of the band (and used to resume the band's field as
+// a solo run). In a band they are shut, and say why; runNav/btnReset refuse as well.
+const coopLockSettings = () => {
+  const on = G.COOP.seats > 1;
+  for (const id of ['btnLang', 'btnRb', 'btnQual', 'btnReset']) {
+    const b = $(id); if (!b) continue;
+    b.disabled = on;
+    if (on) b.title = L('co.noReload'); else if (b.dataset.lt) b.title = L(b.dataset.lt); else b.removeAttribute('title');
+  }
+  if (on) { $('qualMenu').classList.add('hidden'); $('btnQual').setAttribute('aria-expanded', 'false'); $('btnQual').classList.remove('on'); }
+};
 $('btnGear').onclick = () => { const s = $('settings'); s.classList.toggle('hidden');
   $('btnGear').classList.toggle('on', !s.classList.contains('hidden'));
+  coopLockSettings();
+  if (!s.classList.contains('hidden')) focusIn(s);                  // AUDIT-1 UX-06c
   // FIX9-UI §3 — the sheet is capped on a phone (main.css), so it can genuinely become a
   // scroller once the quality submenu is open. `.scr` is what lets the fade + chevron exist at
   // all and `.atEnd` retires it at the last row; both are measured HERE, on a real open, so the
@@ -42115,6 +42178,7 @@ function navTo(p) {
   if (url === location.pathname + location.search + location.hash) location.reload(); else location.href = url;
 }
 function runNav(p) {
+  if (G.COOP.seats > 1) { Audio.play('ui'); return; }              // AUDIT-1 UX-11 — never in a band
   // `true` = save even mid-wave. A player who switches tongue during wave 7 is rolled back to
   // wave 7's muster with the purse, the garrison and the losses they have now — the horn sounds
   // again for that wave. Restoring mid-wave would mean serialising a hundred bodies; see the
@@ -42212,12 +42276,13 @@ $('btnFps').onclick = () => { $('fpsV').textContent = L(G.setFpsCap(G.fpsCap() =
 // v7-RESILIENCE §1 — "Restart Campaign" throws the saved run away as well. It used to be a bare
 // reload, which (now that a snapshot exists) would have landed back on a title offering to
 // resume the very run the player had just asked to be rid of.
-$('btnReset').onclick = () => { G.runClear(); retryNav(); };   // AUDIT-1 GC-10 — same URL rule as 'Try again'
+$('btnReset').onclick = () => { if (G.COOP.seats > 1) return; G.runClear(); retryNav(); };   // UX-11   // AUDIT-1 GC-10 — same URL rule as 'Try again'
 // Title → map select → game. `&map=` names a road outright, so it skips the chooser and
 // Play drops straight into that map (the shot harness and any deep link rely on this).
 // BOOTPIPE §1 — the one hard gate on the staged boot. The bar dims this button and the CSS
 // makes it inert, but a keyboard activation ignores pointer-events, so the check lives here too.
-$('btnPlay').onclick = () => { if (!BOOT.ready) return; if (P.has('map')) UI.startGame(); else UI.showMaps(); };
+$('btnPlay').onclick = () => { if (!BOOT.ready) return; if (P.has('map')) UI.startGame();
+  else { UI.showMaps(); focusIn($('mapCards').querySelector('.mCard.next') || $('mapCards')); } };   // AUDIT-1 UX-06c
 // ══ v7-RESILIENCE §1 — THE OFFER ON THE PLINTH ══════════════════════════════════════
 // A saved run puts a second button on the title screen, above Play, and RELABELS Play as "New
 // campaign". Relabelling is not decoration: with two buttons on the plinth "Play" stops being a
@@ -42277,14 +42342,14 @@ $('btnResume').onclick = () => {
 // link that drops straight into a run (`&auto=`, `&resume=`) must not spend a storage read
 // dressing a plinth nobody will see.
 UI.resumeOffer = resumeOffer;
-$('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); };
+$('btnBack').onclick = () => { $('maps').classList.add('hidden'); $('title').classList.remove('hidden'); Audio.play('ui'); focusIn($('btnPlay')); };
 // SPEC6 §B — the council opens off the chooser and returns to it, so it never becomes a
 // screen you can get stranded on: there is exactly one way in and one way out.
-$('btnCouncil').onclick = () => { Audio.play('ui'); UI.showCouncil(); };
-$('btnCBack').onclick = () => { $('council').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); };
+$('btnCouncil').onclick = () => { Audio.play('ui'); UI.showCouncil(); focusIn($('council')); };
+$('btnCBack').onclick = () => { $('council').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); focusIn($('btnCouncil')); };
 // SPEC6 §C — the chronicle, in the council's own in/out contract.
-$('btnDeeds').onclick = () => { Audio.play('ui'); UI.showDeeds(); };
-$('btnDDBack').onclick = () => { $('deeds').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); };
+$('btnDeeds').onclick = () => { Audio.play('ui'); UI.showDeeds(); focusIn($('deeds')); };
+$('btnDDBack').onclick = () => { $('deeds').classList.add('hidden'); Audio.play('ui'); UI.showMaps(); focusIn($('btnDeeds')); };
 // The counter ledger is debounced (a wave of a thousand must not serialise the record a
 // thousand times), so the page going away is the last place it can be honest.
 if (!SHOT) {
@@ -42368,8 +42433,57 @@ if (!SHOT) {
     if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.key === 'g' || e.key === 'G') $('btnGear').click();
     if (e.key === 'h' || e.key === 'H') hintTog();
-    if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false'); }
+    if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false');
+      // AUDIT-1 UX-06b — Escape closes the sheet or screen in front, topmost first, through each
+      // one's own Back control so every close path stays the one the mouse uses. The lobby has
+      // its own Escape (lobby.js); the end plate has no "close", only its calls.
+      const shown = id => $(id) && !$(id).classList.contains('hidden');
+      if (shown('settings')) { $('btnGear').click(); focusIn($('btnGear')); }
+      else if (shown('council')) $('btnCBack').click();
+      else if (shown('deeds')) $('btnDDBack').click();
+      else if (shown('maps')) $('btnBack').click();
+    }
   });
+  // AUDIT-1 UX-05 — PRESS AND HOLD TO READ. Schools, resistances, mode rules, the Daily War, omen
+  // effects and the lobby's difficulty texts are all `title` tooltips, which a touch screen never
+  // shows. One delegated layer on #ui: a TOUCH (or pen) press held 420 ms without travel lifts the
+  // element's own title into #tapTip; the next touch anywhere drops it, and the click that the
+  // same press would have produced is swallowed (a read is not an order). Mouse is untouched.
+  {
+    const tip = document.createElement('div');
+    tip.id = 'tapTip'; tip.className = 'iron hidden'; tip.setAttribute('role', 'tooltip');
+    $('ui').appendChild(tip);
+    let tm = 0, x0 = 0, y0 = 0, held = false, eat = false;
+    const hide = () => { tip.classList.add('hidden'); held = false; };
+    const show = (el) => {
+      const s = el.isConnected && el.getAttribute('title');
+      if (!s) return;
+      tip.textContent = s; tip.classList.remove('hidden');
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+      const x = clamp(r.left + r.width / 2 - w / 2, 8, Math.max(8, innerWidth - w - 8));
+      let y = r.top - h - 10;
+      if (y < 8) y = Math.min(Math.max(8, innerHeight - h - 8), r.bottom + 10);
+      tip.style.left = Math.round(x) + 'px'; tip.style.top = Math.round(y) + 'px';
+      held = true; eat = true;                       // the click THIS press may still fire
+    };
+    $('ui').addEventListener('pointerdown', e => {
+      clearTimeout(tm); eat = false;                  // a new press: its click is its own
+      if (held) hide();
+      if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
+      const el = e.target && e.target.closest ? e.target.closest('[title]') : null;
+      if (!el || !el.getAttribute('title')) return;
+      x0 = e.clientX; y0 = e.clientY;
+      tm = setTimeout(() => show(el), 420);
+    }, { passive: true });
+    $('ui').addEventListener('pointermove', e => {
+      if (Math.abs(e.clientX - x0) + Math.abs(e.clientY - y0) > 10) clearTimeout(tm);
+    }, { passive: true });
+    for (const ev of ['pointerup', 'pointercancel']) $('ui').addEventListener(ev, () => clearTimeout(tm), { passive: true });
+    $('ui').addEventListener('click', e => {
+      if (eat) { eat = false; e.stopPropagation(); e.preventDefault(); }
+    }, true);
+    $('ui').addEventListener('contextmenu', e => { if (held) e.preventDefault(); });
+  }
   $('title').addEventListener('pointerdown', e => { if (BOOT.ready && e.target === $('title')) $('btnPlay').click(); });
   // FIX9-UI §3 — THE `.atEnd` LATCH THE FADES WERE ALREADY WRITTEN AGAINST. main.css has carried
   // `#ddGrid.atEnd::after{ display:none }` since FIX2-UI §1 and nothing ever set the class, so

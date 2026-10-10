@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Bannerfall</title>
+<!-- AUDIT-1 UX-13 — the boot veil goes up BEFORE the first paint. SECTION: CORE adds html.booting only
+     once three.module.js and game.js have been fetched and evaluated, so on a slow link the raw shell
+     (HUD chips reading 0 gold / wave 0/10 over the title) painted first. Same gate as CORE: never
+     under ?shot= / ?test=. CORE's BOOT.done() removes the class exactly as before. -->
+<script>if(!/[?&](shot|test)=[^&]/.test(location.search))document.documentElement.classList.add('booting');</script>
 <!-- ╔══════════════════════════════════════════════════════════════════╗
      ║ BANNERFALL — AAA tower defense PWA; game code in js/game.js       ║
      ║ Sections are owned by builder agents; edit only your section and  ║
@@ -229,7 +234,8 @@
       <div id="bootTrack"><div id="bootFill"></div></div>
       <div id="bootStage"></div>
     </div>
-    <div id="titleFoot">10 waves &nbsp;·&nbsp; 4 fortifications &nbsp;·&nbsp; one road</div>
+    <!-- AUDIT-1 UX-13: empty on purpose — SECTION: UI writes it from L('foot', …); the static copy was stale English. -->
+    <div id="titleFoot"></div>
   </div>
 
   <div id="maps" class="overlay hidden">
