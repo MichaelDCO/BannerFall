@@ -232,6 +232,8 @@ en: {
   'coop.failed': 'No band answered. Either the code has gone cold, or your network blocks the direct crossing — some routers and campus networks will not let two browsers speak. Try another network, or let the other captain host.',
   'coop.nolib': 'The co-op courier is missing from this build, so no band can be raised.',
   'coop.hostLeft': 'The captain has ridden off. The band is broken.',
+  'coop.full': 'This war-band already rides four captains.',
+  'coop.diffSoon': 'Only the Knight’s trial rides in a war-band — for now',
   'coop.starting': 'The horn sounds in {0}…',
   'coop.badCode': 'A code is five letters and numbers.',
   'coop.back': '← Back',
@@ -561,6 +563,7 @@ en: {
   'pl.noMore': 'no more may be raised',
   'pl.raiseFor': 'raise a standard for <i>{0}</i> gold, or dismantle one',
   'cp.mfull': 'All standards fielded',
+  'bm.musterMax': 'Muster at its height',             // AUDIT-1 GC-13
   'cp.off': 'Off the map',
   'cp.beyond': 'Beyond the vale',
   'cp.steep': 'Ground too steep',
@@ -993,6 +996,8 @@ fr: {
   'coop.failed': 'Aucune compagnie n’a répondu. Soit le code est éteint, soit votre réseau bloque la liaison directe — certains routeurs et réseaux d’entreprise interdisent à deux navigateurs de se parler. Essayez un autre réseau, ou laissez l’autre capitaine héberger.',
   'coop.nolib': 'Le messager de coopération manque à cette version : aucune compagnie ne peut être levée.',
   'coop.hostLeft': 'Le capitaine est parti. La compagnie est rompue.',
+  'coop.full': 'Cette compagnie compte déjà quatre capitaines.',
+  'coop.diffSoon': 'Seule l’épreuve du Chevalier se court en compagnie — pour l’instant',
   'coop.starting': 'Le cor sonne dans {0}…',
   'coop.badCode': 'Un code compte cinq lettres et chiffres.',
   'coop.back': '← Retour',
@@ -1248,6 +1253,7 @@ fr: {
   'pl.noMore': 'aucune de plus',
   'pl.raiseFor': 'levez une bannière pour <i>{0}</i> d’or, ou rasez-en une',
   'cp.mfull': 'Toutes les bannières au champ',
+  'bm.musterMax': 'Ost à son comble',
   'cp.off': 'Hors carte',
   'cp.beyond': 'Hors du val',
   'cp.steep': 'Terrain trop raide',
@@ -23917,7 +23923,11 @@ const WAVE_TABLES = { 1: [ // [type, count, interval s, delay s] groups
 // than by thickening the ramp — a flood that turns into a brute line stops being a flood.
 // The minis RIDE the floods (§D3d) rather than replacing them.
 const HORDE_W = 8;
-const HORDE_PEAK = Q.peak;                              // ~1000 desktop / ~400 mobile
+// AUDIT-1 GC-07 — PINNED PER RUN. The peak used to follow the graphics tier, so a quality switch
+// mid-run (a reload through runNav) shrank the remaining waves by 60%. `&hp=` carries the run's
+// own peak across that reload (resumeParams writes it, runSave records it, runFits checks it);
+// only 400 and 1000 are honoured, so the URL cannot invent a third table.
+const HORDE_PEAK = [400, 1000].indexOf(+P.get('hp')) >= 0 ? +P.get('hp') : Q.peak;   // ~1000 desktop / ~400 mobile
 const HORDE_RAMP = [0.10, 0.16, 0.23, 0.33, 0.45, 0.60, 0.78, 1.00];
 // [type, share of the wave's head count, formation]. Shares sum to 1.00 per wave.
 const HORDE_MIX = [
@@ -25626,9 +25636,18 @@ function buildWave(n, part) {
 // SPEC6 §D2 — true while the opening muster is suspended. Live play only: UI.startGame()
 // is the only thing that ever sets it, and the harness never walks through it.
 let waveHold = false;
+// AUDIT-1 GC-03 — the muster as it stood the instant BEFORE the horn: purse, countdown, the
+// first-wave hold and the omen pick. The horn snapshot (startWave -> runSave(true)) rolls the
+// run back to that muster, so it must hold the purse from before the horn paid its early-call
+// bonus and the War Chest its 60 — otherwise every replay of the wave pays them again. Read by
+// runSave only; nothing in the sim reads it.
+let hornPre = null;
 G.waveHeld = () => waveHold;
 G.holdFirstWave = () => { waveHold = true; };
 function startWave(n) {
+  // AUDIT-1 GC-03 — a horn that was not CALLED (the countdown ran out) still needs its muster
+  // recorded before commitOmen pays the War Chest; G.callWave has already taken it otherwise.
+  if (!hornPre || hornPre.w !== n) hornPre = { w: n, gold: state.gold, cd: state.countdown, hold: waveHold, pick: Omens.picked };
   waveHold = false;
   // §C3 — the horns are per-muster: the mask clears with the wave it called. Zero solo, always.
   COOP.horn = 0; COOP.omenT = 0;
@@ -25667,6 +25686,7 @@ function startWave(n) {
   // the player actually built; `true` lets it fire from phase 'wave', and the rollback the flag
   // performs lands the restore exactly here — at the muster for the wave now beginning.
   runSave(true);
+  hornPre = null;                                       // AUDIT-1 GC-03 — spent by the save above
 }
 // ══ GATE HERALDS — DATA (SPEC5 §B3) ══════════════════════════════════
 // What FRACTION of wave `n` comes out of each gate. A group tagged with a gate (the 5th
@@ -25769,6 +25789,7 @@ G.startWave = startWave;
 // so the button and the command layer's `wave` op share ONE body and cannot drift apart.
 G.callWave = () => {
   if (state.phase !== 'prewave') return false;
+  hornPre = { w: state.wave + 1, gold: state.gold, cd: state.countdown, hold: waveHold, pick: Omens.picked };
   // §C2 — the early-call prize is the BAND'S: seconds thrown away are thrown away by everyone,
   // so the coins divide with the remainder walking. At one seat payAll IS `state.gold +=`.
   if (!waveHold) payAll(Math.ceil(state.countdown));
@@ -25800,7 +25821,6 @@ G.hornReady = (p) => {
 // Free placement: (x,z) is anywhere G.canPlace() allows. `free` skips the purse AND the
 // validity gate — that is the shot harness / preset path only.
 function placeTower(x, z, type, level = 1, free = false) {
-  if (DEEDS_ON && G.deedMark) G.deedMark('muster', G.towersList.length + 1);
   const def = TOWER_DEFS[type];
   if (!free) {
     if (state.gold < def.cost || !canPlace(x, z).ok) return false;
@@ -25837,6 +25857,8 @@ function placeTower(x, z, type, level = 1, free = false) {
   tw.group.position.set(x, tw.y, z);
   scene.add(tw.group);
   G.towersList.push(tw);
+  // AUDIT-1 GC-11 — marked AFTER the tower stands: a refused 14th placement used to grant it.
+  if (DEEDS_ON && G.deedMark) G.deedMark('muster', G.towersList.length);
   G.covDirty();                                   // SPEC_8 §B — the coverage cache is now a lie
   if (type === 'barracks') spawnKnights(tw);
   // HOOK: WORLD — stamp a contact-AO footprint so the tower sits IN the terrain instead of
@@ -25875,7 +25897,18 @@ function sellTower(tw) {
   scene.remove(tw.group);
   G.towersList.splice(G.towersList.indexOf(tw), 1);
   G.covDirty();                                   // §B — selling is how a lane becomes open again
-  G.knights = G.knights.filter(k => k.tower !== tw);
+  // AUDIT-1 GC-04 — e.blockedBy is an INDEX into G.knights, so the compaction remaps every hold
+  // in the same pass (reapMilitia's pattern). A plain filter left foes frozen on the road,
+  // struck from range by a different knight, and never fought. A foe held by a sold knight is
+  // released (-1).
+  { const K = G.knights; let hit = false;
+    for (let i = 0; i < K.length; i++) if (K[i].tower === tw) { hit = true; break; }
+    if (hit) {
+      const map = new Int32Array(K.length), keep = [];
+      for (let i = 0; i < K.length; i++) { if (K[i].tower === tw) { map[i] = -1; continue; } map[i] = keep.length; keep.push(K[i]); }
+      for (const e of G.enemies) if (e.blockedBy >= 0) e.blockedBy = e.blockedBy < map.length ? map[e.blockedBy] : -1;
+      G.knights = keep;
+    } }
   state.selTower = -1;
   UI.sync(); Audio.play('coin');
 }
@@ -27611,18 +27644,23 @@ function runSave(now) {
   if (SHOT) return false;
   const mid = state.phase === 'wave';
   if (state.phase !== 'prewave' && !(mid && now)) return false;
+  const hp0 = mid && hornPre && hornPre.w === state.wave ? hornPre : null;   // AUDIT-1 GC-03
   const s = {
     v: RUN_V, t: Date.now(), map: MAP.id, mode: MODE, seed: runSeed, daily: DAILY,
     wave: mid ? Math.max(0, state.wave - 1) : state.wave,
-    tick: state.tick, gold: state.gold, lives: state.lives, muster: state.muster,
+    tick: state.tick, gold: hp0 ? hp0.gold : state.gold, lives: state.lives, muster: state.muster,
     kills: state.kills, leaked: state.leaked, invested: state.invested, peak: state.peak,
-    endless: state.endless ? 1 : 0, hold: G.waveHeld() ? 1 : 0, speed: state.speed,
-    countdown: mid ? INTERWAVE : state.countdown,
+    endless: state.endless ? 1 : 0, speed: state.speed,
+    // AUDIT-1 GC-03 — mid-wave (the horn save) the muster is the one from BEFORE the horn.
+    hold: mid ? (hp0 && hp0.hold ? 1 : 0) : (G.waveHeld() ? 1 : 0),
+    countdown: mid ? (hp0 ? Math.max(0, +hp0.cd || 0) : INTERWAVE) : state.countdown,
+    hp: HORDE ? HORDE_PEAK : 0,                                     // AUDIT-1 GC-07
+    dd: G.deedRunState ? G.deedRunState() : undefined,               // AUDIT-1 GC-12
     // The omen the NEXT wave will ride is not committed yet, so what has to survive is the
     // player's PICK (an index into an offer that omenTick re-deals from srng — same seed, same
     // hand) and the four-school damage tally, because Elemental Ward turns whichever school the
     // run has leaned on hardest. Lose the tally and a resumed run's ward answers the wrong one.
-    pick: mid ? -1 : Omens.picked,
+    pick: mid ? (hp0 ? hp0.pick : -1) : Omens.picked,
     dmg: SCHOOLS.map(k => Math.round(dmgBySchool[k])),
     // The Long Night's light is FALLING, not switched: it is a function of (tick - night.t0),
     // and at a prewave boundary after a surge wave the vale is still dark and coming back up.
@@ -27674,7 +27712,8 @@ G.runSnap = () => {
 // resolved from the URL at module scope, so a matching snapshot can be restored in place and a
 // non-matching one needs the navigation runSnapUrl() builds.
 G.runFits = (s) => !!s && s.map === MAP.id && s.mode === MODE && s.seed === runSeed &&
-                   (s.daily || '') === (DAILY || '');
+                   (s.daily || '') === (DAILY || '') &&
+                   (!HORDE || !s.hp || s.hp === HORDE_PEAK);         // AUDIT-1 GC-07 (old snapshots carry none)
 // THE RESTORE. Runs from MAIN's boot pipeline between `boot.forge` and `boot.ready`: the world
 // exists and its shaders are warm, and the render loop has not started, so nothing here is ever
 // seen half-built. Everything it calls is a constructor the game already uses.
@@ -39765,7 +39804,9 @@ UI.buildMenu = () => {
     mb.innerHTML = '<i class="mIc ic-must"></i><span class="lg">' + L('bm.muster') + '</span>' +
       '<span class="lgS">' + L('bm.musterS') + '</span>' +
       '<b>' + G.towersList.length + '/' + G.musterCap() + '</b>' +
-      (mCap ? '<span class="why">' + L('cp.mfull') + '</span>'
+      // AUDIT-1 GC-13 — bought to the cap is not the same as fielded to it: 'All standards fielded'
+      // beside a 0/14 read-out contradicted itself. cp.mfull stays for a field that IS full.
+      (mCap ? '<span class="why">' + L(G.towersList.length >= G.musterCap() ? 'cp.mfull' : 'bm.musterMax') + '</span>'
         : mPoor ? '<span class="why">' + LNUM(L('bm.needG', mc)) + '</span>'
         : '<span class="c"><i class="ic ic-gold"></i>' + mc + '</span>');
     mb.title = mCap ? L('bm.capT') : L('bm.raiseT', mc);
@@ -40066,6 +40107,11 @@ UI.endlessBest = (w) => {
 // separate record and does not overwrite it.)
 function dailyBest(won) {
   if (!G.DAILY) return;
+  // AUDIT-1 GC-06 — only the day's own road, on the day's own seed, files under that date. A
+  // stray &daily= that rode along into another map must not overwrite the record.
+  { const d = String(G.DAILY);
+    const dow = new Date(Date.UTC(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8))).getUTCDay();
+    if (MODE !== 'campaign' || MAP.id !== (DAILY_ROT[dow] || 1) || (runSeed >>> 0) !== ((+d) >>> 0)) return; }
   const prev = PROG_D[G.DAILY], stars = won ? starsFor(state.lives) : 0;
   const rec = { map: MAP.id, wave: state.wave, won: !!won, stars };
   if (prev && (prev.won > rec.won || (prev.won === rec.won && prev.wave >= rec.wave && prev.stars >= rec.stars))) return;
@@ -40265,11 +40311,17 @@ G.deedMark = (what, n) => {
 // ── the run's own deeds ───────────────────────────────────────────────────────
 // Six deeds are about a RUN and nothing else, so they are judged once, on the victory plate,
 // out of flags the run itself set. `runLow` and `omenAll` are reset by UI.startGame().
-let runLow = false, omenAll = true, omenTook = 0;
-G.deedRunReset = () => { runLow = false; omenAll = true; omenTook = 0; };
+let runLow = false, omenAll = true, omenTook = 0, omenLast = 0;
+G.deedRunReset = () => { runLow = false; omenAll = true; omenTook = 0; omenLast = 0; };
+// AUDIT-1 GC-12 — the ledger rides the run snapshot, so a resumed run keeps what it earned (and
+// what it forfeited); `omenLast` stops a replayed wave's banner counting its omen twice.
+G.deedRunState = () => [runLow, omenAll, omenTook, omenLast];
+G.deedRunLoad = (a) => { a = Array.isArray(a) ? a : [];
+  runLow = !!a[0]; omenAll = a[1] === undefined ? true : !!a[1]; omenTook = a[2] | 0; omenLast = a[3] | 0; };
 // Called by UI.msg when a wave banner goes up: did the player take the CHALLENGE on offer?
 G.deedOmen = (n) => {
-  if (SHOT || n < G.OMEN_FROM) return;
+  if (SHOT || n < G.OMEN_FROM || n === omenLast) return;
+  omenLast = n;
   const o = G.OMENS[state.omen];
   if (o && o.kind === 'challenge') omenTook++; else omenAll = false;
 };
@@ -40848,6 +40900,8 @@ function buildDaily() {
     const q = new URLSearchParams(location.search);
     q.set('map', String(G.DAILY_MAP)); q.set('seed', String(G.DAILY_SEED));
     q.set('daily', G.TODAY); q.set('auto', '1'); q.delete('maps'); q.delete('endless');
+    // AUDIT-1 GC-06 — a daily is a plain campaign: no mode, no resume, no band, no horde peak.
+    q.delete('mode'); q.delete('resume'); q.delete('coop'); q.delete('join'); q.delete('hp');
     location.search = q.toString();
   };
 }
@@ -40953,11 +41007,15 @@ function chooseMap(id, mode) {
   const md = mode === 'horde' ? 'horde' : mode === 'endl' ? 'endless' : 'campaign';
   // SPEC6 §D3d — the MODE is resolved at load beside the map (the horde swaps the whole wave
   // table in SECTION: SIM), so changing it is a reload exactly as changing the road is.
-  if (id === MAP.id && md === MODE) { $('maps').classList.add('hidden'); UI.startGame(); return; }
+  // AUDIT-1 GC-06 — a daily page cannot shortcut: DAILY is resolved from the URL at load.
+  if (id === MAP.id && md === MODE && !DAILY) { $('maps').classList.add('hidden'); UI.startGame(); return; }
   // The world, the wave tables and the palette are all resolved from `&map=` at load, so a
   // different road is a reload. `auto` drops the player straight in rather than back to the title.
   const q = new URLSearchParams(location.search);
   q.set('map', id); q.set('auto', '1'); q.delete('maps'); q.delete('endless');
+  // AUDIT-1 GC-06 — a new road is a new run: the daily's date, its pinned seed, a pending
+  // resume and the last run's horde peak do not ride along.
+  q.delete('daily'); q.delete('seed'); q.delete('resume'); q.delete('hp');
   if (md === 'campaign') q.delete('mode'); else q.set('mode', md);
   location.search = q.toString();
 }
@@ -41012,7 +41070,18 @@ UI.startGame = (gesture) => {
   // first horn still has something to come back to, and the stale snapshot (which the title
   // screen was offering a moment ago) stops being offerable the instant a different run exists.
   G.runSave();
+  // AUDIT-1 GC-05 — and the address bar now names THIS run, so a refresh (F5, a tab restore)
+  // takes the resume path instead of `&auto=1` opening a fresh run over the snapshot.
+  runUrlStamp();
 };
+function runUrlStamp() {
+  if (SHOT || NET.active) return;            // a war-band's URL is SECTION: NET's (?coop=)
+  try {
+    const p = resumeParams(new URLSearchParams(location.search),
+      { map: MAP.id, seed: runSeed, mode: MODE, daily: DAILY, hp: HORDE ? HORDE_PEAK : 0 });
+    history.replaceState(history.state, '', location.pathname + '?' + p.toString() + location.hash);
+  } catch (e) { /* a sandboxed frame may refuse replaceState: the run itself is unaffected */ }
+}
 // ── first-placement writ (localStorage-gated, never shown under the harness) ────
 let tutDone = true;
 if (!SHOT) try { tutDone = !!localStorage.getItem(TUT_KEY); } catch (e) { tutDone = true; }
@@ -42036,6 +42105,7 @@ function resumeParams(p, s) {
   p.delete('maps'); p.delete('auto'); p.delete('endless');
   if (s.mode === 'campaign') p.delete('mode'); else p.set('mode', s.mode);
   if (s.daily) p.set('daily', s.daily); else p.delete('daily');
+  if (s.hp) p.set('hp', String(s.hp)); else p.delete('hp');          // AUDIT-1 GC-07
   return p;
 }
 // Assigning an identical location.search does not navigate in every browser, so the same-URL
@@ -42049,7 +42119,14 @@ function runNav(p) {
   // wave 7's muster with the purse, the garrison and the losses they have now — the horn sounds
   // again for that wave. Restoring mid-wave would mean serialising a hundred bodies; see the
   // save block in SECTION: SIM for why that trade is not close.
-  if (G.runSave(true)) { const s = G.runSnap(); if (s) resumeParams(p, s); }
+  // AUDIT-1 GC-03 — MID-WAVE, NO NEW SNAPSHOT. Writing the live purse/kills against a rolled-back
+  // wave counter replayed the wave with its bounty kept: an unlimited gold and deed farm. The
+  // horn already wrote the right snapshot (startWave -> runSave(true), holding the muster from
+  // before the horn), so a mid-wave toggle reuses it. Towers bought mid-wave revert with their gold.
+  let ok;
+  if (state.phase === 'wave') { const s0 = G.runSnap(); ok = !!s0 && G.runFits(s0) && s0.wave === state.wave - 1; }
+  else ok = G.runSave(true);
+  if (ok) { const s = G.runSnap(); if (s) resumeParams(p, s); }
   navTo(p);
 }
 // ══ v7-MENUCAM §1 — THE QUALITY MENU ═══════════════════════════════════════════════
@@ -42135,7 +42212,7 @@ $('btnFps').onclick = () => { $('fpsV').textContent = L(G.setFpsCap(G.fpsCap() =
 // v7-RESILIENCE §1 — "Restart Campaign" throws the saved run away as well. It used to be a bare
 // reload, which (now that a snapshot exists) would have landed back on a title offering to
 // resume the very run the player had just asked to be rid of.
-$('btnReset').onclick = () => { G.runClear(); location.reload(); };
+$('btnReset').onclick = () => { G.runClear(); retryNav(); };   // AUDIT-1 GC-10 — same URL rule as 'Try again'
 // Title → map select → game. `&map=` names a road outright, so it skips the chooser and
 // Play drops straight into that map (the shot harness and any deep link rely on this).
 // BOOTPIPE §1 — the one hard gate on the staged boot. The bar dims this button and the CSS
@@ -42176,6 +42253,8 @@ UI.resumeRun = (s, gesture) => {
   // the run actually fought with, which is the whole point of snapshotting them.
   laurelMark();
   if (!G.runRestore(s)) { $('title').classList.remove('hidden'); return false; }
+  G.deedRunLoad(s.dd);                                 // AUDIT-1 GC-12
+  runUrlStamp();                                       // AUDIT-1 GC-05
   // ARMIES-FIX8 §5 — the same starting stand-off UI.startGame sets; see its note there.
   CAM.dist = MAP.id >= 4 ? 82 : 100; CAM.tx = -2; CAM.tz = 2;
   if (gesture === false) {
@@ -42213,10 +42292,21 @@ if (!SHOT) {
   addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') deedFlush(); });
 }
 $('btnCRespec').onclick = councilRespec;
+// AUDIT-1 GC-10 — 'Try again' BUILDS the next run's URL. A bare reload of a resume URL found the
+// snapshot endGame had just cleared and stopped at the title. A daily keeps its date and seed (it
+// IS that seed); any other retry draws a fresh one, as the chooser's `&auto=1` always did.
+function retryNav() {
+  const q = new URLSearchParams(location.search);
+  q.delete('resume');
+  if (q.has('map')) q.set('auto', '1');
+  if (!q.get('daily')) q.delete('seed');
+  if (q.toString() === location.search.replace(/^\?/, '')) location.reload(); else location.search = q.toString();
+}
 $('btnRestart').onclick = () => {
-  if (state.phase !== 'won') { location.reload(); return; }
+  if (state.phase !== 'won') { retryNav(); return; }
   const q = new URLSearchParams(location.search);      // a held road sends you back to the campaign
   q.delete('map'); q.delete('auto'); q.set('maps', '1');
+  q.delete('daily'); q.delete('seed'); q.delete('resume'); q.delete('hp');   // AUDIT-1 GC-06
   location.search = q.toString();
 };
 $('chipWave').title = L('hud.waveT', MAP.name, WAVES.length);
@@ -42272,6 +42362,10 @@ if (!SHOT) {
   };
   $('hintT').addEventListener('click', hintTog);
   addEventListener('keydown', e => {
+    // AUDIT-1 GC-09 — never while typing: the co-op join code's alphabet contains G and H.
+    { const a = document.activeElement;
+      if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable)) return; }
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.key === 'g' || e.key === 'G') $('btnGear').click();
     if (e.key === 'h' || e.key === 'H') hintTog();
     if (e.key === 'Escape') { $('hint').classList.remove('open'); $('hintT').setAttribute('aria-expanded', 'false'); }
@@ -42635,7 +42729,17 @@ addEventListener('keydown', e => {
   // AUDIT-1 CH-2 — no hotkey fires while the player is typing (the co-op lobby's name and code
   // fields) or holding a browser chord (Ctrl+1 is a tab switch, not a ballista).
   if (typing() || e.ctrlKey || e.altKey || e.metaKey) return;
-  if (e.key === ' ') $('btnPause').click();
+  // AUDIT-1 GC-09 — Space is the pause key and nothing else: preventDefault stops a focused HUD
+  // button (x1/x2/x3) from ALSO being activated by the same keystroke, and it only means
+  // pause while a battle is on the field.
+  if (e.key === ' ') {
+    if (state.phase === 'wave' || state.phase === 'prewave') {
+      e.preventDefault();
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      $('btnPause').click();
+    }
+    return;
+  }
   if (e.key === 'Escape') { if (G.place) G.exitPlace(); else UI.deselect(); }
   // SPEC3 §F — T cycles the selected tower's targeting doctrine.
   if ((e.key === 't' || e.key === 'T') && state.selTower >= 0) {
@@ -45603,30 +45707,41 @@ const netOwn = (tw, c) => !!tw && (COOP.seats <= 1 || tw.owner === (c.p | 0));
 
 // THE OP TABLE IS THE PROTOCOL. `a` is the argument arity a transport may validate against
 // before it trusts a peer's packet; `now` marks the two ops that are not sim state at all.
+// AUDIT-1 NET-4 — `v` is the argument TYPE check, run by NET.apply before `run`. Arity alone let
+// `place [x, z, 'nope']` throw inside the tick on every peer and `place 'constructor'` turn the
+// purse into NaN. Each validator is a pure function of the arguments, so a refusal is identical on
+// every peer and cannot desync.
+const netOwnKey = (o, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(o, k);
+const netXZ = (x, z) => Number.isFinite(x) && Number.isFinite(z) && Math.abs(x) <= 400 && Math.abs(z) <= 400;
+const netInt = (v) => Number.isInteger(v) && Math.abs(v) <= 1e9;
+const netBool = (v) => v === true || v === false || v === 0 || v === 1;
 const NET_OPS = {
   // ── the board ──
   // SC1 - the crest is stamped inside placeTower now, off the seat whose purse pays, so the
   // restore path and the shot rigs get an owner too and this verb is one call again.
-  place:  { a: 3, run: (g) => G.placeTower(g[0], g[1], g[2]) },     // [x, z, type]
-  up:     { a: 1, run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.upgradeTower(tw); } },
-  sell:   { a: 1, run: (g, c) => { const tw = netTower(g[0]); if (!netOwn(tw, c)) return false;
+  place:  { a: 3, v: (g) => netXZ(g[0], g[1]) && netOwnKey(TOWER_DEFS, g[2]),
+            run: (g) => G.placeTower(g[0], g[1], g[2]) },     // [x, z, type]
+  up:     { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.upgradeTower(tw); } },
+  sell:   { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); if (!netOwn(tw, c)) return false;
               G.sellTower(tw); return true; } },
-  mode:   { a: 1, run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.cycleMode(tw) !== null; } },
+  mode:   { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.cycleMode(tw) !== null; } },
   // A forge takes BOTH crests. It spends the caller's purse, changes what two towers ARE, and
   // its 50% break refund is paid to whoever breaks it - so a captain may only bind their own
   // pair. (The panel offers no cross-owner candidate either; this is the rule under it.)
-  bond:   { a: 2, run: (g, c) => { const a = netTower(g[0]), b = netTower(g[1]);
+  bond:   { a: 2, v: (g) => netInt(g[0]) && netInt(g[1]), run: (g, c) => { const a = netTower(g[0]), b = netTower(g[1]);
               return netOwn(a, c) && netOwn(b, c) && G.forgeBond(a, b); } },
-  unbond: { a: 1, run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.breakBond(tw, true); } },
-  trap:   { a: 3, run: (g) => G.layTrap(g[0], g[1], g[2]) },        // [kind, x, z]
-  cast:   { a: 3, run: (g) => G.castPower(g[0], g[1], g[2]) },      // [power, x, z]
+  unbond: { a: 1, v: (g) => netInt(g[0]), run: (g, c) => { const tw = netTower(g[0]); return netOwn(tw, c) && G.breakBond(tw, true); } },
+  trap:   { a: 3, v: (g) => netOwnKey(TRAP_DEFS, g[0]) && netXZ(g[1], g[2]),
+            run: (g) => G.layTrap(g[0], g[1], g[2]) },        // [kind, x, z]
+  cast:   { a: 3, v: (g) => netOwnKey(POWERS, g[0]) && netXZ(g[1], g[2]),
+            run: (g) => G.castPower(g[0], g[1], g[2]) },      // [power, x, z]
   // ── the run ──
   // SC3 - a horn is a READY, not a start. G.hornReady collapses to G.callWave() at one seat.
   wave:   { a: 0, run: (g, c) => G.hornReady(c.p) },
   // SC5 - only the Council Speaker's pick is heard. Everyone else's is refused, counted, and
   // refused the same way on every peer, so a second captain hammering the cards cannot move
   // one board without moving the others.
-  omen:   { a: 1, run: (g, c) => (COOP.seats <= 1 || (c.p | 0) === G.omenSpeaker()) && G.omens.pick(g[0]) },
+  omen:   { a: 1, v: (g) => Number.isInteger(g[0]) && g[0] >= 0 && g[0] <= 2, run: (g, c) => (COOP.seats <= 1 || (c.p | 0) === G.omenSpeaker()) && G.omens.pick(g[0]) },
   // SC6 - the muster is SHARED and any captain may widen it, out of their own purse.
   muster: { a: 0, run: () => G.raiseMuster() },
   // ── the two that are NOT sim state ──
@@ -45639,7 +45754,7 @@ const NET_OPS = {
   // is what the loop obeys, so x1 beats x2 beats x3 and no captain can fast-forward the vale
   // out from under someone still siting a tower. A dropped seat stops holding the band back.
   // Solo: one seat, the min of one number, and the shipped line.
-  speed:  { a: 1, now: 1, run: (g, c) => { const v = g[0] | 0; if (v < 1 || v > 3) return false;
+  speed:  { a: 1, now: 1, v: (g) => netInt(g[0]), run: (g, c) => { const v = g[0] | 0; if (v < 1 || v > 3) return false;
               COOP.speeds[c.p & 3] = v;
               let m = v;
               for (let i = 0; i < COOP.seats; i++)
@@ -45648,7 +45763,7 @@ const NET_OPS = {
   // SC4 - ANY captain may call a halt, and any captain may lift it. Deliberately not a mask:
   // a pause nobody can lift without four clicks is a grief in the other direction, and the
   // sequencer already gives the band one order for the two commands.
-  pause:  { a: 1, now: 1, run: (g) => {
+  pause:  { a: 1, now: 1, v: (g) => netBool(g[0]), run: (g) => {
               if (UI.setPaused) UI.setPaused(!!g[0]); else state.paused = !!g[0]; return true; } },
   // ── SC2 - SEND-GOLD, now that there is more than one purse ──
   // [toSeat, amount], in 50-gold steps from the HUD's ally row. Every term is validated in the
@@ -45656,7 +45771,7 @@ const NET_OPS = {
   // rules refuse is refused identically on every peer off identical purses, so it is inside
   // the same no-desync argument every other verb is. `pending.gold` keeps counting what has
   // moved - the transport's action log reads it and it costs nothing to keep honest.
-  gold:   { a: 2, run: (g, c) => {
+  gold:   { a: 2, v: (g) => netInt(g[0]) && netInt(g[1]), run: (g, c) => {
               const to = g[0] | 0, amt = g[1] | 0, from = c.p | 0;
               if (purses() <= 1) return false;                 // one purse: nothing to move
               if (to === from || to < 0 || to >= purses() || from < 0 || from >= purses()) return false;
@@ -45675,7 +45790,7 @@ const NET_OPS = {
   // is the AND (bandAuto, SECTION: SIM). The mask starts empty and every peer sends its own
   // state once, on its first sequenced tick - see NET.pre - so a band never inherits a
   // preference nobody in it can see.
-  auto:   { a: 1, run: (g, c) => { const b = 1 << (c.p | 0);
+  auto:   { a: 1, v: (g) => netBool(g[0]), run: (g, c) => { const b = 1 << (c.p | 0);
               if (g[0]) COOP.auto |= b; else COOP.auto &= ~b; return true; } },
   // ── SB's drop rule, SC1's verb ──
   // [fromSeat, toSeat]. A captain went silent for 30 s and the transport declared the saddle
@@ -45683,7 +45798,7 @@ const NET_OPS = {
   // they change hands - by contract to the host. Their purse goes with the works, because gold
   // nobody can spend is gold the band lost; and the seat is marked `gone`, which is what stops
   // it holding up a horn, a pace or a council for the rest of the road.
-  inherit: { a: 2, run: (g, c) => {
+  inherit: { a: 2, v: (g) => netInt(g[0]) && netInt(g[1]), run: (g, c) => {
               const from = g[0] | 0, to = g[1] | 0;
               // THE HOST'S VERB, AND ONLY THE HOST'S. It is the one command that can move every
               // standard on the board at once, so it is the one command that must not be
@@ -45726,7 +45841,7 @@ NET.submit = (op, args) => {
 
 // ── 3. DELIVER ───────────────────────────────────────────────────────────────────────────────
 NET.recv = (c) => {
-  if (!NET.active || !c || !NET_OPS[c.op]) return false;
+  if (!NET.active || !c || !netOwnKey(NET_OPS, c.op)) return false;   // AUDIT-1 NET-4 — own keys only
   if (NET_OPS[c.op].now) return NET.apply(c);
   let t = c.t | 0;
   // A command stamped for a tick this peer has already stepped is, strictly, a desync - the
@@ -45744,8 +45859,8 @@ NET.stamp = () => state.tick + NET.LEAD;      // the host's stamping rule, publi
 
 // ── 4. APPLY ─────────────────────────────────────────────────────────────────────────────────
 NET.apply = (c) => {
+  if (!c || !netOwnKey(NET_OPS, c.op)) return false;
   const spec = NET_OPS[c.op];
-  if (!spec) return false;
   // GAME_SPEC_9 SC2 - WHOSE PURSE PAYS. Every verb below spends through `state.gold`, which is
   // an accessor over the seat's purse (SECTION: SIM); point it at the COMMANDING seat for the
   // length of one verb and every peer debits the same purse, whichever browser is watching -
@@ -45759,11 +45874,14 @@ NET.apply = (c) => {
   // or a write past the end of a four-slot array. Solo the roster is one seat and the whole
   // test is skipped, exactly as `?test=cmd`'s out-of-order (p, s) plan needs it to be.
   if (COOP.seats > 1 && (p < 0 || p >= COOP.seats)) { NET.refused++; return false; }
+  // AUDIT-1 NET-4 — arity and argument types, at the same door, before any verb sees them.
+  const ga = Array.isArray(c.args) ? c.args : c.args == null ? [] : null;
+  if (!ga || ga.length !== spec.a || (spec.v && !spec.v(ga))) { NET.refused++; return false; }
   const wasPay = COOP.pay, wasAct = COOP.act;
   if (p >= 0 && p < purses()) COOP.pay = p;
   if (p >= 0 && p < COOP.seats) COOP.act = p;
   let ok;
-  try { ok = spec.run(c.args || [], c) !== false; }
+  try { ok = spec.run(ga, c) !== false; }
   finally { COOP.pay = wasPay; COOP.act = wasAct; }
   NET.applied++; if (!ok) NET.refused++;
   NET.last = c;
@@ -46026,6 +46144,18 @@ async function runTests(which) {
     G.sellTower(tw);
     T('econ.sellRefund', state.gold === goldBefore + Math.round(inv * 0.7), 'gold=' + state.gold);
     T('place.sellFreesGround', canPlace(32, -31).ok === true && G.towersList.length === before);
+    // AUDIT-1 GC-04 — selling a Barracks remaps every enemy hold into the compacted knight list:
+    // a foe held by the sold barracks is released, a foe held by the other one keeps its knight.
+    { G.placeTower(32, -31, 'barracks', 1, true); const A = G.towersList[G.towersList.length - 1];
+      G.placeTower(44, -31, 'barracks', 1, true); const B = G.towersList[G.towersList.length - 1];
+      const K = G.knights, ia = K.findIndex(k => k.tower === A), ib = K.findIndex(k => k.tower === B);
+      const fa = { alive: true, blockedBy: ia, gc04: 1 }, fb = { alive: true, blockedBy: ib, gc04: 1 };
+      G.enemies.push(fa, fb);
+      G.sellTower(A);
+      T('econ.sellBarracks.remapsHolds', ia >= 0 && ib > ia && fa.blockedBy === -1 && fb.blockedBy >= 0 &&
+        G.knights[fb.blockedBy] === K[ib] && G.knights.every(k => k.tower !== A),
+        'ia=' + ia + ' ib=' + ib + ' fa=' + fa.blockedBy + ' fb=' + fb.blockedBy);
+      G.enemies = G.enemies.filter(x => !x.gc04); G.sellTower(B); }
   }
 
   if (has('ui')) {
@@ -46479,6 +46609,17 @@ async function runTests(which) {
     const ref0 = NET.refused;
     T('coop.door.rosterBounds', run(9, 'muster', []) === false && NET.refused === ref0 + 1,
       'refused ' + ref0 + ' -> ' + NET.refused);
+    // AUDIT-1 NET-4 — argument TYPES are refused at the same door: junk never reaches a verb, never
+    // throws, and never touches a purse (the shipped bug: `place 'constructor'` made it NaN).
+    { const g0 = GD.join('/'), n0 = G.towersList.length, r0 = NET.refused; let threw = '';
+      const junk = [['place', [32, -31, 'nope']], ['place', [32, -31, 'constructor']], ['place', [32, -31, '__proto__']],
+        ['place', ['a', 'b', 'archer']], ['trap', ['constructor', 32, -31]], ['cast', ['__proto__', 32, -31]],
+        ['omen', [1e9]], ['up', [{}]], ['pause', ['x']], ['constructor', []], ['__proto__', []], ['toString', []]];
+      let okN = 0;
+      for (const j of junk) { try { if (run(0, j[0], j[1]) !== false) okN++; } catch (e) { threw = String(e && e.message); } }
+      T('coop.door.argTypes', okN === 0 && !threw && GD.join('/') === g0 && G.towersList.length === n0 &&
+        GD.every(Number.isFinite) && NET.refused >= r0 + junk.length - 3,
+        'accepted=' + okN + ' threw=' + threw + ' purses=' + GD.join('/') + ' refused+' + (NET.refused - r0)); }
 
     // -- 10. AND THE WHOLE OF IT GOES AWAY. Disbanded, the band is one seat, one purse, and
     //        every rule above is the shipped line again. This is the assertion the 29-row

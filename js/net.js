@@ -294,6 +294,9 @@ const S = {
   pend: [],            // host: submits waiting for a stamp
   seq: 0,              // guest: local submit sequence
   buf: new Map(),      // client: bundles held for a hole in the stream, keyed by `f`
+  quar: new Map(),     // AUDIT-1 NET-1 — guest: bundles from a sender not yet BOUND to a seat,
+                       // held until its `hello` proves it is the captain (then replayed)
+  rate: new Map(),     // AUDIT-1 NET-4 — host: per-sender submit bucket { at, n }
   gapSince: 0,
 
   crc: new Map(),      // checkpoint tick -> { at, rows: Map(idx -> hash) }
@@ -393,11 +396,36 @@ function pump() {
 // A peer's packet is validated against the OP TABLE before it is trusted: an unknown op, or the
 // wrong number of arguments, is a broken or hostile peer and is dropped here rather than allowed
 // to reach a G.* verb with garbage.
+// AUDIT-1 NET-4 — OWN properties only: `constructor` / `__proto__` / `toString` are inherited
+// members of every object and used to pass this door. Arguments must be plain scalars (numbers,
+// short strings, booleans) - the per-op TYPE checks live beside each verb in NET.OPS[op].v.
+const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const okArg = (x) => (typeof x === 'number' && Number.isFinite(x)) || typeof x === 'boolean' ||
+  (typeof x === 'string' && x.length <= 24);
 function okOp(op, args) {
-  const N = sim(); if (!N || !N.OPS) return true;
+  const N = sim();
+  if (typeof op !== 'string' || op.length > 16 || !Array.isArray(args) || args.length > 4) return false;
+  if (!args.every(okArg)) return false;
+  if (!N || !N.OPS) return true;
+  if (!hasOwn(N.OPS, op)) return false;
   const spec = N.OPS[op];
-  if (!spec) return false;
-  return Array.isArray(args) && args.length === (spec.a | 0);
+  return args.length === (spec.a | 0);
+}
+// AUDIT-1 NET-3 — the `now` ops (pause, speed) are NOT sim state and cannot ride the tick
+// sequencer: a paused sim takes no ticks, so a queued 'unpause' waited in S.pend forever and a
+// co-op pause was permanent. The host applies them on arrival and broadcasts them at once.
+const isNow = (op) => { const N = sim(); return !!(N && N.OPS && hasOwn(N.OPS, op) && N.OPS[op].now); };
+function nowCmd(rec) {
+  const c = { t: -1, p: rec.p, s: rec.s, op: rec.op, args: rec.args };
+  if (S.send) fire(S.send.sys, { v: PROTO, k: 'now', c: [c] });
+  applyToSim(c);
+}
+// AUDIT-1 NET-4 — a flood cap per sender: 40 submits a second is several times anything a hand
+// can do, and the pending pile itself is bounded.
+function rateOk(from) {
+  const t = now(); let r = S.rate.get(from);
+  if (!r || t - r.at >= 1000) { r = { at: t, n: 0 }; S.rate.set(from, r); }
+  return ++r.n <= 40;
 }
 
 function applyToSim(cmd) {
@@ -419,9 +447,13 @@ function horizonToSim(t) {
 // nothing at all.
 export function feedTick(t) {
   if (!S.live || !(t > S.tick)) return;
+  // AUDIT-1 GC-01 — a paused band advances nobody's horizon, AND IT DOES NOT CONSUME THE TICK.
+  // This test used to sit after `S.tick = t`, so during a stall the host's sim walked up to the
+  // last sealed horizon, S.tick caught up with it, and after the resume `stamp - LEAD` was never
+  // again greater than S.tick: no bundle was ever sealed and the band froze for good.
+  if (S.role === 'host' && (S.paused || S.ended)) return;
   S.tick = t;
   if (S.role !== 'host') return;
-  if (S.paused || S.ended) return;            // a paused band advances nobody's horizon
 
   // LEAD IS THE SIM'S NUMBER, not ours. `T.lead` is only the standalone default: when SECTION:
   // NET is under us its NET.LEAD wins, because a transport stamping to a different lead than the
@@ -461,8 +493,18 @@ function ingestBundle(b, from) {
   // the captain". After the run's page navigation every peer re-dials with a BRAND NEW peer id,
   // so the roster's ids are stale until each `hello` lands; rejecting on an unknown id here
   // would drop the first bundles of every session.
-  if (S.role === 'guest' && from !== S.selfId) { const fi = S.byId.get(from); if (fi !== undefined && fi !== S.hostIdx) return; }
-  if (typeof b.t !== 'number' || typeof b.f !== 'number') return;
+  // AUDIT-1 NET-1 — ...but "not placed yet" is not "trusted" either. The HOST obeys only its own
+  // bundles. A GUEST obeys only the peer bound to the captain's seat; a sender it cannot place yet
+  // is QUARANTINED, not obeyed, and replayed the moment its `hello` binds it to the captain's
+  // seat (see onSys). Anything else is a stranger issuing orders and is dropped.
+  if (from !== S.selfId) {
+    if (S.role === 'host') return;
+    const fi = S.byId.get(from);
+    if (fi !== S.hostIdx) { if (fi === undefined) quarantine(from, b); return; }
+  }
+  // The SHAPE, before any field is trusted: integer ticks, a forward range, a bounded list.
+  if (!Number.isInteger(b.t) || !Number.isInteger(b.f) || b.f < 0 || b.t < b.f) return;
+  if (b.c !== undefined && (!Array.isArray(b.c) || b.c.length > 256)) return;
   if (b.t <= S.horizon) return;                                  // already lived through
 
   if (b.f > S.horizon + 1) {                                     // a hole: hold it, do not skip it
@@ -482,12 +524,24 @@ function ingestBundle(b, from) {
   }
 }
 
+function quarantine(from, b) {
+  if (!from || !b || typeof b !== 'object') return;
+  let q = S.quar.get(from);
+  if (!q) { if (S.quar.size >= 8) return; q = []; S.quar.set(from, q); }
+  if (q.length < 512) q.push(b);
+}
+function releaseQuarantine(from) {
+  const q = S.quar.get(from); if (!q) return;
+  S.quar.delete(from);
+  for (const b of q) ingestBundle(b, from);
+}
+
 function applyBundle(b) {
   // ORDER MATTERS AND IS NOT NEGOTIABLE: every command is queued BEFORE the horizon rises, so
   // the sim can never be authorized to run a tick whose commands have not yet landed.
   const c = Array.isArray(b.c) ? b.c : [];
   for (const cmd of c) {
-    if (!cmd || typeof cmd.t !== 'number') continue;
+    if (!cmd || !Number.isInteger(cmd.t)) continue;
     if (cmd.t <= S.horizon) continue;                            // a re-send of something already lived
     const op = String(cmd.op || ''), args = Array.isArray(cmd.args) ? cmd.args : [];
     if (!okOp(op, args)) { console.warn('bfnet: refused a malformed command', op, args); continue; }
@@ -509,7 +563,7 @@ function applyBundle(b) {
 function submitCmd(c) {
   if (!S.live || S.ended) return false;
   const rec = { p: S.localIdx, s: c.s | 0, op: String(c.op || ''), args: Array.isArray(c.args) ? c.args : [] };
-  if (S.role === 'host') { S.pend.push(rec); return true; }
+  if (S.role === 'host') { if (isNow(rec.op)) nowCmd(rec); else S.pend.push(rec); return true; }
   if (S.send) fire(S.send.cmd, { v: PROTO, s: rec.s, op: rec.op, args: rec.args });
   return true;
 }
@@ -639,9 +693,8 @@ function dropPeer(idx) {
   const p = S.byIdx.get(idx); if (p) p.gone = true;
   if (S.role === 'host') {
     if (S.send) fire(S.send.sys, { v: PROTO, k: 'roster', players: S.players.map((q) => ({ idx: q.idx, id: q.id, name: q.name, gone: S.gone.has(q.idx) })) });
-    // GAME_SPEC_9 §B. `inherit` is NOT in NET.OPS yet — it is the op the coop-rules stage owns
-    // (ownership is recorded today and enforced nowhere). Until it exists NET.recv drops it as an
-    // unknown op, which is the correct no-op: the towers simply stay where they are.
+    // GAME_SPEC_9 §B / §C1. `inherit` is a host-only verb in NET.OPS (SECTION: NET): the dropped
+    // seat's works and purse pass to the captain on the same tick on every peer.
     submitCmd({ s: nextSeq(), op: 'inherit', args: [idx, S.hostIdx] });
   }
   emit('drop', { idx, name: nameOf(idx) });
@@ -778,7 +831,7 @@ export async function start(sess) {
 
   S.live = true; S.startedAt = now();
   S.tick = -1; S.horizon = -1; S.emitted = -1; S.lastEmit = -1;
-  S.pend.length = 0; S.seq = 0; S.buf.clear(); S.gapSince = 0;
+  S.pend.length = 0; S.seq = 0; S.buf.clear(); S.gapSince = 0; S.quar.clear(); S.rate.clear();
   S.crc.clear(); S.crcSinks = []; S.desync = 0;
   S.seen.clear(); S.stalling.clear(); S.gone.clear(); S.paused = false; S.ended = '';
   S.met.clear(); S.met.add(S.localIdx); S.gatherOn = 0;
@@ -790,13 +843,16 @@ export async function start(sess) {
     if (p === undefined || S.gone.has(p)) return;              // an unseated peer has no vote
     const op = String(d.op || ''), args = Array.isArray(d.args) ? d.args : [];
     if (!okOp(op, args)) { console.warn('bfnet: refused a malformed submit from', p, op); return; }
-    S.pend.push({ p, s: d.s | 0, op, args });
+    if (!rateOk(from) || S.pend.length >= 256) return;          // AUDIT-1 NET-4 — flood
+    const rec = { p, s: d.s | 0, op, args };
+    if (isNow(op)) nowCmd(rec); else S.pend.push(rec);          // AUDIT-1 NET-3
   });
   aBun.on((d, m) => { const from = pid(m); touch(from); ingestBundle(d, from); });
   aCrc.on((d, m) => {
     const from = pid(m); touch(from);
     if (S.role !== 'host' || !d || d.v !== PROTO) return;
-    const p = S.byId.get(from); if (p === undefined) return;
+    const p = S.byId.get(from); if (p === undefined || S.gone.has(p)) return;
+    if (!Number.isInteger(d.t) || d.t < 0) return;                 // AUDIT-1 NET-4
     recordCRC(d.t | 0, p, d.h >>> 0); judgeCRC();
   });
   aSys.on((d, m) => { const from = pid(m); touch(from); onSys(d, from); });
@@ -805,10 +861,16 @@ export async function start(sess) {
   onPeer(room, 'onPeerLeave', (id) => {
     const i = S.byId.get(id);
     if (i === undefined) return;
-    if (i === S.hostIdx && S.role === 'guest') { onHostGone(); return; }
-    // A clean WebRTC teardown is proof, not a guess — no need to wait out the 30 s.
-    if (S.role === 'host') dropPeer(i);
+    // AUDIT-1 NET-6 — A WEBRTC CLOSE IS NOT PROOF. Trystero closes a peer after only 5 s of ICE
+    // 'disconnected' and re-handshakes the same id when the network returns, so dropping here
+    // turned a 5-second blip into a permanent drop (or the end of the run, for the captain).
+    // The leave only starts the clocks: sweep() raises 'waiting for X' at once, and the spec'd
+    // T.drop decides. A peer that really closed its tab says `bye` first (see onHide).
+    if (S.byIdx.get(i) && S.byIdx.get(i).id !== id) return;      // a stale id, not the seat's current one
+    S.seen.set(id, now() - T.silent - 1);
   });
+  S.onHide = () => { if (S.live && S.send && !S.ended) fire(S.send.sys, { v: PROTO, k: 'bye', idx: S.localIdx }); };
+  try { addEventListener('pagehide', S.onHide, true); } catch (e) { /* */ }
 
   bindSim();
   hello();
@@ -822,30 +884,79 @@ export async function start(sess) {
   return true;
 }
 
+// AUDIT-1 NET-2 — WHO MAY TAKE A SADDLE. `hello` used to rebind its sender to ANY numeric idx, so
+// one forged packet seated a guest in the captain's chair (and the host then credited that
+// guest's submits - the host-only `inherit` among them - to the captain). A claim is honoured
+// only when all of these hold:
+//   · idx is an integer seat of this roster, and not OUR own seat;
+//   · the sender is not already bound to a different seat;
+//   · the seat is not already held, in this session, by a DIFFERENT peer that is still on the wire
+//     (still in room.getPeers() and heard from inside T.silent). A seat whose holder has gone
+//     quiet or left may be re-claimed: that is a rider reloading, or Trystero re-dialling.
+// v1 trust model: anyone holding the room code can still claim a saddle nobody has answered
+// for yet; a per-seat secret minted by the lobby is the v1.1 fix (see the audit backlog).
+function seatClaimOk(idx, from) {
+  if (!Number.isInteger(idx) || !S.byIdx.has(idx) || idx === S.localIdx || !from) return false;
+  const prev = S.byId.get(from);
+  if (prev !== undefined && prev !== idx) return false;
+  const r = S.byIdx.get(idx);
+  if (S.met.has(idx) && r && r.id && r.id !== from) {
+    let present = false;
+    try { const ps = S.room && S.room.getPeers ? S.room.getPeers() : null; present = !!ps && Object.prototype.hasOwnProperty.call(ps, r.id); } catch (e) { present = false; }
+    const quiet = now() - (S.seen.get(r.id) || 0) > T.silent;
+    if (present && !quiet) return false;
+  }
+  return true;
+}
+
 function onSys(d, from) {
-  if (!d || d.v !== PROTO) return;
+  if (!d || typeof d !== 'object' || d.v !== PROTO || typeof d.k !== 'string') return;
   if (d.k === 'hello') {
-    if (typeof d.idx === 'number' && from) {
-      S.byId.set(from, d.idx);
-      const r = S.byIdx.get(d.idx);
-      if (r) { r.id = from; if (d.name) r.name = String(d.name).slice(0, 14); }
-      const q = S.players.find((x) => x.idx === d.idx); if (q) q.id = from;   // keep the roster copy honest
-      S.met.add(d.idx);                       // ...and the saddle is answered: see bandPresent()
+    if (!seatClaimOk(d.idx, from)) {
+      if (typeof d.idx === 'number' && S.byId.get(from) !== d.idx) console.warn('bfnet: refused a seat claim', d.idx);
+      return;
     }
+    const prevId = (S.byIdx.get(d.idx) || {}).id;
+    if (prevId && prevId !== from && S.byId.get(prevId) === d.idx) S.byId.delete(prevId);
+    S.byId.set(from, d.idx);
+    const r = S.byIdx.get(d.idx);
+    if (r) { r.id = from; if (typeof d.name === 'string' && d.name) r.name = d.name.slice(0, 14); }
+    const q = S.players.find((x) => x.idx === d.idx); if (q) q.id = from;   // keep the roster copy honest
+    S.met.add(d.idx);                         // ...and the saddle is answered: see bandPresent()
+    if (S.role === 'guest' && d.idx === S.hostIdx) releaseQuarantine(from);   // AUDIT-1 NET-1
     return;
   }
   if (d.k === 'hb') return;                                    // the ping IS the payload
   const fi = S.byId.get(from);
-  if (fi !== undefined && fi !== S.hostIdx) return;             // only the captain issues orders
-  if (d.k === 'desync') { onDesync(d.t | 0, d.rows || []); return; }
+  // AUDIT-1 NET-6 — an explicit `bye` is proof, and it is judged on the SENDER'S OWN seat, so it
+  // can only ever retire the peer that sent it.
+  if (d.k === 'bye') {
+    if (fi === undefined) return;
+    if (S.role === 'guest' && fi === S.hostIdx) { onHostGone(); return; }
+    if (S.role === 'host' && fi !== S.localIdx) dropPeer(fi);
+    return;
+  }
+  // AUDIT-1 NET-1 — only the BOUND captain issues orders. An unknown sender used to pass.
+  if (S.role !== 'guest' || fi !== S.hostIdx) return;
+  if (d.k === 'desync') { onDesync(Number.isInteger(d.t) ? d.t : 0, Array.isArray(d.rows) ? d.rows.slice(0, 4) : []); return; }
+  if (d.k === 'now') {                                          // AUDIT-1 NET-3
+    if (!Array.isArray(d.c) || d.c.length > 8 || S.ended) return;
+    for (const c of d.c) {
+      if (!c || typeof c !== 'object') continue;
+      const op = String(c.op || ''), args = Array.isArray(c.args) ? c.args : [];
+      if (!isNow(op) || !okOp(op, args) || !Number.isInteger(c.p)) continue;
+      applyToSim({ t: -1, p: c.p, s: c.s | 0, op, args });
+    }
+    return;
+  }
   if (d.k === 'roster') {
     if (!Array.isArray(d.players)) return;
     for (const p of d.players) {
+      if (!p || !Number.isInteger(p.idx) || !S.byIdx.has(p.idx)) continue;
       if (p.gone && !S.gone.has(p.idx)) { S.gone.add(p.idx); const r = S.byIdx.get(p.idx); if (r) r.gone = true; S.stalling.delete(p.idx); emit('drop', { idx: p.idx, name: nameOf(p.idx) }); }
     }
     return;
   }
-  if (d.k === 'bye') { const i = S.byId.get(from); if (i === S.hostIdx) onHostGone(); else if (i !== undefined) { S.gone.add(i); emit('drop', { idx: i, name: nameOf(i) }); } }
 }
 
 // A hole in the bundle stream is not a drop — the peer may be perfectly alive and the stream
@@ -876,11 +987,12 @@ export function stop() {
   if (S.hbT) { clearInterval(S.hbT); S.hbT = 0; }
   if (S.pmp) { clearInterval(S.pmp); S.pmp = 0; }
   if (S.live && S.send) fire(S.send.sys, { v: PROTO, k: 'bye', idx: S.localIdx });
+  if (S.onHide) { try { removeEventListener('pagehide', S.onHide, true); } catch (e) { /* */ } S.onHide = null; }
   unbindSim();
   if (S.ownRoom && S.room) { try { if (S.room.leave) S.room.leave(); } catch (e) { /* */ } }
   S.live = false; S.room = null; S.send = null; S.ownRoom = false; S.role = null;
   S.pend.length = 0; S.buf.clear(); S.crc.clear(); S.seen.clear(); S.stalling.clear();
-  S.met.clear(); S.gatherOn = 0;
+  S.met.clear(); S.gatherOn = 0; S.quar.clear(); S.rate.clear();
   veil('');
   emit('stop', {});
 }
